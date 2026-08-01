@@ -3,11 +3,9 @@
 The web player for sonn core. Every room in the house, in a browser — on a desk, on a phone, or on
 a panel on the wall. It plays there too: the tab can register itself as a room and take the music.
 
-It speaks **only** the server's public `/api/v1` contract — no `/admin/api`, no port 7091, no
+It speaks **only** the server's public `/api/v1` contract — no `/admin/api`, no use of the loxone audio server api, no
 undocumented routes. That began as a way of proving the contract was complete enough to build a
-player on. It stayed because of what it makes true: everything this player does, any client can do,
-and the one place to look to check that is `api/client.ts` rather than the whole tree. Where the API
-could not do something, it was reported to the server rather than worked around here.
+player on.
 
 ## Two players, one bundle
 
