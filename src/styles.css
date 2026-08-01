@@ -1,0 +1,4322 @@
+/*
+ * The whole look, in one file.
+ *
+ * Components carry no styling of their own, so this can be replaced without touching one — which
+ * is what the earlier plain pass was holding open, and what this is.
+ *
+ * The idea: a piece of hi-fi rather than a web app. Near-black surfaces so artwork is the only
+ * bright thing on screen; one green accent for state and nothing else; hairlines instead of
+ * borders; numbers always tabular so nothing twitches while it counts.
+ *
+ * Colour comes from one wash, not from the music. `--wash-primary` / `--wash-secondary` /
+ * `--wash-deep` are fixed in `:root` and painted across the whole window by `.app::before`. They were
+ * set per track from `track.colors`, which was pretty per album and incoherent across them — a warm
+ * sleeve and a cool one turned the same screen into two products. A record's own colour belongs to the
+ * art face.
+ *
+ * Conventions used throughout:
+ *  - **One continuous surface.** Nothing has a fill *and* a border: the rails and bars have neither,
+ *    sections are drawn by their label and the space around them, and the few things that must be
+ *    set apart get `--well` — a white tint that reads as a recess. Filled, bordered cards were the
+ *    one hard edge left on the wash and they read as stuck-on rather than part of the page.
+ *  - Hairlines are **alpha**, not solid grey, so they hold up over the art wash as well as over
+ *    the flat surfaces.
+ *  - Row actions are revealed on `:hover`/`:focus-within` rather than always drawn. A queue of
+ *    thirty tracks with four buttons each is a wall of icons; the same list with them hidden is
+ *    a list of music.
+ *  - Every interactive element gets the same `:focus-visible` ring, once, at the bottom.
+ */
+
+/*
+ * The two brand faces, self-hosted.
+ *
+ * Both files are the *variable* fonts (one file covers 100–900), which is why there is one
+ * `@font-face` per family rather than one per weight: Google serves the same binary for every
+ * weight in the range, so shipping four copies of it would be four copies of the same 34 kB.
+ *
+ * Self-hosted rather than linked, because an audioserver on a LAN with no route to the internet
+ * must not fall back to a system sans for its own wordmark. `swap` so text is never invisible
+ * while they load.
+ */
+@font-face {
+  font-family: 'Hanken Grotesk';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('./assets/fonts/hanken-grotesk-var.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('./assets/fonts/jetbrains-mono-var.woff2') format('woff2');
+}
+
+:root {
+  /*
+   * Three faces, one job each — the same split the admin UI and the art player use, so the
+   * three surfaces read as one product.
+   *
+   *  - `--font-display`: Hanken Grotesk, tight tracking. Titles, the wordmark, big numbers.
+   *  - `--font-mono`: JetBrains Mono, wide tracking, uppercase. Every *label*, and every
+   *    measurement — a sample rate, a bitrate, a time, a dB. This is the technical player's
+   *    voice: the readouts should look like they came off a piece of equipment.
+   *  - `--font-sans`: the system UI face for running text and track titles in lists, where a
+   *    display face at 13px only costs legibility.
+   */
+  --font-display: 'Hanken Grotesk', -apple-system, BlinkMacSystemFont, 'Inter', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', system-ui, sans-serif;
+
+  /*
+   * The wash. One palette, everywhere, always.
+   *
+   * Named for what it is rather than where it came from: these were `--art-*` and fed by `track.colors`,
+   * and leaving that name on a constant is how a stylesheet starts lying about itself.
+   *
+   * These were overwritten per track from `track.colors`, and with nothing playing they had no value at
+   * all — so the page was flat `--bg` when idle and took the album's temperature when not. Pretty per
+   * record and incoherent across them: a warm sleeve and a cool one made the same screen look like two
+   * products, and changing rooms changed the colour of the furniture.
+   *
+   * A real palette rather than an invented one — read live off a playing zone, which is why it behaves
+   * like artwork does instead of looking like a guess at what artwork looks like. Cool and deep, so the
+   * green accent stays the only thing on the page that is *saying* something.
+   *
+   * Everything that consumes them is now constant: the page wash, the glow under the sleeve, the
+   * analyser's unlit ground. `track.colors` is still in the contract, and the art face is where a
+   * record's own colour belongs.
+   */
+  --wash-primary: rgb(208 217 229);
+  --wash-secondary: rgb(208 217 229);
+  --wash-deep: rgb(33 44 59);
+
+  /*
+   * Surfaces, darkest first. Four steps is enough to seat a card on a rail on a page.
+   *
+   * `--bg` is the *product's* near-black — the same `#0A0C10` the admin console paints its page with
+   * and the same one the brand lockup uses for text on light (`data/export/sonn-logo-dark-text.svg`).
+   * It was `#08090b`, which is three points away and therefore invisible on its own and wrong beside
+   * the console: two surfaces of one system should not each have their own black.
+   */
+  --bg: #0a0c10;
+  --surface: #0d0f12;
+  --surface-2: #14171c;
+  --surface-3: #1c2027;
+
+  /*
+   * A recess in the surface, for the few things that need to be set apart: the format read-out, the
+   * spectrum, a room in the rail. A *white* tint rather than a dark fill, so it sits with the
+   * artwork wash instead of punching a hole in it — which is what filled, bordered cards did, and
+   * why there are none left.
+   */
+  --well: rgb(255 255 255 / 3%);
+  --well-hover: rgb(255 255 255 / 6%);
+
+  /* Hairlines and washes, as alpha so they compose over artwork. */
+  --line: rgb(255 255 255 / 7%);
+  --line-strong: rgb(255 255 255 / 14%);
+  --tint: rgb(255 255 255 / 4%);
+
+  /*
+   * The text ladder, shared with the console and the art face.
+   *
+   * These were `#e9ebef` / `#a1a8b4` / `#6d7482` — a private ladder two or three points off the one
+   * the admin UI and the art player already share. Nobody can name a two-point difference in a grey
+   * and everybody feels it when the same secondary label is a slightly different colour in the room
+   * next door, so all three surfaces now read from one ladder.
+   */
+  --text: #edeef0;
+  --text-dim: #9ca3af;
+  --text-mute: #6b7280;
+
+  /*
+   * One accent, and it is the *product's* — the same green the admin UI uses (`#4ADE80`), not a
+   * near-miss of it. Two shades of green across two surfaces of one system is the kind of thing
+   * nobody can name and everybody feels.
+   */
+  --accent: #4ade80;
+  --accent-soft: rgb(74 222 128 / 8%);
+  --accent-line: rgb(74 222 128 / 30%);
+  /* The ink *on* the accent — the console's `--accent-on`, not a second near-black green. */
+  --accent-ink: #062812;
+
+  --warn: #f59e0b;
+  --warn-soft: rgb(245 158 11 / 14%);
+
+  /*
+   * One radius scale, shared with the console: 8 / 10 / 12 / 16.
+   *
+   * `--r-sm` was 6px and `--r-lg` 14px, which put every small button in this player two pixels
+   * tighter than the same button in the admin UI — the kind of mismatch that reads as "different
+   * product" without ever being noticed as a number.
+   */
+  --r-sm: 8px;
+  --r: 10px;
+  --r-lg: 12px;
+  --r-xl: 16px;
+  --r-pill: 999px;
+
+  --shadow-1: 0 1px 2px rgb(0 0 0 / 40%);
+  --shadow-2: 0 8px 24px rgb(0 0 0 / 45%);
+  --shadow-3: 0 18px 50px rgb(0 0 0 / 55%);
+
+  --gap: 12px;
+  --dur: 140ms;
+  /*
+   * One curve, everywhere in the product.
+   *
+   * This was `cubic-bezier(0.2, 0.7, 0.3, 1)`, which made the technical player the only one of the
+   * four surfaces (console, shell, art face, both design prototypes) that did not ease on
+   * `(0.2, 0.8, 0.2, 1)`. Motion is the most legible signature a system has and it should have one.
+   */
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+
+  /* Kept for anything still reaching for the old name. */
+  --radius: var(--r);
+
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 14px/1.45 var(--font-sans);
+  /* Numbers never change width, anywhere. Durations, volumes and bitrates all live next to a
+     slider or in a column, and proportional digits make both jitter. */
+  font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/*
+ * The two voices, as helpers.
+ *
+ * `.mono` is a *label*: uppercase, wide, small, and never a sentence — the tracking that makes a
+ * three-letter label read as engraved makes a paragraph unreadable. `.disp` is the display face
+ * with the tracking it wants; both are applied by name in the rules below rather than by wrapping
+ * markup in extra spans.
+ */
+.mono {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.disp {
+  font-family: var(--font-display);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: default;
+  opacity: 0.35;
+}
+
+h1,
+h2,
+h3 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+p {
+  margin: 0;
+}
+
+ul,
+ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/*
+ * Icons are sized here, once, for every context.
+ *
+ * An `<svg>` with only a `viewBox` takes its size from its container, so in a flex row it
+ * stretches to whatever room is going — which is how a 16px glyph became four white squares
+ * filling a button. One rule at the top makes that impossible everywhere rather than needing a
+ * width beside every icon.
+ */
+svg {
+  flex: none;
+  width: 16px;
+  height: 16px;
+}
+
+/* Thin, quiet scrollbars: three panes scroll independently and three grey slabs would frame the
+   content in chrome. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--line-strong) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+*::-webkit-scrollbar-thumb {
+  border: 3px solid transparent;
+  border-radius: var(--r-pill);
+  background: var(--line-strong);
+  background-clip: content-box;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: rgb(255 255 255 / 22%);
+  background-clip: content-box;
+}
+
+/* --- shell ---------------------------------------------------------------- */
+
+/*
+ * Fixed to the viewport rather than growing with the page.
+ *
+ * `height` (not `min-height`) is what keeps the app bar and the now-bar still while only the
+ * middle column scrolls — with `min-height` the document scrolls and the bottom bar walks off the
+ * screen, which is the one thing it exists not to do.
+ */
+.app {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  /* The shell (`.face`) owns the viewport height now, so this fills its parent rather than
+     re-stating `100dvh` — two elements both claiming the viewport is how a page ends up one
+     scrollbar taller than the screen. */
+  height: 100%;
+  overflow: hidden;
+}
+
+/*
+ * The wash, across the entire player.
+ *
+ * A fixed layer behind everything rather than a background on the hero: the point is that one colour
+ * runs through the whole surface — rails, bars and all — so nothing reads as a card floating on its
+ * own mood. It used to be the *artwork's* colour, per track, which is where the shape of this layer
+ * comes from; it is one fixed tint now (see `--wash-*` in `:root`) and the name says so.
+ *
+ * Built to cover the window rather than to bloom in one spot. The two radials are deliberately
+ * larger than the viewport and anchored off its corners, so what lands on screen is the middle of
+ * a gradient — no visible centre, no falloff ring inside the frame. Under them the deep artwork
+ * colour floods the full height, which is what carries the tint into the rails where the radials
+ * have already thinned out.
+ *
+ * **Kept deliberately faint.** The percentages below are the whole design of this layer, and the
+ * temptation is to raise them: a wash you can point at is a wash that has become a colour cast, and
+ * then every neutral on the page — text, hairlines, the green accent — is sitting on top of it and
+ * reading wrong. It should be the kind of thing you only notice when you switch to a record with a
+ * very different cover. If in doubt, lower them.
+ */
+.app::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    /*
+     * No green band along the top edge.
+     *
+     * There was one — a wide accent ellipse off the top, copied from the admin console so both
+     * surfaces glowed alike after a tab switch. It made sense while the rest of this layer took its
+     * colour from the artwork and therefore had no fixed hue of its own. Now that the wash *is* one
+     * fixed colour, a green ellipse over it is a second light source with a different temperature,
+     * and it reads as a band across the top of the window rather than as light. One wash, one
+     * direction; the green on this page is for state, and the spectrum in the middle is already
+     * carrying plenty of it.
+     */
+    radial-gradient(
+      135% 115% at 8% -20%,
+      color-mix(in oklab, var(--wash-primary, transparent) 7%, transparent),
+      transparent 78%
+    ),
+    radial-gradient(
+      120% 110% at 108% 120%,
+      color-mix(in oklab, var(--wash-secondary, transparent) 4%, transparent),
+      transparent 74%
+    ),
+    linear-gradient(
+      170deg,
+      color-mix(in oklab, var(--wash-deep, transparent) 13%, transparent),
+      color-mix(in oklab, var(--wash-deep, transparent) 5%, transparent)
+    );
+}
+
+/* Everything sits above the wash. */
+.app > * {
+  position: relative;
+  z-index: 1;
+}
+
+/*
+ * Three columns, and only the middle one scrolls.
+ *
+ * `grid` rather than flex because the rails are furniture whose width should not answer to their
+ * contents — a nav that widens for one long album name shifts the whole page. `minmax(0, 1fr)` on
+ * the middle column is what makes a wide table there scroll inside itself instead of pushing the
+ * rails off-screen.
+ */
+.app-body {
+  display: grid;
+  grid-template-columns: 244px minmax(0, 1fr) 312px;
+  flex: 1;
+  min-height: 0;
+}
+
+/* No zones means no right rail; the grid must not then leave a 312px hole. */
+.app-body:not(:has(.rail)) {
+  grid-template-columns: 244px minmax(0, 1fr);
+}
+
+/*
+ * The middle column is a frame, not a scroller.
+ *
+ * Each view scrolls its own region instead: now-playing pins the player and scrolls the queue under
+ * it, and the browser scrolls its listing under a fixed search bar. If `.main` scrolled as well,
+ * both would slide as one lump and neither could pin anything.
+ */
+.main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  padding: 16px 20px 0;
+}
+
+/* Views fill the frame and take over the scrolling. */
+.main > * {
+  flex: 1;
+  min-height: 0;
+}
+
+/* --- the bar across the top ----------------------------------------------- */
+
+/*
+ * The identity, where you are, and what acts on the room.
+ *
+ * A grid rather than flex, and the first column is exactly the rail's width: the wordmark then sits
+ * over the navigation it belongs to, and the view label starts on the same line the content does. With
+ * flex it drifted by a few pixels at every window width, which is the sort of thing you cannot name but
+ * makes a layout feel loose.
+ *
+ * No fill, one hairline — the same rule as the rails. It is chrome, and chrome here is defined by its
+ * edges, not by its tone.
+ */
+.app-bar {
+  display: grid;
+  grid-template-columns: 244px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 16px;
+  flex: none;
+  height: 54px;
+  padding: 0 16px 0 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.app-bar-brand {
+  padding-left: 12px;
+}
+
+/*
+ * Where you are, in the mono voice.
+ *
+ * Not a breadcrumb: that lives in the browser where its parts can be clicked. This is the *mode* —
+ * now playing in a named room, a collection, a service — and it is the one label on the page that is
+ * true no matter which panel has focus.
+ */
+.app-bar-view {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+  font-size: 9.5px;
+  letter-spacing: 0.22em;
+  color: var(--text-dim);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.app-bar-view svg {
+  width: 13px;
+  height: 13px;
+  color: var(--accent);
+}
+
+.app-bar-right {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  min-width: 0;
+}
+
+/*
+ * The switch to the other face.
+ *
+ * A hairline button rather than a link: it changes what the whole window is, which is a heavier act than
+ * navigating, and the box is what says so. Mono, because it is a label for a mode rather than a name.
+ */
+.app-bar-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 10px 7px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  background: none;
+  color: var(--text-dim);
+  font-size: 8.5px;
+  letter-spacing: 0.18em;
+  transition:
+    border-color var(--dur) var(--ease),
+    color var(--dur) var(--ease),
+    background var(--dur) var(--ease);
+}
+
+.app-bar-switch:hover {
+  border-color: var(--accent-line);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.app-bar-switch svg {
+  width: 12px;
+  height: 12px;
+}
+
+/* The cap, when a room has one: `40 / 70` rather than a percentage that would be a third wrong. */
+.volume-cap {
+  color: var(--text-mute);
+}
+
+/* --- chrome --------------------------------------------------------------- */
+
+/*
+ * The chrome has no fill at all. Only hairlines.
+ *
+ * This is the whole trick, and getting it wrong is obvious: a *translucent* dark rail is still a
+ * dark rail, so laying one over the wash left the middle column — which has no fill — reading as a
+ * bright rectangle floating between two dark ones. Removing the fill entirely means one wash runs
+ * edge to edge and the rails are defined by their 1px borders instead of by their own tone.
+ *
+ * Safe because nothing scrolls behind these: the rails are grid columns and the bar is a flex item
+ * outside the scrolling region, so there is no content for a fill to have to hide.
+ */
+.app-bar,
+.nav-rail,
+.rail,
+.now-bar {
+  background: none;
+}
+
+/*
+ * The wordmark: `sonn` in the display face, the face name in the mono one.
+ *
+ * Not two colours of the same font — the two faces *are* the distinction, which is why the second
+ * word can sit at plain grey and still read as a subtitle rather than as a second brand.
+ */
+/*
+ * Sized as the art face sizes it, which is the version that reads best: a slightly larger mark and a
+ * 19 px wordmark, rather than 26 px and 17 px. The two faces had drifted a couple of pixels apart in
+ * both, which is not visible on either screen alone and very visible when you switch between them.
+ */
+.brand {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.33em;
+  font-family: var(--font-display);
+  font-size: 19px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--text);
+}
+
+.brand-light {
+  color: var(--text-mute);
+  font-family: var(--font-mono);
+  font-size: 0.58em;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+/* The mark beside it: the roofline over the waveform. Same size as the art face's. */
+.brand-mark {
+  flex: none;
+  width: 30px;
+  height: 24px;
+  margin-right: 0.25em;
+  color: var(--accent);
+}
+
+/* --- primitives ----------------------------------------------------------- */
+
+.icon-button {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-pill);
+  background: var(--surface-2);
+  color: var(--text);
+  transition:
+    background var(--dur) var(--ease),
+    border-color var(--dur) var(--ease),
+    color var(--dur) var(--ease);
+}
+
+.icon-button:hover:not(:disabled) {
+  border-color: var(--line-strong);
+  background: var(--surface-3);
+}
+
+/*
+ * The play/pause button: a ring, not a fill.
+ *
+ * The one control whose position you should find without reading, and it earns that by being the only
+ * ringed circle on the page rather than by being the only coloured block. A filled accent disc turned
+ * out to be the loudest thing in the window — louder than the artwork, which is the one thing that
+ * should be — so the weight moved into a 1.5px accent stroke and the fill became a whisper of it.
+ * Inverting on hover is the same move the art face makes, so the two players feel like one product.
+ */
+.icon-button.primary {
+  width: 56px;
+  height: 56px;
+  border: 0;
+  box-shadow: inset 0 0 0 1.5px var(--accent);
+  background: rgb(74 222 128 / 7%);
+  color: var(--accent);
+  transition:
+    background var(--dur) var(--ease),
+    color var(--dur) var(--ease),
+    box-shadow var(--dur) var(--ease);
+}
+
+.icon-button.primary:hover:not(:disabled) {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+.icon-button.primary svg {
+  width: 20px;
+  height: 20px;
+}
+
+.icon-button.small {
+  width: 30px;
+  height: 30px;
+}
+
+.icon-button.small svg {
+  width: 14px;
+  height: 14px;
+}
+
+.icon-button.ghost {
+  border-color: transparent;
+  background: none;
+  color: var(--text-dim);
+}
+
+.icon-button.ghost:hover:not(:disabled) {
+  background: var(--tint);
+  color: var(--text);
+}
+
+.icon-button[data-active] {
+  border-color: var(--accent-line);
+  color: var(--accent);
+}
+
+.text-button {
+  padding: 5px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  background: none;
+  color: var(--text-dim);
+  font-size: 13px;
+  transition:
+    border-color var(--dur) var(--ease),
+    color var(--dur) var(--ease);
+}
+
+.text-button:hover:not(:disabled) {
+  border-color: var(--line-strong);
+  color: var(--text);
+}
+
+.text-button[data-active] {
+  border-color: var(--accent-line);
+  color: var(--accent);
+}
+
+/*
+ * A chip states a fact — a codec, a verdict, a kind. Never interactive.
+ *
+ * A hairline rather than a fill: on a page whose only fill is the play button, a filled pill on
+ * every row was reading as something to press.
+ */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 7px;
+  border-radius: 3px;
+  box-shadow: inset 0 0 0 1px var(--line-strong);
+  color: var(--text-dim);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* The one chip that earns colour: the audio survived intact. */
+.chip[data-lossless] {
+  box-shadow: inset 0 0 0 1px var(--accent-line);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 1px 6px;
+  border-radius: var(--r-pill);
+  background: var(--surface-3);
+  color: var(--text-dim);
+  font-size: 11px;
+}
+
+.badge svg {
+  width: 11px;
+  height: 11px;
+}
+
+.badge.warn {
+  background: var(--warn-soft);
+  color: var(--warn);
+}
+
+.notice {
+  padding: 8px 10px;
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+  font-size: 13px;
+}
+
+.notice.warn {
+  background: var(--warn-soft);
+  color: var(--warn);
+}
+
+.hint {
+  color: var(--text-dim);
+  font-size: 13px;
+}
+
+.small {
+  font-size: 12px;
+}
+
+.count {
+  margin-left: 6px;
+  color: var(--text-mute);
+  font-size: 12px;
+  font-weight: 400;
+}
+
+/*
+ * Section labels: the quietest text on the page, and the most repeated.
+ *
+ * All of them in the mono face — this is the one decision that makes the player read as
+ * equipment rather than as a website. A label is engraved on a panel; it is not prose.
+ */
+.rail-head,
+.nav-group-head,
+.panel-header > h2,
+.analysis-heading > span:first-child {
+  color: var(--text-mute);
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+/*
+ * Every measurement, in the mono face.
+ *
+ * Rates, depths, bitrates, times, volumes, dB and the verdict chips. `tabular-nums` on the body
+ * already stops digits from changing width; the mono face is what stops a *reading* from looking
+ * like a sentence. Collected in one rule so a new readout gets the voice by naming its class here
+ * rather than by remembering to add three properties.
+ */
+.chip,
+.badge,
+.volume-value,
+.progress-time,
+.analysis-pitch,
+.analysis-level,
+.analysis-axis span,
+.eq-handle-label,
+.eq-handle-value,
+.signal-value,
+.signal-detail,
+.signal-verdict-head,
+.stream-format-detail,
+.format-flags,
+.item-meta,
+.zone-row-format {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/*
+ * The only native control left, and it showed.
+ *
+ * It was already bordered and filled, but without `appearance: none` it kept the platform's own
+ * indicator and metrics — a double chevron and a taller box, sitting beside two text buttons. On a page
+ * where every other control was drawn by hand it read as a form that had wandered in. The arrow is ours
+ * now (a chevron in the same weight as the rail's), and the padding leaves room for it.
+ */
+select {
+  appearance: none;
+  padding: 5px 26px 5px 9px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  background:
+    /* A chevron, drawn as two strokes rather than shipped as an asset. */
+    linear-gradient(45deg, transparent 50%, var(--text-mute) 50%) calc(100% - 13px) calc(50% - 1px) /
+      5px 5px no-repeat,
+    linear-gradient(-45deg, transparent 50%, var(--text-mute) 50%) calc(100% - 9px) calc(50% - 1px) /
+      5px 5px no-repeat,
+    var(--surface-2);
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+select:hover {
+  border-color: var(--line-strong);
+}
+
+input[type='search'],
+input[type='text'] {
+  border: 0;
+  background: none;
+  color: var(--text);
+  font: inherit;
+}
+
+input[type='search']::placeholder {
+  color: var(--text-mute);
+}
+
+/*
+ * Sliders, drawn thin.
+ *
+ * The native control was kept for a long time on the argument that hand-drawing one loses the *filled*
+ * portion in Firefox — which is true of `::-moz-range-progress` tricks, and avoidable: the fill here is
+ * a gradient on the track whose stop sits at `--fill`, a percentage the component sets inline. Both
+ * engines honour that, so this is a custom slider with none of the usual costs, and the input itself
+ * still owns the gesture, the keyboard and the accessible name.
+ *
+ * Why bother: a native range renders a ~4px track and a ~16px thumb, and five of those in a rail read as
+ * plumbing. The design's are a 2px line with a small round knob — furniture you look past until you need
+ * it. The element stays 18px tall for the hit area; only the paint is thin.
+ *
+ * The equalizer's are excluded (`.native-range`): they are vertical, and a vertical range is one of the
+ * few places where the platform's own control is still the only one that works everywhere.
+ */
+input[type='range']:not(.native-range) {
+  appearance: none;
+  -webkit-appearance: none;
+  flex: 1;
+  min-width: 70px;
+  height: 18px;
+  margin: 0;
+  background: none;
+  cursor: pointer;
+}
+
+input[type='range']:not(.native-range)::-webkit-slider-runnable-track {
+  height: 2px;
+  border-radius: var(--r-pill);
+  background: linear-gradient(
+    to right,
+    var(--accent) 0 var(--fill, 0%),
+    var(--line-strong) var(--fill, 0%) 100%
+  );
+}
+
+input[type='range']:not(.native-range)::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 11px;
+  height: 11px;
+  /* Half the thumb minus half the track: what centres a 11px circle on a 2px line. */
+  margin-top: -4.5px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--accent);
+  /* The ring punches the knob out of the line it sits on; the glow is what makes it look lit rather
+     than stuck on. */
+  box-shadow:
+    0 0 0 3px var(--bg),
+    0 0 8px rgb(74 222 128 / 35%);
+  transition: scale var(--dur) var(--ease);
+}
+
+input[type='range']:not(.native-range)::-moz-range-track {
+  height: 2px;
+  border-radius: var(--r-pill);
+  background: linear-gradient(
+    to right,
+    var(--accent) 0 var(--fill, 0%),
+    var(--line-strong) var(--fill, 0%) 100%
+  );
+}
+
+input[type='range']:not(.native-range)::-moz-range-thumb {
+  width: 11px;
+  height: 11px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow:
+    0 0 0 3px var(--bg),
+    0 0 8px rgb(74 222 128 / 35%);
+}
+
+/* Reached for, so it grows a little. */
+input[type='range']:not(.native-range):hover::-webkit-slider-thumb,
+input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
+  scale: 1.18;
+}
+
+/* --- zone menu ------------------------------------------------------------ */
+
+/*
+ * The room control: a trigger stating the current room, and a popover with the rest.
+ *
+ * It cannot be a bare `ZonePicker` — that renders the whole list inline, which in a header pushes
+ * the content down by however many rooms the house has.
+ */
+.zone-menu {
+  position: relative;
+}
+
+.zone-menu-trigger {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  max-width: 280px;
+  padding: 6px 10px;
+  border: 0;
+  border-radius: var(--r);
+  background: var(--well);
+  text-align: left;
+  transition: background var(--dur) var(--ease);
+}
+
+.zone-menu-trigger:hover,
+.zone-menu-trigger[data-open] {
+  background: var(--well-hover);
+}
+
+.zone-menu-trigger > svg {
+  color: var(--accent);
+}
+
+.zone-menu-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.3;
+}
+
+.zone-menu-name {
+  font-size: 13px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.zone-menu-sub {
+  color: var(--text-mute);
+  font-size: 11px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.zone-menu-caret {
+  width: 13px;
+  height: 13px;
+  margin-left: auto;
+  color: var(--text-mute);
+}
+
+.zone-menu-pop {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  z-index: 30;
+  width: 340px;
+  max-height: 62vh;
+  overflow-y: auto;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-3);
+}
+
+/* --- zone rows (shared: popover and rail) --------------------------------- */
+
+.zone-list {
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.zone-list.empty {
+  padding: 18px;
+  color: var(--text-dim);
+  font-size: 13px;
+}
+
+.zone-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px;
+  border: 1px solid transparent;
+  border-radius: var(--r);
+  background: none;
+  text-align: left;
+  transition: background var(--dur) var(--ease);
+}
+
+.zone-row:hover {
+  background: var(--tint);
+}
+
+.zone-row[data-selected] {
+  border-color: var(--accent-line);
+  background: var(--accent-soft);
+}
+
+.zone-row[data-playing] .zone-row-label {
+  color: var(--accent);
+}
+
+.zone-row-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 1px;
+}
+
+.zone-row-name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.zone-row-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.zone-row-sub,
+.zone-row-format {
+  color: var(--text-dim);
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.zone-row-format {
+  color: var(--text-mute);
+  font-size: 11px;
+}
+
+.zone-row-state {
+  margin-left: auto;
+  color: var(--accent);
+  font-size: 11px;
+}
+
+/* --- nav rail ------------------------------------------------------------- */
+
+/*
+ * The rail: a fixed head, and a tree that scrolls under it.
+ *
+ * The overflow lives on `.nav-scroll`, never on the rail itself — `overflow-y: auto` clips
+ * absolutely-positioned descendants, so with it up here the room picker's popover would be trapped
+ * inside the scroll box instead of dropping over the content.
+ */
+.nav-rail {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: 0;
+  border-right: 1px solid var(--line);
+}
+
+.nav-head {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  flex: none;
+  padding: 12px 10px 14px;
+}
+
+.nav-brand {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 2px 2px 0;
+}
+
+.nav-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 2px 10px 16px;
+}
+
+/* Full width in the rail, rather than the content-sized trigger a header would want. */
+.nav-head .zone-menu-trigger {
+  width: 100%;
+  max-width: none;
+}
+
+/* The popover is wider than the rail on purpose — it carries cover art and a status line per room,
+   and it is an overlay, so spilling over the content is correct rather than a clipping bug. */
+.nav-head .zone-menu-pop {
+  width: 320px;
+}
+
+/*
+ * A recess, like every other set-apart thing on this page — no outline.
+ *
+ * A bordered, filled field is the shape of a form control, and on a surface with no other frames it
+ * reads as one pasted on. The well plus the icon is enough to say "type here", and hover deepens it
+ * rather than drawing an edge.
+ */
+.nav-search {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  padding: 9px 11px;
+  border: 0;
+  border-radius: var(--r);
+  background: var(--well);
+  color: var(--text-mute);
+  font-size: 13px;
+  text-align: left;
+  transition:
+    background var(--dur) var(--ease),
+    color var(--dur) var(--ease);
+}
+
+.nav-search:hover {
+  background: var(--well-hover);
+  color: var(--text);
+}
+
+.nav-search svg {
+  width: 15px;
+  height: 15px;
+}
+
+/*
+ * Groups, separated by space and a label — no rules, no boxes.
+ *
+ * The rail carries two of these ("This room", "Catalogue") and the gap between them is doing the
+ * work a divider would do more loudly. Both live inside the scroll region now: the head above it
+ * holds only the things that must stay put (the room, the search field), which is what stopped the
+ * rail from being a wall.
+ */
+.nav-group-head {
+  margin: 0 0 7px 11px;
+}
+
+.nav-group + .nav-group {
+  margin-top: 20px;
+}
+
+.nav-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+/* One continuous structure rather than sections, so no gap between rows. */
+.nav-tree {
+  gap: 0;
+}
+
+/*
+ * A row is the label and the caret side by side, sharing one hover.
+ *
+ * Two buttons, not one: merging them makes a parent node unreachable the moment it has children.
+ * The shared hover is what keeps that reading as a single row.
+ */
+.nav-row {
+  display: flex;
+  align-items: center;
+  border-radius: var(--r-sm);
+  transition: background var(--dur) var(--ease);
+}
+
+.nav-row:hover {
+  background: var(--tint);
+}
+
+/* Indentation as a token, so the padding and the guide line cannot disagree. */
+.nav-row[data-depth='1'] {
+  --nav-indent: 15px;
+}
+
+.nav-row[data-depth='2'] {
+  --nav-indent: 29px;
+}
+
+.nav-row[data-depth='3'] {
+  --nav-indent: 43px;
+}
+
+.nav-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex: 1;
+  min-width: 0;
+  padding: 6px 4px 6px calc(11px + var(--nav-indent, 0px));
+  border: 0;
+  border-radius: var(--r-sm);
+  background: none;
+  font-size: 13px;
+  text-align: left;
+}
+
+.nav-item svg {
+  width: 15px;
+  height: 15px;
+  color: var(--text-mute);
+}
+
+.nav-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Depth 0 is a service: it heads a branch, so it carries more weight. */
+.nav-row[data-depth='0'] .nav-item {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* A guide line down each indented level: what makes a deep tree readable without dotted rules. */
+.nav-row[data-depth]:not([data-depth='0']) .nav-item::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: calc(var(--nav-indent) - 4px);
+  width: 1px;
+  background: var(--line);
+}
+
+/*
+ * The selected entry: accent text and a bar, not a filled pill. The rail holds a dozen of these,
+ * and a solid block on one fights the artwork.
+ */
+.nav-item[data-active] {
+  background: var(--tint);
+  color: var(--accent);
+}
+
+.nav-item[data-active] svg {
+  color: var(--accent);
+}
+
+.nav-item[data-active]::before {
+  content: '';
+  position: absolute;
+  inset: 5px auto 5px 0;
+  width: 2px;
+  border-radius: var(--r-pill);
+  background: var(--accent);
+}
+
+.nav-badge {
+  flex: none;
+}
+
+/* The row already names the service in text; the badge's own label would be it twice. */
+.nav-badge .service-badge-name {
+  display: none;
+}
+
+.nav-caret {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 26px;
+  height: 26px;
+  margin-right: 3px;
+  border: 0;
+  border-radius: var(--r-sm);
+  background: none;
+  color: var(--text-mute);
+  transition:
+    background var(--dur) var(--ease),
+    color var(--dur) var(--ease);
+}
+
+.nav-caret:hover {
+  background: var(--line);
+  color: var(--text);
+}
+
+.nav-caret svg {
+  width: 13px;
+  height: 13px;
+}
+
+/* Keeps leaf labels aligned with expandable ones instead of running under the caret. */
+.nav-caret-spacer {
+  flex: none;
+  width: 29px;
+}
+
+/* --- service badge -------------------------------------------------------- */
+
+.service-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  color: var(--text-dim);
+  font-size: 12px;
+}
+
+/*
+ * Provider logos, neutralised.
+ *
+ * The marks are the real ones (the server's own assets, shared with the admin UI) and they are
+ * recognised pre-attentively in a way a redrawn glyph never is — but they arrive in *their*
+ * brand colours: Apple Music's pink-red, SoundCloud's orange, Tidal's cyan. On a page whose whole
+ * discipline is "one accent, and the artwork is the only colour", a row of those reads as a
+ * sponsor strip, and worse, each one competes with the green that actually means something here.
+ *
+ * So they are desaturated to the page's own grey and lifted back to a legible weight:
+ * `grayscale` removes the brand hue, `brightness`/`contrast` recover the shape a flat grey loses,
+ * and the opacity seats the mark at label weight rather than at title weight. The logo still does
+ * its job — you can tell Apple Music from Tidal at 14px by silhouette alone — without bringing a
+ * second palette onto the page.
+ *
+ * Hovering a row restores nothing: this is not a hidden state to reveal, it *is* the design.
+ */
+.service-badge img {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  filter: grayscale(1) brightness(1.55) contrast(0.82);
+  opacity: 0.72;
+  transition: opacity var(--dur) var(--ease);
+}
+
+/* The active service in the rail earns full weight — still grey, just no longer receding. */
+.nav-item[data-active] .service-badge img,
+.item-list > li:hover .service-badge img {
+  opacity: 1;
+}
+
+.service-badge-letter {
+  font-family: var(--font-mono);
+}
+
+.service-badge-letter {
+  display: grid;
+  place-items: center;
+  width: 15px;
+  height: 15px;
+  border-radius: 3px;
+  background: var(--surface-3);
+  color: var(--text-dim);
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.service-badge-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* --- artwork -------------------------------------------------------------- */
+
+/*
+ * One square box that clips whatever is inside it.
+ *
+ * `aspect-ratio` rather than a fixed height, so a cover is correct at any width the grid gives it,
+ * and `object-fit: cover` because provider artwork is not reliably square — letterboxing every
+ * non-square image would be more honest and much worse to look at.
+ */
+.cover {
+  position: relative;
+  flex: 0 0 auto;
+  width: 100%;
+  aspect-ratio: 1;
+  overflow: hidden;
+  border-radius: var(--r-sm);
+  background: var(--surface-3);
+}
+
+.cover img,
+.cover video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.cover[data-empty] {
+  display: grid;
+  place-items: center;
+  color: var(--line-strong);
+}
+
+.cover-placeholder {
+  width: 40%;
+  height: 40%;
+}
+
+.cover.tiny {
+  width: 40px;
+  height: 40px;
+  border-radius: 5px;
+}
+
+/* --- now playing ---------------------------------------------------------- */
+
+/*
+ * The player is pinned; only what is under it scrolls.
+ *
+ * Two rows: the player at its natural height, and the rest taking what is left and scrolling
+ * inside itself. That means `.main` must **not** scroll for this view — otherwise the whole thing
+ * scrolls as one and the pinning does nothing — so the view owns its scrolling and takes the full
+ * height of the column to do it.
+ */
+.now-playing {
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr);
+  gap: 14px;
+  height: 100%;
+}
+
+/*
+ * No card: the artwork's colour is the whole page's background now (see `.app::before`), and a
+ * bordered box sitting on its own wash reads as a panel that failed to fill.
+ *
+ * Artwork and controls side by side, with the spectrum spanning both beneath — the areas are named
+ * so that last part is a fact of the layout rather than a margin trick.
+ */
+/*
+ * The sleeve grows with the window.
+ *
+ * 250 px was a laptop's number and it left a wide screen top-light: a small square of the only
+ * photograph on the page, beside a title set at 30 px. `clamp` lets it reach 320 px where there is
+ * room without ever crowding the heading, which needs the second column more than the artwork needs
+ * the first.
+ */
+.np-player {
+  display: grid;
+  grid-template-columns: clamp(150px, 22vw, 320px) minmax(0, 1fr);
+  grid-template-areas:
+    'cover meta'
+    'analysis analysis';
+  gap: 18px 22px;
+  min-width: 0;
+}
+
+.np-meta {
+  grid-area: meta;
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+  min-width: 0;
+  align-self: center;
+}
+
+.np-player > .analysis-panel {
+  grid-area: analysis;
+}
+
+/*
+ * The sleeve is lit the same way in both players.
+ *
+ * This used to glow in `--wash-primary` — the fixed cool tint the page wash is made of — layered over
+ * the neutral shadow. It looked right on its own and wrong the moment the artwork could *travel*: the
+ * flight between faces carries the cover's computed radius and shadow, so a 10px corner with a cold
+ * halo had to morph into a 4px corner with a plain black one while it was in the air, and the seam was
+ * visible on the one object the transition is built around.
+ *
+ * So both ends now agree, and the value they agree on is the art player's: a plain dark shadow for the
+ * edge, a 1px inset hairline for the crop, and the light coming from `.np-bloom` behind it — the sleeve
+ * blurred behind itself, which is a better answer than a tint anyway. A colour derived from the picture
+ * is a guess at the picture; the picture is not.
+ */
+.cover.hero {
+  width: 100%;
+  align-self: start;
+  border-radius: 4px;
+  box-shadow:
+    0 44px 90px -40px rgb(0 0 0 / 95%),
+    inset 0 0 0 1px rgb(255 255 255 / 14%);
+}
+
+/*
+ * The hero and the light it throws.
+ *
+ * A wrapper only so the bloom has something un-clipped to size itself against: `.cover` is
+ * `overflow: hidden` (it crops the artwork to its radius), so a glow inside it would be cut off at the
+ * very edge it is supposed to spill past.
+ */
+.np-cover {
+  position: relative;
+  grid-area: cover;
+  align-self: start;
+}
+
+/*
+ * The sleeve, blurred behind itself — the art player's construction, verbatim.
+ *
+ * Same size as the cover and concentric with it, clipped to a circle, at `blur(52px) saturate(1.25)`, so
+ * the light around the artwork is the artwork's own light at its own distribution. Breathing on a 7s
+ * cycle while playing and still when paused: a page with a live spectrum on it should not be the only
+ * thing on screen that looks alive.
+ */
+.np-bloom {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: 50%;
+  background-position: center;
+  background-size: cover;
+  pointer-events: none;
+  filter: blur(52px) saturate(1.25);
+  opacity: 0.32;
+  transform-origin: center;
+  transition: opacity 1.4s ease;
+  will-change: transform, opacity;
+}
+
+.np-cover[data-playing] .np-bloom {
+  opacity: 0.85;
+  animation: np-bloom-breathe 7s ease-in-out infinite;
+}
+
+@keyframes np-bloom-breathe {
+  0%,
+  100% {
+    transform: scale(1.04);
+    opacity: 0.52;
+  }
+  50% {
+    transform: scale(1.16);
+    opacity: 0.82;
+  }
+}
+
+/* The artwork sits above its own glow. */
+.np-cover > .cover {
+  position: relative;
+  z-index: 1;
+}
+
+/*
+ * The heading block: title, artist, album, with a rhythm of its own.
+ *
+ * Two tricks and neither is a gradient. `text-wrap: balance` splits a two-line title into two even
+ * lines instead of leaving one word stranded — the single biggest thing you can do for a display face
+ * you do not control the content of. And the whole block crossfades on a track change (keyed in
+ * `NowPlayingView`), because at this size text that swaps instantly reads as a glitch.
+ */
+.np-heading {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  animation: np-heading-in 420ms var(--ease) both;
+}
+
+@keyframes np-heading-in {
+  from {
+    opacity: 0;
+    translate: 0 4px;
+  }
+  to {
+    opacity: 1;
+    translate: none;
+  }
+}
+
+.np-title {
+  font-family: var(--font-display);
+  font-size: clamp(27px, 3.2vw, 46px);
+  font-weight: 800;
+  line-height: 1.02;
+  letter-spacing: -0.035em;
+  text-wrap: balance;
+  /* Long titles get two lines and then stop, rather than pushing the controls off the card. */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+}
+
+/*
+ * The edition, inside whatever line carries it.
+ *
+ * Sized in `em`, so one rule serves the 46 px title and the 13 px album without either being tuned by
+ * hand — and so it stays proportional through the title's own `clamp`. Dimmer as well as smaller,
+ * because "which mix is this" is a fact you check once and then stop seeing, and lighter in weight
+ * because 800 at two thirds the size still shouts. The display face's tight tracking is relaxed too:
+ * negative letter-spacing is a large-type trick and it turns to mush further down the scale.
+ */
+.np-qualifier {
+  color: var(--text-mute);
+  font-size: 0.62em;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+
+/* The album line is already small and quiet, so its qualifier only needs to be smaller — dimming it
+   twice would put it under the noise floor of the page. */
+.np-album .np-qualifier {
+  color: inherit;
+  font-size: 0.86em;
+  font-weight: inherit;
+}
+
+/*
+ * Three lines under the title, in decreasing order of what people look for.
+ *
+ * The artist was accent-coloured for a while, on the theory that colour is cheaper than size for the one
+ * field everyone scans for. It read as a *state* instead: on a page where green means bit-perfect, an
+ * active room and a lit fader, a green artist looks like it is telling you something about the audio.
+ * The hierarchy is three steps of brightness and size now, and the accent is back to meaning one thing.
+ */
+/*
+ * The artist reads as a subtitle, not as a second heading.
+ *
+ * At 600 beside an 800 title — both white — the two competed: the eye had to compare sizes to work out
+ * which was which. 500 puts the difference in *weight* as well as size, which is what a subtitle is.
+ */
+.np-artist {
+  margin-top: 5px;
+  color: var(--text);
+  font-size: 17px;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* The album is a place, not a name: the quietest of the three, so the two above it can be read without
+   deciding which is which. */
+.np-album {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+  margin-top: 3px;
+  color: var(--text-mute);
+  font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.np-album .service-badge {
+  font-size: 11.5px;
+}
+
+.np-output {
+  color: var(--text-mute);
+  font-size: 12px;
+}
+
+/*
+ * The nameplate: `LOSSLESS · PCM · 44.1 kHz · 16-bit`.
+ *
+ * One fact per chip so each is findable, and the verdict first because it is the only one that is an
+ * opinion. Slightly more room above than below: it belongs to the title block, not to the timeline
+ * under it.
+ */
+.format-chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px;
+  margin-top: 3px;
+}
+
+.format-chips .chip {
+  padding: 4px 9px;
+  border-radius: 4px;
+}
+
+/*
+ * The provider, as the row's first chip.
+ *
+ * The logo keeps its 14px and the name takes the chip's own mono voice, so it sits in line with
+ * `CONVERTED` and `44.1 KHZ` instead of looking like a pasted-in badge. Slightly tighter tracking than
+ * its neighbours: a provider name is a word, and 0.14em on "Apple Music" reads as shouting.
+ */
+.chip-source {
+  gap: 6px;
+  padding-left: 6px;
+}
+
+.chip-source .service-badge {
+  gap: 6px;
+  color: inherit;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.chip-source .service-badge img {
+  width: 13px;
+  height: 13px;
+}
+
+/* --- waveform ------------------------------------------------------------- */
+
+/*
+ * The timeline as an envelope of what has played.
+ *
+ * Three-column grid — elapsed, bars, remaining/total — so the bars take whatever is left and the two
+ * time read-outs never move as the digits change. Both are mono, which is why they can be fixed
+ * width without looking padded.
+ */
+.wave {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+}
+
+.wave-time {
+  color: var(--text-mute);
+  font-size: 11px;
+}
+
+.wave-time-end {
+  display: flex;
+  align-items: baseline;
+  gap: 9px;
+}
+
+.wave-remain {
+  color: var(--text-dim);
+}
+
+.wave-total {
+  color: var(--text-mute);
+}
+
+.wave-live {
+  color: var(--accent);
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+/*
+ * Tall enough for an envelope when there is one, and a line's worth of height when there is not.
+ *
+ * The empty state is not an error — it is every track's first second, and every output with no
+ * visualiser — so it should occupy a line rather than reserve a hole for a picture that may never
+ * arrive.
+ */
+.wave-body {
+  position: relative;
+  height: 14px;
+  cursor: default;
+  transition: height 240ms var(--ease);
+}
+
+.wave[data-measured] .wave-body {
+  height: 40px;
+}
+
+.wave[data-seekable] .wave-body {
+  cursor: pointer;
+}
+
+/*
+ * The baseline the bars stand on.
+ *
+ * One rule across the whole display, so an unmeasured bucket can render nothing at all and still look
+ * like part of a continuous track. Deliberately grey rather than accent: a coloured line here would
+ * put a second green bar directly above the scrubber's, and two of those stacked read as one control
+ * drawn twice.
+ */
+.wave-body::after {
+  content: '';
+  position: absolute;
+  inset: 50% 0 auto;
+  height: 2px;
+  border-radius: var(--r-pill);
+  background: var(--line);
+  translate: 0 -50%;
+}
+
+.wave-bars {
+  position: relative;
+  /* Above the baseline drawn by `.wave-body::after`. */
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 1px;
+  height: 100%;
+}
+
+/*
+ * One bar per bucket, mirrored around the centre line.
+ *
+ * `--h` is the measured loudness; the minimum of 6% is what keeps a quiet passage a *line* rather
+ * than a gap, so the track reads as continuous. Unmeasured buckets (`data-void`) collapse to a
+ * hairline — silence is a real reading and has to look different from "nothing recorded here".
+ */
+.wave-bars i {
+  flex: 1;
+  min-width: 1px;
+  height: var(--h, 10%);
+  border-radius: 1px;
+  background: var(--line-strong);
+  transition: height 120ms linear;
+}
+
+/* Nothing recorded here: draw nothing, and let the baseline through. */
+.wave-bars i[data-void] {
+  height: 2px;
+  background: none;
+}
+
+/* Behind the playhead: the accent. Ahead of it: the same bars, unlit — which is what makes the
+   playhead visible without drawing one. */
+.wave-bars i[data-played] {
+  background: var(--accent);
+}
+
+/* Played but unmeasured: nothing. `.wave-played` draws that stretch as one continuous accent line,
+   which is a gap in the *recording* stated once instead of two hundred times. */
+.wave-bars i[data-played][data-void] {
+  background: none;
+}
+
+.wave-played {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  z-index: 1;
+  height: 2px;
+  border-radius: var(--r-pill);
+  background: color-mix(in oklab, var(--accent) 70%, transparent);
+  translate: 0 -50%;
+  pointer-events: none;
+}
+
+/*
+ * The playhead.
+ *
+ * A 2px line the full height of the display, so the boundary between played and unplayed is a position
+ * and not only a colour change — at 0:03 into a track there is almost no colour to change. It grows a
+ * knob while dragging, which is what makes a 40px-tall picture read as a control.
+ */
+.wave-head {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  z-index: 2;
+  width: 2px;
+  margin-left: -1px;
+  border-radius: 1px;
+  background: var(--text);
+  opacity: 0.85;
+  pointer-events: none;
+}
+
+.wave:not([data-seekable]) .wave-head {
+  display: none;
+}
+
+.wave-head::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: var(--text);
+  box-shadow: var(--shadow-1);
+  translate: -50% -50%;
+  scale: 0;
+  transition: scale var(--dur) var(--ease);
+}
+
+.wave[data-seekable]:hover .wave-head::after {
+  scale: 1;
+}
+
+/*
+ * The seek gesture: a native range, invisible, over the whole display.
+ *
+ * The drawing never learns about pointers, and the keyboard and the accessible name come free. It is
+ * taller than the bars on purpose — a 40px hit area for a 2px line at the quiet end of a track.
+ */
+.wave-body input[type='range'] {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.wave:not([data-seekable]) .wave-body input[type='range'] {
+  display: none;
+}
+
+/* --- hero controls -------------------------------------------------------- */
+
+/*
+ * Transport on the left, the two per-track actions opposite it.
+ *
+ * `space-between` rather than a fixed gap: the actions belong to the *right edge* of the block, which
+ * is where a hand reaching for a phone-shaped layout expects them, and it keeps the transport aligned
+ * with everything above it however wide the column gets.
+ */
+/*
+ * Capped, because a row of controls is not a rule to be spanned.
+ *
+ * `.np-actions` pushes the star to the far edge, which is right up to a point: past ~720 px the five
+ * transport buttons sat left of centre with a hand's width of nothing between the volume and the star.
+ * Bounding the row keeps the group together on a wide window and changes nothing below the cap, where
+ * the volume's own floor and `flex-wrap` were already doing the work.
+ */
+.np-controls {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px clamp(14px, 1.6vw, 26px);
+  max-width: 720px;
+  margin-top: 2px;
+}
+
+/*
+ * The volume sits with the transport and takes what is left, between a floor and a ceiling.
+ *
+ * Both bounds earn their place: without the ceiling a slider spans the whole block and becomes a rule
+ * with a dot on it, and without the floor — plus `flex-wrap` on the row — the transport, the slider and
+ * the star together outgrow the middle column at 1440px and the star gets clipped by the rail.
+ */
+.np-controls .volume {
+  flex: 1 1 120px;
+  min-width: 100px;
+  max-width: 210px;
+}
+
+/* The per-track action goes to the far edge, which is where a hand reaching for the right side of a
+   layout expects it. */
+.np-actions {
+  margin-left: auto;
+}
+
+.np-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/*
+ * A square-ish action button, distinct from the round transport ones.
+ *
+ * The shape is the grouping: round means "moves the music", square means "does something to this
+ * track". Cheaper than a divider and it survives at 14px.
+ */
+.np-action {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  background: none;
+  color: var(--text-dim);
+  transition:
+    border-color var(--dur) var(--ease),
+    color var(--dur) var(--ease),
+    background var(--dur) var(--ease);
+}
+
+.np-action:hover {
+  border-color: var(--line-strong);
+  color: var(--text);
+}
+
+.np-action[data-on] {
+  border-color: var(--accent-line);
+  color: var(--accent);
+}
+
+
+/* The hero's own controls get a ceiling: a volume slider spanning a 900px card is not a control,
+   it is a rule with a dot on it. */
+.np-meta .volume {
+  max-width: 340px;
+}
+
+.np-meta .progress {
+  margin-top: 2px;
+}
+
+/*
+ * The transport: glyphs on black, no plates.
+ *
+ * Every button used to sit on its own bordered disc, which put five hard-edged circles in a row and
+ * made the one that matters — play — compete with four that do not. Stripping the plates leaves the
+ * *shapes* to carry it, and the shapes are stroked outlines at 22–25px (see `Icon`'s `STROKED`), which
+ * is how a transport is marked on hardware. Wide gaps, because without plates the spacing is the only
+ * thing separating them.
+ *
+ * Scoped to `.transport` so the bordered `.icon-button` stays what it is everywhere else — row actions
+ * and sheet controls do need a hit area you can see.
+ */
+.transport {
+  display: flex;
+  align-items: center;
+  gap: clamp(18px, 2.4vw, 34px);
+}
+
+.transport .icon-button {
+  width: 34px;
+  height: 34px;
+  border: 0;
+  background: none;
+  /* Bright, and dimmed by opacity rather than by a greyer colour: at this size a mid-grey stroke on
+     black loses its shape, while white at 82% keeps the drawing and still leaves hover somewhere to
+     go. */
+  color: var(--text);
+  opacity: 0.82;
+  transition:
+    opacity var(--dur) var(--ease),
+    color var(--dur) var(--ease),
+    scale var(--dur) var(--ease);
+}
+
+.transport .icon-button svg {
+  width: 23px;
+  height: 23px;
+}
+
+.transport .icon-button:hover:not(:disabled) {
+  background: none;
+  opacity: 1;
+  scale: 1.08;
+}
+
+/* Shuffle and repeat are *states*, and the accent is how a state says so. */
+.transport .icon-button[data-active] {
+  color: var(--accent);
+  opacity: 1;
+}
+
+/* The play ring keeps its own size and its glyph stays white — the ring is the accent, the symbol is
+   the symbol. Inverts on hover, like the art face's. */
+.transport .icon-button.primary {
+  width: 56px;
+  height: 56px;
+  color: var(--text);
+  opacity: 1;
+  scale: 1;
+}
+
+.transport .icon-button.primary:hover:not(:disabled) {
+  background: var(--accent);
+  color: var(--accent-ink);
+  scale: 1;
+}
+
+.transport .icon-button.primary svg {
+  width: 22px;
+  height: 22px;
+}
+
+.volume,
+.progress {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.volume-value {
+  min-width: 2.4em;
+  color: var(--text-dim);
+  font-size: 12px;
+  text-align: right;
+}
+
+/* --- progress ------------------------------------------------------------- */
+
+.progress-time {
+  min-width: 3.4em;
+  color: var(--text-mute);
+  font-size: 12px;
+}
+
+.progress-time:last-child {
+  text-align: right;
+}
+
+.progress-track {
+  position: relative;
+  flex: 1;
+  height: 2px;
+  border-radius: var(--r-pill);
+  background: var(--line);
+}
+
+.progress-fill {
+  position: relative;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--accent);
+}
+
+/*
+ * A thumb at the head of the fill, on hover only.
+ *
+ * Drawn from the fill's own end so it needs no second element and cannot drift out of sync with
+ * the position. Hidden at rest because a static playhead invites dragging on a stream that
+ * `source.seekable` says cannot be dragged.
+ */
+.progress[data-seekable] .progress-fill::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: 0;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: var(--shadow-1);
+  translate: 50% -50%;
+  scale: 0;
+  transition: scale var(--dur) var(--ease);
+}
+
+.progress[data-seekable]:hover .progress-fill::after {
+  scale: 1;
+}
+
+.progress[data-seekable] .progress-track {
+  cursor: pointer;
+}
+
+/*
+ * The slim variant: the scrubber under the waveform.
+ *
+ * Full width because it has no times to make room for, and its playhead is drawn at rest rather than
+ * on hover — with the waveform above it as the picture, this bar's whole job is to look like the
+ * control, and a control you cannot see the handle of does not.
+ */
+.progress[data-slim] .progress-track {
+  height: 2px;
+}
+
+.progress[data-slim][data-seekable] .progress-fill::after {
+  scale: 1;
+  width: 12px;
+  height: 12px;
+}
+
+/* The invisible native range that actually handles the seek gesture. */
+.progress-track input[type='range'] {
+  position: absolute;
+  inset: -9px 0;
+  width: 100%;
+  height: auto;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+/* --- compact volume ------------------------------------------------------- */
+
+/*
+ * The slider without its step buttons, for the rail rows and the now-bar — places that carry one
+ * volume among many, where two extra buttons per instance is most of the weight on that side of
+ * the screen.
+ */
+.volume[data-compact] {
+  gap: 9px;
+}
+
+.volume[data-compact] .volume-value {
+  min-width: 2.2em;
+  font-size: 12px;
+}
+
+/* --- stream format -------------------------------------------------------- */
+
+/*
+ * A well, not a card: no border, and a fill that reads as a slight recess in the surface rather
+ * than as an object placed on it. `rgb(255 255 255 / 3%)` sits *with* the wash — a black fill sat
+ * against it, which is what made these clash once the page became one continuous surface.
+ */
+.stream-format-block {
+  padding: 9px 12px;
+  border: 0;
+  border-radius: var(--r);
+  background: var(--well);
+}
+
+.stream-format {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+}
+
+.stream-format-detail {
+  color: var(--text);
+  font-size: 13px;
+}
+
+.stream-format-rate {
+  color: var(--text-mute);
+}
+
+.format-flags {
+  margin-top: 4px;
+  color: var(--text-mute);
+  font-size: 12px;
+}
+
+/*
+ * One line, for the now-bar.
+ *
+ * `nowrap` is the point: the full block wraps to three lines in a column that narrow, which is
+ * what made the bar tall enough to eat the content.
+ */
+.stream-format.compact {
+  margin-top: 2px;
+  gap: 6px;
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.stream-format.compact .chip {
+  padding: 1px 6px;
+  font-size: 10px;
+}
+
+.stream-format.compact .stream-format-detail {
+  color: var(--text-mute);
+  font-size: 11px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* --- analysis ------------------------------------------------------------- */
+
+/*
+ * Not a card.
+ *
+ * This was the last filled box in the main column, which put it at odds with the rule the rest of the
+ * page follows: once the rails lost their fill, one wash runs across the whole window and a tinted
+ * slab sitting on it reads as a panel that failed to fill. The analyser does not need a card anyway —
+ * its unlit segments *are* its ground, and they read better against the page than against a lighter
+ * grey. A hairline above and below sets it apart as an instrument without boxing it in.
+ */
+.analysis-panel {
+  padding: 13px 0 9px;
+  border: 0;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  background: none;
+}
+
+.analysis-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.analysis-readout {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+/* The note gets the accent: it is the one value here that means something musical. */
+.analysis-pitch {
+  min-width: 2.6em;
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 600;
+  text-align: right;
+}
+
+.analysis-level {
+  min-width: 4.6em;
+  color: var(--text-dim);
+  font-size: 11px;
+  text-align: right;
+}
+
+/* The unit, half a step quieter than the number it belongs to. */
+.analysis-level i {
+  margin-left: 3px;
+  color: var(--text-mute);
+  font-size: 8.5px;
+  font-style: normal;
+  letter-spacing: 0.1em;
+}
+
+/*
+ * The peak lamp. Dark glass when nothing is near full scale, lit when something is.
+ *
+ * A lamp rather than a number because the answer is binary — either the level is somewhere worth
+ * reacting to or it is not — and because a hardware analyser puts exactly this here.
+ */
+/*
+ * Unlit, it is a ring rather than a filled dot.
+ *
+ * A 6 px grey disc at the edge of a readout reads as a speck of dirt on the screen, not as a lamp that
+ * happens to be off — and the page already has a language for exactly this distinction: the signal
+ * path's stages are hollow when idle and filled when active. Same idea, same weight.
+ */
+.analysis-lamp {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: none;
+  box-shadow: inset 0 0 0 1.5px var(--line-strong);
+  transition:
+    background var(--dur) var(--ease),
+    box-shadow var(--dur) var(--ease);
+}
+
+.analysis-lamp[data-lit] {
+  background: var(--warn);
+  box-shadow: 0 0 7px var(--warn);
+}
+
+/*
+ * Loudness, as a hairline beneath the spectrum.
+ *
+ * A line rather than a bar: it is one number belonging to the whole display, and drawn any heavier
+ * it competes with the forty-eight bars above it for the same glance.
+ */
+.analysis-meter {
+  height: 2px;
+  margin-top: 9px;
+  overflow: hidden;
+  border-radius: var(--r-pill);
+  background: var(--line);
+}
+
+.analysis-meter span {
+  display: block;
+  width: var(--level, 0%);
+  height: 100%;
+  background: var(--accent);
+  transition: width 60ms linear;
+}
+
+/*
+ * The spectrum, as a segmented LED display.
+ *
+ * Each `<i>` is a **full-height column**, not a bar: the lit part is drawn inside it from the bottom
+ * and the held peak floats above that. Sizing the element itself would leave nothing for the cap to
+ * position against, and nothing to draw the *unlit* segments on.
+ *
+ * The segments themselves are one repeating gradient used twice — as the column's own faint
+ * background, and as a mask over the lit fill. Because both boxes share their bottom edge, the two
+ * patterns line up automatically at every height, with no arithmetic and nothing to keep in sync.
+ *
+ * `--spec-h` divides exactly by the segment period (100 / 10 = 10 segments). Keep it that way when
+ * changing either, or the top segment is clipped mid-block and the whole thing looks misprinted.
+ */
+/*
+ * Height scales with the window, because the layout had spare room and was spending it on nothing.
+ *
+ * The queue sits under this and is usually short — one track, sometimes none — so a fixed 120 px
+ * display left a third of a large screen empty below it. The analyser is the most alive thing on the
+ * page and the one element that gets *better* with height (more segments resolve, the noise floor
+ * separates from the music), so it takes the slack. Clamped at both ends: below 120 px the segments
+ * stop reading as a column, and past ~260 px it starts to dominate a page whose subject is a song.
+ */
+.spectrum {
+  --spec-h: clamp(120px, 21vh, 260px);
+  --seg: 8px;
+  --seg-gap: 2px;
+
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  gap: 3px;
+  height: var(--spec-h);
+}
+
+/*
+ * The scale, behind the bars.
+ *
+ * Four hairlines across the display, drawn once as a single gradient on the container rather than
+ * as elements — a reading is easier to judge against a graticule than against nothing, and this is
+ * what a hardware analyser has behind its LEDs. It sits under the columns because `::before`
+ * paints before element children, so no z-index is needed and the bars are never veiled by it.
+ *
+ * Deliberately unlabelled: the panel already carries a level readout, and dB ticks up the side of
+ * a 120px display would be four more numbers for something nobody reads off a spectrum.
+ */
+.spectrum::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    to top,
+    transparent 0 calc(25% - 1px),
+    var(--line) calc(25% - 1px) 25%
+  );
+  /* Faded upward like the grid behind it: four full-width rules climbing to the top edge would put
+     back the rectangle the segments just stopped drawing. A mask is safe here — this pseudo has no
+     children to take with it. */
+  -webkit-mask: linear-gradient(to top, #000 0%, #000 30%, transparent 88%);
+  mask: linear-gradient(to top, #000 0%, #000 30%, transparent 88%);
+  opacity: 0.4;
+}
+
+/*
+ * The unlit segments: present at the bottom, gone by the top.
+ *
+ * They have to exist — silence has to read as a display that is *on* rather than as a panel that
+ * failed to load — but a full rectangle of them is a box drawn around the analyser, and the page has
+ * no other boxes left. So the grid dissolves as it rises: solid where the music usually sits, nothing
+ * at all where a ceiling would otherwise draw a line across the page. There is no top edge to see.
+ *
+ * Masked to *transparent* rather than covered by a fade in the page's colour. The first attempt did the
+ * latter, and it cancelled the artwork wash inside the display — a faint rectangle appeared exactly
+ * where the box was supposed to have gone. A mask is only safe on a layer with no children, which is
+ * why the lit column moved out of `::before` and into a real element.
+ *
+ * The artwork tints it, at a whisper. An earlier pass ran this at 22% and turned the whole ground brown
+ * under a warm sleeve — the album became the loudest thing in a readout. At 7% it is the same colour
+ * the page wash and the sleeve's glow come from, and you would not name it if asked.
+ */
+.spectrum i {
+  position: relative;
+  flex: 1;
+  min-width: 1px;
+}
+
+.spectrum i::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    to top,
+    color-mix(in oklab, var(--wash-primary, transparent) 7%, var(--line)) 0 var(--seg),
+    transparent var(--seg) calc(var(--seg) + var(--seg-gap))
+  );
+  -webkit-mask: linear-gradient(to top, #000 0%, #000 26%, transparent 94%);
+  mask: linear-gradient(to top, #000 0%, #000 26%, transparent 94%);
+}
+
+.spectrum i > span {
+  position: absolute;
+  inset: auto 0 0;
+  height: var(--h, 0%);
+  /*
+   * Colour is mapped to the **absolute** level, not to the bar's own height: `background-size` pins
+   * the gradient to the full column, so a quiet bar is dim all the way up instead of going bright at
+   * its own tip. That is the difference between a meter and a bar chart.
+   *
+   * One accent, and `--warn` only in the top tenth — where the level is approaching full scale and
+   * is genuinely worth noticing. That is what the traffic-light zones on a hardware analyser are
+   * really for, said in the two colours this design already uses for "fine" and "look at this".
+   */
+  background:
+    linear-gradient(
+      to top,
+      /*
+       * Dim, and *opaque*. This stop used to fade the accent toward transparent, which read the same
+       * on its own and let the unlit grid behind the column show through the bottom of every bar — one
+       * lighter band at a fixed height across the whole display, which looks like a fault because it
+       * is one. Mixing toward the page colour instead keeps the low end dim without turning the bar
+       * into a window.
+       */
+      color-mix(in oklab, var(--accent) 55%, var(--bg)) 0%,
+      var(--accent) 55%,
+      var(--accent) 88%,
+      var(--warn) 97%
+    )
+    left bottom / 100% var(--spec-h) no-repeat;
+  /*
+   * A bloom, so the column reads as something switched on.
+   *
+   * Inside the mask on purpose: the glow is chopped into the same blocks as the fill, so each lit
+   * segment carries its own halo the way an LED behind a smoked panel does — rather than the whole
+   * column wearing one soft edge. Tight radius and low alpha; at anything more it stops being a
+   * measurement and starts being a screensaver.
+   */
+  box-shadow: 0 0 7px color-mix(in oklab, var(--accent) 45%, transparent);
+  /* Chops the fill into blocks, in register with the unlit ones behind it. */
+  -webkit-mask: repeating-linear-gradient(
+    to top,
+    #000 0 var(--seg),
+    transparent var(--seg) calc(var(--seg) + var(--seg-gap))
+  );
+  mask: repeating-linear-gradient(
+    to top,
+    #000 0 var(--seg),
+    transparent var(--seg) calc(var(--seg) + var(--seg-gap))
+  );
+  transition: height 60ms linear;
+}
+
+/*
+ * Stopping and pausing let the display sink rather than switch off.
+ *
+ * 60 ms is right while playing — it is a meter and it has to keep up — and wrong the moment the music
+ * stops, where the same number makes 48 columns vanish between two frames. Slowed to most of a second
+ * and eased out, the fall reads as the sound leaving the room. The peak caps take longer still and
+ * land last, which is what makes it look like settling rather than sliding.
+ */
+.spectrum[data-settling] i > span {
+  transition: height 900ms cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+.spectrum[data-settling] i::after {
+  transition:
+    bottom 1400ms cubic-bezier(0.22, 0.61, 0.36, 1),
+    opacity 1400ms ease-out;
+  opacity: 0;
+}
+
+/*
+ * The held peak: a cap that falls slowly.
+ *
+ * Deliberately *not* segmented — it is a marker, not a level, and a single line above the blocks is
+ * what keeps a transient legible after the blocks under it have dropped away.
+ */
+.spectrum i::after {
+  content: '';
+  position: absolute;
+  /*
+   * Placed with `bottom`, not `margin-bottom`.
+   *
+   * A percentage margin — on *any* side — resolves against the containing block's **width**, which is
+   * one of CSS's oldest traps. This bar is ~26 px wide and 210 px tall, so a peak at 65% was pushed up
+   * by 65% of 26 px: the marker sat 17 px off the floor on every column, at what looked like a fixed
+   * height, reading as a stray bright line low in the display rather than as the peak it is. `bottom`
+   * resolves against height, which is the axis this number was always about.
+   */
+  inset: auto 0 var(--p, 0%);
+  height: 2px;
+  /* Brighter and thinner-feeling than the blocks it floats over: a held peak should read as the one
+     thing on the display that is *remembering* something. */
+  background: color-mix(in oklab, var(--accent) 82%, white);
+  box-shadow: 0 0 6px color-mix(in oklab, var(--accent) 55%, transparent);
+  opacity: 0.72;
+  transition: bottom 60ms linear;
+}
+
+/* --- frequency axis ------------------------------------------------------- */
+
+/*
+ * Ticks positioned by frequency across the width, so each label sits over the bins it names.
+ * `--pull` is set per tick by the component: -50% to centre, and 0 / -100% at the ends where
+ * centring would hang half the label off the panel.
+ */
+.analysis-axis {
+  position: relative;
+  height: 12px;
+  margin-top: 7px;
+}
+
+.analysis-axis span {
+  position: absolute;
+  top: 0;
+  color: var(--text-mute);
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  translate: var(--pull, -50%) 0;
+  white-space: nowrap;
+}
+
+/*
+ * No tick marks. A mark would have to be drawn from inside the label, whose own left edge moves when
+ * `--pull` shifts it inward at the ends — so it would point at the label's centre rather than at the
+ * frequency. The label alone is unambiguous; a mark that is subtly wrong is not worth the extra
+ * element it would take to place correctly.
+ */
+
+/* --- tabs ----------------------------------------------------------------- */
+
+.tabs,
+.tabs {
+  gap: 4px;
+  border-bottom: 1px solid var(--line);
+}
+
+.tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 12px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: none;
+  color: var(--text-dim);
+  font-size: 13px;
+  transition: color var(--dur) var(--ease);
+}
+
+.tab:hover {
+  color: var(--text);
+}
+
+.tab svg {
+  width: 14px;
+  height: 14px;
+}
+
+.tab[data-active] {
+  border-bottom-color: var(--accent);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+/* The scrolling half of the now-playing view. */
+.tab-body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-height: 0;
+  overflow-y: auto;
+  /*
+   * Six pixels of air at the top, for the ring that would otherwise be cut in half.
+   *
+   * This scrolls, so it clips — and the first thing inside it is a panel header whose controls sit
+   * flush against the very top edge. A focus ring is drawn *outside* the element it belongs to (2px of
+   * outline at 2px offset, with a 3px halo behind it), so on the topmost control every pixel of that
+   * landed above the container's edge and was thrown away: a green outline with no lid. Nothing else in
+   * this column needed the room, which is exactly why it was not there.
+   */
+  padding-top: 6px;
+  padding-bottom: 18px;
+}
+
+/* --- panels --------------------------------------------------------------- */
+
+/*
+ * A panel is a *section*, not a box.
+ *
+ * Once the rails lost their fill, one wash runs across the whole window — and a bordered, filled
+ * card sitting on it is the only hard edge left, so it reads as something stuck on rather than part
+ * of the page. Structure now comes from the header label and the space around it, which is what the
+ * rest of this design already uses. Rows inside still get their own hover tint, so the list has all
+ * the definition it needs without a frame around it.
+ */
+.panel {
+  padding: 0;
+  border: 0;
+  background: none;
+}
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.panel-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/*
+ * Four outlined pills in a row, and only one of them was a field.
+ *
+ * The panel header put a select and three buttons side by side at identical weight, so "where do you
+ * want this queue" looked exactly like "undo" — and the row read as a toolbar bolted to a list rather
+ * than as two things you might do to it. Split by what they are:
+ *
+ *  - The transfer is one control. The select holds the value and the button acts on it, so they are
+ *    joined into a segment with a shared edge instead of floating 6 px apart.
+ *  - `Undo` and `Clear` lose their boxes. They are occasional actions on the list below, and a border
+ *    is what a *field* has; hover gives them their target back.
+ */
+.queue-transfer {
+  display: flex;
+  align-items: stretch;
+}
+
+/* Alone until there is something to weld to — see `data-armed` in `QueuePanel`. */
+.queue-transfer select {
+  border-radius: var(--r-sm);
+}
+
+.queue-transfer[data-armed] select {
+  border-radius: var(--r-sm) 0 0 var(--r-sm);
+}
+
+/* Part of the field, so it keeps the border the actions give up — minus the edge it shares. */
+.panel-actions .queue-transfer .text-button {
+  border: 1px solid var(--line);
+  border-left: 0;
+  border-radius: 0 var(--r-sm) var(--r-sm) 0;
+  color: var(--text);
+}
+
+.panel-actions .queue-transfer .text-button:hover:not(:disabled) {
+  background: var(--well);
+}
+
+/* The actions themselves: no border, and a hover target rather than a permanent outline. */
+.panel-actions > .text-button {
+  padding: 5px 9px;
+  border: 0;
+  border-radius: var(--r-sm);
+  color: var(--text-mute);
+  transition:
+    background var(--dur) var(--ease),
+    color var(--dur) var(--ease);
+}
+
+.panel-actions > .text-button:hover:not(:disabled) {
+  background: var(--well);
+  color: var(--text);
+}
+
+.check-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.check-list label {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 7px 9px;
+  border-radius: var(--r-sm);
+  background: var(--surface-3);
+}
+
+.check-list input {
+  accent-color: var(--accent);
+}
+
+/* --- item lists ----------------------------------------------------------- */
+
+.item-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+/*
+ * A row: cover, text, meta, and actions that appear when you reach for them.
+ *
+ * The hidden actions are the difference between a list of music and a wall of icons. `focus-within`
+ * alongside `hover` is what keeps them reachable by keyboard, and `:has()` lets the whole row
+ * respond rather than only the part the pointer is over.
+ */
+.item-list > li {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  border-radius: var(--r);
+  transition: background var(--dur) var(--ease);
+}
+
+.item-list > li:hover,
+.item-list > li:focus-within {
+  background: var(--tint);
+}
+
+.item-row {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  flex: 1;
+  min-width: 0;
+  padding: 7px 9px;
+  border: 0;
+  border-radius: var(--r);
+  background: none;
+  text-align: left;
+}
+
+.item-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 1px;
+}
+
+.item-title {
+  font-size: 13.5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.item-sub {
+  color: var(--text-dim);
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.item-meta {
+  margin-left: auto;
+  padding-left: 10px;
+  color: var(--text-mute);
+  font-size: 12px;
+}
+
+.item-service {
+  flex: none;
+}
+
+.row-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding-right: 6px;
+  opacity: 0;
+  transition: opacity var(--dur) var(--ease);
+}
+
+.item-list > li:hover .row-actions,
+.item-list > li:focus-within .row-actions {
+  opacity: 1;
+}
+
+/* Touch has no hover, so nothing would ever reveal them. */
+@media (hover: none) {
+  .row-actions {
+    opacity: 1;
+  }
+}
+
+.drag-handle {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 18px;
+  color: var(--text-mute);
+  cursor: grab;
+  opacity: 0;
+  transition: opacity var(--dur) var(--ease);
+}
+
+.item-list > li:hover .drag-handle {
+  opacity: 1;
+}
+
+.drag-handle svg {
+  width: 13px;
+  height: 13px;
+}
+
+/*
+ * The row being played: accent text and a bar, and no fill.
+ *
+ * It had `--accent-soft` behind it, which on a list this wide is a green slab — the only filled block
+ * left on the page after the analyser and the rail gave theirs up, and with a radius and a hard right
+ * edge it read as stuck on rather than part of the list. It was also the third thing saying one thing:
+ * the title is already accent-coloured and the bar already marks the position. Two signals is enough,
+ * and the row now sits on the same surface as every other row.
+ */
+.queue-list > li[data-current] {
+  background: none;
+}
+
+.queue-list > li[data-current] .item-title {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+/* The bar carries the state on its own now, so it runs the full height of the row rather than being
+   inset — a short stub beside an untinted row reads as a stray mark. */
+.queue-list > li[data-current]::before {
+  content: '';
+  position: absolute;
+  inset: 2px auto 2px 0;
+  width: 2px;
+  border-radius: var(--r-pill);
+  background: var(--accent);
+}
+
+.queue-list > li[data-dragging] {
+  opacity: 0.4;
+}
+
+/*
+ * A grid, for anything that is mostly artwork.
+ *
+ * `auto-fill` with a minimum rather than a column count: the middle column's width changes with
+ * the rails, and a fixed count would give five cramped covers at one width and five stretched
+ * ones at another.
+ */
+.item-list.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
+  gap: 6px;
+}
+
+.item-list.grid > li {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0;
+  padding: 8px;
+}
+
+.item-list.grid .item-row {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 9px;
+  padding: 0;
+}
+
+.item-list.grid .cover.tiny {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1;
+  box-shadow: var(--shadow-1);
+}
+
+.item-list.grid .item-meta {
+  margin-left: 0;
+  padding-left: 0;
+}
+
+.item-list.grid .row-actions {
+  justify-content: flex-end;
+  padding: 6px 0 0;
+}
+
+/* The play affordance over a grid cover, so a card both opens and plays. */
+.item-overlay {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  opacity: 0;
+  transition: opacity var(--dur) var(--ease);
+}
+
+.item-list.grid > li:hover .item-overlay,
+.item-list.grid > li:focus-within .item-overlay {
+  opacity: 1;
+}
+
+.item-overlay .icon-button {
+  border-color: var(--line-strong);
+  background: rgb(0 0 0 / 65%);
+  color: var(--text);
+  backdrop-filter: blur(6px);
+}
+
+.load-more {
+  align-self: center;
+  margin-top: 12px;
+}
+
+/*
+ * The add-to-playlist picker, in a row action.
+ *
+ * A native `<select>` because the option list is the playlists and the platform already draws that
+ * well; narrowed to icon width so it sits in the action strip beside the buttons rather than
+ * stretching the row.
+ */
+.playlist-add {
+  width: 30px;
+  padding: 4px 2px;
+  border-color: transparent;
+  background: none;
+  color: var(--text-dim);
+  font-size: 12px;
+}
+
+.playlist-add:hover:not(:disabled) {
+  background: var(--tint);
+}
+
+/* Playlist edit actions sit in a panel header, where the smaller size reads as secondary. */
+.playlist-action {
+  padding: 4px 8px;
+  font-size: 12px;
+}
+
+/* A list of tracks is a list, not a grid — the base `.item-list` already is one. Named so the
+   markup's intent is visible here, and so a future track-specific rule has somewhere to live. */
+.track-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.signal-stages {
+  display: flex;
+  flex-direction: column;
+}
+
+/* --- content -------------------------------------------------------------- */
+
+/*
+ * The browser: search and breadcrumbs stay, the listing scrolls.
+ *
+ * The search field is the one control you reach for after scrolling a long way, so it is the wrong
+ * thing to have to scroll back to. Everything after the crumbs is the scrolling region.
+ */
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  height: 100%;
+  min-height: 0;
+}
+
+.content-scroll {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding-bottom: 18px;
+}
+
+/*
+ * The collection panels get the same treatment without a wrapper of their own: `ContentView`
+ * renders `FavoritesPanel` / `RecentsPanel` as the only child of `.content`, so the panel itself
+ * is the scrolling region.
+ */
+.content > .panel {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.content-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/*
+ * Bounded, because a search field is not a rule across the page.
+ *
+ * `flex: 1` in a bar that spans the window put a 2300 px input on a wide screen, with a caret in the
+ * top-left corner of a green trough. A field's width is a promise about how much you are expected to
+ * type, and nobody types a paragraph into this one.
+ */
+.search {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex: 1 1 320px;
+  max-width: 460px;
+  padding: 10px 13px;
+  border: 0;
+  border-radius: var(--r);
+  background: var(--well);
+  transition: background var(--dur) var(--ease);
+}
+
+/* Focus is the one state that gets colour — an inset ring rather than a border, so the field does
+   not change size when it lights up. */
+.search:focus-within {
+  background: var(--well-hover);
+  box-shadow: inset 0 0 0 1px var(--accent-line);
+}
+
+/*
+ * One ring, not two.
+ *
+ * The wrapper lights up on `:focus-within` *and* the input inside it took the global
+ * `:focus-visible` outline, so focusing the field drew an inset ring around the trough and a second
+ * offset ring around the text inside it — two nested green rounded rectangles, which is what made this
+ * the ugliest control in the player. The wrapper's ring is the focus indicator; suppressing the inner
+ * one loses nothing a keyboard user needs, because the thing that lights up is the thing that has
+ * focus.
+ */
+.search input:focus,
+.search input:focus-visible {
+  outline: none;
+  box-shadow: none;
+}
+
+.search svg {
+  width: 15px;
+  height: 15px;
+  color: var(--text-mute);
+}
+
+.search input {
+  flex: 1;
+  min-width: 0;
+  font-size: 14px;
+}
+
+/*
+ * No platform clear button.
+ *
+ * `type="search"` is right for the semantics and brings Chromium's own grey `×` with it — the last
+ * native widget on a page where every other control is drawn here. Ours is a real button in the same
+ * language as the rest, and it only exists when there is something to clear.
+ */
+.search input::-webkit-search-cancel-button,
+.search input::-webkit-search-decoration {
+  appearance: none;
+  display: none;
+}
+
+.search-clear {
+  flex: none;
+  color: var(--text-mute);
+}
+
+.search-clear:hover {
+  color: var(--text);
+}
+
+.search-clear svg {
+  width: 13px;
+  height: 13px;
+}
+
+.crumbs {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 2px;
+}
+
+.crumbs .text-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px 6px;
+  border-color: transparent;
+}
+
+.crumbs .text-button:hover {
+  background: var(--tint);
+}
+
+.crumbs svg {
+  width: 12px;
+  height: 12px;
+  color: var(--text-mute);
+}
+
+/* The last crumb is where you are, not somewhere to go. */
+.crumbs .text-button:last-child {
+  color: var(--text);
+}
+
+.home-title {
+  font-size: 20px;
+}
+
+.home-section + .home-section {
+  margin-top: 14px;
+}
+
+.content-empty {
+  display: grid;
+  place-items: center;
+  gap: 8px;
+  padding: 64px 20px;
+  text-align: center;
+  color: var(--text-dim);
+}
+
+.content-empty h2 {
+  color: var(--text);
+  font-size: 17px;
+}
+
+.content-empty-icon {
+  width: 30px;
+  height: 30px;
+  color: var(--text-mute);
+}
+
+/* --- equalizer overlay --------------------------------------------------- */
+
+/*
+ * The equalizer, laid over the spectrum.
+ *
+ * Absolute inside `.spectrum`, so every `left` below is a percentage of the *display* and lands on the
+ * frequency the component computed — no measurement, nothing to keep in sync when the panel resizes.
+ */
+.eq-overlay {
+  --eq-top: 20px;
+
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+}
+
+/*
+ * The strip the overlay keeps for itself, so its own controls never sit on a slider.
+ * `--eq-top` is the one number the toolbar, the handles and the curve all measure from — they have to
+ * agree, or the curve stops passing through the thumbs.
+ */
+.eq-toolbar {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: var(--eq-top);
+  z-index: 4;
+}
+
+/* Dims the bars while the handles are up, so the control reads as the foreground. */
+.spectrum[data-eq] i::before {
+  opacity: 0.4;
+}
+
+.spectrum[data-eq] i::after {
+  opacity: 0.25;
+}
+
+/*
+ * The response curve through the ten gains.
+ *
+ * A 100x100 viewBox with `preserveAspectRatio: none` stretches to the panel, which is what lets the
+ * points be written as percentages. `vector-effect` keeps the stroke 1.5px after that stretch —
+ * without it a wide panel scales the line into a smear.
+ */
+.eq-curve {
+  position: absolute;
+  inset: var(--eq-top) 0 0;
+  width: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.eq-curve polyline {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+  opacity: 0.85;
+}
+
+/* One band. Positioned at its frequency; `--pull` centres it, or aligns it inward at the edges. */
+.eq-handle {
+  position: absolute;
+  top: var(--eq-top);
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  width: 34px;
+  translate: var(--pull, -50%) 0;
+}
+
+/*
+ * The slider spans the full height, so its thumb sits at the gain the curve draws.
+ *
+ * `writing-mode: vertical-lr` is the modern way and Chrome honours it; `appearance: slider-vertical`
+ * is the fallback older engines still need and is harmless where the first already worked. Native, so
+ * the equalizer stays reachable by keyboard.
+ */
+.eq-handle input[type='range'] {
+  writing-mode: vertical-lr;
+  direction: rtl;
+  appearance: slider-vertical;
+  width: 100%;
+  flex: 1;
+  min-height: 0;
+  height: auto;
+  margin: 0;
+  opacity: 0.7;
+}
+
+.eq-handle input[type='range']:hover,
+.eq-handle input[type='range']:focus-visible {
+  opacity: 1;
+}
+
+.eq-handle-label {
+  display: flex;
+  align-items: baseline;
+  gap: 1px;
+  color: var(--text-mute);
+  font-size: 10px;
+  line-height: 1;
+}
+
+/* A band that is set says so in text as well as in the curve — the curve is readable at a glance but
+   not to the dB. */
+.eq-handle[data-set] .eq-handle-label {
+  color: var(--text-dim);
+}
+
+.eq-handle-value {
+  position: absolute;
+  top: -14px;
+  color: var(--accent);
+  font-size: 10px;
+  font-weight: 600;
+}
+
+/* Marks the band whose centre is below the analyser's floor, so its position on this scale is a
+   placement rather than a reading. */
+.eq-handle-note {
+  color: var(--line-strong);
+  cursor: help;
+}
+
+.eq-flat {
+  padding: 2px 8px;
+  font-size: 11px;
+}
+
+/*
+ * No box until it is on.
+ *
+ * It is a toggle, so a border is right — while the toggle is *active*. Drawn permanently it was the only
+ * outlined control in a heading whose other content is a readout, and it made "adjust the equalizer"
+ * look like the subject of the panel rather than something you can do to it. Off: a label with a hover
+ * target. On: `.text-button[data-active]` supplies the accent border it earns.
+ */
+.analysis-eq-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-left: 4px;
+  padding: 2px 8px;
+  border-color: transparent;
+  font-size: 11px;
+  transition:
+    background var(--dur) var(--ease),
+    border-color var(--dur) var(--ease),
+    color var(--dur) var(--ease);
+}
+
+.analysis-eq-toggle:hover:not([data-active]) {
+  background: var(--well);
+  border-color: transparent;
+}
+
+.analysis-eq-toggle svg {
+  width: 12px;
+  height: 12px;
+}
+
+/* --- right rail ----------------------------------------------------------- */
+
+/*
+ * The right gutter is wider than the left, on purpose.
+ *
+ * Measured at 1700 px: the rail's text ended 12 px from the window edge while sitting 20 px from the
+ * column beside it — so every line in the signal path finished closer to the screen's edge than to its
+ * own neighbour, which reads as clipped even though nothing is cut. The hairline on the left already
+ * separates it; the right side has only the window, and that needs more room, not less.
+ */
+.rail {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 20px 24px 12px;
+  border-left: 1px solid var(--line);
+  overflow-y: auto;
+}
+
+/*
+ * `OUTPUT` and `ZONES` take the accent, which is the one place in the player where the accent is used
+ * for *structure* rather than for state. It is affordable here because the rail has no other green: the
+ * signal path's dots are the only thing that lights up, and a label above a card cannot be mistaken for
+ * a reading.
+ */
+.rail-head {
+  margin: 10px 0 8px 2px;
+  color: var(--accent);
+}
+
+/*
+ * A card, unlike the rest of the player.
+ *
+ * The house style has no boxes around content, and this is the deliberate exception the design asks
+ * for: the rail is a stack of *instruments* rather than a document, and a boxed instrument reads as one
+ * unit to take in. Kept honest by the fill — a white tint, not a dark slab — so it still sits with the
+ * artwork wash rather than punching a hole in it, and by a hairline instead of a border.
+ */
+/*
+ * Not a box either, now.
+ *
+ * This was argued for when the main column still had one — a boxed instrument beside a boxed analyser
+ * reads as two units. The analyser lost its fill, and a single remaining box reads as a leftover rather
+ * than a decision. What replaces it is what the analyser got: a hairline that says "this is a separate
+ * instrument" without drawing a frame around it.
+ */
+.rail-card {
+  padding: 13px 0 0;
+  border: 0;
+  border-top: 1px solid var(--line);
+  border-radius: 0;
+  background: none;
+}
+
+/*
+ * The one line the card shows when there is nothing to draw a path for.
+ *
+ * Replaces the device header the card used to lead with. That header restated a room you had already
+ * picked; this states the only thing about the destination you cannot read off the path itself —
+ * that there isn't one, or that it is not answering.
+ */
+.rail-card-warn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  color: var(--warn);
+  font-size: 12px;
+}
+
+.rail-card-warn svg {
+  width: 15px;
+  height: 15px;
+}
+
+/* --- signal path ---------------------------------------------------------- */
+
+/* The card's whole content now, so nothing to separate it from: the rail's own head names it. */
+.signal-path {
+  margin: 0;
+}
+
+/*
+ * The verdict, above the chain.
+ *
+ * `FLAC 24/192 → PCM 24/48` used to sit here and it was a puzzle: two codenames and four numbers, from
+ * which the reader had to work out whether anything had happened. This says it — and when the answer is
+ * "something happened" it names the cause, which is the difference between a readout and something you
+ * can act on.
+ *
+ * The tone rides on the left edge rather than on a tinted panel: on this near-black page a filled block
+ * reads as an alert, and "your audio is intact" is not an alert.
+ */
+/*
+ * The hairline sits *under* the verdict, not over it.
+ *
+ * Above, it read as the card's own top edge repeated and cut the verdict off from the head that
+ * names it. Below, it does the one job a line has here: separating the conclusion from the chain of
+ * evidence it was drawn from.
+ */
+.signal-verdict {
+  position: relative;
+  margin: 2px 0 13px;
+  padding-left: 11px;
+  padding-bottom: 13px;
+  border-bottom: 1px solid var(--line);
+}
+
+.signal-verdict::before {
+  content: '';
+  position: absolute;
+  inset: 1px auto 1px 0;
+  width: 2px;
+  border-radius: var(--r-pill);
+  background: var(--line-strong);
+}
+
+/* Intact, either way: the file's own samples, or a lossy source we did not make worse. */
+.signal-verdict[data-tone='perfect']::before,
+.signal-verdict[data-tone='clean']::before {
+  background: var(--accent);
+}
+
+.signal-verdict[data-tone='altered']::before {
+  background: var(--warn);
+}
+
+.signal-verdict-head {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.signal-verdict[data-tone='perfect'] .signal-verdict-head,
+.signal-verdict[data-tone='clean'] .signal-verdict-head {
+  color: var(--accent);
+}
+
+.signal-verdict[data-tone='altered'] .signal-verdict-head {
+  color: var(--warn);
+}
+
+/* The reason, in sentence case and the reading face: it is a sentence, not a label. */
+.signal-verdict-note {
+  margin-top: 3px;
+  font-size: 11.5px;
+  line-height: 1.4;
+  color: var(--text-dim);
+}
+
+/*
+ * The chain, drawn as a path.
+ *
+ * The design's typography rather than this player's default, and it is better here: the stage *name* is
+ * plain sans at reading weight and the *reading* under it is mono. That inverts what the rest of the
+ * player does with labels, on purpose — in a five-row chain the names are what you scan and the values
+ * are what you check, so making the names the quieter engraved thing had them disappear.
+ *
+ * The spine is dashed and drawn per row rather than as a border on the list, so the last stage does not
+ * trail a line into nothing.
+ */
+.signal-stage {
+  position: relative;
+  display: flex;
+  gap: 12px;
+  padding-bottom: 13px;
+}
+
+.signal-stage:last-child {
+  padding-bottom: 0;
+}
+
+.signal-stage:not(:last-child)::before {
+  content: '';
+  position: absolute;
+  top: 14px;
+  bottom: 1px;
+  left: 3px;
+  border-left: 1px dashed var(--line-strong);
+}
+
+.signal-dot {
+  flex: none;
+  width: 7px;
+  height: 7px;
+  margin-top: 5px;
+  border-radius: 50%;
+  background: var(--text-mute);
+}
+
+/* Lit, with a halo: the stage is doing something. */
+.signal-stage[data-state='on'] .signal-dot {
+  background: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft), 0 0 7px rgb(74 222 128 / 45%);
+}
+
+/* Passive is good news, so it is quiet rather than warning-coloured. */
+.signal-stage[data-state='idle'] .signal-dot {
+  background: none;
+  box-shadow: inset 0 0 0 1.5px var(--text-mute);
+}
+
+.signal-stage[data-state='off'] .signal-dot {
+  background: var(--warn);
+}
+
+.signal-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 2px;
+}
+
+.signal-label {
+  font-family: var(--font-sans);
+  font-size: 13.5px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  text-transform: none;
+  color: var(--text);
+}
+
+.signal-value {
+  font-size: 11.5px;
+  color: var(--text-dim);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* The reading a stage is *about* gets the brightest text in the row. */
+.signal-stage[data-state='on'] .signal-value {
+  color: var(--text-dim);
+}
+
+/* Secondary, and quieter for a reason: this is where the drifting measured bitrate lands. */
+.signal-detail {
+  color: var(--text-mute);
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+}
+
+/* --- signal path: the clock ----------------------------------------------- */
+
+/*
+ * The timing block, under the chain.
+ *
+ * Separated by a hairline the same way the verdict is, because it answers a different question from
+ * the stages above it: those say what happened to the audio, this says whether it arrives on time.
+ * The only control in the whole rail lives here, and it is at the bottom on purpose — a correction
+ * you reach for occasionally should not sit above the readings that tell you whether you need it.
+ */
+.signal-timing {
+  margin-top: 13px;
+  padding-top: 13px;
+  border-top: 1px solid var(--line);
+}
+
+.signal-timing-head {
+  margin: 0 0 9px;
+  color: var(--text-mute);
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+/* The device's own verdict. Toned like the stage dots: green is not "good", it is "locked". */
+.signal-lock {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  margin: 0 0 10px;
+}
+
+.signal-lock-label {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-mute);
+}
+
+.signal-lock[data-tone='ok'] .signal-lock-label {
+  color: var(--accent);
+}
+
+.signal-lock[data-tone='warn'] .signal-lock-label {
+  color: var(--warn);
+}
+
+.signal-lock[data-tone='bad'] .signal-lock-label {
+  color: var(--bad, var(--warn));
+}
+
+.signal-lock-note {
+  min-width: 0;
+  color: var(--text-mute);
+  font-size: 11px;
+}
+
+/*
+ * Three readings in a row, mono and tabular so they stop twitching sideways as they change.
+ * `auto-fit` rather than three fixed columns: drift is absent for a stream that has not
+ * established one, and a gap where a column was reads as a missing value.
+ */
+.signal-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(72px, 1fr));
+  gap: 8px 10px;
+  margin: 0 0 12px;
+}
+
+.signal-metrics dt {
+  color: var(--text-mute);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.signal-metrics dd {
+  margin: 2px 0 0;
+  color: var(--text-dim);
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  font-variant-numeric: tabular-nums;
+}
+
+.signal-metric-unit {
+  color: var(--text-mute);
+  font-size: 10px;
+}
+
+/* "of 250", "peak 99": the number beside is what makes the number in front mean anything. */
+.signal-metric-of {
+  display: block;
+  color: var(--text-mute);
+  font-size: 9.5px;
+  letter-spacing: 0.04em;
+}
+
+/* --- grouping ------------------------------------------------------------- */
+
+/*
+ * A screen, not a sheet.
+ *
+ * Grouping is where you sit while adjusting by ear: play something, nudge, listen, nudge again. A
+ * modal over the player is the wrong container for that — it hides what it is about and cannot be
+ * returned to. So it takes the main column, and the layout follows the two questions in order:
+ * which rooms play together, and then how to line them up.
+ */
+.grouping {
+  display: flex;
+  flex-direction: column;
+  gap: 26px;
+  padding: 26px 28px 36px;
+  overflow-y: auto;
+}
+
+.grouping-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.grouping-head h1 {
+  margin: 0;
+  font-size: 30px;
+  line-height: 1.1;
+}
+
+.grouping-lede {
+  margin: 5px 0 0;
+  color: var(--text-dim);
+  font-size: 13px;
+}
+
+.grouping-section-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 12px;
+  margin: 0 0 12px;
+  color: var(--text-mute);
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+/* The one-line reason the section exists, in prose: the label above it is engraved, this is spoken. */
+.grouping-section-note {
+  color: var(--text-mute);
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+/* --- grouping: alignment -------------------------------------------------- */
+
+/*
+ * The one paragraph of prose on the screen.
+ *
+ * Constrained to a readable measure and kept quiet: it is a thing you read the first time and never
+ * again, so it must not compete with the rows it explains.
+ */
+.grouping-guide {
+  max-width: 62ch;
+  margin: -4px 0 14px;
+  color: var(--text-mute);
+  font-size: 11.5px;
+  line-height: 1.5;
+}
+
+.align-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/*
+ * One row per member, and the rows are deliberately identical in width and scale.
+ *
+ * That is the whole point of the screen: the sliders share an axis, so two knobs at different
+ * positions *are* the misalignment, read at a glance instead of worked out from two numbers.
+ */
+.align-row {
+  padding: 13px 15px;
+  border-radius: var(--r-lg);
+  background: var(--well);
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+
+/* The clock reference gets the accent hairline — it is the one every other row is aligned against. */
+.align-row[data-leader] {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 35%, var(--line));
+}
+
+.align-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.align-name {
+  display: flex;
+  align-items: baseline;
+  gap: 9px;
+  min-width: 0;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.align-tag {
+  color: var(--accent);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.align-lock {
+  flex: none;
+  color: var(--text-mute);
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.align-lock[data-tone='ok'] {
+  color: var(--accent);
+}
+
+.align-lock[data-tone='warn'] {
+  color: var(--warn);
+}
+
+.align-lock[data-tone='bad'] {
+  color: var(--bad, var(--warn));
+}
+
+/* The measured half, kept to one quiet line: it informs the adjustment, it is not the adjustment. */
+.align-metrics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px 14px;
+  margin: 6px 0 0;
+  color: var(--text-mute);
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-variant-numeric: tabular-nums;
+}
+
+.align-metrics b {
+  color: var(--text-dim);
+  font-weight: 700;
+}
+
+.align-delay {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 11px;
+}
+
+.align-delay input[type='range'] {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Fixed width, tabular: the number must not shove the slider sideways as it counts up. */
+.align-value {
+  flex: none;
+  width: 58px;
+  color: var(--text-dim);
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.align-warn {
+  margin: 8px 0 0;
+  color: var(--warn);
+  font-size: 11px;
+}
+
+/* --- grouping: rooms ------------------------------------------------------ */
+
+.grouping-rooms {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.grouping-room-toggle {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  width: 100%;
+  padding: 11px 13px;
+  border: 0;
+  border-radius: var(--r-lg);
+  background: var(--well);
+  box-shadow: inset 0 0 0 1px var(--line);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.grouping-room-toggle:hover {
+  background: rgb(255 255 255 / 5%);
+}
+
+.grouping-room[data-joined] .grouping-room-toggle {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 35%, var(--line));
+}
+
+/* The mark carries the state, so the row does not need a label saying "joined". */
+.grouping-room-mark {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: rgb(255 255 255 / 4%);
+  box-shadow: inset 0 0 0 1px var(--line);
+  color: var(--text-mute);
+}
+
+.grouping-room-mark svg {
+  width: 13px;
+  height: 13px;
+}
+
+.grouping-room[data-joined] .grouping-room-mark {
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  box-shadow: inset 0 0 0 1px var(--accent);
+  color: var(--accent);
+}
+
+.grouping-room-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.grouping-room-name {
+  overflow: hidden;
+  font-size: 13.5px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.grouping-room-meta {
+  color: var(--text-mute);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.04em;
+}
+
+/*
+ * The line that closes the queue.
+ *
+ * Centred and very quiet: it is not an instruction, it is the bottom of the list. A hairline above it
+ * rather than a box, so it reads as the end of the column instead of as another panel.
+ */
+.queue-end {
+  margin: 6px 0 0;
+  padding-top: 13px;
+  border-top: 1px solid var(--line);
+  color: var(--text-mute);
+  font-size: 11.5px;
+}
+
+/* --- now bar -------------------------------------------------------------- */
+
+/*
+ * Chrome, not content: outside the scrolling grid so it never moves, and the reason browsing does
+ * not cost you the transport controls.
+ */
+.now-bar {
+  display: grid;
+  /* What is playing, the transport for it, and the room's volume — the third column is what keeps the
+     transport centred as well as what holds the slider. */
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 1.4fr) minmax(0, 1fr);
+  align-items: center;
+  gap: 18px;
+  flex: none;
+  padding: 8px 16px;
+  border-top: 1px solid var(--line);
+}
+
+.now-bar-track {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  text-align: left;
+}
+
+.now-bar-track:disabled {
+  opacity: 0.65;
+}
+
+.now-bar-cover {
+  flex: none;
+  width: 50px;
+  height: 50px;
+  border-radius: var(--r-sm);
+  box-shadow: var(--shadow-1);
+}
+
+.now-bar-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 1px;
+}
+
+.now-bar-title {
+  font-size: 13.5px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.now-bar-sub {
+  color: var(--text-dim);
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.now-bar-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+.now-bar-controls .transport {
+  justify-content: center;
+  gap: 8px;
+}
+
+/* Smaller than the block's: this is the secondary copy of the same controls, in the same plate-less
+   style. */
+.now-bar-controls .transport {
+  gap: clamp(14px, 1.6vw, 22px);
+}
+
+.now-bar-controls .icon-button {
+  width: 30px;
+  height: 30px;
+}
+
+.now-bar-controls .icon-button svg {
+  width: 19px;
+  height: 19px;
+}
+
+.now-bar-controls .icon-button.primary {
+  width: 40px;
+  height: 40px;
+}
+
+.now-bar-controls .icon-button.primary svg {
+  width: 17px;
+  height: 17px;
+}
+
+.now-bar-right {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  min-width: 0;
+}
+
+/* Wide enough to aim at, capped so the bar stays about what is playing. */
+.now-bar-right .volume {
+  width: clamp(110px, 13vw, 190px);
+}
+
+/* --- sheet ---------------------------------------------------------------- */
+
+.sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgb(0 0 0 / 65%);
+  backdrop-filter: blur(3px);
+}
+
+.sheet {
+  width: min(560px, 100%);
+  max-height: 82vh;
+  overflow-y: auto;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-3);
+}
+
+.sheet-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--line);
+}
+
+.sheet-head h2 {
+  font-size: 15px;
+}
+
+/* Panels carry no padding of their own — the page provides it — so the sheet has to. */
+.sheet .panel {
+  padding: 14px 16px 16px;
+}
+
+/* --- favourite button ----------------------------------------------------- */
+
+.favorite-add[data-saved] {
+  color: var(--accent);
+}
+
+.favorite-add[data-pending] {
+  opacity: 0.5;
+}
+
+/* --- focus --------------------------------------------------------------- */
+
+/*
+ * One ring for everything, defined once and last so it wins.
+ *
+ * `:focus-visible` rather than `:focus`: a mouse click on a transport button should not leave a
+ * ring behind, but tabbing to it must show one.
+ */
+/*
+ * The ring is the console's ring: a half-strength outline with a wide, faint halo behind it, rather
+ * than a hard 2px of full accent. Two products cannot each have their own idea of what focus looks
+ * like — it is the one piece of styling a keyboard user sees on every surface, in sequence.
+ *
+ * It sets no `border-radius`, deliberately, and used to. That declaration does not round the *ring* —
+ * it rounds the focused element, and the ring merely follows. On the queue's move-to control, which is
+ * a select and a button welded into one field, focusing the select rounded its square inner edge and
+ * pushed a uniform green box out past the shared border: two controls that had come apart. An outline
+ * already traces whatever radius the element has, so saying nothing here is what keeps every ring the
+ * shape of the thing inside it.
+ */
+:focus-visible {
+  outline: 2px solid rgb(74 222 128 / 50%);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 3px rgb(74 222 128 / 18%);
+}
+
+/* --- narrow --------------------------------------------------------------- */
+
+/*
+ * Below three columns' worth of room the rails drop rather than shrink. The now-bar stays at every
+ * width — it is the one piece of furniture that always earns its space.
+ */
+@media (max-width: 1180px) {
+  .app-body,
+  .app-body:not(:has(.rail)) {
+    grid-template-columns: 210px minmax(0, 1fr);
+  }
+
+  .rail {
+    display: none;
+  }
+}
+
+@media (max-width: 900px) {
+  /*
+   * One column, with the rail stacked on top rather than hidden.
+   *
+   * Hiding it is what a narrow layout wants to do and cannot: the rail now holds the room picker and
+   * every destination, so removing it leaves no way to change rooms or reach the catalogue. Capping
+   * its height and letting the tree scroll inside keeps all of it reachable without building a
+   * drawer.
+   */
+  .app-body,
+  .app-body:not(:has(.rail)) {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+
+  /* A third of the screen, not nearly half: below this width the rail is stacked *above* the player,
+     so every vh it keeps is one the artwork and the transport do not get. The tree scrolls inside
+     it, so nothing becomes unreachable. */
+  .nav-rail {
+    max-height: 34vh;
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .main {
+    padding: 14px;
+  }
+
+  /* The player stacks: artwork over controls, spectrum last. Art centred and capped so it does
+     not fill a phone. */
+  .np-player {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      'cover'
+      'meta'
+      'analysis';
+    gap: 14px;
+  }
+
+  .np-cover {
+    width: min(280px, 68vw);
+    justify-self: center;
+  }
+
+  .np-meta {
+    align-items: flex-start;
+  }
+
+  /*
+   * Pinning is a desktop luxury. On a phone the player alone is most of the viewport, so pinning it
+   * would leave a queue two rows tall — the whole column scrolls as one instead, and the now-bar at
+   * the bottom is what keeps the controls reachable.
+   */
+  .now-playing {
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+  }
+
+  .tab-body {
+    overflow: visible;
+  }
+
+  .now-bar {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 10px;
+  }
+
+  .now-bar-controls .progress {
+    display: none;
+  }
+}
+
+/* --- reduced motion ------------------------------------------------------- */
+
+/*
+ * The spectrum and the meter keep their transitions: they are a *readout* of live audio, and
+ * without the tween they strobe at the frame rate, which is worse for the sensitivity this setting
+ * asks about than the smooth motion is.
+ */
+@media (prefers-reduced-motion: reduce) {
+  *:not(.spectrum i):not(.analysis-meter span) {
+    transition-duration: 1ms !important;
+  }
+}

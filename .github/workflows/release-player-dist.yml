@@ -1,0 +1,45 @@
+# Attaches a built bundle to every published release.
+#
+# The audioserver never builds this repo: it fetches `player-dist.tgz` from the latest release, both
+# at its own build time (`scripts/fetch-player-dist.mjs`) and when someone presses update in the
+# console (`performWebBundleUpdate`). Both of them do `tar -xzf … -C public/player`, so the archive
+# has to be **flat** — `index.html`, `assets/` and `version.json` at its root, which is what
+# `tar -C dist` produces and why the `-C` is not optional.
+#
+# Same shape as adminui's `release-admin-dist.yml`, deliberately: two bundles fetched by one
+# mechanism should not be published by two different ones.
+name: Release Player
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+jobs:
+  build-release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Package dist
+        run: tar -C dist -czf player-dist.tgz .
+
+      - name: Upload release artifact
+        uses: softprops/action-gh-release@v2
+        with:
+          files: player-dist.tgz

@@ -1,0 +1,6 @@
+node_modules
+dist
+dist-cap
+.vite-temp
+*.local
+.DS_Store

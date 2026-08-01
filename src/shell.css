@@ -1,0 +1,618 @@
+/*
+ * The shell: the splash, the choice, and the transition between the two players.
+ *
+ * Kept out of `styles.css` (the technical player) and `art.css` (the art one) because it belongs to
+ * neither — it is the frame both hang in, and it is the one place their two visual languages have to
+ * agree. Which they do here, on the three things that make the product feel like one product:
+ * near-black, the two brand faces, and one easing curve.
+ *
+ * The tokens are read from `styles.css`, which is imported first and defines them on `:root`.
+ */
+
+/*
+ * The product is three surfaces, and moving between them is a navigation.
+ *
+ * The two players are one bundle and switch inside it; the admin console is a different app at a different
+ * url, so going there is a real page load and no amount of DOM animation can cross it. `@view-transition`
+ * can: same-origin cross-document transitions let the browser snapshot the outgoing page, load the
+ * incoming one, and animate between the two — and `view-transition-name` makes named elements *fly*
+ * between their old and new positions even though they belong to different documents.
+ *
+ * Which is why the mark carries a name here and in the console's hero. Press the wordmark in a player and
+ * the mark travels from the corner to the middle of the console's splash; press it there and it travels
+ * back. One object, three surfaces, one continuous gesture — the same argument as the sleeve's flight
+ * between faces, at the scale of the whole product.
+ *
+ * Browsers without it get an ordinary navigation, which is what they got before.
+ */
+@view-transition {
+  navigation: auto;
+}
+
+/* --- the face, and the transition between faces ---------------------------- */
+
+.face {
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+}
+
+/*
+ * The entrance, and *only* when someone chose.
+ *
+ * `data-entered` is set by `Root` for a face reached by pressing the switch, and absent for one reached by
+ * reloading or by a deep link. Animating both would make a page refresh look like a navigation, which is
+ * the tell that a transition has become decoration.
+ *
+ * The scale is the fallback, for a switch made from a screen with no artwork on it to carry. When there
+ * *is* a sleeve, `data-morph` replaces this with a plain fade and the sleeve does the moving.
+ */
+.face[data-entered] {
+  animation: face-in 420ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+/*
+ * Except when the sleeve is flying.
+ *
+ * A switch between the two players carries the artwork across as a shared element (`shell/coverMorph`),
+ * and that flight *is* the transition — a whole page zooming from 0.985 behind it is a second motion
+ * saying the same thing less well. It is also load-bearing rather than only tasteful: the flight measures
+ * its destination with `getBoundingClientRect`, which reports the transformed box, so a face holding the
+ * first frame of a scale animation hands it a rect 1.5% too small and the sleeve lands seven pixels off
+ * and jumps.
+ */
+.face[data-entered][data-morph] {
+  /*
+   * Behind the sleeve, and after it.
+   *
+   * 560ms with a 120ms head start for the flight, so the artwork is already moving before anything else
+   * appears. The order matters more than the durations: a page that arrives *while* the anchor is in the
+   * air reads as one thing rearranging itself, and a page that arrives first reads as two screens.
+   */
+  animation: face-fade 560ms cubic-bezier(0.22, 0.9, 0.24, 1) 120ms both;
+}
+
+@keyframes face-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/*
+ * The room reassembles in the order a room would.
+ *
+ * A single opacity on the whole face is a cross-dissolve of two screenshots — everything arrives at once,
+ * which is legible and dead. These four steps are the same content arriving in the order it *means*: the
+ * light in the room first, then what is playing, then the controls for it, then the house along the edges.
+ *
+ * Each is a small rise as well as a fade, which is what stops the cascade reading as four separate fades.
+ * The delays are on top of the face's own 120ms, so the last of them lands around 800ms — just after the
+ * sleeve settles, so the artwork is always the thing that arrives first and the edges are always last.
+ *
+ * Nothing here may move the *sleeve*: the flight measures its destination with `getBoundingClientRect`,
+ * and a transform on an ancestor would hand it the wrong answer. Every selector below is a sibling of the
+ * artwork or a separate layer, never a parent of it.
+ */
+.face[data-morph] .cx-bg,
+.face[data-morph] .cx-bg-scrim,
+.face[data-morph] .app::before {
+  animation: face-part 900ms cubic-bezier(0.22, 0.9, 0.24, 1) 120ms both;
+}
+
+.face[data-morph] .cx-stage-meta,
+.face[data-morph] .np-meta {
+  animation: face-part 620ms cubic-bezier(0.22, 0.9, 0.24, 1) 300ms both;
+}
+
+.face[data-morph] .cx-lane,
+.face[data-morph] .cx-dock,
+.face[data-morph] .nav-rail,
+.face[data-morph] .rail,
+.face[data-morph] .now-bar {
+  animation: face-part 620ms cubic-bezier(0.22, 0.9, 0.24, 1) 420ms both;
+}
+
+@keyframes face-part {
+  from {
+    opacity: 0;
+    translate: 0 10px;
+  }
+  to {
+    opacity: 1;
+    translate: none;
+  }
+}
+
+/*
+ * The wash does not rise, it only arrives.
+ *
+ * It is a full-window blur anchored off all four edges; sliding it 10px would drag its own soft border
+ * into frame at the top. Same timing as the rest of its step, opacity only.
+ */
+.face[data-morph] .cx-bg,
+.face[data-morph] .cx-bg-scrim {
+  animation-name: face-fade;
+}
+
+/*
+ * And nothing inside it may slide either.
+ *
+ * Each face has its own entrance for the *view*: the art stage rises 14px (`cx-view-in`), the technical
+ * player's heading does the same. Both are right on their own and both are wrong underneath a flying
+ * sleeve, for the same two reasons as the face's scale above — a second motion competing with the shared
+ * element, and a destination rect measured 14px low because `getBoundingClientRect` reports the slide.
+ * That was exactly the seam: the sleeve landed, then hopped fourteen pixels up.
+ *
+ * Reaching across into both faces' class names from the shell is deliberate. This is the one file that is
+ * allowed to know about both (see the header), and the alternative — a flag threaded through two
+ * component trees to reach one `animation: none` — is worse in every way that matters.
+ */
+.face[data-morph] .cx-stage,
+.face[data-morph] .cx-mstage,
+.face[data-morph] .np-heading {
+  animation: none;
+}
+
+@keyframes face-in {
+  from {
+    opacity: 0;
+    scale: 0.985;
+  }
+  to {
+    opacity: 1;
+    scale: 1;
+  }
+}
+
+/* --- the brand, which belongs to the frame -------------------------------- */
+
+/*
+ * One lockup, over both faces, in exactly one place.
+ *
+ * Every number here used to exist twice — once in `.app-bar` and once in `.cx-top` — and the two copies
+ * had drifted: 54px against 58px of bar, a 12px inset against 30px. The logo hopped 18px sideways and 6px
+ * down on every switch. Now the bars agree on the height (see both stylesheets) and this owns the
+ * position, so there is nothing left to disagree about.
+ *
+ * `position: fixed` above the faces and below the splash. `pointer-events: none` because in both faces it
+ * was always a `span` — it names the product, it does not do anything — and a dead element that eats
+ * clicks over a bar is worse than one that does not.
+ */
+.brand-shared {
+  /* The bar both faces draw, and the mark that has to sit in the middle of it. */
+  --brand-bar-h: 54px;
+  --brand-mark-h: 24px;
+
+  position: fixed;
+  left: 12px;
+  top: 0;
+  z-index: 120;
+  display: flex;
+  height: var(--brand-bar-h);
+  /*
+   * It takes its own clicks — which is the whole point of it now.
+   *
+   * This was `pointer-events: none`, and correctly so while the floating lockup was a `<span>`: a decorative
+   * layer pinned over two bars must not swallow what is underneath it. Then the lockup became the door to
+   * the console (`<a href="/admin/">`) and the rule stayed, so the one link in the frame was unclickable —
+   * every press landed on the hidden twin the bar keeps to hold the space. Nothing else lives under it
+   * *because* of that twin, so taking the clicks costs nobody anything.
+   *
+   * `text-decoration: none` for the same reason the console's wordmark carries it: `.brand` is an
+   * inline-flex box, so the anchor's default underline is not propagated into the lockup but ruled
+   * *beneath* the whole thing — a line under `sonn player` that the same lockup in the console does not
+   * have. The two are one drawing and one of them had grown a link's underline.
+   */
+  cursor: pointer;
+  text-decoration: none;
+  transition: opacity 0.18s;
+  /*
+   * Centre the *mark*, not the lockup's box.
+   *
+   * `.brand` is baseline-aligned — the mark's bottom edge sits on the wordmark's baseline, which is what
+   * stops a 30px glyph from floating beside a 19px word. That also means the box is taller than the mark
+   * by the wordmark's descender, all of it *below* the mark, so centring the box leaves the mark about
+   * four pixels high in the bar. It always did, in the technical player; the art player never showed it
+   * because that bar was four pixels taller and centred its lockup differently.
+   *
+   * Aligning to the top and pushing down by half the leftover puts the mark's centre exactly on the bar's,
+   * using the two heights already declared above rather than a measured descender that would be wrong for
+   * the next font.
+   */
+  align-items: center;
+}
+
+/*
+ * Mark and wordmark on one *centre* line, not on one baseline.
+ *
+ * Baseline-aligning them (`.brand`'s own default, from the technical player) rests the mark's bottom edge
+ * on the wordmark's baseline, which reads well as a lockup in isolation and is wrong in a bar: all of the
+ * wordmark's descender then hangs below the mark, so whichever of the two you centre, the other one is out
+ * by five or six pixels. Centred on the mark, `sonn player` sat 6.6px below the nav labels next to it —
+ * and text beside text is the mismatch an eye actually catches.
+ *
+ * Sharing a centre puts the mark, the wordmark and the nav on one line, which is what the art player's own
+ * bar used to do before the lockup was hoisted out of it. Only here: on a phone `.brand` is still drawn
+ * in-bar and keeps its baseline construction, where there is no nav beside it to disagree with.
+ */
+.brand-shared .brand {
+  align-items: center;
+}
+
+/*
+ * The only feedback a door needs.
+ *
+ * Not a colour and not an underline: the wordmark is the product's own drawing and it is the same drawing
+ * in the console it leads to, so anything that restyles it on approach breaks the one thing the transition
+ * depends on — that this element is recognisably the same object on both sides.
+ */
+.brand-shared:hover {
+  /* The console's own figure, to the hundredth: `.hero-wordmark__link:hover`. */
+  opacity: 0.78;
+}
+
+/*
+ * The hidden twin each bar keeps, to hold the space.
+ *
+ * `visibility: hidden` rather than `opacity: 0`, so it is out of the accessibility tree and the tab order
+ * as well as invisible — and unlike `display: none` it still lays out, which is the one thing it is for.
+ */
+.brand-slot {
+  visibility: hidden;
+}
+
+/*
+ * On a phone, each face carries its own again.
+ *
+ * The art player drops its header entirely once a record is playing, to give the artwork all four edges —
+ * so a brand pinned to the top-left would be floating on somebody's album cover. Below the art face's
+ * breakpoint (`PHONE_MAX`, 979px) the shared copy stands down and the in-bar twins become the real thing.
+ */
+@media (max-width: 979px) {
+  .brand-shared {
+    display: none;
+  }
+
+  .brand-slot {
+    visibility: visible;
+  }
+}
+
+/* --- splash ---------------------------------------------------------------- */
+
+/*
+ * Above everything, and it fades in two stages (see `Intro`): the contents first, then the black
+ * layer itself. That order is why the hand-off is invisible — the app is already rendered
+ * underneath by the time anything moves.
+ */
+.intro {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 22px;
+  /* A shade darker than the app: the splash is the outside of the product. */
+  background: #05060a;
+  transition: opacity 640ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.intro[data-out] {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.intro[data-fading] .intro-mark,
+.intro[data-fading] .intro-word,
+.intro[data-fading] .intro-tag {
+  opacity: 0;
+  transition: opacity 520ms ease;
+}
+
+/*
+ * While the splash is up it is the mark that carries the name, because on a cross-document arrival the
+ * splash is what the incoming page is showing. `Root` moves the name to the bar's copy the moment the
+ * splash is gone — two elements holding one `view-transition-name` at the same time is how a browser
+ * decides to skip the whole transition.
+ */
+.intro[data-vt] .intro-mark {
+  view-transition-name: sonn-mark;
+}
+
+.brand-shared[data-vt] .brand-mark {
+  view-transition-name: sonn-mark;
+}
+
+/*
+ * The mark: bars breathing, roofline drawing itself.
+ *
+ * The roof is stroked with a dash the length of the path and an offset that animates to zero, which
+ * is the pure-CSS way to draw a line on. `stroke-dasharray: 96` is that length — it is not a round
+ * number chosen for looks, and changing the path means changing it or the stroke will appear
+ * pre-drawn or never finish.
+ */
+/*
+ * The rings, borrowed from the admin interface's splash.
+ *
+ * Two circles that expand out of the mark and fade, staggered — the same gesture that product uses when
+ * its hero lands, at the same accent. Timed to peak as the roofline lands rather than after it: this
+ * splash holds for 1600 ms (`INTRO_MIN_MS`) and then fades, so the admin's own delays fired them into
+ * the fade and neither ever completed. At 850/1030 ms they are brightest around 1050/1240 ms, with the
+ * roof finishing at 1330 ms — one gesture arriving, not two.
+ *
+ * `backwards` fill so they are invisible before their delay rather than sitting at full scale waiting,
+ * and sized as a share of the glyph so they scale with `min(168px, 40vw)` instead of being a fixed
+ * circle around a mark that is not always the same size.
+ */
+.intro-glyph {
+  position: relative;
+  display: grid;
+  place-items: center;
+}
+
+.intro-glyph::before,
+.intro-glyph::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 62%;
+  aspect-ratio: 1;
+  border: 1px solid color-mix(in oklab, var(--accent) 60%, transparent);
+  border-radius: 50%;
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(0.2);
+  pointer-events: none;
+}
+
+.intro-glyph::before {
+  animation: intro-ring 950ms cubic-bezier(0.2, 0.8, 0.2, 1) 850ms backwards;
+}
+
+.intro-glyph::after {
+  animation: intro-ring 1050ms cubic-bezier(0.2, 0.8, 0.2, 1) 1030ms backwards;
+}
+
+@keyframes intro-ring {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.2);
+  }
+
+  20% {
+    opacity: 0.8;
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(4);
+  }
+}
+
+.intro-mark {
+  width: min(168px, 40vw);
+  height: auto;
+  opacity: 0;
+  /* The halo is the accent too, not a white bloom: a green mark inside a white glow reads as two
+     colours arguing about which one the product is. */
+  filter: drop-shadow(0 0 40px color-mix(in oklab, var(--accent) 30%, transparent));
+  animation: intro-mark-in 900ms cubic-bezier(0.2, 0.8, 0.2, 1) 320ms forwards;
+}
+
+.intro-mark rect {
+  fill: var(--accent);
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: intro-bar 1050ms ease-in-out infinite;
+}
+
+/*
+ * The roofline, in the accent.
+ *
+ * It was `--text` — white — which made the one drawn stroke in the whole splash the only part of the
+ * mark that was not the product's colour, sitting directly above ten green bars. The mark is one thing
+ * and now it is one colour.
+ */
+.intro-mark path {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 96;
+  stroke-dashoffset: 96;
+  animation: intro-roof 850ms cubic-bezier(0.2, 0.8, 0.2, 1) 480ms forwards;
+}
+
+/* Negative delays so the bars start mid-cycle: they are already moving when they appear, which is
+   what makes it a level meter rather than a loading animation that begins. */
+.intro-mark rect:nth-child(1) { animation-delay: -0.2s; }
+.intro-mark rect:nth-child(2) { animation-delay: -0.55s; }
+.intro-mark rect:nth-child(3) { animation-delay: -0.4s; }
+.intro-mark rect:nth-child(4) { animation-delay: -0.32s; }
+.intro-mark rect:nth-child(5) { animation-delay: -0.25s; }
+.intro-mark rect:nth-child(6) { animation-delay: -0.48s; }
+.intro-mark rect:nth-child(7) { animation-delay: -0.12s; }
+.intro-mark rect:nth-child(8) { animation-delay: -0.6s; }
+.intro-mark rect:nth-child(9) { animation-delay: -0.36s; }
+.intro-mark rect:nth-child(10) { animation-delay: -0.5s; }
+
+@keyframes intro-bar {
+  0%,
+  100% {
+    transform: scaleY(0.38);
+  }
+  50% {
+    transform: scaleY(1.28);
+  }
+}
+
+@keyframes intro-roof {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes intro-mark-in {
+  from {
+    opacity: 0;
+    scale: 0.9;
+  }
+  to {
+    opacity: 1;
+    scale: 1;
+  }
+}
+
+.intro-word {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.34em;
+  font-size: clamp(26px, 5vw, 34px);
+  color: var(--text);
+  opacity: 0;
+  animation: intro-rise 700ms cubic-bezier(0.2, 0.8, 0.2, 1) 1100ms forwards;
+}
+
+.intro-word-light {
+  font-size: 0.55em;
+  color: var(--text-mute);
+  letter-spacing: 0.22em;
+}
+
+.intro-tag {
+  margin-top: -8px;
+  font-size: 9px;
+  letter-spacing: 0.3em;
+  color: var(--accent);
+  opacity: 0;
+  animation: intro-rise 700ms cubic-bezier(0.2, 0.8, 0.2, 1) 1320ms forwards;
+}
+
+@keyframes intro-rise {
+  from {
+    opacity: 0;
+    translate: 0 8px;
+  }
+  to {
+    opacity: 1;
+    translate: none;
+  }
+}
+
+/* --- the switch back, in both faces --------------------------------------- */
+
+/*
+ * Where else you can be, styled once for both faces: **admin | technical**, or **admin | art**.
+ *
+ * Deliberately quiet and deliberately always present, in the same corner on both surfaces. Two labels
+ * either side of one hairline: the face is a toggle and the console is a door, and the difference is
+ * carried by the arrow rather than by two different constructions.
+ */
+.face-switch {
+  position: fixed;
+  right: 16px;
+  top: 0;
+  z-index: 120;
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  height: 54px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+/*
+ * A link and a button, drawn as one thing.
+ *
+ * They cannot be the same element — `admin` is a real navigation so the mark can fly across it, the face
+ * is not — but nothing about that difference belongs on screen, so every property that would give it away
+ * is set here rather than inherited.
+ */
+.face-switch-go {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 2px;
+  border: 0;
+  background: none;
+  color: var(--text-mute);
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: uppercase;
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 0.18s var(--ease);
+}
+
+.face-switch-go:hover {
+  color: var(--text);
+}
+
+/* The one hairline in the corner, and the only thing separating the two. */
+.face-switch-sep {
+  width: 1px;
+  height: 11px;
+  background: var(--line-strong);
+}
+
+/* The word is the only part that changes, so it is the only part that moves. */
+.face-switch-label[data-swapping] {
+  animation: face-switch-swap 420ms var(--ease) both;
+}
+
+@keyframes face-switch-swap {
+  from {
+    opacity: 0;
+    translate: 0 -4px;
+  }
+  to {
+    opacity: 1;
+    translate: none;
+  }
+}
+
+.face-switch-arrow {
+  width: 13px;
+  height: 13px;
+  rotate: -90deg;
+  transition: translate 0.22s var(--ease);
+}
+
+.face-switch-go:hover .face-switch-arrow {
+  translate: 3px 0;
+}
+
+/*
+ * On a phone, only the art face gives this up.
+ *
+ * It drops its bar entirely once a record is playing, so a switch pinned to the top-right would be
+ * floating on the artwork — its own `more` sheet carries the way across instead. The technical player
+ * keeps its bar at every width, and hiding this there left a narrow window with no way out of the face
+ * at all.
+ */
+@media (max-width: 979px) {
+  .face-switch[data-face='art'] {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .face[data-entered],
+  .intro-mark,
+  .intro-mark rect,
+  .intro-mark path,
+  .intro-word,
+  .intro-tag {
+    animation-duration: 1ms !important;
+    animation-delay: 0ms !important;
+  }
+}
