@@ -39,7 +39,7 @@ import {
   SpeakerGlyph,
 } from '@/art/glyphs';
 import { formatTime } from '@/lib/format';
-import type { ContentItem, ContentListing, ContentSection, ContentSource } from '@/api/content';
+import type { ContentAbout, ContentItem, ContentListing, ContentSection, ContentSource } from '@/api/content';
 import type { ApiInput, ApiZoneState } from '@/api/types';
 import type { Cur } from '@/art/useCur';
 
@@ -80,6 +80,57 @@ export type BrowseNode = { id?: string; label?: string };
  * sleeves behind it is still a door.
  */
 type Peek = { art: string[]; names: string[] };
+
+/**
+ * The story behind a container, once per id per session — misses included, for the same reason
+ * `peek` remembers its own: a 404 asked once is the route's ordinary answer, asked on every visit
+ * it is polling for a feature the server has said it does not have.
+ */
+const abouts = new Map<string, Promise<ContentAbout | null>>();
+
+function aboutOf(content: ContentSource, id: string): Promise<ContentAbout | null> {
+  let hit = abouts.get(id);
+  if (!hit) {
+    hit = content.about(id).catch(() => null);
+    abouts.set(id, hit);
+  }
+  return hit;
+}
+
+/**
+ * The prose, clamped to a glance and opened by a word.
+ *
+ * A biography on a browse page is context, not content — four lines say who this is, and the rest
+ * is there for the person who asks. `more` only appears when there is genuinely more (the clamp is
+ * by character count rather than measured overflow, which is approximate and fails politely: a
+ * borderline text simply opens to nearly what it already showed). The attribution is not optional
+ * dressing: prose from a cloud source arrives with a licence, and the name is the price.
+ */
+const ABOUT_CLAMP = 280;
+
+function About({ about }: { about: ContentAbout }) {
+  const [open, setOpen] = useState(false);
+  const text = about.description?.trim() ?? '';
+  if (!text) {
+    return null;
+  }
+  const long = text.length > ABOUT_CLAMP;
+  return (
+    <div className="cx-about">
+      <p className="cx-about-text" data-open={open || !long || undefined}>
+        {text}
+      </p>
+      <span className="cx-about-foot mono">
+        {long && (
+          <button type="button" onClick={() => setOpen((value) => !value)}>
+            {open ? 'less' : 'more'}
+          </button>
+        )}
+        {about.source?.name && <i className="cx-about-src">{about.source.name}</i>}
+      </span>
+    </div>
+  );
+}
 
 const NOTHING: Peek = { art: [], names: [] };
 
@@ -364,6 +415,7 @@ export function Browse({
   const [query, setQuery] = useState('');
   const [searching, setSearching] = useState(false);
   const [results, setResults] = useState<ContentSection[]>([]);
+  const [about, setAbout] = useState<ContentAbout | null>(null);
   const field = useRef<HTMLInputElement>(null);
 
   const here = stack[stack.length - 1] ?? {};
@@ -477,6 +529,29 @@ export function Browse({
   );
 
   const container = listing?.container ?? null;
+
+  /*
+   * The story around the container, when the server can tell one (`ContentAbout`). Fetched after
+   * the listing rather than with it, so browsing never waits on prose — the page composes itself
+   * and the biography joins it, or quietly never does.
+   */
+  const aboutId = container?.id ?? null;
+  useEffect(() => {
+    setAbout(null);
+    if (!aboutId) {
+      return undefined;
+    }
+    let cancelled = false;
+    void aboutOf(content, aboutId).then((story) => {
+      if (!cancelled) {
+        setAbout(story);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [content, aboutId]);
+
   // Search comes back in buckets and is rendered as shelves, so it takes the sections slot and leaves
   // the flat one empty — the two are never both populated.
   const items = query ? [] : (listing?.items ?? []);
@@ -609,6 +684,10 @@ export function Browse({
           </div>
         )}
 
+        {/* Who this is, when the server can say — see `About`. Keyed so a new container starts
+            folded rather than inheriting the last one's `more`. */}
+        {!query && about && <About about={about} key={aboutId ?? 'none'} />}
+
         {/* Ghosts only when there is nothing else to look at: a re-search should not blank the results
             it is about to replace. */}
         {((loading && !query) || searching) && items.length === 0 && sections.length === 0 && <Waiting />}
@@ -672,6 +751,31 @@ export function Browse({
               ))}
             </div>
           )
+        )}
+
+        {/*
+          The names beside this one, as a shelf at the end of the page — where a person who has
+          read the records above goes next. The same `Tile` as everywhere: a similar item is a
+          full item, openable and playable, not a caption.
+        */}
+        {!query && about && about.similar.length > 0 && (
+          <section className="cx-shelf cx-similar">
+            <div className="cx-sec-head">
+              <span className="cx-sec-lbl mono">beside this</span>
+              <span className="cx-sec-rule" />
+            </div>
+            <div className="cx-shelf-row">
+              {about.similar.map((item, index) => (
+                <Tile
+                  key={item.id}
+                  item={item}
+                  index={index}
+                  onOpen={() => open(item)}
+                  onPlay={() => play(item)}
+                />
+              ))}
+            </div>
+          </section>
         )}
       </div>
     </div>

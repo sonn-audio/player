@@ -3608,6 +3608,65 @@
 }
 
 /*
+ * --- the story ---------------------------------------------------------------
+ *
+ * A biography under the heading, in running text — the one place this face sets a paragraph.
+ * Measured like one: a readable line length, not the page's; the clamp and the `more` are in the
+ * component (`About`). The attribution is part of the deal with whichever cloud service the
+ * *server* borrowed the prose from, so it is always drawn, small and honest.
+ */
+.cx-about {
+  max-width: 640px;
+  margin: 4px 0 30px;
+}
+
+.cx-about-text {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+  line-clamp: 4;
+  overflow: hidden;
+  font-size: 14px;
+  line-height: 1.65;
+  color: var(--t4);
+  white-space: pre-line;
+}
+
+.cx-about-text[data-open] {
+  display: block;
+  -webkit-line-clamp: none;
+  line-clamp: none;
+}
+
+.cx-about-foot {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 14px;
+  margin-top: 8px;
+  font-size: 9px;
+  letter-spacing: 0.2em;
+}
+
+.cx-about-foot button {
+  color: var(--gb);
+  transition: color 0.18s;
+}
+
+.cx-about-foot button:hover {
+  color: var(--t1);
+}
+
+.cx-about-src {
+  font-style: normal;
+  color: var(--t7);
+}
+
+/* At the end of the page, the shelf needs air above it that a mid-page shelf does not. */
+.cx-similar {
+  margin-top: 38px;
+}
+
+/*
  * On a phone, the record opens.
  *
  * The desk shows a sleeve beside a list — a catalogue's composition, and the right one where there

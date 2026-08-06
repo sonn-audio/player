@@ -78,6 +78,26 @@ export interface ContentSection {
   items: ContentItem[];
 }
 
+/**
+ * The story around an item — an artist's biography, an album's context, the names beside it.
+ *
+ * A **proposed** surface: `GET /items/{id}/about`, answered 404 until the server can enrich
+ * (see `docs/PROPOSAL-item-about.md`). The enrichment itself belongs server-side — the way
+ * Music Assistant leans on TheAudioDB and Plexamp on Plex's metadata service — because an API
+ * key cannot ship in a public web bundle, one server cache serves every panel in the house, and
+ * a client on a LAN without internet still gets whatever the server has stored. The player
+ * renders what arrives and renders nothing when nothing does; absence is the documented
+ * default, not an error.
+ */
+export interface ContentAbout {
+  /** Prose about the item, plain text, paragraphs split on blank lines. Null when there is none. */
+  description: string | null;
+  /** Related items — full `ContentItem`s, openable and playable like any others. */
+  similar: ContentItem[];
+  /** Who wrote the prose, for the attribution cloud sources require. */
+  source: { name: string; url: string | null } | null;
+}
+
 /** Search results, bucketed by kind. */
 export interface ContentSearchResult {
   query: string;
@@ -121,6 +141,8 @@ export interface ContentSource {
   browse(id?: string, offset?: number, limit?: number): Promise<ContentListing>;
   /** Describes one id without browsing its parent. Null when it no longer resolves. */
   item(id: string): Promise<ContentItem | null>;
+  /** The story around an id. Null whenever the server has none to tell — the common case. */
+  about(id: string): Promise<ContentAbout | null>;
   search(query: string, opts?: SearchOptions): Promise<ContentSearchResult>;
 }
 
@@ -160,6 +182,11 @@ export class HttpContentSource implements ContentSource {
     }
   }
 
+  about(id: string): Promise<ContentAbout | null> {
+    // 404 handling lives in the client method: "nothing to tell" is that route's ordinary answer.
+    return this.api.itemAbout(id);
+  }
+
   async search(query: string, opts: SearchOptions = {}): Promise<ContentSearchResult> {
     try {
       return await this.api.search(query, opts);
@@ -190,6 +217,10 @@ export class UnavailableContentSource implements ContentSource {
   }
 
   async item(): Promise<ContentItem | null> {
+    return null;
+  }
+
+  async about(): Promise<ContentAbout | null> {
     return null;
   }
 
