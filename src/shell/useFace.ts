@@ -6,16 +6,26 @@
  * everything below the presentation is shared — the API client, the event stream, the zone store, the
  * selected room.
  *
- * **There is no longer a screen that asks which one you want.** There was: a landing page with two
- * cards, framed as a choice between products. But the cards described one player twice, the state they
- * showed to make the choice concrete (`2 of 4 rooms playing`) was the thing you were being kept from,
- * and a first-run gate in front of a music player is a toll booth. The switch in each face's top-right
- * corner tells the whole story more honestly: whichever face you are in, the other one is one press
- * away, and nothing had to be decided before the music could start.
+ * **The screen that asks which one you want is back — once, ever.** It was removed with cause: the
+ * old landing page stood in front of every visit, its two cards described one player twice, and the
+ * live state it showed (`2 of 4 rooms playing`) was the thing you were being kept from — a toll booth.
+ * What replaced it, the corner switch alone, quietly created the opposite problem: a browser that has
+ * never been here lands in the art face and nothing on screen *says there is a second one*, so half
+ * the product hangs on whether someone ever reads a 10px word in a corner. The toll booth and the
+ * unread corner are both discoverability answered badly.
  *
- * So a bare url opens the face you were last in, and the art one the first time — it is the face for a
- * phone, a wall panel and the rest of the time, and the technical one is the specialist view you go to
- * when you want to know what the audio is doing.
+ * So the ask returns, shaped by the old screen's failures: it appears only when this browser has no
+ * remembered face **and** the url names none (`undecided`) — one press, answered where the splash was
+ * already holding the door, never seen again. A deep link is already an answer, so it skips the ask;
+ * so does every visit after the first, because the choice is stored exactly like a corner switch
+ * would have stored it. Nothing is described twice and no state is withheld: the two halves say the
+ * two stances (`what the music is` / `what the audio is`) and the footer says the truth that makes
+ * the choice weightless — the other face stays one press away, always.
+ *
+ * A bare url thereafter opens the face you were last in. (Where storage is unwritable — private-mode
+ * Safari — the ask would return each visit for the same reason the face itself cannot be remembered;
+ * `undecided` therefore also requires that storage *works*, and such browsers keep the old behaviour:
+ * straight into the art face.)
  *
  * Addressed by hash (`#/technical`, `#/art`) rather than by path, for a reason that is about deployment
  * and not taste: the audioserver serves this bundle from a static directory with no SPA fallback, so
@@ -49,17 +59,48 @@ function readStored(): Face | null {
 }
 
 /**
+ * Whether an answer, once given, would actually be kept. Asking a browser that cannot remember
+ * the answer means asking on every visit — the exact toll booth the ask is designed not to be —
+ * so an unwritable storage keeps the old behaviour: no question, straight into the default face.
+ */
+function storageWorks(): boolean {
+  try {
+    const probe = 'sonn.player.probe';
+    window.localStorage.setItem(probe, '1');
+    window.localStorage.removeItem(probe);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
  * The face, the setter, and whether we arrived by switching.
  *
  * `chose` is what the transition needs: a face reached by pressing the switch should animate in, and the
  * same face reached by reloading the page should simply be there. Animating a reload is the tell that a
  * transition has become decoration.
  */
-export function useFace(): { face: Face; go: (face: Face) => void; chose: boolean; morphing: boolean } {
+export function useFace(): {
+  face: Face;
+  go: (face: Face) => void;
+  chose: boolean;
+  morphing: boolean;
+  undecided: boolean;
+} {
   const [face, setFace] = useState<Face>(
     () => parse(window.location.hash) ?? readStored() ?? DEFAULT_FACE,
   );
   const [chose, setChose] = useState(false);
+  /*
+   * Whether this browser has ever answered the "which player" question — by pressing the switch,
+   * by following a deep link, or on the ask itself. Read once, on mount: it decides whether the
+   * splash resolves into the ask or into a face, and that decision must not change under a screen
+   * already animating. `Root` owns the ask's lifecycle from here.
+   */
+  const [undecided] = useState<boolean>(
+    () => parse(window.location.hash) === null && readStored() === null && storageWorks(),
+  );
   /* Whether the switch we are in the middle of is carrying a sleeve across — see `coverMorph`. */
   const [morphing, setMorphing] = useState(false);
 
@@ -116,5 +157,5 @@ export function useFace(): { face: Face; go: (face: Face) => void; chose: boolea
     }
   }, []);
 
-  return { face, go, chose, morphing };
+  return { face, go, chose, morphing, undecided };
 }

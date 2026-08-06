@@ -27,7 +27,11 @@ the frame around them (the wordmark, the corner that names the other face and th
 move or fade while the room behind it rearranges. Faces are addressed by **hash** rather than path
 because the audioserver serves this bundle from a static directory with no SPA fallback: `/player/art`
 would 404 from the file handler, `#/art` never reaches the server. The chosen face is remembered, and
-a browser that has never been here opens the art one.
+a browser that has never been here is **asked** — once, ever: the splash resolves into the two stances
+(`the music` / `the audio`), one press picks, and the answer is stored exactly as a corner-switch press
+would store it. A deep link counts as an answer and skips the ask. This is a return with a history —
+an earlier landing page was removed as a toll booth — and `shell/useFace.ts` carries the full argument
+for why once-ever is not that.
 
 The look is shared with the admin UI on purpose: the same two brand faces (Hanken Grotesk for
 display, JetBrains Mono for every label and measurement, both self-hosted variable fonts), the same

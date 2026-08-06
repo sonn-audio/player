@@ -18,9 +18,10 @@ import { useEffect, useRef, useState } from 'react';
 import { App } from '@/App';
 import { ArtApp } from '@/art/ArtApp';
 import { Brand } from '@/shell/Brand';
+import { Choice } from '@/shell/Choice';
 import { FaceSwitch } from '@/shell/FaceSwitch';
 import { Intro } from '@/shell/Intro';
-import { useFace } from '@/shell/useFace';
+import { useFace, type Face } from '@/shell/useFace';
 import { useServer } from '@/state/ServerContext';
 
 /** How long the splash stays even when the server answers instantly. */
@@ -43,13 +44,37 @@ const INTRO_FADE_MS = 520;
 /** How long the black layer takes to clear once it starts. */
 const INTRO_OUT_MS = 640;
 
+/** How long the ask takes to fade once answered — same curve family as the intro's exit. */
+const CHOICE_OUT_MS = 700;
+
 export function Root() {
-  const { face, go, chose, morphing } = useFace();
+  const { face, go, chose, morphing, undecided } = useFace();
   const { status } = useServer();
 
   const [intro, setIntro] = useState<'holding' | 'fading' | 'out' | 'gone'>('holding');
   const [minElapsed, setMinElapsed] = useState(false);
   const [gaveUp, setGaveUp] = useState(false);
+
+  /*
+   * The ask's lifecycle, owned here because only the shell knows the layering: the choice sits
+   * *under* the splash, so the intro's black dissolves into the question rather than into a face
+   * — and once answered it fades over the face that was mounted underneath all along. `undecided`
+   * is read once by `useFace`; from `asking` onwards this state is the authority.
+   */
+  const [ask, setAsk] = useState<'asking' | 'leaving' | 'gone'>(undecided ? 'asking' : 'gone');
+
+  useEffect(() => {
+    if (ask !== 'leaving') {
+      return;
+    }
+    const timer = setTimeout(() => setAsk('gone'), CHOICE_OUT_MS);
+    return () => clearTimeout(timer);
+  }, [ask]);
+
+  const pick = (next: Face): void => {
+    go(next);
+    setAsk('leaving');
+  };
 
   useEffect(() => {
     const min = setTimeout(() => setMinElapsed(true), INTRO_MIN_MS);
@@ -109,6 +134,10 @@ export function Root() {
       */}
       <Brand vt={intro === 'gone'} />
       <FaceSwitch face={face} onSwitch={go} />
+
+      {/* Under the splash, over the frame: the intro dissolves into the question, the question
+          fades into the face. Mounted only for a browser that has never answered it. */}
+      {ask !== 'gone' && <Choice leaving={ask === 'leaving'} onPick={pick} />}
 
       {intro !== 'gone' && <Intro fading={intro !== 'holding'} out={intro === 'out'} vt />}
     </>
