@@ -505,6 +505,124 @@
   }
 }
 
+/* --- the ask: which player ------------------------------------------------- */
+
+/*
+ * One layer below the splash and above the frame, on the splash's own black — the intro dissolves
+ * into the question, so the first thing a new browser reads is that there are two of these. Two
+ * halves, a hairline between them, and almost no ink: the stances are the content, and anything
+ * added to them is the removed landing page growing back.
+ */
+.choice {
+  position: fixed;
+  inset: 0;
+  z-index: 280;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(30px, 7vh, 64px);
+  padding: 24px;
+  background: #05060a;
+  transition: opacity 700ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.choice[data-leaving] {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.choice-kicker {
+  font-size: 10px;
+  letter-spacing: 0.3em;
+  color: var(--accent);
+}
+
+.choice-split {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: stretch;
+  gap: clamp(28px, 5vw, 72px);
+}
+
+/* The hairline that says "two", vertical on a desk. Faded at both ends like every rule here. */
+.choice-rule {
+  width: 1px;
+  background: linear-gradient(180deg, transparent, rgb(255 255 255 / 14%), transparent);
+}
+
+.choice-half {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: clamp(18px, 4vh, 40px) clamp(10px, 3vw, 48px);
+  /* The global reset leaves a button's UA fill and border alone (the technical face wants some);
+     here a half must be nothing but its words on the splash's black. */
+  border: 0;
+  background: none;
+  text-align: center;
+}
+
+.choice-lbl {
+  font-size: 9.5px;
+  letter-spacing: 0.26em;
+  color: var(--text-tertiary, rgb(255 255 255 / 45%));
+  transition: color 0.22s;
+}
+
+/* The stance, in the greeting's voice: the biggest words on the screen, because they are the choice. */
+.choice-name {
+  font-size: clamp(34px, 5.4vw, 62px);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  color: rgb(255 255 255 / 72%);
+  transition: color 0.22s;
+}
+
+.choice-sub {
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  color: rgb(255 255 255 / 32%);
+  transition: color 0.22s;
+}
+
+.choice-half:hover .choice-name,
+.choice-half:focus-visible .choice-name {
+  color: #fff;
+}
+
+.choice-half:hover .choice-lbl,
+.choice-half:focus-visible .choice-lbl {
+  color: var(--accent);
+}
+
+.choice-half:hover .choice-sub,
+.choice-half:focus-visible .choice-sub {
+  color: rgb(255 255 255 / 55%);
+}
+
+.choice-foot {
+  font-size: 9px;
+  letter-spacing: 0.22em;
+  color: rgb(255 255 255 / 30%);
+}
+
+/* A phone stacks the halves; the rule turns with them. */
+@media (max-width: 700px) {
+  .choice-split {
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr auto 1fr;
+  }
+
+  .choice-rule {
+    width: auto;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgb(255 255 255 / 14%), transparent);
+  }
+}
+
 /* --- the switch back, in both faces --------------------------------------- */
 
 /*
