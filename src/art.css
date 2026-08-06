@@ -3545,6 +3545,13 @@
     grid-column: 1 / -1;
   }
 
+  /* Everything the hero introduces — the story, the rows, the shelf beside it — is one child
+     (`.cx-browse-body`, see `Browse`), so the grid places exactly two things side by side and
+     nothing auto-flows under the sticky picture. */
+  .cx-browse-inner[data-detail] > .cx-browse-body {
+    grid-column: 2;
+  }
+
   /*
    * Sticky, so the cover stays with you down a hundred-track playlist.
    *
@@ -3605,6 +3612,17 @@
   box-shadow:
     0 40px 80px -38px rgb(0 0 0 / 95%),
     inset 0 0 0 1px rgb(255 255 255 / 14%);
+}
+
+/*
+ * Round for a person, square for a record — on a desk only. The phone's full-bleed band keeps its
+ * own shape for both: a circle cannot bleed to an edge, and an artist photo cropped wide is what
+ * that band is for.
+ */
+@media (min-width: 980px) {
+  .cx-detail[data-portrait] .cx-detail-cover {
+    border-radius: 50%;
+  }
 }
 
 /*
