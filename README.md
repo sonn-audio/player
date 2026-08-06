@@ -72,8 +72,10 @@ source id — browse results, search hits, queue entries, recents — and adds i
 zone. That is the Loxone concept, and the API always supported it from any id.
 
 **Local playback** — this browser is a room. It registers itself over `POST /destinations/local`
-on load and appears in the room list beside the hardware zones; select it and play, and it plays
-here.
+on load and appears in the room list beside the hardware zones — in both faces, named for the
+device ("This phone" below the art face's phone breakpoint, "This browser" on a desk); select it
+and play, and it plays here. That is what makes the phone player a music player in its own right
+rather than a remote for other rooms, while the same rooms sheet keeps every zone one tap away.
 
 There is no UI of its own — no enable button, no separate volume, no connection badge — because it
 is a zone, so the ordinary zone controls already drive it. Volume goes through
