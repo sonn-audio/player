@@ -692,9 +692,17 @@ svg {
   white-space: nowrap;
 }
 
-/* The one chip that earns colour: the audio survived intact. */
+/*
+ * The one chip that earns colour: the audio survived intact.
+ *
+ * And the one that earns light — the faintest halo, steady, never pulsing. It is the LOCK lamp on
+ * the front of the equipment: on when the signal is exactly what the source sent, and the fact
+ * that it neither blinks nor breathes is what makes it read as a state rather than an event.
+ */
 .chip[data-lossless] {
-  box-shadow: inset 0 0 0 1px var(--accent-line);
+  box-shadow:
+    inset 0 0 0 1px var(--accent-line),
+    0 0 14px rgb(74 222 128 / 13%);
   background: var(--accent-soft);
   color: var(--accent);
 }
@@ -1702,6 +1710,10 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
   align-items: center;
   gap: 5px;
   margin-top: 3px;
+  /* The relock. The row is keyed on the wire format (see `NowPlayingView`), so this runs exactly
+     when codec, rate, depth or the verdict change — the nameplate re-engraving itself — and sits
+     perfectly still through an album that never changes the wire. */
+  animation: np-heading-in 420ms var(--ease) both;
 }
 
 .format-chips .chip {
@@ -1755,6 +1767,8 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
 .wave-time {
   color: var(--text-mute);
   font-size: 11px;
+  /* A counting readout must not wobble as its digits change — instrument digits are fixed-width. */
+  font-variant-numeric: tabular-nums;
 }
 
 .wave-time-end {
@@ -1816,6 +1830,37 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
   border-radius: var(--r-pill);
   background: var(--line);
   translate: 0 -50%;
+}
+
+/*
+ * The scope's cursor: a hairline where the pointer is, and the time a press would seek to.
+ *
+ * Grey on purpose, both of them — the green on this display means *played*, and a green cursor at
+ * 3:40 over a track at 1:10 would claim territory the audio has not reached. The readout hangs
+ * above the envelope rather than following inside it, where it would sit on top of the bars it is
+ * measuring.
+ */
+.wave-cursor {
+  position: absolute;
+  top: 10%;
+  bottom: 10%;
+  z-index: 2;
+  width: 1px;
+  background: var(--text-dim);
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+.wave-cursor-time {
+  position: absolute;
+  bottom: calc(100% + 5px);
+  z-index: 2;
+  translate: -50% 0;
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-dim);
+  white-space: nowrap;
+  pointer-events: none;
 }
 
 .wave-bars {

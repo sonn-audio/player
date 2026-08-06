@@ -182,8 +182,21 @@ export function NowPlayingView({
           {zone.error && <p className="notice warn">{zone.error}</p>}
 
           {/* The nameplate: where it came from, then what it is. The rail's signal path no longer
-              repeats the verdict — see `FormatChips` and `SignalPath`. */}
-          <p className="format-chips">
+              repeats the verdict — see `FormatChips` and `SignalPath`.
+
+              Keyed on the *wire* format, so the row re-arrives — the same small rise the heading
+              has — exactly when the equipment relocks: a 16/44.1 record giving way to a 24/192 one
+              is a moment on this face the way a track change is on the other. The signature leaves
+              the bitrate out (it moves every second) and the track out (an unchanged wire across a
+              whole album should sit perfectly still). */}
+          <p
+            className="format-chips"
+            key={
+              zone.format?.output
+                ? `${zone.format.output.codec}/${zone.format.output.sampleRate}/${zone.format.output.bitDepth}/${zone.format.bitPerfect}/${zone.format.source?.codec ?? ''}`
+                : 'silent'
+            }
+          >
             {zone.source && <SourceChip source={zone.source} />}
             <FormatChips format={zone.format} />
           </p>
