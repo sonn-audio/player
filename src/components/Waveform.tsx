@@ -33,6 +33,15 @@ export function Waveform({ zone }: { zone: ApiZoneState }) {
   const api = useApi();
   const live = useLiveProgress(zone);
   const [scrubbing, setScrubbing] = useState<number | null>(null);
+  /*
+   * Where the pointer is over the timeline, as a fraction — the scope's cursor.
+   *
+   * An instrument answers before you commit: hovering the envelope shows a hairline and the time
+   * it would seek to, so scrubbing starts as a measurement instead of a guess. Mouse only — under
+   * a finger the cursor would sit exactly where the finger is hiding it, and touch already gets
+   * its answer from the drag itself (`wave-time` follows the scrub).
+   */
+  const [hover, setHover] = useState<number | null>(null);
 
   const seekable = zone.source?.seekable === true && zone.duration > 0;
   // While a drag is in flight the display follows the finger, not the server: the zone reports where
@@ -65,7 +74,17 @@ export function Waveform({ zone }: { zone: ApiZoneState }) {
         as one that has not been recorded yet — and that is the normal state for the first seconds of
         anything and for the whole of a track on an output with no visualiser.
       */}
-      <div className="wave-body">
+      <div
+        className="wave-body"
+        onPointerMove={(event) => {
+          if (!seekable || event.pointerType !== 'mouse') {
+            return;
+          }
+          const rect = event.currentTarget.getBoundingClientRect();
+          setHover(Math.max(0, Math.min(1, (event.clientX - rect.left) / rect.width)));
+        }}
+        onPointerLeave={() => setHover(null)}
+      >
         {/* The played part of the baseline, as one line rather than as a tick per unmeasured bucket.
             Opening the player mid-track means most of what has played was never measured here, and
             drawing those as dim green dots made the honest gap read as noise. */}
@@ -89,6 +108,17 @@ export function Waveform({ zone }: { zone: ApiZoneState }) {
             colour change — which matters most at the start of a track, where there is barely any
             colour to change. */}
         <span className="wave-head" style={{ left: `${fraction * 100}%` }} aria-hidden="true" />
+
+        {/* The cursor: the hairline and the time it would seek to. Suppressed mid-scrub, where the
+            elapsed readout is already following the finger and a second time would disagree with it. */}
+        {hover !== null && scrubbing === null && (
+          <>
+            <span className="wave-cursor" style={{ left: `${hover * 100}%` }} aria-hidden="true" />
+            <span className="wave-cursor-time" style={{ left: `${hover * 100}%` }} aria-hidden="true">
+              {formatTime(hover * zone.duration)}
+            </span>
+          </>
+        )}
 
         {seekable && (
           <input
