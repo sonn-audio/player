@@ -22,6 +22,15 @@
  * two stances (`what the music is` / `what the audio is`) and the footer says the truth that makes
  * the choice weightless — the other face stays one press away, always.
  *
+ * **And a phone is not asked at all.** The two faces are a *desk* question: a desk has the width for
+ * a spectrum beside a signal path, and a person at one may genuinely be either kind of listener. A
+ * phone is one product — the full-screen player, the record's own colours, the thumb's gestures —
+ * and asking it to choose between that and a rack instrument squeezed into one column is asking a
+ * question with a right answer, which is not a question. So below the shell's phone line the ask
+ * never appears and the art player simply starts; the technical face stays what it is there — the
+ * specialist view, one row away in the player sheet, or a deep link (`#/technical`) that still works
+ * for the person who wants the instrument in their pocket anyway.
+ *
  * A bare url thereafter opens the face you were last in. (Where storage is unwritable — private-mode
  * Safari — the ask would return each visit for the same reason the face itself cannot be remembered;
  * `undecided` therefore also requires that storage *works*, and such browsers keep the old behaviour:
@@ -57,6 +66,12 @@ function readStored(): Face | null {
     return null;
   }
 }
+
+/**
+ * The shell's phone line — the art face's own 979px breakpoint, read once at load. Below it the
+ * ask never shows (see the note above): a phone is one product, and it is the art player.
+ */
+const PHONE = window.matchMedia?.('(max-width: 979px)').matches ?? false;
 
 /**
  * Whether an answer, once given, would actually be kept. Asking a browser that cannot remember
@@ -99,7 +114,7 @@ export function useFace(): {
    * already animating. `Root` owns the ask's lifecycle from here.
    */
   const [undecided] = useState<boolean>(
-    () => parse(window.location.hash) === null && readStored() === null && storageWorks(),
+    () => !PHONE && parse(window.location.hash) === null && readStored() === null && storageWorks(),
   );
   /* Whether the switch we are in the middle of is carrying a sleeve across — see `coverMorph`. */
   const [morphing, setMorphing] = useState(false);
