@@ -593,15 +593,23 @@ export function Browse({
   const title = query ? `“${query}”` : (container?.name ?? here.label ?? 'Music');
 
   /*
-   * A record, as opposed to a shelf.
+   * An object, as opposed to a shelf.
    *
-   * A listing of tracks with a container that has its own picture *is* an album, a playlist or a station
-   * list — an object, with a cover and a running order. It used to render as a bare title over a list and
-   * threw the picture away entirely, which on the art player's own browse view is the one thing it cannot
-   * do. Anything else (a category, a grid of covers) keeps the plain heading: a shelf is not an object and
-   * giving it a hero would be inventing one.
+   * A container with its own picture is a *thing* — an album, a playlist, an artist — and a thing
+   * gets the hero: its picture large, its name on it, the two things you can do to it. A category
+   * or a service root keeps the plain heading; a shelf is not an object and giving it a hero would
+   * be inventing one. `detail` narrows the heroes to the track-listed kind (an album, a running
+   * order), which is what decides the run line and the numbered rows below.
    */
-  const detail = !query && trackish && container?.coverUrl ? container : null;
+  const hero = !query && container?.coverUrl ? container : null;
+  const detail = hero && trackish ? hero : null;
+
+  /*
+   * Round for a person, square for a record — the one presentation decision `kind` makes here.
+   * Presentation only, with a safe fallback: an unknown kind simply stays square, which is never
+   * wrong, so the open set stays open.
+   */
+  const portrait = hero?.kind === 'artist';
 
   /** `24 tracks · 1 hr 32 min` — what the object is, in the two numbers anyone wants of it. */
   const runLine = ((): string => {
@@ -622,16 +630,16 @@ export function Browse({
     <div className="cx-browse">
       {/* The container's own artwork, washed out behind its title — the one flourish in this view,
           and only when there is a picture to wash. */}
-      {!query && container?.coverUrl && trackish && (
+      {hero && (
         <>
-          <span className="cx-browse-bg" style={{ backgroundImage: itemCoverCss(container.coverUrl) }} />
+          <span className="cx-browse-bg" style={{ backgroundImage: itemCoverCss(hero.coverUrl) }} />
           <span className="cx-browse-fade" />
         </>
       )}
 
       <div
         className="cx-browse-inner"
-        data-detail={detail ? '' : undefined}
+        data-detail={hero ? '' : undefined}
         data-search={query ? '' : undefined}
       >
         <button type="button" className="mono cx-browse-back" onClick={back}>
@@ -639,28 +647,29 @@ export function Browse({
           back
         </button>
 
-        {detail ? (
+        {hero ? (
           /*
-           * The record itself, as the left half of the page.
+           * The thing itself, as the left half of the page.
            *
-           * Sleeve, what it is, what it is called, who by, and the two things you can do to it — the same
-           * furniture the stage gives a playing track, because a record you are looking at and a record
-           * that is playing are the same kind of object. Sticky, so the cover stays with you down a
-           * hundred-track playlist: the list is the thing that scrolls, not the thing it belongs to.
+           * Sleeve or portrait, what it is, what it is called, who by, and the two things you can do
+           * to it — the same furniture the stage gives a playing track, because a record you are
+           * looking at and a record that is playing are the same kind of object. Sticky, so the
+           * picture stays with you down a hundred-track playlist: the list is the thing that
+           * scrolls, not the thing it belongs to.
            */
-          <header className="cx-detail">
+          <header className="cx-detail" data-portrait={portrait || undefined}>
             <span className="cx-detail-art">
-              <span className="cx-detail-bloom" style={{ backgroundImage: itemCoverCss(detail.coverUrl) }} />
-              <span className="cx-detail-cover" style={{ backgroundImage: itemCoverCss(detail.coverUrl) }}>
-                <Motion src={detail.animatedCoverUrl} />
+              <span className="cx-detail-bloom" style={{ backgroundImage: itemCoverCss(hero.coverUrl) }} />
+              <span className="cx-detail-cover" style={{ backgroundImage: itemCoverCss(hero.coverUrl) }}>
+                <Motion src={hero.animatedCoverUrl} />
               </span>
             </span>
 
             {runLine && <span className="mono cx-detail-kind">{runLine}</span>}
             <h1 className="disp cx-detail-title">{title}</h1>
-            {detail.artist && <span className="cx-detail-sub">{detail.artist}</span>}
+            {hero.artist && <span className="cx-detail-sub">{hero.artist}</span>}
 
-            {detail.playable && <Actions container={detail} zone={zone} onPlay={play} />}
+            {hero.playable && <Actions container={hero} zone={zone} onPlay={play} />}
           </header>
         ) : (
           <div className="cx-browse-head">
@@ -684,99 +693,108 @@ export function Browse({
           </div>
         )}
 
-        {/* Who this is, when the server can say — see `About`. Keyed so a new container starts
-            folded rather than inheriting the last one's `more`. */}
-        {!query && about && <About about={about} key={aboutId ?? 'none'} />}
-
-        {/* Ghosts only when there is nothing else to look at: a re-search should not blank the results
-            it is about to replace. */}
-        {((loading && !query) || searching) && items.length === 0 && sections.length === 0 && <Waiting />}
-
-        {!loading && !searching && items.length === 0 && sections.length === 0 && (
-          <p className="cx-browse-empty mono">{query ? 'nothing found' : 'nothing here'}</p>
-        )}
-
-        {sections.map((section) => (
-          <section className="cx-shelf" key={section.id}>
-            <div className="cx-sec-head">
-              <span className="cx-sec-lbl mono">{section.name}</span>
-              <span className="cx-sec-rule" />
-            </div>
-            {/* The mask on the right edge is what says "this row continues" without a scrollbar. */}
-            <div className="cx-shelf-row">
-              {section.items.map((item, index) => (
-                <Tile
-                  key={item.id}
-                  item={item}
-                  index={index}
-                  onOpen={() => open(item)}
-                  onPlay={() => play(item)}
-                />
-              ))}
-            </div>
-          </section>
-        ))}
-
-        {doors ? (
-          <div className="cx-doors">
-            {items.map((item, index) => (
-              <Door key={item.id} item={item} index={index} onOpen={() => open(item)} />
-            ))}
-          </div>
-        ) : trackish ? (
-          <div className="cx-trows">
-            {items.map((item, index) => (
-              <TrackRow
-                key={item.id}
-                item={item}
-                index={index}
-                playing={nowPlaying !== '' && item.name.trim().toLowerCase() === nowPlaying}
-                paused={zone?.state !== 'playing'}
-                onPlay={() => play(item)}
-                onQueue={() => queue(item)}
-              />
-            ))}
-          </div>
-        ) : (
-          items.length > 0 && (
-            <div className="cx-grid">
-              {items.map((item, index) => (
-                <Tile
-                  key={item.id}
-                  item={item}
-                  index={index}
-                  onOpen={() => open(item)}
-                  onPlay={() => play(item)}
-                />
-              ))}
-            </div>
-          )
-        )}
-
         {/*
-          The names beside this one, as a shelf at the end of the page — where a person who has
-          read the records above goes next. The same `Tile` as everywhere: a similar item is a
-          full item, openable and playable, not a caption.
+          One wrapper for everything the header introduces, so the desktop's two-column detail
+          layout has exactly three children to place — back, the hero, and this — instead of five
+          auto-flowing blocks landing wherever the grid's cursor happens to be.
         */}
-        {!query && about && about.similar.length > 0 && (
-          <section className="cx-shelf cx-similar">
-            <div className="cx-sec-head">
-              <span className="cx-sec-lbl mono">beside this</span>
-              <span className="cx-sec-rule" />
+        <div className="cx-browse-body">
+
+          {/* Who this is, when the server can say — see `About`. Keyed so a new container starts
+              folded rather than inheriting the last one's `more`. */}
+          {!query && about && <About about={about} key={aboutId ?? 'none'} />}
+
+          {/* Ghosts only when there is nothing else to look at: a re-search should not blank the results
+              it is about to replace. */}
+          {((loading && !query) || searching) && items.length === 0 && sections.length === 0 && <Waiting />}
+
+          {!loading && !searching && items.length === 0 && sections.length === 0 && (
+            <p className="cx-browse-empty mono">{query ? 'nothing found' : 'nothing here'}</p>
+          )}
+
+          {sections.map((section) => (
+            <section className="cx-shelf" key={section.id}>
+              <div className="cx-sec-head">
+                <span className="cx-sec-lbl mono">{section.name}</span>
+                <span className="cx-sec-rule" />
+              </div>
+              {/* The mask on the right edge is what says "this row continues" without a scrollbar. */}
+              <div className="cx-shelf-row">
+                {section.items.map((item, index) => (
+                  <Tile
+                    key={item.id}
+                    item={item}
+                    index={index}
+                    onOpen={() => open(item)}
+                    onPlay={() => play(item)}
+                  />
+                ))}
+              </div>
+            </section>
+          ))}
+
+          {doors ? (
+            <div className="cx-doors">
+              {items.map((item, index) => (
+                <Door key={item.id} item={item} index={index} onOpen={() => open(item)} />
+              ))}
             </div>
-            <div className="cx-shelf-row">
-              {about.similar.map((item, index) => (
-                <Tile
+          ) : trackish ? (
+            <div className="cx-trows">
+              {items.map((item, index) => (
+                <TrackRow
                   key={item.id}
                   item={item}
                   index={index}
-                  onOpen={() => open(item)}
+                  playing={nowPlaying !== '' && item.name.trim().toLowerCase() === nowPlaying}
+                  paused={zone?.state !== 'playing'}
                   onPlay={() => play(item)}
+                  onQueue={() => queue(item)}
                 />
               ))}
             </div>
-          </section>
-        )}
+          ) : (
+            items.length > 0 && (
+              <div className="cx-grid">
+                {items.map((item, index) => (
+                  <Tile
+                    key={item.id}
+                    item={item}
+                    index={index}
+                    onOpen={() => open(item)}
+                    onPlay={() => play(item)}
+                  />
+                ))}
+              </div>
+            )
+          )}
+
+          {/*
+            The names beside this one, as a shelf at the end of the page — where a person who has
+            read the records above goes next. The same `Tile` as everywhere: a similar item is a
+            full item, openable and playable, not a caption.
+          */}
+          {!query && about && about.similar.length > 0 && (
+            <section className="cx-shelf cx-similar">
+              <div className="cx-sec-head">
+                <span className="cx-sec-lbl mono">beside this</span>
+                <span className="cx-sec-rule" />
+              </div>
+              <div className="cx-shelf-row">
+                {about.similar.map((item, index) => (
+                  <Tile
+                    key={item.id}
+                    item={item}
+                    index={index}
+                    onOpen={() => open(item)}
+                    onPlay={() => play(item)}
+                  />
+                ))}
+              </div>
+            </section>
+          )}
+
+        </div>
       </div>
     </div>
   );
