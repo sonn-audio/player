@@ -2899,6 +2899,70 @@
   color: #d8a08a;
 }
 
+/*
+ * --- scenes ----------------------------------------------------------------
+ *
+ * Rows in the same voice as the rooms above them: a sleeve, a name, a line saying what it does,
+ * and words for actions. No card, no border — the rule underneath is the boundary, exactly as it
+ * is for the rooms and the more-sheet rows.
+ */
+.cx-scene {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: 14px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--hair-soft);
+}
+
+.cx-scene-art {
+  grid-column: 1;
+  grid-row: 1 / span 2;
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 3px;
+  background-color: var(--cx-cover);
+  background-position: center;
+  background-size: cover;
+}
+
+.cx-scene-art[data-empty] {
+  color: var(--t7);
+}
+
+.cx-scene-name {
+  grid-column: 2;
+  grid-row: 1;
+  overflow: hidden;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--t3);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cx-scene-sub {
+  grid-column: 2;
+  grid-row: 2;
+  overflow: hidden;
+  margin-top: 3px;
+  font-size: 8.5px;
+  letter-spacing: 0.16em;
+  color: var(--t6);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cx-scene-act {
+  grid-column: 3;
+  grid-row: 1 / span 2;
+  display: inline-flex;
+  gap: 16px;
+}
+
 /* --- more sheet ----------------------------------------------------------- */
 
 .cx-more {

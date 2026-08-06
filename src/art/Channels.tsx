@@ -18,7 +18,8 @@
  */
 import { useState } from 'react';
 import { useApi } from '@/state/ServerContext';
-import { zoneCoverCss } from '@/art/cover';
+import { sceneable, useScenes } from '@/state/useScenes';
+import { itemCoverCss, zoneCoverCss } from '@/art/cover';
 import { useVolumeControl } from '@/art/volume';
 import { Bars, EmptyArtGlyph, SpeakerGlyph } from '@/art/glyphs';
 import type { Channel } from '@/art/useCur';
@@ -226,6 +227,7 @@ export function RoomsSheet({
   const api = useApi();
   const selected = zones.find((zone) => zone.id === selectedId) ?? null;
   const [rejected, setRejected] = useState<string[]>([]);
+  const { scenes, save, recall, forget } = useScenes();
 
   const group = selected?.group ?? null;
   const members = group
@@ -287,6 +289,30 @@ export function RoomsSheet({
   };
 
   const grouped = members.length > 1;
+
+  /*
+   * Where playback actually lives for the selected room — the group's leader. A scene is
+   * captured off the leader because that is whose `source.id` and whose track the group is
+   * playing; a follower's own fields can be stale (the same rule `useCur` renders by).
+   */
+  const leader = group ? (zones.find((zone) => zone.id === group.leader) ?? selected) : selected;
+
+  /**
+   * Saves this moment: these rooms, this music, these volumes. The name is the one thing the
+   * house cannot know — same `window.prompt` the favourites rename uses, for the same reason:
+   * a text field with focus management inside a sheet is a lot of machinery for one string.
+   */
+  const saveScene = (): void => {
+    if (!leader) {
+      return;
+    }
+    const suggestion = leader.track?.title || leader.source?.name || '';
+    const name = window.prompt('Name this moment', suggestion);
+    if (!name?.trim()) {
+      return;
+    }
+    save(leader, zones, name.trim());
+  };
 
   return (
     <div className="cx-rooms">
@@ -384,6 +410,64 @@ export function RoomsSheet({
               }
             />
           ))}
+        </>
+      )}
+
+      {/*
+       * Scenes, in the sheet that is about the house — because a scene *is* a house decision:
+       * these rooms, this music, these volumes, saved as one word and recalled as one press.
+       *
+       * `save this moment` sits in the head the way `ungroup` does above: it acts on what the
+       * sheet already shows rather than opening a builder. There is nothing to configure — the
+       * moment is the configuration — which is what keeps a scene honest: if it can be heard,
+       * it can be saved. Absent entirely when there is nothing replayable and nothing saved.
+       */}
+      {(scenes.length > 0 || sceneable(leader)) && (
+        <>
+          <div className="cx-sec-head cx-rooms-head">
+            <span className="cx-sec-lbl mono">scenes</span>
+            <span className="cx-sec-rule" />
+            {sceneable(leader) && (
+              <button type="button" className="mono cx-disband" onClick={saveScene}>
+                save this moment
+              </button>
+            )}
+          </div>
+
+          {scenes.map((scene) => {
+            const cover = itemCoverCss(scene.coverUrl);
+            return (
+              <div className="cx-scene" key={scene.id}>
+                <span className="cx-scene-art" style={{ backgroundImage: cover }} data-empty={!cover || undefined}>
+                  {!cover && <EmptyArtGlyph size={15} />}
+                </span>
+                <span className="cx-scene-name">{scene.name}</span>
+                <span className="cx-scene-sub mono">
+                  {[scene.what, scene.rooms.map((room) => room.name).join(' + ')]
+                    .filter(Boolean)
+                    .join(' · ')}
+                </span>
+                <span className="cx-scene-act">
+                  {/* The one word with a consequence carries the accent, as everywhere in this sheet. */}
+                  <button
+                    type="button"
+                    className="cx-room-link mono"
+                    data-accent
+                    onClick={() =>
+                      void recall(scene).catch(() =>
+                        setRejected(['That scene did not start — a room in it may have gone.']),
+                      )
+                    }
+                  >
+                    play
+                  </button>
+                  <button type="button" className="cx-room-link mono" onClick={() => forget(scene.id)}>
+                    forget
+                  </button>
+                </span>
+              </div>
+            );
+          })}
         </>
       )}
 

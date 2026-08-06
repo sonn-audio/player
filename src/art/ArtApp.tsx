@@ -20,6 +20,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useApi, useServer } from '@/state/ServerContext';
 import { useSelectedZone } from '@/state/useSelectedZone';
+import { useMediaSession } from '@/state/useMediaSession';
+import { useScenes } from '@/state/useScenes';
+import { useWakeLock } from '@/state/useWakeLock';
 import { Brand } from '@/shell/Brand';
 import { Mark } from '@/components/Mark';
 import { Stage, MobileStage, greeting } from '@/art/Stage';
@@ -93,6 +96,20 @@ export function ArtApp({ onSwitchFace }: { onSwitchFace: (face: Face) => void })
   const leader = cur.leader;
   const { queue } = useQueue(leader?.id ?? null);
   const recents = useRecents(zone?.id ?? null);
+  const { scenes, recall } = useScenes();
+
+  // The lock screen and the media keys follow the room this face controls — the leader,
+  // which is where `useCur` already says playback lives.
+  useMediaSession(leader);
+
+  /*
+   * A playing room keeps the screen on.
+   *
+   * The idle state below turns this face into a picture of the record, which is what a wall
+   * panel is for — and the OS, seeing only an inputless minute, would blank it. Held while
+   * audio flows and released when the house goes quiet, so a silent panel still sleeps.
+   */
+  useWakeLock(cur.isPlaying);
 
   /*
    * One drop of the record's colour, and the handle that says when the artwork changed.
@@ -306,6 +323,15 @@ export function ArtApp({ onSwitchFace }: { onSwitchFace: (face: Face) => void })
                   services={services}
                   onBrowse={openBrowse}
                   onInputs={() => setView({ kind: 'inputs' })}
+                  // A quiet house is exactly when a saved moment earns its place: scenes carry
+                  // their own rooms and volumes, so they work from this screen with nothing
+                  // selected — unlike the recents beside them, which need a room to land in.
+                  scenes={scenes.slice(0, 4).map((scene) => ({
+                    key: scene.id,
+                    title: scene.name,
+                    cover: scene.coverUrl,
+                    play: () => void recall(scene),
+                  }))}
                   recents={recents.slice(0, 4).map((item) => ({
                     key: item.source,
                     title: item.title || item.album || item.source,
@@ -607,6 +633,7 @@ function Welcome({
   services,
   onBrowse,
   onInputs,
+  scenes,
   recents,
 }: {
   greetingText: string;
@@ -614,6 +641,8 @@ function Welcome({
   services: ContentService[];
   onBrowse: (node?: BrowseNode) => void;
   onInputs: () => void;
+  /** Saved moments, drawn exactly like the recents: a scene is also a record on the shelf. */
+  scenes: Array<{ key: string; title: string; cover: string; play: () => void }>;
   recents: Array<{ key: string; title: string; cover: string; play: () => void }>;
 }) {
   return (
@@ -634,6 +663,25 @@ function Welcome({
           inputs
         </button>
       </div>
+
+      {/*
+        Scenes before recents, because they are the stronger promise: a recent needs a room to be
+        selected to land anywhere, a scene brings its own rooms and volumes with it. Same shelf,
+        same records — what a scene *is* to the eye is the sleeve of the moment it saved.
+      */}
+      {scenes.length > 0 && (
+        <div className="cx-welcome-recents">
+          <span className="cx-welcome-recents-lbl mono">set the scene</span>
+          <div className="cx-welcome-recents-row">
+            {scenes.map((item) => (
+              <button type="button" className="cx-welcome-recent" key={item.key} onClick={item.play}>
+                <span className="cx-welcome-recent-cov" style={{ backgroundImage: itemCoverCss(item.cover) }} />
+                <span className="cx-welcome-recent-title">{item.title}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {recents.length > 0 && (
         <div className="cx-welcome-recents">

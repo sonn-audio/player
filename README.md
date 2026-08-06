@@ -93,6 +93,22 @@ and picks its shape from what a listing actually holds — a table of contents w
 artwork, shelves where the server sent sections, a running order where it is a record, a grid
 otherwise.
 
+**Scenes** — a moment in the house, saved and replayed in one press. "Dinner" is not a track: it is
+the kitchen and the living room in step, that playlist, at *that* volume. Every part of it already
+exists in the contract — `group`, `volume`, and `play` with a stored `source.id` — so a scene is
+three calls with remembered arguments, no new server capability required. Saved from the rooms sheet
+("save this moment", art face), recalled from the same sheet or from the quiet-house screen, and
+stored in this browser, because the API has no store for client preferences — which is a finding.
+
+**A citizen of the platform** — the player answers the surfaces a browser offers a thing that plays
+music. `navigator.mediaSession` carries the leader's title, artwork and position, and routes the
+lock screen's and a headset's keys through the ordinary zone commands (no silent-audio trick to
+steal the keys; they surface when this tab genuinely plays). A web app manifest and icons make it
+installable — a home-screen app on a phone, no URL bar on a wall panel — with deliberately no
+service worker, since a cache-first shell on a panel would keep replaying an old build after every
+upgrade. And while a room is playing, the art face holds a screen wake lock, so the panel the idle
+state was designed for actually stays on to show it.
+
 ## How it is laid out
 
 ```
