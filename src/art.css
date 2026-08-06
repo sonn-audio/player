@@ -3607,6 +3607,105 @@
     inset 0 0 0 1px rgb(255 255 255 / 14%);
 }
 
+/*
+ * On a phone, the record opens.
+ *
+ * The desk shows a sleeve beside a list — a catalogue's composition, and the right one where there
+ * is width to compose in. A phone has one column and a thumb, and the page for one album should be
+ * what the player already taught: the artwork edge to edge, melting into the page over its bottom
+ * third, the words standing on the fade — the *doek*, again, because a record you are looking at
+ * and a record that is playing are the same kind of object. The bloom layer stands down here; a
+ * full-bleed picture does not need its own halo behind it.
+ */
+@media (max-width: 979px) {
+  .cx-browse-inner[data-detail] {
+    padding-top: 0;
+  }
+
+  /* Floating on the artwork, where the picture now begins at the page's very top. */
+  .cx-browse-inner[data-detail] > .cx-browse-back {
+    position: absolute;
+    top: 16px;
+    left: var(--browse-pad);
+    z-index: 4;
+    color: var(--t2);
+    text-shadow: 0 1px 8px rgb(0 0 0 / 70%);
+  }
+
+  .cx-detail {
+    position: relative;
+    display: block;
+    margin: 0 calc(-1 * var(--browse-pad)) 24px;
+  }
+
+  .cx-detail-art {
+    width: 100%;
+    height: min(88vw, 46vh);
+    aspect-ratio: auto;
+    margin-bottom: 0;
+  }
+
+  .cx-detail-bloom {
+    display: none;
+  }
+
+  .cx-detail-cover {
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  /* How the canvas stops — the player's own gesture, ending in the page rather than on an edge. */
+  .cx-detail-art::after {
+    content: '';
+    position: absolute;
+    inset: 42% 0 0;
+    z-index: 2;
+    background: linear-gradient(180deg, transparent, color-mix(in srgb, var(--cx-bg) 55%, transparent) 55%, var(--cx-bg));
+  }
+
+  /* The words stand on the fade, pulled up into the picture's own lower third. Doubled with the
+     parent class on purpose: the base rules below use `margin` shorthand, and these longhands
+     must outrank them wherever they land in the sheet. */
+  .cx-detail .cx-detail-kind,
+  .cx-detail .cx-detail-title,
+  .cx-detail .cx-detail-sub,
+  .cx-detail .cx-browse-actions {
+    position: relative;
+    z-index: 3;
+    margin-left: var(--browse-pad);
+    margin-right: var(--browse-pad);
+  }
+
+  .cx-detail .cx-detail-kind {
+    margin-top: -30px;
+  }
+
+  /*
+   * The one loud thing on the page: play, as a filled pill.
+   *
+   * Everywhere else this face's actions are words, and that is right for things done occasionally
+   * — but "play this record" is what the whole page is *for*, and on a phone it competes with a
+   * thumb's reach rather than a pointer's precision. Filled near-white rather than the accent,
+   * because `--g` is the *playing* record's colour: painting this album's play button in another
+   * album's tint would be the one dishonest pixel on the page.
+   */
+  .cx-detail .cx-play-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 42px;
+    padding: 0 22px;
+    border-radius: 21px;
+    background: rgb(255 255 255 / 92%);
+    color: #0a0a0c;
+    font-weight: 700;
+  }
+
+  .cx-detail .cx-browse-actions {
+    margin-top: 16px;
+  }
+}
+
 .cx-detail-kind {
   font-size: 9px;
   letter-spacing: 0.22em;
