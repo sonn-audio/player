@@ -12,11 +12,13 @@
  * and no verdict to give; it has a record playing. Silver is what a control surface is when it is not
  * saying anything.
  *
- * Three variables come out, matching the design's own names:
+ * Four variables come out, matching the design's own names:
  *
  *  - `--g`   the accent itself
  *  - `--gb`  a brighter cut for text on dark, 42% toward white
  *  - `--gon` ink for text *on* the accent, always near-black
+ *  - `--cx-stage` the record's own dark, for the one surface allowed more than a drop: the
+ *    phone player. See `stageOf` below for the whole argument.
  */
 import type { ApiTrack } from '@/api/types';
 
@@ -35,7 +37,16 @@ const DAMP = 0.4;
  */
 const MIN_LUM = 0.5;
 
-export type Accent = { '--g': string; '--gb': string; '--gon': string };
+export type Accent = { '--g': string; '--gb': string; '--gon': string; '--cx-stage': string };
+
+/** The page's own near-black (`--cx-bg`), the pole every stage colour is pulled toward. */
+const STAGE_BASE: Rgb = [10, 10, 12];
+
+/** How far the record's dark is pulled toward the page's. 0 = the raw sleeve dark, 1 = the page. */
+const STAGE_DAMP = 0.42;
+
+/** Above this luminance a "dark" background is not one, and gets pulled down until it is. */
+const STAGE_MAX_LUM = 0.16;
 
 type Rgb = [number, number, number];
 
@@ -80,6 +91,35 @@ const blend = (from: Rgb, to: Rgb, t: number): Rgb => [
  *
  * A room with nothing playing gets the plain silver, so the surface has no opinion until it has music.
  */
+/**
+ * The stage colour: the record's own dark, tamed until it can be the room.
+ *
+ * This is the one deliberate exception to "one drop, no wash". The *phone* player is a different
+ * situation from every other surface: it is the whole screen, held in a hand, showing one record —
+ * a pocket edition of the sleeve, not a control surface among rooms. There the contract's
+ * `colors.backgroundDark` (derived server-side from the artwork, sitting unused since the wash was
+ * retired) finally does the job it was made for: the page under the canvas takes the record's own
+ * temperature, the way the record industry has printed inner sleeves forever.
+ *
+ * Tamed twice, both toward the page's own near-black: `STAGE_DAMP` so a red album and a blue one
+ * are one product in two lights rather than two products, and a luminance ceiling so a sleeve
+ * whose "dark" is not (a white-bordered pressing) cannot bleach the text standing on it. No track,
+ * or no palette, is exactly the page colour — the surface has no opinion until it has music.
+ */
+function stageOf(track: ApiTrack | null | undefined): Rgb {
+  const dark = track?.colors?.backgroundDark;
+  if (!dark) {
+    return STAGE_BASE;
+  }
+  let stage = blend([dark[0], dark[1], dark[2]], STAGE_BASE, STAGE_DAMP);
+  const lum = luminance(stage);
+  if (lum > STAGE_MAX_LUM) {
+    // Pull the overshoot back toward the page, proportionally — a near-miss barely moves.
+    stage = blend(stage, STAGE_BASE, Math.min(1, (lum - STAGE_MAX_LUM) / lum + 0.35));
+  }
+  return stage;
+}
+
 export function accentOf(track: ApiTrack | null | undefined): Accent {
   const silver = parse(SILVER);
   let accent = silver;
@@ -98,6 +138,7 @@ export function accentOf(track: ApiTrack | null | undefined): Accent {
     '--g': toHex(accent),
     '--gb': toHex(lighten(accent, 0.42)),
     '--gon': '#0a0a0b',
+    '--cx-stage': toHex(stageOf(track)),
   };
 }
 

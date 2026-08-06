@@ -18,7 +18,9 @@ The same rooms, the same API, two stances towards the music, one press apart fro
 - **Art** (`#/art`) — what the music *is*. Artwork large, controls quiet, nothing technical anywhere.
   On a desk the sleeve holds the middle, with the queue folded down the right edge and the house
   folded along the bottom — both open when you reach for them and get out of the way when you do not.
-  A phone gets a full-screen player that never scrolls, a bottom nav and sheets. Left alone for a
+  A phone gets a full-screen player that never scrolls, a bottom nav and sheets — painted in the
+  record's own colours (`track.colors.backgroundDark`, damped), with the sleeve answering the thumb:
+  swipe sideways for the next track, up for the queue, a haptic tick at each commit. Left alone for a
   minute the chrome dims away and the screen becomes the record, which is what a wall panel spends
   most of its day being.
 

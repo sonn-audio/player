@@ -477,12 +477,25 @@ const SWIPE_COMMIT_PX = 55;
 /** Under this it was a tap, not a drag. Without the band, an imprecise tap skips the track. */
 const SWIPE_TAP_PX = 8;
 
+/**
+ * One soft tick under the thumb, at the moment a gesture commits.
+ *
+ * The canvas gestures have no button to press and therefore no visual travel to feel — a swipe
+ * that changes the track and a swipe that fell short look identical until the artwork answers.
+ * 8 ms is a tick, not a buzz: confirmation, in the register of a camera shutter. Android only;
+ * iOS Safari has no vibration API and the optional call simply never fires there.
+ */
+function tick(): void {
+  navigator.vibrate?.(8);
+}
+
 export function MobileStage({
   cur,
   artKey,
   channels,
   currentLeaderId,
   onOpenRooms,
+  onOpenQueue,
   onBrowse,
   onPickChannel,
 }: {
@@ -491,6 +504,8 @@ export function MobileStage({
   channels: Channel[];
   currentLeaderId: number | null;
   onOpenRooms: () => void;
+  /** Raised by swiping up on the canvas — what is *behind* this track, pulled up from under it. */
+  onOpenQueue: () => void;
   onBrowse: () => void;
   onPickChannel: (leaderId: number) => void;
 }) {
@@ -512,12 +527,12 @@ export function MobileStage({
    * threshold into a visible one — the sleeve leans, the lean stops keeping up past the commit distance,
    * and letting go under it springs back.
    */
-  const swipe = useRef<{ x: number; moved: boolean } | null>(null);
+  const swipe = useRef<{ x: number; y: number; moved: boolean } | null>(null);
   const [dx, setDx] = useState(0);
   const [dragging, setDragging] = useState(false);
 
   const onDown = (event: React.PointerEvent): void => {
-    swipe.current = { x: event.clientX, moved: false };
+    swipe.current = { x: event.clientX, y: event.clientY, moved: false };
     setDragging(true);
   };
   const onMove = (event: React.PointerEvent): void => {
@@ -526,10 +541,11 @@ export function MobileStage({
       return;
     }
     const raw = event.clientX - start.x;
-    if (Math.abs(raw) > SWIPE_TAP_PX) {
+    if (Math.abs(raw) > SWIPE_TAP_PX || Math.abs(event.clientY - start.y) > SWIPE_TAP_PX) {
       start.moved = true;
     }
-    // Linear to the commit point, then a third of the distance — rubber, not rails.
+    // Linear to the commit point, then a third of the distance — rubber, not rails. The lean is
+    // horizontal only: a vertical swipe barely moves x, so the sleeve holds still under it.
     const over = Math.max(0, Math.abs(raw) - SWIPE_COMMIT_PX);
     setDx((Math.abs(raw) - over + over / 3) * Math.sign(raw));
   };
@@ -544,10 +560,25 @@ export function MobileStage({
       settle();
       return;
     }
-    const travelled = event.clientX - start.x;
-    if (start.moved && Math.abs(travelled) >= SWIPE_COMMIT_PX) {
-      void (travelled < 0 ? api.next(leader.id) : api.previous(leader.id));
+    const travelledX = event.clientX - start.x;
+    const travelledY = event.clientY - start.y;
+    if (start.moved && Math.abs(travelledY) >= SWIPE_COMMIT_PX && Math.abs(travelledY) > Math.abs(travelledX)) {
+      /*
+       * Up, from the sleeve: what is behind this track. The queue was reachable only through the
+       * bottom nav, a reach away from where the thumb already is — and pulling upward on the thing
+       * that is playing to see what follows it is the gesture every phone player has taught.
+       * Downward deliberately does nothing; the sheet's own dismiss is a downward drag, and a pull
+       * that opens what a push closes would make the pair feel broken.
+       */
+      if (travelledY < 0) {
+        tick();
+        onOpenQueue();
+      }
+    } else if (start.moved && Math.abs(travelledX) >= SWIPE_COMMIT_PX) {
+      tick();
+      void (travelledX < 0 ? api.next(leader.id) : api.previous(leader.id));
     } else if (!start.moved) {
+      tick();
       toggle();
     }
     settle();

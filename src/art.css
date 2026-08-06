@@ -38,6 +38,14 @@
   initial-value: #dfe2e6;
 }
 
+/* The phone stage's ground — the record's own dark, damped (see `stageOf`). Registered for the
+   same reason as the accent: the room should change temperature on a dissolve, not on a cut. */
+@property --cx-stage {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #0a0a0c;
+}
+
 .cx-root {
   /*
    * Silver, or the record's own colour damped 40% toward it — never the console's green.
@@ -49,10 +57,12 @@
   --g: #c9cdd4;
   --gb: #dfe2e6;
   --gon: #0a0a0b;
+  --cx-stage: #0a0a0c;
 
   transition:
     --g 1.9s ease,
-    --gb 1.9s ease;
+    --gb 1.9s ease,
+    --cx-stage 1.9s ease;
 
   /* the only surface */
   --cx-bg: #0a0a0c;
@@ -1254,11 +1264,24 @@
   filter: grayscale(1) blur(90px) brightness(0.58);
 }
 
+/*
+ * The scrim is where the record paints the room.
+ *
+ * Its stops used to be the page's fixed near-black; they are now `--cx-stage` — the sleeve's own
+ * `backgroundDark`, damped in `accent.ts` — so the whole phone player takes the record's
+ * temperature the way an inner sleeve does, while the blurred artwork behind it stays the
+ * grayscale light source it always was. The var glides (see its `@property`), so a track change
+ * re-tempers the room over the same beat as the artwork's dissolve.
+ */
 .cx-mstage-scrim {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background: linear-gradient(180deg, rgb(10 10 12 / 30%), rgb(10 10 12 / 85%));
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--cx-stage) 30%, transparent),
+    color-mix(in srgb, var(--cx-stage) 85%, transparent)
+  );
 }
 
 /*
@@ -1343,16 +1366,17 @@
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background: linear-gradient(180deg, rgb(10 10 12 / 55%), transparent 24%);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--cx-stage) 55%, transparent), transparent 24%);
 }
 
-/* How the canvas stops. Not an edge — a dissolve into the page, over the bottom third. */
+/* How the canvas stops. Not an edge — a dissolve into the page, over the bottom third. The page
+   under a phone canvas is the record's own dark (see `.cx-mstage-scrim`), so it melts into that. */
 .cx-doek-fade {
   position: absolute;
   inset: auto 0 0;
   height: 36%;
   pointer-events: none;
-  background: linear-gradient(180deg, transparent, rgb(10 10 12 / 55%) 55%, #0a0a0c);
+  background: linear-gradient(180deg, transparent, color-mix(in srgb, var(--cx-stage) 55%, transparent) 55%, var(--cx-stage));
 }
 
 /*
@@ -4295,7 +4319,9 @@
   height: calc(56px + env(safe-area-inset-bottom));
   padding-bottom: env(safe-area-inset-bottom);
   border-top: 1px solid var(--hair);
-  background: rgb(10 10 12 / 92%);
+  /* The record's dark, not the page's: the nav stands on the stage it belongs to, and a fixed
+     near-black strip under a warm room was the one part of the screen refusing the light. */
+  background: color-mix(in srgb, var(--cx-stage) 92%, transparent);
   backdrop-filter: blur(14px);
 }
 
@@ -4430,7 +4456,7 @@
     inset: 0 0 0 auto;
     width: 30%;
     height: auto;
-    background: linear-gradient(90deg, transparent, rgb(10 10 12 / 55%) 55%, #0a0a0c);
+    background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--cx-stage) 55%, transparent) 55%, var(--cx-stage));
   }
 
   /*
