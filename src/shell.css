@@ -505,6 +505,25 @@
   }
 }
 
+/*
+ * When the art face goes to rest, the frame rests with it.
+ *
+ * The idle state (`.cx-root[data-idle]`, see `useIdle`) fades everything that is about *using* the
+ * player, but the wordmark and the face switch are the shell's — drawn above both faces, outside
+ * the face's reach — so the poster kept two lit labels in its corners all night. `:has()` is the
+ * honest bridge: the face publishes its state in the DOM and the shell reads it, no props threaded
+ * through three layers for one opacity. Same 1.4s ramp as the face's own chrome, `visibility` so
+ * the invisible console link cannot swallow the click that wakes the room.
+ */
+body:has(.cx-root[data-idle]) .brand-shared,
+body:has(.cx-root[data-idle]) .face-switch {
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity 1.4s cubic-bezier(0.2, 0.8, 0.2, 1),
+    visibility 1.4s step-end;
+}
+
 /* --- the ask: which player ------------------------------------------------- */
 
 /*

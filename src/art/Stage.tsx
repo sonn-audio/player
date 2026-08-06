@@ -386,16 +386,31 @@ export function Stage({
             {cur.hasTrack && cur.source && <i className="cx-eyebrow-src">{cur.source}</i>}
           </span>
 
-          <h1 className="disp cx-title">{cur.title}</h1>
+          {/*
+           * A track change is a moment, so the words arrive like one.
+           *
+           * Keyed on the track's identity: React remounts the three lines and each runs the same
+           * rise the phone's meta block already had, staggered a beat apart (`cx-swap-2/-3`) so
+           * the title leads and the provenance follows. Keyed on title+artist rather than on the
+           * zone object, which is replaced every second — a rise per progress tick would turn a
+           * gesture into a twitch.
+           */}
+          <h1 className="disp cx-title cx-swap" key={`t:${cur.title}|${cur.artist}`}>
+            {cur.title}
+          </h1>
 
-          <div className="cx-artistrow">
+          <div className="cx-artistrow cx-swap cx-swap-2" key={`a:${cur.title}|${cur.artist}`}>
             {cur.artist && <span className="cx-artist">{cur.artist}</span>}
             {cur.hasTrack && <Favourite cur={cur} />}
           </div>
 
           {/* The album, under the artist rather than folded into it with a dash: it is a place the
               track came from, not part of its name. */}
-          {cur.album && cur.album !== cur.title && <span className="cx-album">{cur.album}</span>}
+          {cur.album && cur.album !== cur.title && (
+            <span className="cx-album cx-swap cx-swap-3" key={`b:${cur.title}|${cur.album}`}>
+              {cur.album}
+            </span>
+          )}
 
           {/* Why the last attempt failed. `play` answers before anything is resolved, so this is the
               only place a failure can appear — and it belongs beside the title it failed to become. */}
@@ -621,9 +636,10 @@ export function MobileStage({
         {cur.showBar && <Times cur={cur} />}
         {cur.isLive && <Live />}
 
-        {/* Keyed on the room so the block crossfades when you switch channels — the one piece of motion on
-            this screen, and it exists to answer "did that tap do anything". */}
-        <div className="cx-mstage-meta" key={currentLeaderId ?? 'none'}>
+        {/* Keyed on the room *and* the track, so the block crossfades when you switch channels — feedback
+            for a tap that otherwise changes nothing visible — and again when the record moves on, which is
+            the same moment the desktop stage marks with its rise. */}
+        <div className="cx-mstage-meta" key={`${currentLeaderId ?? 'none'}:${cur.title}`}>
           <div className="cx-mstage-titles">
             <span className="disp cx-mtitle">{cur.title}</span>
             {cur.artist && <span className="cx-martist">{cur.artist}</span>}
