@@ -433,6 +433,21 @@ svg {
   border-bottom: 1px solid var(--line);
 }
 
+/*
+ * Narrow windows keep the corner switch — this face never gives up its way out (see the
+ * `.face-switch` note in shell.css) — but the switch is *fixed*, drawn by the shell over this bar,
+ * and the bar was laying its view label straight through it. So below the shell's breakpoint the
+ * bar sets a place for its guest: the brand column stops pretending it heads a 244px rail that is
+ * no longer beside it, and the right edge leaves the corner exactly the room the switch occupies.
+ * The label clips against it instead of colliding, which `overflow: hidden` above already handles.
+ */
+@media (max-width: 979px) {
+  .app-bar {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    padding-right: 156px;
+  }
+}
+
 .app-bar-brand {
   padding-left: 12px;
 }
