@@ -12,6 +12,7 @@
  * not carry.
  */
 import type {
+  ContentAbout,
   ContentItem,
   ContentListing,
   ContentSearchResult,
@@ -169,6 +170,23 @@ export class ApiClient {
   /** Describes one id without browsing its parent — the deep-link / stored-id case. */
   item(id: string): Promise<ContentItem> {
     return this.request('GET', `/items/${encodeURIComponent(id)}`);
+  }
+
+  /**
+   * The story around an id — a biography, related items — when the server can tell one.
+   *
+   * A **proposed** route (`docs/PROPOSAL-item-about.md`): the server enriches from a cloud
+   * metadata service and caches; this player renders whatever arrives. 404 is the ordinary
+   * answer — an older server, no enrichment configured, an item nobody has written about — so it
+   * resolves null the way `waveform` does, rather than throwing over a page that renders fine
+   * without it.
+   */
+  async itemAbout(id: string): Promise<ContentAbout | null> {
+    try {
+      return await this.request<ContentAbout>('GET', `/items/${encodeURIComponent(id)}/about`);
+    } catch {
+      return null;
+    }
   }
 
   /**
