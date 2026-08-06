@@ -25,6 +25,7 @@ import { NowPlayingView } from '@/views/NowPlayingView';
 import { ContentView } from '@/views/ContentView';
 import { Icon } from '@/components/Icon';
 import { useLocalPlayback } from '@/state/useLocalPlayback';
+import { useMediaSession } from '@/state/useMediaSession';
 import type { ApiZoneState } from '@/api/types';
 
 /**
@@ -85,6 +86,22 @@ export function App() {
     [local.zone, serverZones],
   );
   const { zone, zoneId, select } = useSelectedZone(zones, synced);
+
+  /*
+   * The platform's media surface — lock screen, media keys — follows the selected room.
+   *
+   * Pointed at the group *leader* rather than the selection itself, because a follower mirrors
+   * its leader for everything a lock screen shows and its own track fields can be stale — the
+   * same rule the art face's `useCur` applies before rendering anything.
+   */
+  const mediaZone = useMemo(() => {
+    if (!zone) {
+      return null;
+    }
+    const leaderId = zone.group?.leader ?? zone.id;
+    return zones.find((candidate) => candidate.id === leaderId) ?? zone;
+  }, [zone, zones]);
+  useMediaSession(mediaZone);
 
   /*
    * The page's colour does *not* follow the music.

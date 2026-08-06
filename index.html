@@ -4,7 +4,20 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="color-scheme" content="dark light" />
+    <!-- The browser chrome around a standalone install takes the page's own near-black. -->
+    <meta name="theme-color" content="#0a0a0c" />
     <title>sonn player</title>
+    <!--
+      Installable: a phone puts the player on its home screen, a wall panel runs it without a
+      URL bar. The manifest's relative paths resolve against /player/, where the audioserver
+      serves this bundle; Vite prefixes the absolute hrefs below with the same base. There is
+      deliberately no service worker — the bundle is served by the audioserver itself, and a
+      cache-first shell on a wall panel would keep replaying an old build after every upgrade.
+    -->
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <!-- Safari ignores the manifest; this is the one line it reads for the home-screen icon. -->
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
   </head>
   <body>
     <div id="root"></div>
