@@ -21,6 +21,8 @@ import { horizontalDrag } from '@/art/drag';
 import { useVolumeControl } from '@/art/volume';
 import { Crossfade } from '@/art/Crossfade';
 import { Motion } from '@/art/Motion';
+import { ArtWave } from '@/art/Wave';
+import { useTrackWaveform } from '@/state/useTrackWaveform';
 import { useZoneFavorite } from '@/state/useZoneFavorite';
 import { useCoverAnchor } from '@/shell/coverMorph';
 import {
@@ -531,6 +533,12 @@ export function MobileStage({
   const [dx, setDx] = useState(0);
   const [dragging, setDragging] = useState(false);
 
+  /*
+   * The track's scanned shape, when the server has one — the timeline becomes the envelope of
+   * the record (see `ArtWave`). Null for every streaming source, which keeps the plain bar.
+   */
+  const shape = useTrackWaveform(leader);
+
   const onDown = (event: React.PointerEvent): void => {
     swipe.current = { x: event.clientX, y: event.clientY, moved: false };
     setDragging(true);
@@ -653,8 +661,9 @@ export function MobileStage({
             </span>
           )}
 
-          {/* Riding the canvas's bottom edge, half on and half off it. */}
-          {cur.showBar && <Timeline cur={cur} bare />}
+          {/* Riding the canvas's bottom edge, half on and half off it — as the record's own
+              envelope where a scanned shape exists, as the plain bar where none can. */}
+          {cur.showBar && (shape ? <ArtWave cur={cur} levels={shape} /> : <Timeline cur={cur} bare />)}
         </div>
       ) : (
         <div className="cx-doek cx-doek-empty">

@@ -20,6 +20,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useApi, useServer } from '@/state/ServerContext';
 import { useSelectedZone } from '@/state/useSelectedZone';
+import { useLocalPlayback } from '@/state/useLocalPlayback';
 import { useMediaSession } from '@/state/useMediaSession';
 import { useScenes } from '@/state/useScenes';
 import { useWakeLock } from '@/state/useWakeLock';
@@ -82,7 +83,22 @@ type Sheet = null | 'rooms' | 'queue' | 'more';
 
 export function ArtApp({ onSwitchFace }: { onSwitchFace: (face: Face) => void }) {
   const api = useApi();
-  const { zones, status, synced, content } = useServer();
+  const { zones: serverZones, status, synced, content } = useServer();
+  const local = useLocalPlayback();
+
+  /*
+   * This device takes its place among the rooms — here too, not only in the technical face.
+   *
+   * The art face is the phone's face, and a phone player that can only *point at* other rooms is
+   * a remote control. With the local destination merged in ("This phone", first in the list), the
+   * rooms sheet offers the device in your hand alongside the kitchen, and picking it makes this a
+   * music player in its own right — same components, same transport, audio out of this speaker.
+   * The technical face has always done this; the phone face needing it more was an oversight.
+   */
+  const zones = useMemo(
+    () => (local.zone ? [local.zone, ...serverZones] : serverZones),
+    [local.zone, serverZones],
+  );
   const { zone, zoneId, select } = useSelectedZone(zones, synced);
   const phone = useIsPhone();
 

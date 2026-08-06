@@ -44,8 +44,16 @@ import type { ApiAudioFormat, ApiLocalDestination, ApiZoneState } from '@/api/ty
 /** Where the reclaimable client id lives. Per browser, which is the right scope for "this tab". */
 const CLIENT_ID_KEY = 'sonn.player.localClientId';
 
-/** What this destination is called in everyone else's list, when the user gives no name. */
-const DEFAULT_NAME = 'This browser';
+/**
+ * What this destination is called in everyone else's list, when the user gives no name.
+ *
+ * Named for the *device*, not the software: in a rooms list alongside "Kitchen" and "Study",
+ * "This phone" says what will make the sound, and "This browser" is only right where that word
+ * means something — a desk. The art face's phone breakpoint (979px) is the same line drawn here,
+ * read once at module load: a registration keeps its name for its lifetime, and a window resized
+ * across the boundary mid-session is a desk being narrowed, not a phone appearing.
+ */
+const DEFAULT_NAME = window.matchMedia?.('(max-width: 979px)').matches ? 'This phone' : 'This browser';
 
 /** How long to wait for the audio socket before calling it a failure. */
 const CONNECT_TIMEOUT_MS = 8000;

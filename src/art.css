@@ -1425,6 +1425,52 @@
   width: 100%;
 }
 
+/*
+ * The envelope, where the plain bar would be (see `ArtWave`).
+ *
+ * Same edge, same gesture, more truth: the bars are the record's own dynamics, in this face's
+ * voice — soft, rounded, low contrast, the played part in the sleeve's accent. It stands half on
+ * the artwork and half on the page like the bar it replaces, so the bottom of the canvas stays
+ * the seam where the picture becomes the player.
+ */
+.cx-doek .cx-wave {
+  position: absolute;
+  left: 18px;
+  right: 18px;
+  bottom: -14px;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  height: 34px;
+  cursor: pointer;
+  touch-action: none;
+}
+
+.cx-wave i {
+  flex: 1;
+  min-width: 1px;
+  height: var(--h, 8%);
+  min-height: 3px;
+  border-radius: 1.5px;
+  background: rgb(255 255 255 / 24%);
+  /* Legible on the artwork's bottom edge without a scrim of its own: each bar carries a whisper
+     of shadow, the way the room name at the top does. */
+  box-shadow: 0 1px 5px rgb(0 0 0 / 35%);
+  transition:
+    background-color 0.35s,
+    height 0.5s var(--cx-ease);
+}
+
+.cx-wave i[data-played] {
+  background: var(--g);
+}
+
+/* While the finger is down nothing may lag it — the same rule every fader here follows. */
+.cx-wave[data-scrub] i {
+  transition: background-color 0.1s;
+}
+
 .cx-doek-empty {
   display: flex;
   flex-direction: column;
@@ -4589,6 +4635,7 @@
 .cx-root[data-idle] .cx-transport,
 .cx-root[data-idle] .cx-bar-wrap,
 .cx-root[data-idle] .cx-doek .cx-bar,
+.cx-root[data-idle] .cx-doek .cx-wave,
 .cx-root[data-idle] .cx-times,
 .cx-root[data-idle] .cx-volrow,
 .cx-root[data-idle] .cx-mvol,
