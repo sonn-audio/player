@@ -191,6 +191,32 @@
   filter: grayscale(1) blur(110px) brightness(0.5);
 }
 
+/*
+ * The light moves.
+ *
+ * Real light does — a room lit by a window is never lit the same way twice a minute apart — and a
+ * wash that holds perfectly still reads as wallpaper the moment you notice it. So the blurred
+ * record drifts: one slow arc of scale and position, ninety seconds out and ninety back, always
+ * below the speed of attention. The 10–14% overscan these layers already carry is what the drift
+ * spends, so no edge ever shows. `transform` composes with nothing else here, and the global
+ * reduced-motion rule (end of this sheet) stills it for those who asked for stillness.
+ */
+.cx-bg,
+.cx-mstage-bg {
+  animation: cx-wash-drift 90s ease-in-out infinite alternate;
+  will-change: transform;
+}
+
+@keyframes cx-wash-drift {
+  from {
+    transform: scale(1) translate(0, 0);
+  }
+
+  to {
+    transform: scale(1.08) translate(1.4%, -1.1%);
+  }
+}
+
 .cx-bg-scrim {
   position: absolute;
   inset: 0;
@@ -1413,6 +1439,23 @@
     opacity: 1;
     translate: none;
   }
+}
+
+/*
+ * The same rise, for the desktop stage's three lines — keyed remounts run it on every track
+ * change (see `Stage`). Staggered a beat apart so the title leads and the provenance follows:
+ * one gesture read left to right down the column, not three lines blinking at once.
+ */
+.cx-swap {
+  animation: cx-title-swap 0.55s var(--cx-ease) both;
+}
+
+.cx-swap-2 {
+  animation-delay: 60ms;
+}
+
+.cx-swap-3 {
+  animation-delay: 110ms;
 }
 
 /*
@@ -4623,9 +4666,14 @@
   z-index: 4;
   font-size: clamp(30px, 4.4vw, 58px);
   font-variant-numeric: tabular-nums;
+  text-align: right;
   color: var(--t6);
   pointer-events: none;
-  animation: cx-clock-in 1.6s var(--cx-ease) both;
+  /* Its own wander, off the stage's period (300s against 240s), so the two never read as one
+     rigid plate sliding around — the clock and the record drift like things in the same slow water. */
+  animation:
+    cx-clock-in 1.6s var(--cx-ease) both,
+    cx-wander 300s ease-in-out infinite;
 }
 
 @keyframes cx-clock-in {
@@ -4635,6 +4683,73 @@
   to {
     opacity: 1;
   }
+}
+
+/* The date, a size class below the time: what a clock on a wall knows. */
+.cx-idle-date {
+  display: block;
+  margin-top: 7px;
+  font-size: clamp(9px, 0.9vw, 11px);
+  font-style: normal;
+  letter-spacing: 0.32em;
+  color: var(--t7);
+}
+
+/*
+ * And, very slowly, everything sharp wanders.
+ *
+ * A wall panel is on for years, and the poster state is exactly the state that burns one in: the
+ * same sleeve edge, the same clock digits, hours at a stretch. So while the room rests, everything
+ * with a hard edge drifts through a hand's breadth of pixels on a cycle measured in minutes — far
+ * below what an eye notices in the moment, far above what an OLED needs to stay healthy. The
+ * washes already live on their own 90s drift; this moves the sharp things over them. Waking snaps
+ * nothing: the wander is `transform`-only, and the ramp back happens inside the same 1.4s the
+ * chrome takes to return.
+ */
+.cx-root[data-idle] .cx-stage-inner,
+.cx-root[data-idle] .cx-doek,
+.cx-root[data-idle] .cx-mstage-controls {
+  animation: cx-wander 240s ease-in-out infinite;
+}
+
+@keyframes cx-wander {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+
+  25% {
+    transform: translate3d(7px, -5px, 0);
+  }
+
+  50% {
+    transform: translate3d(-5px, -9px, 0);
+  }
+
+  75% {
+    transform: translate3d(-8px, 6px, 0);
+  }
+}
+
+/*
+ * The record's position, as light on the floor of the screen.
+ *
+ * Not a bar — no rail, no knob, nothing to invite a hand. A hairline of the record's own accent,
+ * growing left to right, faint enough to ignore and present enough to answer the one glance a
+ * poster gets from across the room: *how far in are we*. It rides `width` on a 1s linear
+ * transition because position ticks arrive once a second — the light glides instead of stepping.
+ */
+.cx-idle-progress {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  z-index: 4;
+  height: 2px;
+  background: var(--g);
+  opacity: 0.22;
+  pointer-events: none;
+  transition: width 1s linear;
+  animation: cx-clock-in 1.6s var(--cx-ease) both;
 }
 
 /* --- focus + motion ------------------------------------------------------- */

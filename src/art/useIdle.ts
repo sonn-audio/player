@@ -68,8 +68,12 @@ export function useIdle(afterMs: number, enabled: boolean): boolean {
   return idle;
 }
 
-/** `21:04` — the one readout the dimmed screen carries, because a panel on a wall is also a clock. */
-export function useClock(active: boolean): string {
+/**
+ * `21:04` and `thu, aug 6` — the readout the dimmed screen carries, because a panel on a wall is
+ * also a clock, and a clock on a wall usually knows the date. Split into two values rather than
+ * one string so the date can be typeset a size class below the time instead of riding beside it.
+ */
+export function useClock(active: boolean): { time: string; date: string } {
   const [now, setNow] = useState(() => new Date());
 
   useEffect(() => {
@@ -81,5 +85,11 @@ export function useClock(active: boolean): string {
     return () => window.clearInterval(timer);
   }, [active]);
 
-  return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+  return {
+    time: `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`,
+    // Lowercased to match the face's mono voice, which never shouts — `WED` at poster size does.
+    date: new Intl.DateTimeFormat('en', { weekday: 'short', day: 'numeric', month: 'short' })
+      .format(now)
+      .toLowerCase(),
+  };
 }

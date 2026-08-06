@@ -222,8 +222,23 @@ export function ArtApp({ onSwitchFace }: { onSwitchFace: (face: Face) => void })
         />
       )}
 
-      {/* The dimmed screen's one readout: a panel on a wall is also a clock. */}
-      {idle && <span className="cx-idle-clock disp">{clock}</span>}
+      {/* The dimmed screen's one readout: a panel on a wall is also a clock — and a calendar. */}
+      {idle && (
+        <span className="cx-idle-clock disp">
+          {clock.time}
+          <i className="cx-idle-date mono">{clock.date}</i>
+        </span>
+      )}
+
+      {/*
+       * The one measurement the poster keeps: how far into the record the room is, as a light
+       * along the bottom edge rather than a bar with a knob. Faint enough to ignore, present
+       * enough to answer the glance from across the room. Only when there is a position at all —
+       * a station gets nothing, which is honest.
+       */}
+      {idle && cur.showBar && (
+        <span className="cx-idle-progress" style={{ width: cur.pct }} aria-hidden="true" />
+      )}
 
       {/* --- desktop chrome --- */}
       {!phone && (
