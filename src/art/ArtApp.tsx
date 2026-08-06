@@ -361,6 +361,7 @@ export function ArtApp({ onSwitchFace }: { onSwitchFace: (face: Face) => void })
                   channels={channels}
                   currentLeaderId={leaderOf(zone, zones)?.id ?? null}
                   onOpenRooms={() => setSheet('rooms')}
+                  onOpenQueue={() => setSheet('queue')}
                   onBrowse={() => openBrowse()}
                   onPickChannel={pickChannel}
                 />
