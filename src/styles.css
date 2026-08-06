@@ -2430,7 +2430,9 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
   width: var(--level, 0%);
   height: 100%;
   background: var(--accent);
-  transition: width 60ms linear;
+  /* The loudness value rides the same ballistics as the bars now; a transition here was the old
+     smoothing, and two of them made the hairline trail the display it belongs to. */
+  transition: none;
 }
 
 /*
@@ -2533,6 +2535,29 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
   mask: linear-gradient(to top, #000 0%, #000 26%, transparent 94%);
 }
 
+/*
+ * And it lets go at the ends.
+ *
+ * The vertical dissolve removed the display's ceiling; its left and right edges still stopped dead
+ * at the first and last column, which is the remaining half of the rectangle. Three columns of
+ * taper on each side and the resting grid emerges from the page instead of spanning it as a plate.
+ * Only the unlit ground fades — a reading in the outermost bin is a reading, and gets full ink.
+ */
+.spectrum i:first-child::before,
+.spectrum i:last-child::before {
+  opacity: 0.35;
+}
+
+.spectrum i:nth-child(2)::before,
+.spectrum i:nth-last-child(2)::before {
+  opacity: 0.55;
+}
+
+.spectrum i:nth-child(3)::before,
+.spectrum i:nth-last-child(3)::before {
+  opacity: 0.78;
+}
+
 .spectrum i > span {
   position: absolute;
   inset: auto 0 0;
@@ -2582,7 +2607,13 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
     #000 0 var(--seg),
     transparent var(--seg) calc(var(--seg) + var(--seg-gap))
   );
-  transition: height 60ms linear;
+  /*
+   * No transition while live: the ballistics loop in `useAnalysis` animates every frame now, with
+   * a rise and a fall time of its own, and a CSS transition on top of that is smoothing applied
+   * twice — the attack arrived late and the whole display wore a faint rubbery lag. The settling
+   * rule below still owns the moment the music stops.
+   */
+  transition: none;
 }
 
 /*
@@ -2629,7 +2660,8 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
   background: color-mix(in oklab, var(--accent) 82%, white);
   box-shadow: 0 0 6px color-mix(in oklab, var(--accent) 55%, transparent);
   opacity: 0.72;
-  transition: bottom 60ms linear;
+  /* Per-frame from the ballistics loop, like the bars — see the note on the lit column. */
+  transition: none;
 }
 
 /* --- frequency axis ------------------------------------------------------- */
