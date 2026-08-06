@@ -31,6 +31,29 @@ const PEAK_HOLD_MS = 700;
 const PEAK_FALL_PER_SEC = 0.45;
 
 /**
+ * Meter ballistics: how the drawn level chases the measured one.
+ *
+ * The wire delivers a discrete reading every 30–100 ms, whatever the device's rate allows, and a
+ * display that simply steps to each one is a slideshow of a meter — the slower the device, the
+ * worse the flipbook. Hardware meters never had this problem because a needle has mass: it leaps
+ * toward a transient and *falls* with weight. These two time constants are that mass, applied
+ * every animation frame between events: rise fast enough to feel instant without arriving as a
+ * step, fall slow enough that a drumbeat leaves a wake instead of a blink. Wall-clock based, so a
+ * 30 fps panel and a 144 Hz monitor draw the same motion.
+ */
+const RISE_TAU_MS = 35;
+const FALL_TAU_MS = 190;
+
+/**
+ * When a chasing value is allowed to arrive, as a fraction of full scale.
+ *
+ * An exponential approach never quite lands; below this distance it is snapped to its target so a
+ * silent display truly goes quiet — and, more to the point, so the loop can stop publishing.
+ * Renders happen only while something is visibly moving; a room playing silence costs nothing.
+ */
+const SETTLE_FRACTION = 0.002;
+
+/**
  * The geometry `/zones/{id}/analysis` bins and scales by.
  *
  * Read off the stream: `analysis.ready` states `spectrum` (the same `f_min`/`f_max`/`scale` the
@@ -136,14 +159,22 @@ const EMPTY: Analysis = { loudness: 0, bins: [], pitch: '', peak: 0, peaks: [] }
 type Entry = {
   refs: number;
   source: EventSource;
+  /** What components read: the *drawn* values, ballistics applied. */
   state: Analysis;
+  /** The latest wire values — the targets the drawn values chase. */
   pending: Analysis;
+  /** The ballistics loop's rAF handle. Runs for the life of the entry. */
   frame: number | null;
   listeners: Set<() => void>;
   /** When each bar's held peak was last set, for the hold-then-fall behaviour. */
   peakAt: number[];
   /** The previous paint's timestamp, so the fall is per second rather than per frame. */
   paintedAt: number;
+  /** The chasing values, raw wire scale. Separate from `state` so a publish is a decision. */
+  shownBins: number[];
+  shownLoudness: number;
+  /** Set by an arriving event; makes the next frame publish even if nothing numeric moved. */
+  dirty: boolean;
 };
 
 /** One entry per zone being watched, keyed by id. */
@@ -168,21 +199,62 @@ function open(base: string, zoneId: number, rate: number): Entry {
     listeners: new Set(),
     peakAt: [],
     paintedAt: 0,
+    shownBins: [],
+    shownLoudness: 0,
+    dirty: false,
   };
 
-  const flush = (): void => {
-    entry.frame = null;
-    const next = entry.pending;
+  /*
+   * The ballistics loop: every frame, the drawn values chase the wire's latest.
+   *
+   * This used to be a flush scheduled per event, which tied the display's motion to the stream's
+   * rate — smooth at 30 events a second, a flipbook at 10. Now the wire only moves the *targets*
+   * and this loop, running at the paint rate, gives the meter its mass: `1 − e^(−dt/τ)` per frame
+   * is the classic exponential approach, `τ` split by direction so a transient leaps and a decay
+   * falls (see `RISE_TAU_MS`). Publishing is gated: a frame where nothing visibly moved — silence,
+   * a paused pipeline, values settled onto their targets — re-renders nobody.
+   */
+  const step = (now: number): void => {
+    entry.frame = requestAnimationFrame(step);
+    // Clamped: a backgrounded tab stops painting, and an hour-long `dt` on return should snap to
+    // the present rather than integrate an hour of fall.
+    const dt = entry.paintedAt ? Math.min(100, now - entry.paintedAt) : 16;
+    entry.paintedAt = now;
+    const riseK = 1 - Math.exp(-dt / RISE_TAU_MS);
+    const fallK = 1 - Math.exp(-dt / FALL_TAU_MS);
+    const settleAt = geometry.fullScale * SETTLE_FRACTION;
+    let moving = entry.dirty;
+
+    const chase = (shown: number, target: number): number => {
+      const next = shown + (target - shown) * (target >= shown ? riseK : fallK);
+      return Math.abs(next - target) < settleAt ? target : next;
+    };
+
+    const targets = entry.pending.bins;
+    const bins = targets.map((target, index) => {
+      const next = chase(entry.shownBins[index] ?? 0, target);
+      if (next !== (entry.shownBins[index] ?? 0)) {
+        moving = true;
+      }
+      return next;
+    });
+    entry.shownBins = bins;
+
+    const loudness = chase(entry.shownLoudness, entry.pending.loudness);
+    if (loudness !== entry.shownLoudness) {
+      moving = true;
+    }
+    entry.shownLoudness = loudness;
+
     /*
      * Peak-hold: a new high is taken immediately and then held still for `PEAK_HOLD_MS` before it
-     * starts sinking at `PEAK_FALL_PER_SEC`. Timed off the clock rather than counted in frames, so a
-     * display painting at 30 fps behaves like one painting at 60.
+     * starts sinking at `PEAK_FALL_PER_SEC`. Measured against the *wire* values, not the chased
+     * ones — the cap marks the transient itself, and a cap that waited for the bar to catch up
+     * would remember something slightly less than what happened.
      */
-    const now = performance.now();
-    const elapsed = entry.paintedAt ? (now - entry.paintedAt) / 1000 : 0;
-    entry.paintedAt = now;
+    const elapsed = dt / 1000;
     const held = entry.state.peaks;
-    const peaks = next.bins.map((bin, index) => {
+    const peaks = targets.map((bin, index) => {
       const height = toHeight(bin);
       const previous = held[index] ?? 0;
       if (height >= previous) {
@@ -192,11 +264,27 @@ function open(base: string, zoneId: number, rate: number): Entry {
       if (now - (entry.peakAt[index] ?? 0) < PEAK_HOLD_MS) {
         return previous;
       }
-      return Math.max(height, previous - elapsed * PEAK_FALL_PER_SEC);
+      const fallen = Math.max(height, previous - elapsed * PEAK_FALL_PER_SEC);
+      return fallen;
     });
-    entry.state = { ...next, peaks };
+    if (!moving && peaks.some((peak, index) => peak !== (held[index] ?? 0))) {
+      moving = true;
+    }
+
+    if (!moving) {
+      return;
+    }
+    entry.dirty = false;
+    entry.state = {
+      loudness,
+      bins,
+      pitch: entry.pending.pitch,
+      peak: entry.pending.peak,
+      peaks,
+    };
     publish(entry);
   };
+  entry.frame = requestAnimationFrame(step);
 
   source.onmessage = (message: MessageEvent<string>) => {
     try {
@@ -218,9 +306,8 @@ function open(base: string, zoneId: number, rate: number): Entry {
       if (event.type === 'pitch' && typeof event.midiQ88 === 'number') {
         entry.pending = { ...entry.pending, pitch: pitchName(event.midiQ88) };
       }
-      if (entry.frame === null) {
-        entry.frame = requestAnimationFrame(flush);
-      }
+      // Events only move the targets; the ballistics loop is the one thing that ever publishes.
+      entry.dirty = true;
     } catch {
       // A malformed realtime sample must not take down the player.
     }
