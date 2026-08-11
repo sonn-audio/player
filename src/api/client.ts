@@ -58,6 +58,21 @@ export class ApiError extends Error {
 /** How long a command may take before we give up on it. */
 const REQUEST_TIMEOUT_MS = 10_000;
 
+/**
+ * Whether a body is the about panel's own shape.
+ *
+ * The one route this client checks rather than trusts, because it is the one route that may not
+ * exist: a proposed surface is answered by servers that predate it, and a wrong 200 there costs
+ * a crash instead of a missing panel. `similar` is the field the page indexes into, so it is the
+ * field that decides — a body without it is not an about, whatever else it is.
+ */
+function isAbout(body: unknown): body is ContentAbout {
+  if (typeof body !== 'object' || body === null) {
+    return false;
+  }
+  return Array.isArray((body as Partial<ContentAbout>).similar);
+}
+
 export class ApiClient {
   /** Absolute base without a trailing slash, e.g. `http://host:7090`. */
   private readonly origin: string;
@@ -183,7 +198,13 @@ export class ApiClient {
    */
   async itemAbout(id: string): Promise<ContentAbout | null> {
     try {
-      return await this.request<ContentAbout>('GET', `/items/${encodeURIComponent(id)}/about`);
+      const body = await this.request<unknown>('GET', `/items/${encodeURIComponent(id)}/about`);
+      // A proposed route is one a server may not have, and "does not have it" has been spelled
+      // more than one way: a server whose `/items/{id}` route matched greedily answered 200 with
+      // the *item* instead, whose shape has no `similar` — and a page that trusted the type
+      // crashed on the panel it was about to skip. So the shape is checked rather than declared:
+      // anything that is not an about is the same nothing a 404 is.
+      return isAbout(body) ? body : null;
     } catch {
       return null;
     }
