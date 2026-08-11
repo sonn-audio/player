@@ -3,6 +3,11 @@
 *A finding from the player, in the form the player exists to produce: the contract cannot do
 something its competitors' contracts can, and this is the smallest honest surface that closes it.*
 
+> **Status: implemented, both sides.** The audioserver answers this route from MusicBrainz →
+> Wikidata → Wikipedia (no API key), resolves `similar` back through the provider the item came
+> from, and caches hits *and* misses persistently. The document is kept as written — it is the
+> reasoning behind the surface, not a to-do list.
+
 ## The gap
 
 An artist page in Music Assistant or Plexamp carries a biography, genres, and a row of similar
