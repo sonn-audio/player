@@ -1895,9 +1895,15 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
  * than a gap, so the track reads as continuous. Unmeasured buckets (`data-void`) collapse to a
  * hairline — silence is a real reading and has to look different from "nothing recorded here".
  */
+/*
+ * `min-width: 0`, not 1px. A floor here is a floor on the *strip*: with the 1px gap it made the
+ * minimum width two pixels per bar, which flex cannot shrink past, so a strip narrower than that
+ * overflowed its grid track and stopped lining up with the playhead. The bar count is measured
+ * against the track now (`BAR_PITCH_PX`), so nothing needs a floor to stay visible.
+ */
 .wave-bars i {
   flex: 1;
-  min-width: 1px;
+  min-width: 0;
   height: var(--h, 10%);
   border-radius: 1px;
   background: var(--line-strong);

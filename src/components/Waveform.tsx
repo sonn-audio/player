@@ -21,13 +21,24 @@
  * right, so it *was* a progress bar, and the two of them stacked read as the position drawn twice.
  * One element now: the envelope, the playhead, and the seek gesture.
  */
-import { useState } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import { useApi } from '@/state/ServerContext';
 import { useLiveProgress } from '@/state/useLiveProgress';
 import { useLoudnessHistory } from '@/state/useLoudnessHistory';
 import { useTrackWaveform } from '@/state/useTrackWaveform';
 import { formatTime, LIVE_LABEL } from '@/lib/format';
+import { fitLevels } from '@/lib/waveformScale';
 import type { ApiZoneState } from '@/api/types';
+
+/**
+ * Horizontal space per bar, including the 1px gap between them.
+ *
+ * Three pixels is where a waveform stops reading as a bar chart, which is the number both level
+ * sources were originally written around — each guessing at the width it would be drawn in, and
+ * disagreeing (400 buckets assumed ~1200px, 220 assumed ~660px). The strip is measured now, so this
+ * is the only place a pixel figure appears and it is a density rather than a width.
+ */
+const BAR_PITCH_PX = 3;
 
 export function Waveform({ zone }: { zone: ApiZoneState }) {
   const api = useApi();
@@ -58,8 +69,35 @@ export function Waveform({ zone }: { zone: ApiZoneState }) {
    * what draws the track that has no file behind it.
    */
   const prepared = useTrackWaveform(zone);
-  const levels = prepared ?? recorded;
+  const source = prepared ?? recorded;
   const hasShape = prepared !== null || measured;
+
+  /*
+   * How many bars fit, measured rather than assumed.
+   *
+   * The playhead and the played line are positioned as a percentage of this element, so the bars have
+   * to span exactly this element too or the picture and the position drift apart. Measured
+   * synchronously on mount as well as observed, so the first paint is already right instead of showing
+   * one frame at the data's own density.
+   */
+  const bodyRef = useRef<HTMLDivElement | null>(null);
+  const [barCount, setBarCount] = useState(0);
+  useLayoutEffect(() => {
+    const node = bodyRef.current;
+    if (!node) {
+      return undefined;
+    }
+    const fit = (width: number): void => {
+      setBarCount(width > 0 ? Math.max(1, Math.floor(width / BAR_PITCH_PX)) : 0);
+    };
+    fit(node.getBoundingClientRect().width);
+    const observer = new ResizeObserver((entries) => {
+      fit(entries[0]?.contentRect.width ?? 0);
+    });
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
+  const levels = barCount > 0 ? fitLevels(source, barCount) : source;
 
   return (
     <div className="wave" data-measured={hasShape || undefined} data-seekable={seekable || undefined}>
@@ -76,6 +114,7 @@ export function Waveform({ zone }: { zone: ApiZoneState }) {
       */}
       <div
         className="wave-body"
+        ref={bodyRef}
         onPointerMove={(event) => {
           if (!seekable || event.pointerType !== 'mouse') {
             return;
