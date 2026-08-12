@@ -1842,6 +1842,9 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
   position: absolute;
   inset: 50% 0 auto;
   height: 2px;
+  /* A pseudo-element is painted after its element's children, so this 2px line would otherwise be a
+     dead strip across the middle of the scrubber — the one row a pointer is most likely to aim at. */
+  pointer-events: none;
   border-radius: var(--r-pill);
   background: var(--line);
   translate: 0 -50%;
@@ -1882,6 +1885,14 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
   position: relative;
   /* Above the baseline drawn by `.wave-body::after`. */
   z-index: 1;
+  /*
+   * And out of the way of the pointer. The scrubber is an invisible `input[type=range]` stretched
+   * across the body, and this layer sits on top of it — so without this the drawing swallowed every
+   * press and the timeline could not be scrubbed at all. Every other layer over that input already
+   * says the same thing (the cursor, its readout, the played line, the playhead); the bars were the
+   * one that did not, and they are the one that covers the whole control.
+   */
+  pointer-events: none;
   display: flex;
   align-items: center;
   gap: 1px;
