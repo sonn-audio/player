@@ -1,18 +1,17 @@
 /**
  * The timeline, as the envelope of what has played.
  *
- * Two sources, in order of preference. A **prepared** shape (`useTrackWaveform`) is the whole track,
- * scanned from the file before a note is played, so the timeline arrives complete and the playhead
- * moves across a waveform instead of drawing one. Where there is none — every streaming service, whose
- * audio only exists while it plays — it falls back to the **recorded** envelope of what has been
- * listened to (`useLoudnessHistory`): honest, and half a picture, since opening a track at 2:00 leaves
- * the first two minutes flat.
+ * One source. A **prepared** shape (`useTrackWaveform`) is the whole track, scanned from the file
+ * before a note is played, so the timeline arrives complete and the playhead moves across a waveform
+ * instead of drawing one. That needs a file, which every streaming service is not: their audio only
+ * exists while it plays.
  *
  * Two states below the ideal, both deliberate:
  *
- *  - **No measurement.** A server whose analysis stream is silent, or a zone whose output does not
- *    carry a visualiser, leaves this a flat hairline that still scrubs. A slim bar is a worse picture
- *    and a perfectly good control; a *fabricated* waveform would be a better picture and a lie.
+ *  - **No shape.** Streaming, or a file the server could not read, leaves this a flat hairline that
+ *    still scrubs. A slim bar is a worse picture and a perfectly good control; a *fabricated*
+ *    waveform, or half of a real one drawn as though it were whole, would be a better picture and a
+ *    lie.
  *  - **No duration.** Live radio has a position that climbs and no end, so there is nothing to divide
  *    into buckets and nothing to seek to. It says LIVE and shows the elapsed time.
  *
@@ -24,7 +23,6 @@
 import { useLayoutEffect, useRef, useState } from 'react';
 import { useApi } from '@/state/ServerContext';
 import { useLiveProgress } from '@/state/useLiveProgress';
-import { useLoudnessHistory } from '@/state/useLoudnessHistory';
 import { useTrackWaveform } from '@/state/useTrackWaveform';
 import { formatTime, LIVE_LABEL } from '@/lib/format';
 import { fitLevels } from '@/lib/waveformScale';
@@ -59,18 +57,22 @@ export function Waveform({ zone }: { zone: ApiZoneState }) {
   // playback actually is, which lags the gesture, and the playhead would jump backwards under it.
   const position = scrubbing ?? live;
   const fraction = zone.duration > 0 ? Math.min(1, position / zone.duration) : 0;
-  // The envelope is recorded against the *server's* position, never the dragged one — a scrub should
-  // not write samples at a place the audio has not reached.
-  const { levels: recorded, measured } = useLoudnessHistory(zone, live);
   /*
-   * The prepared shape wins where there is one, and there is no blend between the two: they are the
-   * same measurement of the same audio, so mixing them would only make the seam between "scanned" and
-   * "heard" visible for no gain. The recording keeps running underneath — it costs nothing and it is
-   * what draws the track that has no file behind it.
+   * A shape, or a progress bar. Nothing in between.
+   *
+   * There used to be a fallback: where no file could be scanned, the display drew the envelope of what
+   * had been *listened to* instead. It was honest and it was half a picture — nothing ahead of the
+   * playhead, because nothing has measured the future — and on a streaming track that is most of the
+   * bar. Read as a picture it looks like a waveform that has broken rather than one that cannot exist,
+   * which is the wrong thing for a display whose whole point is not claiming measurements it does not
+   * have.
+   *
+   * So the rule is the one the server can actually honour: a track backed by a file gets its shape,
+   * everything else gets the slim bar, and the slim bar was always a perfectly good scrubber.
    */
   const prepared = useTrackWaveform(zone);
-  const source = prepared ?? recorded;
-  const hasShape = prepared !== null || measured;
+  const source = prepared ?? [];
+  const hasShape = prepared !== null;
 
   /*
    * How many bars fit, measured rather than assumed.
