@@ -62,6 +62,50 @@ export function recordedBarHeight(position: number): number {
   return Math.min(1, amplitude / 10 ** (RECORDED_FULL_SCALE_DB / 20));
 }
 
+/**
+ * Reduce a set of levels to exactly as many bars as are being drawn.
+ *
+ * The count of levels and the count of bars are different questions, and treating them as one is
+ * what broke the display: the prepared shape arrives as 400 buckets and the recorded envelope as
+ * 220, while the strip they are drawn in is whatever the layout gives it. Rendering one bar per
+ * bucket made the picture's width a property of the *data*, so on any strip narrower than the bars
+ * needed it ran past the timeline and, worse, stopped agreeing with the playhead — which is
+ * positioned as a percentage of the strip, not of the bars.
+ *
+ * The reduction takes the **maximum** of each group, not the mean. A waveform is a picture of peaks;
+ * averaging a drum hit with the silence either side of it is how a dynamic track ends up looking
+ * like a flat block. It also keeps the "nothing recorded here" marker intact: -1 loses to any real
+ * reading, so a group is only void when all of it is.
+ *
+ * Never invents detail — asked for more bars than there are levels, it returns what it has and the
+ * bars simply come out wider.
+ *
+ * Takes `ArrayLike` because the two sources are not the same kind of array: a prepared shape is a
+ * `number[]` and a live recording is a `Float32Array`.
+ */
+export function fitLevels(levels: ArrayLike<number>, count: number): number[] {
+  if (count <= 0 || levels.length === 0) {
+    return [];
+  }
+  if (count >= levels.length) {
+    return Array.from(levels);
+  }
+  const out = new Array<number>(count);
+  for (let index = 0; index < count; index += 1) {
+    const from = Math.floor((index * levels.length) / count);
+    const to = Math.max(from + 1, Math.floor(((index + 1) * levels.length) / count));
+    let peak = -1;
+    for (let at = from; at < to; at += 1) {
+      const value = levels[at] ?? -1;
+      if (value > peak) {
+        peak = value;
+      }
+    }
+    out[index] = peak;
+  }
+  return out;
+}
+
 /** A whole prepared track to bar heights, normalised to its own peak. */
 export function preparedBarHeights(positions: number[]): number[] {
   const amplitudes = positions.map(dbPositionToAmplitude);
