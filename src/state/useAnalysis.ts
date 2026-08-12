@@ -54,6 +54,19 @@ const FALL_TAU_MS = 190;
 const SETTLE_FRACTION = 0.002;
 
 /**
+ * The longest a sample may be held back to line it up with the audio.
+ *
+ * On the presentation timeline an event's stamp says when its audio will be *heard*, which for
+ * Sendspin is about 250 ms ahead of when the event arrives — so drawing on arrival puts the meter a
+ * quarter of a second in front of the music. Holding each sample until its moment fixes that, but
+ * the delay is only ever as trustworthy as the clock estimate behind it. Past this bound something
+ * is wrong (a server that restarted and reset its monotonic origin, a sleeping tab, a zone whose
+ * renderer buffers seconds), and a display that is late by seconds is worse than one that is early
+ * by a fraction: beyond this the sample is drawn immediately.
+ */
+const MAX_ALIGN_DELAY_MS = 1500;
+
+/**
  * The geometry `/zones/{id}/analysis` bins and scales by.
  *
  * Read off the stream: `analysis.ready` states `spectrum` (the same `f_min`/`f_max`/`scale` the
@@ -175,7 +188,58 @@ type Entry = {
   shownLoudness: number;
   /** Set by an arriving event; makes the next frame publish even if nothing numeric moved. */
   dirty: boolean;
+  /**
+   * What the stream's `timestampUs` means. `presentation` = when the audio will be heard, so the
+   * sample is worth holding until then; `capture` = when it was measured, which is already past.
+   */
+  timeline: 'presentation' | 'capture';
+  /**
+   * `localMs - serverUs/1000`, or null before the first reading.
+   *
+   * Kept as the *smallest* value seen rather than the latest. Each reading is inflated by however
+   * long that message spent in flight, so the minimum is the one that travelled fastest and sits
+   * closest to the true offset — the same reason a time sync keeps its best round trip instead of
+   * averaging them all.
+   */
+  clockOffsetMs: number | null;
+  /** Samples waiting for their moment, in arrival order (which is timestamp order). */
+  queue: Array<{ dueMs: number; event: Record<string, unknown> }>;
 };
+
+/**
+ * Fold one reading of the server's audio clock into the entry's estimate.
+ *
+ * The stream states the clock twice over: once at `analysis.ready`, then on every keep-alive. One
+ * reading is enough to line samples up; the repeats are what keep them lined up, since two clocks
+ * never tick at quite the same rate.
+ */
+function noteClock(entry: Entry, serverNowUs: unknown): void {
+  if (typeof serverNowUs !== 'number' || !Number.isFinite(serverNowUs)) {
+    return;
+  }
+  const offset = performance.now() - serverNowUs / 1000;
+  entry.clockOffsetMs =
+    entry.clockOffsetMs === null ? offset : Math.min(entry.clockOffsetMs, offset);
+}
+
+/**
+ * When to draw a sample, in local rAF time — or null to draw it now.
+ *
+ * Null covers every case where holding it would be a guess dressed up as precision: no clock
+ * estimate yet, no usable timestamp, a moment that has already passed, or a delay so long
+ * (`MAX_ALIGN_DELAY_MS`) that the estimate cannot be believed.
+ */
+function dueAt(entry: Entry, timestampUs: unknown): number | null {
+  if (entry.clockOffsetMs === null || typeof timestampUs !== 'number' || !Number.isFinite(timestampUs)) {
+    return null;
+  }
+  const dueMs = timestampUs / 1000 + entry.clockOffsetMs;
+  const delay = dueMs - performance.now();
+  if (delay <= 0 || delay > MAX_ALIGN_DELAY_MS) {
+    return null;
+  }
+  return dueMs;
+}
 
 /** One entry per zone being watched, keyed by id. */
 const entries = new Map<number, Entry>();
@@ -202,6 +266,27 @@ function open(base: string, zoneId: number, rate: number): Entry {
     shownBins: [],
     shownLoudness: 0,
     dirty: false,
+    timeline: 'capture',
+    clockOffsetMs: null,
+    queue: [],
+  };
+
+  /** Move the targets from one sample. The ballistics loop is what turns them into pixels. */
+  const applyEvent = (event: Record<string, unknown>): void => {
+    if (event.type === 'loudness' && typeof event.value === 'number') {
+      entry.pending = { ...entry.pending, loudness: event.value };
+    }
+    if (event.type === 'spectrum' && Array.isArray(event.bins)) {
+      entry.pending = { ...entry.pending, bins: event.bins as number[] };
+    }
+    if (event.type === 'peak' && typeof event.strength === 'number') {
+      entry.pending = { ...entry.pending, peak: event.strength };
+    }
+    if (event.type === 'pitch' && typeof event.midiQ88 === 'number') {
+      entry.pending = { ...entry.pending, pitch: pitchName(event.midiQ88) };
+    }
+    // Events only move the targets; the ballistics loop is the one thing that ever publishes.
+    entry.dirty = true;
   };
 
   /*
@@ -216,6 +301,11 @@ function open(base: string, zoneId: number, rate: number): Entry {
    */
   const step = (now: number): void => {
     entry.frame = requestAnimationFrame(step);
+    // Release whatever is due before the chase runs, so a sample lands on the first frame at or
+    // after its moment. `now` is a rAF timestamp, the same clock the due times were computed on.
+    while (entry.queue.length && entry.queue[0]!.dueMs <= now) {
+      applyEvent(entry.queue.shift()!.event);
+    }
     // Clamped: a backgrounded tab stops painting, and an hour-long `dt` on return should snap to
     // the present rather than integrate an hour of fall.
     const dt = entry.paintedAt ? Math.min(100, now - entry.paintedAt) : 16;
@@ -293,21 +383,33 @@ function open(base: string, zoneId: number, rate: number): Entry {
         // Sent again whenever the server re-arms the analyzer, which it does when the zone's
         // PCM format changes mid-stream. The geometry can change with it.
         adoptGeometry(event);
+        entry.timeline = event.timeline === 'presentation' ? 'presentation' : 'capture';
+        /*
+         * Start the clock estimate over, rather than folding this reading into the old one.
+         *
+         * The audio timeline is monotonic from the server *process* start, so a server that
+         * restarted has a new origin — usually a much smaller number. Keeping the old minimum
+         * across that would peg every sample as long overdue and the alignment would silently stop
+         * working. A fresh `analysis.ready` is the one moment we know a re-estimate is safe.
+         */
+        entry.clockOffsetMs = null;
+        entry.queue.length = 0;
+        noteClock(entry, event.serverNowUs);
+        return;
       }
-      if (event.type === 'loudness' && typeof event.value === 'number') {
-        entry.pending = { ...entry.pending, loudness: event.value };
+      if (event.type === 'analysis.clock') {
+        noteClock(entry, event.serverNowUs);
+        return;
       }
-      if (event.type === 'spectrum' && Array.isArray(event.bins)) {
-        entry.pending = { ...entry.pending, bins: event.bins as number[] };
+      // On the presentation timeline the sample belongs to a moment that has not arrived yet.
+      if (entry.timeline === 'presentation') {
+        const dueMs = dueAt(entry, event.timestampUs);
+        if (dueMs !== null) {
+          entry.queue.push({ dueMs, event });
+          return;
+        }
       }
-      if (event.type === 'peak' && typeof event.strength === 'number') {
-        entry.pending = { ...entry.pending, peak: event.strength };
-      }
-      if (event.type === 'pitch' && typeof event.midiQ88 === 'number') {
-        entry.pending = { ...entry.pending, pitch: pitchName(event.midiQ88) };
-      }
-      // Events only move the targets; the ballistics loop is the one thing that ever publishes.
-      entry.dirty = true;
+      applyEvent(event);
     } catch {
       // A malformed realtime sample must not take down the player.
     }
