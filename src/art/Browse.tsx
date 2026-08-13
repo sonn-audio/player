@@ -68,18 +68,49 @@ const PLURAL: Record<string, string> = {
 export type BrowseNode = { id?: string; label?: string };
 
 /**
- * What is behind a door, so the door can show it.
+ * Container rows with no picture of their own, few enough to be a table of contents.
+ *
+ * That is a service root, a share, a folder of folders — the same shape turns up two and three
+ * levels down and deserves the same treatment there.
+ */
+function doorlike(pool: ContentItem[]): boolean {
+  return pool.length > 0 && pool.length <= 12 && pool.every((item) => item.browsable && !item.coverUrl);
+}
+
+/**
+ * How long the page waits for the doors' peeks before composing without the stragglers.
+ *
+ * The peeks are what decide which doors open out into shelves and what the billboard has to pick
+ * from, and those decisions have to be made *before* the page paints — a door that turns into a
+ * shelf after render is the exact composition-shift this file spends its comments fighting. The
+ * local library answers in milliseconds; a slow provider misses the window and its door simply
+ * stays a door for this visit, upgrading on the next one from the module cache.
+ */
+const PEEK_WAIT_MS = 800;
+
+/** From this many sleeves behind it, a door opens out into a shelf. */
+const SHELF_MIN_ART = 4;
+
+/** Today, as a number — the billboard walks its pool by the day. */
+const DAY = Math.floor(Date.now() / 86_400_000);
+
+/**
+ * What is behind a door, so the door can show it — and so the page can be composed from it.
  *
  * A service root, a share, a folder of folders — these arrive with a name and nothing else, and the grid
  * drew each as an empty grey square with a speaker glyph in it. Three of those was the first screen of
  * browsing on a phone, which is a poor advertisement for a player whose whole argument is the artwork.
  *
- * So each door asks what is inside it and shows four of them. One extra request per door, once per
- * session — the cache is module-level and keyed by the opaque id, so walking back out to the root and in
- * again costs nothing, and a failure resolves to an empty list rather than rejecting: a door with no
- * sleeves behind it is still a door.
+ * So each door asks what is inside it. One extra request per door, once per session — the cache is
+ * module-level and keyed by the opaque id, so walking back out to the root and in again costs nothing,
+ * and a failure resolves to an empty list rather than rejecting: a door with no music behind it is
+ * still a door.
+ *
+ * The peek keeps the *items*, not just their pictures, because two different presentations are built
+ * from it: a door's fan of sleeves, and — where a door's children carry artwork — the door opened out
+ * into a whole shelf of them (see `composed` in `Browse`). A shelf needs real items to open and play.
  */
-type Peek = { art: string[]; names: string[] };
+type Peek = { items: ContentItem[] };
 
 /**
  * The story behind a container, once per id per session — misses included, for the same reason
@@ -132,7 +163,10 @@ function About({ about }: { about: ContentAbout }) {
   );
 }
 
-const NOTHING: Peek = { art: [], names: [] };
+const NOTHING: Peek = { items: [] };
+
+/** How many children a peek keeps — one shelf's worth. */
+const PEEK_LIMIT = 12;
 
 const peeked = new Map<string, Promise<Peek>>();
 
@@ -140,23 +174,22 @@ function peek(content: ContentSource, id: string): Promise<Peek> {
   let hit = peeked.get(id);
   if (!hit) {
     hit = content
-      .browse(id, 0, 12)
-      .then((listing) => {
-        const pool = [...(listing.sections ?? []).flatMap((section) => section.items), ...listing.items];
-        return {
-          art: pool
-            .map((item) => item.coverUrl)
-            .filter((url): url is string => Boolean(url))
-            .slice(0, 4),
-          // For a door with nothing to show: the names of the first few things behind it, which is what
-          // a table of contents does when there is no illustration.
-          names: pool.map((item) => item.name).filter(Boolean).slice(0, 3),
-        };
-      })
+      .browse(id, 0, PEEK_LIMIT)
+      .then((listing) => ({
+        items: [
+          ...(listing.sections ?? []).flatMap((section) => section.items),
+          ...listing.items,
+        ].slice(0, PEEK_LIMIT),
+      }))
       .catch(() => NOTHING);
     peeked.set(id, hit);
   }
   return hit;
+}
+
+/** The sleeves in a peek — what both the door's fan and the shelf decision read. */
+function artOf(items: ContentItem[]): string[] {
+  return items.map((item) => item.coverUrl).filter((url): url is string => Boolean(url));
 }
 
 /**
@@ -182,6 +215,11 @@ function Door({ item, index, onOpen }: { item: ContentItem; index: number; onOpe
     };
   }, [content, item.id]);
 
+  const art = artOf(inside.items).slice(0, 4);
+  // For a door with nothing to show: the names of the first few things behind it, which is what
+  // a table of contents does when there is no illustration.
+  const names = inside.items.map((entry) => entry.name).filter(Boolean).slice(0, 3);
+
   /*
    * Painted right to left, so the first sleeve ends up in front.
    *
@@ -190,7 +228,7 @@ function Door({ item, index, onOpen }: { item: ContentItem; index: number; onOpe
    * stylesheet, where the negative margins would then be applied in the wrong places and drag the whole
    * fan out of its box.
    */
-  const stack = [...inside.art].reverse();
+  const stack = [...art].reverse();
 
   return (
     <button
@@ -201,8 +239,8 @@ function Door({ item, index, onOpen }: { item: ContentItem; index: number; onOpe
     >
       <span className="cx-door-meta">
         <span className="cx-door-name disp">{item.name}</span>
-        {inside.art.length === 0 && inside.names.length > 0 && (
-          <span className="cx-door-inside mono">{inside.names.join(' · ')}</span>
+        {art.length === 0 && names.length > 0 && (
+          <span className="cx-door-inside mono">{names.join(' · ')}</span>
         )}
       </span>
 
@@ -220,6 +258,77 @@ function Door({ item, index, onOpen }: { item: ContentItem; index: number; onOpe
         <ForwardGlyph size={17} />
       </span>
     </button>
+  );
+}
+
+/**
+ * The billboard: one record, put forward, at the top of a home-like page.
+ *
+ * A page of doors or shelves is a table of contents, and a table of contents sells nothing — every
+ * album in the house is the same 150px square. This is the counter-move, taken from what a record
+ * shop does with its window: *one* sleeve large, on a wall of its own light, with its name at
+ * display size. Not curation (the server has no editor) but rotation: the pick walks the pool by
+ * the day, so the window is dressed differently tomorrow and identical on every visit today.
+ *
+ * The wall is the sleeve itself, blurred past recognition and darkened until the page is still
+ * black — the same argument as the stage's bloom: no palette guessed, the record's own light at the
+ * record's own distribution. It fades into the page at the bottom because that is how every canvas
+ * in this face ends (the phone player's `doek`, the detail hero on a phone): in the page, not on
+ * an edge.
+ */
+function Billboard({
+  item,
+  from,
+  onOpen,
+  onPlay,
+}: {
+  item: ContentItem;
+  /** Where the pick came from — a door's or section's name, as provenance in the kicker. */
+  from: string;
+  onOpen: () => void;
+  onPlay: () => void;
+}) {
+  const open = item.browsable ? onOpen : onPlay;
+  return (
+    <section className="cx-bill">
+      <span className="cx-bill-wall" style={{ backgroundImage: itemCoverCss(item.coverUrl) }} aria-hidden="true" />
+      <span className="cx-bill-scrim" aria-hidden="true" />
+
+      <button
+        type="button"
+        className="cx-bill-cover"
+        style={{ backgroundImage: itemCoverCss(item.coverUrl) }}
+        onClick={open}
+        aria-label={item.name}
+        data-person={item.kind === 'artist' || undefined}
+      >
+        <Motion src={item.animatedCoverUrl} />
+      </button>
+
+      <span className="cx-bill-meta">
+        <span className="mono cx-bill-kicker">
+          today
+          {from && <i className="cx-bill-from">{from}</i>}
+        </span>
+        <button type="button" className="disp cx-bill-title" onClick={open}>
+          {item.name}
+        </button>
+        {item.artist && <span className="cx-bill-sub">{item.artist}</span>}
+
+        <span className="cx-bill-actions">
+          {item.playable && (
+            <button type="button" className="mono cx-play-btn" onClick={onPlay}>
+              <PlayGlyph size={13} /> play
+            </button>
+          )}
+          {item.browsable && (
+            <button type="button" className="mono cx-bill-open" onClick={onOpen}>
+              open
+            </button>
+          )}
+        </span>
+      </span>
+    </section>
   );
 }
 
@@ -246,6 +355,9 @@ function Tile({
   return (
     <div
       className="cx-tile"
+      // Round for a person, square for a record — presentation only, on an open kind set: anything
+      // unrecognised stays square, which is never wrong.
+      data-person={item.kind === 'artist' || undefined}
       // The glow under the lift reads the cover from here — see `.cx-tile::after` for why it cannot read
       // it from the element that actually paints it.
       style={{ '--tile-art': itemCoverCss(item.coverUrl), '--i': index } as React.CSSProperties}
@@ -411,6 +523,8 @@ export function Browse({
   /** The path, so back is a pop rather than a re-browse from the top. */
   const [stack, setStack] = useState<BrowseNode[]>([root]);
   const [listing, setListing] = useState<ContentListing | null>(null);
+  /** What is behind each door, gathered before paint — see the browse effect. */
+  const [peeks, setPeeks] = useState<Record<string, ContentItem[]>>({});
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState('');
   const [searching, setSearching] = useState(false);
@@ -434,11 +548,38 @@ export function Browse({
      * ghosts below fill the gap.
      */
     setListing(null);
+    setPeeks({});
     void content
       .browse(here.id, 0, PAGE)
-      .then((next) => {
+      .then(async (next) => {
+        /*
+         * A doors page is composed *before* it paints.
+         *
+         * Which doors open out into shelves, and what the billboard can feature, both come from the
+         * peeks — so the page waits for them (briefly; see `PEEK_WAIT_MS`) and then renders once,
+         * whole. The alternative was doors morphing into shelves and a billboard dropping in above
+         * them a beat after the page landed. Skipped when the server sent sections: that page is
+         * already composed, and peeking every category of a cloud service is a fan of upstream
+         * requests nobody asked for.
+         */
+        const found: Record<string, ContentItem[]> = {};
+        const pool = next.items ?? [];
+        if ((next.sections ?? []).length === 0 && doorlike(pool)) {
+          await Promise.race([
+            Promise.all(
+              pool.map(async (door) => {
+                const inside = await peek(content, door.id);
+                found[door.id] = inside.items;
+              }),
+            ),
+            new Promise((resolve) => setTimeout(resolve, PEEK_WAIT_MS)),
+          ]);
+        }
         if (!cancelled) {
           setListing(next);
+          // Copied at the moment of the set: stragglers keep mutating `found` after the race and
+          // must not reach under a page that has already decided its shape.
+          setPeeks({ ...found });
           setLoading(false);
         }
       })
@@ -561,15 +702,11 @@ export function Browse({
    * A table of contents, not a wall of empty squares.
    *
    * Nothing here has a picture and everything opens: that is a service root, a share, a folder of
-   * folders. Judged from the items rather than from where we are, because the same shape turns up two
-   * and three levels down and deserves the same treatment there.
+   * folders. No longer conditional on the absence of sections — a home that sends shelves *and*
+   * categories (Apple Music's does) used to draw the categories as a grid of empty grey tiles under
+   * its shelves; as doors they are the same table of contents they are everywhere else.
    */
-  const doors =
-    !query &&
-    sections.length === 0 &&
-    items.length > 0 &&
-    items.length <= 12 &&
-    items.every((item) => item.browsable && !item.coverUrl);
+  const doors = !query && doorlike(items);
 
   /**
    * The recording this room is playing, if it is in this listing.
@@ -590,7 +727,16 @@ export function Browse({
    * about what to call a playlist.
    */
   const trackish = items.length > 0 && items.filter((item) => item.playable && !item.browsable).length / items.length > 0.6;
-  const title = query ? `“${query}”` : (container?.name ?? here.label ?? 'Music');
+  /*
+   * The name you pressed wins over the name the server holds.
+   *
+   * They are almost always the same word — a row's `name` becomes the stack label becomes the next
+   * page's `container.name`. The one place they differ is a service's own root: the nav says
+   * `Library` and the provider names its root category after itself (`Local Media`), which put a
+   * heading on the page that repeated the first row under it and matched nothing anyone pressed.
+   * The container's name stays the answer where no label exists — a deep link, a search result.
+   */
+  const title = query ? `“${query}”` : (here.label ?? container?.name ?? 'Music');
 
   /*
    * An object, as opposed to a shelf.
@@ -603,6 +749,29 @@ export function Browse({
    */
   const hero = !query && container?.coverUrl ? container : null;
   const detail = hero && trackish ? hero : null;
+
+  /*
+   * The record in the window — see `Billboard`.
+   *
+   * Only a home-like page dresses one: a page with its own hero is about that hero, a track list is
+   * a record's own inside, and a search is a question. The pool is everything with a sleeve that the
+   * page already knows about — the sections it was sent, or the peeks it composed — walked by the
+   * day so the window changes tomorrow and holds still today. Sections win over peeks because they
+   * are the service's own idea of "put this forward", which is closer to an editor than a folder is.
+   */
+  const spotlight = ((): { item: ContentItem; from: string } | null => {
+    if (query || hero || trackish || loading) {
+      return null;
+    }
+    const fromSections = sections.flatMap((section) =>
+      section.items.filter((entry) => entry.coverUrl).map((entry) => ({ item: entry, from: section.name })),
+    );
+    const fromPeeks = items.flatMap((door) =>
+      (peeks[door.id] ?? []).filter((entry) => entry.coverUrl).map((entry) => ({ item: entry, from: door.name })),
+    );
+    const pool = fromSections.length > 0 ? fromSections : fromPeeks;
+    return pool[DAY % pool.length] ?? null;
+  })();
 
   /*
    * Round for a person, square for a record — the one presentation decision `kind` makes here.
@@ -700,6 +869,16 @@ export function Browse({
         */}
         <div className="cx-browse-body">
 
+          {/* The window dressing, above everything the page lists — see `Billboard`. */}
+          {spotlight && (
+            <Billboard
+              item={spotlight.item}
+              from={spotlight.from}
+              onOpen={() => open(spotlight.item)}
+              onPlay={() => play(spotlight.item)}
+            />
+          )}
+
           {/* Who this is, when the server can say — see `About`. Keyed so a new container starts
               folded rather than inheriting the last one's `more`. */}
           {!query && about && <About about={about} key={aboutId ?? 'none'} />}
@@ -734,10 +913,44 @@ export function Browse({
           ))}
 
           {doors ? (
+            /*
+             * The table of contents, opened out where it can be.
+             *
+             * A door whose children carry artwork stops describing the shelf and becomes it: the
+             * name turns into a shelf heading (still the way in to the whole folder) and the first
+             * dozen sleeves stand under it, each openable and playable in place. A door with
+             * nothing to show stays a door. The mix is the page's rhythm — Albums and Artists as
+             * shelves, Folders as a line of type — and it was decided before paint (see the browse
+             * effect), so nothing here morphs.
+             */
             <div className="cx-doors">
-              {items.map((item, index) => (
-                <Door key={item.id} item={item} index={index} onOpen={() => open(item)} />
-              ))}
+              {items.map((item, index) => {
+                const inside = peeks[item.id] ?? [];
+                const artful = inside.filter((entry) => entry.coverUrl);
+                return artful.length >= SHELF_MIN_ART ? (
+                  <section className="cx-shelf cx-doorshelf" key={item.id} style={{ '--i': index } as React.CSSProperties}>
+                    <button type="button" className="cx-doorshelf-head" onClick={() => open(item)}>
+                      <span className="cx-doorshelf-name disp">{item.name}</span>
+                      <span className="cx-doorshelf-go mono">
+                        all <ForwardGlyph size={13} />
+                      </span>
+                    </button>
+                    <div className="cx-shelf-row">
+                      {artful.map((entry, at) => (
+                        <Tile
+                          key={entry.id}
+                          item={entry}
+                          index={at}
+                          onOpen={() => open(entry)}
+                          onPlay={() => play(entry)}
+                        />
+                      ))}
+                    </div>
+                  </section>
+                ) : (
+                  <Door key={item.id} item={item} index={index} onOpen={() => open(item)} />
+                );
+              })}
             </div>
           ) : trackish ? (
             <div className="cx-trows">

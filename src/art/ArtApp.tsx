@@ -193,8 +193,13 @@ export function ArtApp({ onSwitchFace }: { onSwitchFace: (face: Face) => void })
    *
    * So: believe `seekable` when it says yes, and let the queue itself overrule it when it says no. The
    * stable case stays stable; the case that was simply wrong now answers late instead of never.
+   *
+   * More than one entry, not more than none: a live station reports its own stream as a single queue
+   * item, and that item is *this* — the thing already on the stage. A lane whose whole stack is the
+   * track you are looking at showed one coverless tile and a sideways "next" for every radio in the
+   * house. One entry is a mirror, not a queue.
    */
-  const hasQueue = !cur.isLive || queue.total > 0;
+  const hasQueue = !cur.isLive || queue.total > 1;
 
   /** The entry after the one playing, for the stage's "next" line. */
   const nextUp = useMemo(() => {
