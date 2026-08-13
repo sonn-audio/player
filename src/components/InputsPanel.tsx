@@ -38,9 +38,27 @@ export function InputsPanel({ zone }: { zone: ApiZoneState }) {
     };
   }, [api]);
 
-  // Nothing configured is the common case; an empty panel would just be noise.
-  if (!inputs || inputs.length === 0) {
-    return null;
+  /*
+   * This is a destination now, reached from the rail, so it has to say something.
+   * It used to return `null` when the list was empty, which was right while it was embedded in
+   * another screen and wrong the moment it became the whole column — a blank main area reads as a
+   * broken page rather than as an empty list. The rail only offers the entry when the server has an
+   * input, so this is the racing case: the list emptied, or the fetch failed.
+   */
+  if (!inputs) {
+    return <p className="hint">Loading…</p>;
+  }
+  if (inputs.length === 0) {
+    return (
+      <div className="content-empty">
+        <Icon name="input" className="content-empty-icon" />
+        <h2>No inputs</h2>
+        <p>
+          A turntable, a CD player or a line-in jack appears here once it is configured on the
+          server.
+        </p>
+      </div>
+    );
   }
 
   // `source.id` reports the same id an input was selected by, which closes the loop:
