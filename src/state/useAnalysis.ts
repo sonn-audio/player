@@ -105,6 +105,15 @@ function adoptGeometry(event: Record<string, unknown>): void {
  * samples to count and still has to show the right number of unlit segments — a grid that changes
  * width when the music stops would read as the display resizing rather than going quiet.
  */
+/**
+ * How many bands the display resolves.
+ *
+ * 64 was a pass at "more density" and it bought the wrong kind: a band is a *column*, so more of
+ * them makes every column narrower, and a field of narrow columns is a picket fence the eye counts
+ * rather than a surface it reads. The density that was actually wanted lives in the cells each
+ * column is chopped into — that texture is free of the band count. So this is back at the figure
+ * the display was designed around, where a column is wide enough to be a block.
+ */
 export const SPECTRUM_BARS = 48;
 
 /**
@@ -148,6 +157,19 @@ export function spectrumPosition(hz: number): number | null {
   return (Math.log10(hz) - lo) / (hi - lo);
 }
 
+/**
+ * The inverse: which frequency sits at a fraction of the display's width.
+ *
+ * What a pointer over the spectrum is asking. Same log scale as `spectrumPosition`, so the two
+ * functions agree about every pixel between them.
+ */
+export function spectrumFrequency(fraction: number): number {
+  const { fMin, fMax } = geometry;
+  const lo = Math.log10(fMin);
+  const hi = Math.log10(fMax);
+  return 10 ** (lo + Math.max(0, Math.min(1, fraction)) * (hi - lo));
+}
+
 function pitchName(midiQ88: number): string {
   const midi = Math.round(midiQ88 / 256);
   if (!Number.isFinite(midi) || midi <= 0) return '';
@@ -165,9 +187,29 @@ export type Analysis = {
   peak: number;
   /** Held peaks, already in 0–1 height space. */
   peaks: number[];
+  /**
+   * Front left/right levels, 0–65535 — the stereo meter's two sides. Null until the stream has
+   * sent one, which is also what an older server without the event looks like: the meter falls
+   * back to mono rather than showing a dead channel.
+   */
+  left: number | null;
+  right: number | null;
+  /** Held peaks per side, wire scale — the meter bridge's ticks, same hold-then-fall as the caps. */
+  leftPeak: number;
+  rightPeak: number;
 };
 
-const EMPTY: Analysis = { loudness: 0, bins: [], pitch: '', peak: 0, peaks: [] };
+const EMPTY: Analysis = {
+  loudness: 0,
+  bins: [],
+  pitch: '',
+  peak: 0,
+  peaks: [],
+  left: null,
+  right: null,
+  leftPeak: 0,
+  rightPeak: 0,
+};
 
 type Entry = {
   refs: number;
@@ -186,6 +228,11 @@ type Entry = {
   /** The chasing values, raw wire scale. Separate from `state` so a publish is a decision. */
   shownBins: number[];
   shownLoudness: number;
+  shownLeft: number;
+  shownRight: number;
+  /** When each side's held peak was last set — the bridge's own hold-then-fall clock. */
+  leftPeakAt: number;
+  rightPeakAt: number;
   /** Set by an arriving event; makes the next frame publish even if nothing numeric moved. */
   dirty: boolean;
   /**
@@ -252,7 +299,7 @@ function publish(entry: Entry): void {
 
 function open(base: string, zoneId: number, rate: number): Entry {
   const source = new EventSource(
-    `${base}/zones/${zoneId}/analysis?types=loudness,spectrum,peak,pitch&rate=${rate}&bins=${SPECTRUM_BARS}`,
+    `${base}/zones/${zoneId}/analysis?types=loudness,spectrum,peak,pitch,stereo&rate=${rate}&bins=${SPECTRUM_BARS}`,
   );
   const entry: Entry = {
     refs: 0,
@@ -265,6 +312,10 @@ function open(base: string, zoneId: number, rate: number): Entry {
     paintedAt: 0,
     shownBins: [],
     shownLoudness: 0,
+    shownLeft: 0,
+    shownRight: 0,
+    leftPeakAt: 0,
+    rightPeakAt: 0,
     dirty: false,
     timeline: 'capture',
     clockOffsetMs: null,
@@ -284,6 +335,9 @@ function open(base: string, zoneId: number, rate: number): Entry {
     }
     if (event.type === 'pitch' && typeof event.midiQ88 === 'number') {
       entry.pending = { ...entry.pending, pitch: pitchName(event.midiQ88) };
+    }
+    if (event.type === 'stereo' && typeof event.left === 'number' && typeof event.right === 'number') {
+      entry.pending = { ...entry.pending, left: event.left, right: event.right };
     }
     // Events only move the targets; the ballistics loop is the one thing that ever publishes.
     entry.dirty = true;
@@ -336,6 +390,36 @@ function open(base: string, zoneId: number, rate: number): Entry {
     }
     entry.shownLoudness = loudness;
 
+    // The two sides of the stereo meter, on the same ballistics as everything else.
+    const left = chase(entry.shownLeft, entry.pending.left ?? 0);
+    const right = chase(entry.shownRight, entry.pending.right ?? 0);
+    if (left !== entry.shownLeft || right !== entry.shownRight) {
+      moving = true;
+    }
+    entry.shownLeft = left;
+    entry.shownRight = right;
+
+    /*
+     * The bridge's held peaks — same rules as the spectrum caps, measured against the wire values
+     * rather than the chased ones, so the tick marks the transient itself. Wire scale throughout;
+     * `PEAK_FALL_PER_SEC` is stated in height space, so the fall converts through `fullScale`.
+     */
+    const holdSide = (held: number, target: number, atKey: 'leftPeakAt' | 'rightPeakAt'): number => {
+      if (target >= held) {
+        entry[atKey] = now;
+        return target;
+      }
+      if (now - entry[atKey] < PEAK_HOLD_MS) {
+        return held;
+      }
+      return Math.max(target, held - (dt / 1000) * PEAK_FALL_PER_SEC * geometry.fullScale);
+    };
+    const leftPeak = holdSide(entry.state.leftPeak, entry.pending.left ?? 0, 'leftPeakAt');
+    const rightPeak = holdSide(entry.state.rightPeak, entry.pending.right ?? 0, 'rightPeakAt');
+    if (leftPeak !== entry.state.leftPeak || rightPeak !== entry.state.rightPeak) {
+      moving = true;
+    }
+
     /*
      * Peak-hold: a new high is taken immediately and then held still for `PEAK_HOLD_MS` before it
      * starts sinking at `PEAK_FALL_PER_SEC`. Measured against the *wire* values, not the chased
@@ -371,6 +455,11 @@ function open(base: string, zoneId: number, rate: number): Entry {
       pitch: entry.pending.pitch,
       peak: entry.pending.peak,
       peaks,
+      // Null until the wire has spoken, so a server without the event keeps the mono meter.
+      left: entry.pending.left === null ? null : left,
+      right: entry.pending.right === null ? null : right,
+      leftPeak,
+      rightPeak,
     };
     publish(entry);
   };

@@ -29,8 +29,19 @@
  * and passive — no DSP is *good* news — and `off` for one that cannot report, which is the case worth
  * seeing before pressing play.
  */
+import { useEffect, useRef } from 'react';
 import { describeFormat, isLosslessCodec } from '@/components/StreamFormat';
 import type { ApiProcessingChain, ApiStreamFormat, ApiZoneState } from '@/api/types';
+
+/**
+ * Each room's recent lead readings, module-level so a room switch does not forget the other room's
+ * trace and a re-mount does not start the line over. One entry per zone event — the stream ticks
+ * once a second while playing, so the buffer is roughly the last two minutes.
+ */
+const leadTraces = new Map<number, number[]>();
+
+/** How many readings the trace keeps. */
+const TRACE_LENGTH = 120;
 
 type Stage = {
   label: string;
@@ -435,6 +446,31 @@ function Verdict({ zone }: { zone: ApiZoneState }) {
 function Timing({ zone }: { zone: ApiZoneState }) {
   const sync = zone.output?.sync;
 
+  /*
+   * Sample the lead once per zone event — the event identity is the tick.
+   *
+   * The rail re-renders for reasons of its own (a hover elsewhere, an analysis frame), and appending
+   * on every render would draw a trace whose x-axis is "how busy React was". A zone event is a new
+   * object, so reference equality is exactly "one sample per report".
+   */
+  const lastZone = useRef<ApiZoneState | null>(null);
+  useEffect(() => {
+    if (lastZone.current === zone) {
+      return;
+    }
+    lastZone.current = zone;
+    const lead = zone.output?.sync?.leadMs;
+    if (typeof lead !== 'number') {
+      return;
+    }
+    const trace = leadTraces.get(zone.id) ?? [];
+    trace.push(lead);
+    if (trace.length > TRACE_LENGTH) {
+      trace.splice(0, trace.length - TRACE_LENGTH);
+    }
+    leadTraces.set(zone.id, trace);
+  });
+
   if (!sync) {
     return null;
   }
@@ -476,15 +512,17 @@ function Timing({ zone }: { zone: ApiZoneState }) {
               </span>
             </dd>
           </div>
-          <div>
-            <dt>Floor</dt>
-            <dd>
-              {sync.leadMinMs} <span className="signal-metric-unit">ms</span>
-              {/* The lowest lead of the last couple of seconds. At or above the target means the
-                  player never ran short; sinking toward zero is what dropouts look like. */}
-              <span className="signal-metric-of">lowest lead</span>
-            </dd>
-          </div>
+          {sync.leadMinMs !== null && (
+            <div>
+              <dt>Floor</dt>
+              <dd>
+                {sync.leadMinMs} <span className="signal-metric-unit">ms</span>
+                {/* The lowest lead of the last couple of seconds. At or above the target means the
+                    player never ran short; sinking toward zero is what dropouts look like. */}
+                <span className="signal-metric-of">lowest lead</span>
+              </dd>
+            </div>
+          )}
           {sync.driftMs !== null && (
             <div>
               <dt>Drift</dt>
@@ -497,6 +535,48 @@ function Timing({ zone }: { zone: ApiZoneState }) {
         </dl>
       )}
 
+      {streaming && (
+        <LeadTrace
+          samples={leadTraces.get(zone.id) ?? []}
+          lo={sync.targetLeadMs}
+          hi={sync.targetLeadMs + sync.leadMarginMs}
+        />
+      )}
+
+    </div>
+  );
+}
+
+/**
+ * The lead, as a trace instead of only a number.
+ *
+ * The metrics above say where the lead is *now*; this says where it has been — the roll display of
+ * an oscilloscope, one pixel column per report, the target band drawn behind it. A healthy stream
+ * is a line lying flat inside a faint green band, which is a fact you absorb in half a second and
+ * could never get from watching a number change. Scaled to whichever is wider, the band or the
+ * data, so an excursion bends the line instead of leaving the chart.
+ *
+ * Hidden until a few seconds have accumulated: two points make a line, not a trace.
+ */
+function LeadTrace({ samples, lo, hi }: { samples: number[]; lo: number; hi: number }) {
+  if (samples.length < 8) {
+    return null;
+  }
+  const min = Math.min(lo, ...samples);
+  const max = Math.max(hi, ...samples);
+  const pad = Math.max(6, (max - min) * 0.18);
+  const top = max + pad;
+  const bottom = min - pad;
+  const y = (value: number): number => ((top - value) / (top - bottom)) * 100;
+  const step = 100 / (TRACE_LENGTH - 1);
+  const points = samples.map((value, index) => `${(index * step).toFixed(2)},${y(value).toFixed(2)}`).join(' ');
+
+  return (
+    <div className="signal-trace" aria-hidden="true">
+      <svg viewBox="0 0 100 100" preserveAspectRatio="none">
+        <rect className="signal-trace-band" x="0" y={y(hi)} width="100" height={Math.max(0, y(lo) - y(hi))} />
+        <polyline className="signal-trace-line" points={points} />
+      </svg>
     </div>
   );
 }
@@ -519,13 +599,21 @@ export function SignalPath({ zone }: { zone: ApiZoneState }) {
       {/* No heading of its own: the rail's own `Signal path` head names this card. */}
       <Verdict zone={zone} />
 
-      <ol className="signal-stages">
+      {/* `data-live` while audio flows: the spine carries a slow pulse of light from Source to the
+          wire (see `.signal-stages[data-live]` in styles.css), so the chain does not just describe
+          the signal — it visibly has one. Stopped means still, which is itself a reading. */}
+      <ol className="signal-stages" data-live={zone.state === 'playing' || undefined}>
         {stages.map((stage) => (
           <li key={stage.label} className="signal-stage" data-state={stage.state}>
             <span className="signal-dot" aria-hidden="true" />
             <span className="signal-text">
               <span className="signal-label">{stage.label}</span>
-              <span className="signal-value">{stage.value}</span>
+              {/* Keyed on the reading, so a stage that *re-locks* — a new rate, a depth change, an
+                  EQ engaging — re-mounts and lands in the accent before settling to white. The
+                  chain reacts at exactly the moment the equipment does. The detail line is not
+                  keyed: it carries the measured bitrate, which moves every second and would turn
+                  a moment into a flicker. */}
+              <span className="signal-value" key={stage.value}>{stage.value}</span>
               {stage.detail && <span className="signal-detail">{stage.detail}</span>}
             </span>
           </li>

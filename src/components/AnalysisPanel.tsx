@@ -12,9 +12,10 @@
  *  - **Peaks are held and fall slowly.** The detail that makes a spectrum readable rather than a
  *    blur, and what analyser hardware has always done.
  */
-import { useState } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import {
   useAnalysis,
+  spectrumFrequency,
   spectrumGeometry,
   SPECTRUM_BARS,
   spectrumPosition,
@@ -32,6 +33,32 @@ const AXIS_TICKS = [100, 1000, 10000];
 function tickLabel(hz: number): string {
   return hz >= 1000 ? `${hz / 1000}k` : `${hz}`;
 }
+
+/** Hz → the probe's readout: `240 Hz`, `2.4 kHz` — a measurement, so it keeps its unit. */
+function probeHz(hz: number): string {
+  if (hz >= 1000) {
+    const k = hz / 1000;
+    return `${k >= 10 ? Math.round(k) : k.toFixed(1)} kHz`;
+  }
+  return `${Math.round(hz)} Hz`;
+}
+
+/**
+ * How much of its slot a bar fills, and the seam it may never give up.
+ *
+ * Wide ink, narrow seams: the display went 0.44 → 0.66 → 0.78 → here, and every step got
+ * *calmer* rather than busier, which is the opposite of what the first cut assumed. A field of
+ * thin columns is a picket fence — the eye counts the gaps — while wide ones read as one surface
+ * with texture in it, the way the original wall did. What keeps that mass from congealing back
+ * into a slab is not the seams any more; it is the silver (a reading that does not shout) and the
+ * cells that chop every column horizontally.
+ *
+ * The seam has a floor in pixels as well as a share of the pitch, so a narrow window keeps its
+ * columns countable instead of fusing them at the point where the fraction alone would round to
+ * nothing.
+ */
+const BAR_FRACTION = 0.86;
+const MIN_SEAM_PX = 2.5;
 
 /**
  * Loudness as dBFS, which is the unit this reading actually has.
@@ -72,6 +99,46 @@ export function AnalysisPanel({
   const [showEq, setShowEq] = useState(false);
 
   /*
+   * The probe: pointing at the display measures it.
+   *
+   * A hairline under the cursor and the two numbers of the place it stands on — the frequency
+   * there, and the level in that bin right now. The same gesture the timeline already answers
+   * (hover shows the time it would seek to), extended to the axis this display actually has.
+   * Mouse only: under a finger the readout would sit exactly where the finger is hiding it.
+   * Suppressed while the equalizer is overlaid (its handles own the surface) and while idle
+   * (measuring silence reads `-60 dB` everywhere, which is a number pretending to be a fact).
+   */
+  const [probe, setProbe] = useState<{ at: number; hz: number; db: number } | null>(null);
+
+  /*
+   * The display's box, measured — the curve is drawn in pixel space.
+   *
+   * A percentage viewBox stretched with `preserveAspectRatio: none` warps every stroke (1.5px
+   * horizontal, 4px vertical); a viewBox that *is* the box keeps the geometry honest and lets the
+   * glow filter run in screen space. Same pattern the waveform uses to size its bars.
+   */
+  const canvas = useRef<HTMLDivElement | null>(null);
+  const [dims, setDims] = useState({ w: 0, h: 0 });
+  useLayoutEffect(() => {
+    const node = canvas.current;
+    if (!node) {
+      return undefined;
+    }
+    const fit = (): void => {
+      const rect = node.getBoundingClientRect();
+      setDims((prev) =>
+        Math.round(rect.width) !== prev.w || Math.round(rect.height) !== prev.h
+          ? { w: Math.round(rect.width), h: Math.round(rect.height) }
+          : prev,
+      );
+    };
+    fit();
+    const observer = new ResizeObserver(fit);
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
+
+  /*
    * Always drawn, playing or not.
    *
    * A display that disappears when the music stops leaves a hole in the layout and makes the room look
@@ -88,6 +155,43 @@ export function AnalysisPanel({
   const ticks = AXIS_TICKS.map((hz) => ({ hz, at: spectrumPosition(hz) })).filter(
     (tick): tick is { hz: number; at: number } => tick.at !== null,
   );
+
+  /*
+   * The bars' shared geometry, in pixel space. The ballistics in `useAnalysis` drive every height
+   * per frame; nothing here transitions.
+   */
+  const pitch = bars.length > 0 ? dims.w / bars.length : 0;
+  const barW = Math.max(2, Math.min(pitch * BAR_FRACTION, pitch - MIN_SEAM_PX));
+  const barR = Math.min(4, barW / 2);
+  const dimId = `spectrum-dim-${zoneId}`;
+
+  /*
+   * The reading in silver, the memory in green.
+   *
+   * The display tried a saturated green wall (a slab), a frequency-coloured ramp (beautiful, and
+   * shouting over everything else on the page) — and landed on the rule the rest of the product
+   * already lives by: a control surface is silver when it is not saying anything, and the accent
+   * is spent on the one thing that *is* saying something. The bars are the reading — quiet,
+   * near-monochrome, mass without volume. The peak caps are the statement: where the music just
+   * was, in the product's own green, floating over a silver field. (The polychrome ramp lives one
+   * commit back if the pendulum swings again.)
+   */
+  const BAR_INK = 'rgb(255 255 255 / 20%)';
+
+  /*
+   * The cells are back — in silver, where they never were the problem.
+   *
+   * The original display's LED chop read as 1992 because it was a chop through *saturated green*;
+   * on a quiet silver field the same segmentation is texture, the way a dot-matrix reads as craft
+   * where a green wall reads as retro. One mask of horizontal rows, built from the floor up so the
+   * cells stand on the bridge, chops every bar at once; the caps live outside it and stay whole.
+   */
+  const SEG_H = 6;
+  const SEG_GAP = 3;
+  const segRows: number[] = [];
+  for (let y = dims.h; y > -SEG_H; y -= SEG_H + SEG_GAP) {
+    segRows.push(y - SEG_H);
+  }
 
   return (
     <section className="analysis-panel">
@@ -133,44 +237,150 @@ export function AnalysisPanel({
       {/* The spectrum, and the equalizer over it when asked for. `position: relative` on this makes
           the overlay's percentages resolve against the display rather than the panel. */}
       {/*
-        `data-settling` while the music is not running.
-        The stream closes on pause, the bins go empty and every bar is asked to become zero — which at
-        the live transition speed is a display being switched off. Marked here and slowed in CSS, the
-        same zero reads as the sound decaying out of the room, which is what actually just happened.
+        `data-settling` while the music is not running: the ballistics fall the curve to the floor,
+        and the baseline it comes to rest on dims — a device that is on and silent, not one that
+        is drawing nothing.
       */}
       <div
+        ref={canvas}
         className="spectrum"
         aria-label="Spectrum"
         data-eq={showEq || undefined}
         data-settling={!active || undefined}
+        onPointerMove={(event) => {
+          if (event.pointerType !== 'mouse' || showEq || !active) {
+            return;
+          }
+          const rect = event.currentTarget.getBoundingClientRect();
+          const at = Math.max(0, Math.min(1, (event.clientX - rect.left) / rect.width));
+          const index = Math.min(bars.length - 1, Math.floor(at * bars.length));
+          setProbe({ at, hz: spectrumFrequency(at), db: toDb(bars[index] ?? 0) });
+        }}
+        onPointerLeave={() => setProbe(null)}
       >
-        {bars.map((bin, index) => (
-          <i
-            key={index}
-            style={
-              {
-                '--h': `${toHeight(bin) * 100}%`,
-                '--p': `${(analysis.peaks[index] ?? 0) * 100}%`,
-              } as React.CSSProperties
-            }
+        {dims.w > 0 && (
+          <svg
+            className="spectrum-curve"
+            viewBox={`0 0 ${dims.w} ${dims.h}`}
+            width={dims.w}
+            height={dims.h}
+            aria-hidden="true"
           >
-            {/*
-              The lit column is a child rather than a pseudo-element, so that `::before` is free to be
-              the unlit grid — and the grid is the one layer that has to be *masked* to fade out. A mask
-              on the column itself would take the lit fill and the peak cap with it, since those would
-              be its own children.
-            */}
-            <span />
-          </i>
-        ))}
+            <defs>
+              {/*
+                The absolute-level dimming, as one wash over the whole display: near the floor every
+                bar is dim, near full scale every bar is bright — what the LED wall's gradient stops
+                used to say, now said once instead of per bar so each bar can keep its own hue.
+                Over the page's own black it is invisible; it only ever takes light away from bars.
+              */}
+              {/* Softer than it was: the colour ramp now carries depth of its own, and two full
+                  encodings of "low" stacked up read as mud in the bass corner. */}
+              <linearGradient id={dimId} gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2={dims.h}>
+                <stop offset="0%" stopColor="rgb(10 12 16 / 0%)" />
+                <stop offset="55%" stopColor="rgb(10 12 16 / 16%)" />
+                <stop offset="100%" stopColor="rgb(10 12 16 / 40%)" />
+              </linearGradient>
+              <mask id={`spectrum-seg-${zoneId}`} maskUnits="userSpaceOnUse" x="0" y="0" width={dims.w} height={dims.h}>
+                {segRows.map((y, index) => (
+                  <rect key={index} x="0" y={y} width={dims.w} height={SEG_H} fill="#fff" />
+                ))}
+              </mask>
+            </defs>
+            <g className="spectrum-bars" mask={`url(#spectrum-seg-${zoneId})`}>
+              {bars.map((bin, index) => {
+                const height = Math.max(2, toHeight(bin) * (dims.h - 2));
+                return (
+                  <rect
+                    key={index}
+                    x={(index + 0.5) * pitch - barW / 2}
+                    y={dims.h - 1 - height}
+                    /* Extended past the floor by the corner radius, which the svg clips off: a
+                       rounded top and a *flat* foot. A bar standing on the baseline with a rounded
+                       bottom is a floating pill; meters stand on their bridge. */
+                    width={barW}
+                    height={height + barR}
+                    rx={barR}
+                    fill={BAR_INK}
+                  />
+                );
+              })}
+            </g>
+            <rect x="0" y="0" width={dims.w} height={dims.h} fill={`url(#${dimId})`} pointerEvents="none" />
+            {/* The memory: a rounded tick floating where each band last peaked — held, then
+                sinking (`analysis.peaks`). Its band's own hue, lifted toward white: brighter than
+                the bar it remembers, and drawn above the dimming wash so it stays the one bright
+                element over the reading. */}
+            <g className="spectrum-peaks">
+              {analysis.peaks.map((peak, index) =>
+                peak > 0.02 ? (
+                  <rect
+                    key={index}
+                    x={(index + 0.5) * pitch - barW / 2}
+                    y={1 + (dims.h - 2) * (1 - peak) - 1}
+                    width={barW}
+                    height={2}
+                    rx={1}
+                  />
+                ) : null,
+              )}
+            </g>
+          </svg>
+        )}
+        {probe && !showEq && active && (
+          <>
+            <span className="spectrum-cursor" style={{ left: `${probe.at * 100}%` }} aria-hidden="true" />
+            <span
+              className="spectrum-readout"
+              style={{ left: `${Math.min(0.93, Math.max(0.07, probe.at)) * 100}%` }}
+              aria-hidden="true"
+            >
+              {probeHz(probe.hz)} <i>{probe.db.toFixed(0)} dB</i>
+            </span>
+          </>
+        )}
         {showEq && <EqOverlay zoneId={zoneId} />}
       </div>
 
-      {/* Loudness, as a hairline under the spectrum rather than a bar above it: it is one number,
-          and it belongs to the whole display instead of competing with it. */}
-      <div className="analysis-meter" style={{ '--level': `${level}%` } as React.CSSProperties}>
-        <span />
-      </div>
+      {/* Loudness, as hairlines under the spectrum rather than a bar above it. Two of them where
+          the stream reports the channels apart (`stereo`): a left and a right rail, each with its
+          own tiny nameplate — the stereo image as two lines breathing against each other. One
+          mono hairline against an older server, which is honest rather than a dead R channel. */}
+      {analysis.left !== null && analysis.right !== null ? (
+        /* The bridge speaks the display's own grammar: the level is silver (a reading), and the
+           held peak is the green tick (a statement) — the same hold-then-fall as the caps above. */
+        <div className="analysis-meter-stereo">
+          <span className="analysis-meter-ch">L</span>
+          <div
+            className="analysis-meter"
+            style={
+              {
+                '--level': `${Math.min(100, analysis.left / (spectrumGeometry().fullScale / 100))}%`,
+                '--held': `${Math.min(100, analysis.leftPeak / (spectrumGeometry().fullScale / 100))}%`,
+              } as React.CSSProperties
+            }
+          >
+            <span />
+            <i aria-hidden="true" />
+          </div>
+          <span className="analysis-meter-ch">R</span>
+          <div
+            className="analysis-meter"
+            style={
+              {
+                '--level': `${Math.min(100, analysis.right / (spectrumGeometry().fullScale / 100))}%`,
+                '--held': `${Math.min(100, analysis.rightPeak / (spectrumGeometry().fullScale / 100))}%`,
+              } as React.CSSProperties
+            }
+          >
+            <span />
+            <i aria-hidden="true" />
+          </div>
+        </div>
+      ) : (
+        <div className="analysis-meter" style={{ '--level': `${level}%` } as React.CSSProperties}>
+          <span />
+        </div>
+      )}
 
       <div className="analysis-axis" aria-hidden="true">
         {ticks.map((tick) => (

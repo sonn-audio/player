@@ -9,6 +9,8 @@
  * set, so this must not switch exhaustively on it.
  */
 import { useEffect, useState } from 'react';
+import { Crossfade } from '@/art/Crossfade';
+import { zoneCoverCss } from '@/art/cover';
 import { Cover } from '@/components/Cover';
 import { Transport } from '@/components/Transport';
 import { Volume } from '@/components/Volume';
@@ -87,6 +89,25 @@ export function NowPlayingView({
 
   return (
     <div className="now-playing">
+      {/*
+       * The record's light, in this face's voice: black and white.
+       *
+       * The art player lights its room with the sleeve in colour; this face's rule is that colour
+       * comes from one constant wash and never from the music — a rule about *colour*, not about
+       * light. So the sleeve stands behind the player as a monochrome wash: blurred past recognition,
+       * desaturated completely, fading out before the spectrum. The page keeps one palette in every
+       * room and still sits in the light of what is playing — a darkroom print of the same idea the
+       * other face does in colour. Dissolving on the same slow cross-fade (`Crossfade`), because
+       * light in a room does not blink.
+       */}
+      {track && (
+        <Crossfade
+          artKey={`${track.coverUrl}|${track.title}`}
+          cover={zoneCoverCss(api, zone, 480)}
+          render={(slot) => <span className="np-wash" style={{ backgroundImage: slot.cover }} />}
+        />
+      )}
+
       {/*
         The player itself: pinned, so it stays put while the queue moves under it.
         No card around it — the artwork's colour is the page's background now, and a bordered box
@@ -215,11 +236,22 @@ export function NowPlayingView({
           */}
           <div className="np-controls">
             <Transport zone={zone} />
-            <Volume zone={zone} compact percent />
-            {/* One action beside the transport, not two: the "…" that used to sit here held things
-                that belong to the room rather than to the track. */}
-            <div className="np-actions">
-              <TrackHeart zone={zone} />
+            {/*
+              The volume and the one per-track action, as a unit.
+
+              They were siblings of the transport, and `flex-wrap` treated them as strangers: at the
+              1440px column there is room for the transport and the volume but not the star, so the
+              star wrapped alone to a second row — one orphaned button hanging off the right edge.
+              Grouped, the pair wraps together into a full second row (fader left, star at the far
+              edge) or fits beside the transport whole. Both arrangements look decided.
+            */}
+            <div className="np-tail">
+              <Volume zone={zone} compact percent />
+              {/* One action beside the transport, not two: the "…" that used to sit here held things
+                  that belong to the room rather than to the track. */}
+              <div className="np-actions">
+                <TrackHeart zone={zone} />
+              </div>
             </div>
           </div>
 
