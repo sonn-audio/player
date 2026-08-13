@@ -23,6 +23,7 @@ import { NowBar } from '@/components/NowBar';
 import { GroupingView } from '@/views/GroupingView';
 import { NowPlayingView } from '@/views/NowPlayingView';
 import { ContentView } from '@/views/ContentView';
+import { InputsPanel } from '@/components/InputsPanel';
 import { Icon } from '@/components/Icon';
 import { useLocalPlayback } from '@/state/useLocalPlayback';
 import { useMediaSession } from '@/state/useMediaSession';
@@ -55,6 +56,9 @@ function barViewOf(target: NavTarget, zone: ApiZoneState | null): BarView {
   }
   if (target.kind === 'grouping') {
     return { label: zone ? `grouping · ${zone.name}` : 'grouping', icon: 'group' };
+  }
+  if (target.kind === 'inputs') {
+    return { label: zone ? `inputs · ${zone.name}` : 'inputs', icon: 'input' };
   }
   if (target.kind === 'collection') {
     return {
@@ -164,7 +168,13 @@ export function App() {
         <main className="main">
           {navTarget.kind === 'grouping' && zone ? (
             <GroupingView zone={zone} zones={zones} />
-          ) : navTarget.kind !== 'playing' ? (
+          ) : navTarget.kind === 'inputs' && zone ? (
+            /* The panel is the only child of `.content`, so it becomes the scrolling region —
+               the same shape the collections use. */
+            <div className="content">
+              <InputsPanel zone={zone} />
+            </div>
+          ) : navTarget.kind !== 'playing' && navTarget.kind !== 'inputs' ? (
             <ContentView
               zone={zone}
               {...(navTarget.kind === 'browse' && navTarget.id

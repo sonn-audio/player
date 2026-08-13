@@ -41,6 +41,18 @@ export type NavTarget =
   /** A zone-scoped collection, rendered by the panels rather than the browser. */
   | { kind: 'collection'; id: 'favorites' | 'recents' }
   /**
+   * The physical inputs — a turntable, a CD player, a line-in jack.
+   *
+   * Grouped with the catalogue and *not* with the room, which is the same distinction the two
+   * headings already make: the room's entries are its own state (its queue, its favourites, its
+   * group), while `GET /inputs` is server-level and every room sees the identical list. That the
+   * chosen input then plays *in* the selected room is not a counter-argument — an album from any
+   * service behaves exactly the same way.
+   *
+   * Offered only when the server has one configured (see `hasInputs`), because most do not.
+   */
+  | { kind: 'inputs' }
+  /**
    * Which rooms play together, and the per-room delay that lines them up.
    *
    * A destination rather than a modal: it is the screen you sit on while adjusting by ear, so it has
@@ -103,6 +115,32 @@ export function NavRail({
   const [open, setOpen] = useState<Set<string>>(readOpen);
   /** Children by node id, filled as nodes are fetched. */
   const [children, setChildren] = useState<Record<string, Node[]>>({});
+  /** Whether this server has any physical input at all — the Inputs entry exists only then. */
+  const [hasInputs, setHasInputs] = useState(false);
+
+  /*
+   * The inputs, read once and only counted.
+   *
+   * Server-level rather than per zone, so this does not re-run when the room changes; the panel
+   * fetches the list itself when it is opened. All the rail needs is whether the entry should be
+   * there, and a rail row leading to "nothing configured" is worse than no row.
+   */
+  useEffect(() => {
+    let cancelled = false;
+    api
+      .getInputs()
+      .then((list) => {
+        if (!cancelled) {
+          setHasInputs(list.length > 0);
+        }
+      })
+      .catch(() => {
+        // A server without the route is a server without inputs.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [api]);
 
   /*
    * The services, and one level inside each, read once.
@@ -310,10 +348,15 @@ export function NavRail({
           </section>
         )}
 
-        {roots.length > 0 && (
+        {(roots.length > 0 || hasInputs) && (
           <section className="nav-group">
             <h2 className="nav-group-head">Catalogue</h2>
-            <ul className="nav-list nav-tree">{roots.map((root) => renderNode(root, 0))}</ul>
+            <ul className="nav-list nav-tree">
+              {roots.map((root) => renderNode(root, 0))}
+              {/* Last, and without a caret: the services are trees you walk into, this is a flat
+                  list of sockets. Same group because both answer "where does the audio come from". */}
+              {hasInputs && leaf({ kind: 'inputs' }, 'input', 'Inputs', active?.kind === 'inputs')}
+            </ul>
           </section>
         )}
       </div>
