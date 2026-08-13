@@ -20,6 +20,15 @@ import { useApi } from '@/state/ServerContext';
 import { motionUrl } from '@/art/motion';
 import type { ApiZoneState } from '@/api/types';
 
+/** The note, for artwork that never arrived — one drawing for every empty square. */
+function Placeholder() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" className="cover-placeholder">
+      <path fill="currentColor" d="M12 3v10.55A4 4 0 1 0 14 17V7h4V3h-6Z" />
+    </svg>
+  );
+}
+
 export function Cover({
   zone,
   animatedUrl,
@@ -91,12 +100,7 @@ export function Cover({
   return (
     <div className={`cover ${className ?? ''}`} data-empty={showPlaceholder || undefined} {...anchor}>
       {showPlaceholder ? (
-        <svg viewBox="0 0 24 24" aria-hidden="true" className="cover-placeholder">
-          <path
-            fill="currentColor"
-            d="M12 3v10.55A4 4 0 1 0 14 17V7h4V3h-6Z"
-          />
-        </svg>
+        <Placeholder />
       ) : motion ? (
         <video
           src={motion}
@@ -132,8 +136,17 @@ export function ItemCover({ url, animatedUrl, className }: { url: string; animat
   const [failed, setFailed] = useState(false);
   useEffect(() => setFailed(false), [url]);
 
+  /*
+   * A blank grey square used to be the whole empty state here, while the zone cover above drew its
+   * note — so a coverless queue row (a live stream, most days) looked unloaded next to a placeholder
+   * that looked deliberate. Same square, same note.
+   */
   if (!url || failed) {
-    return <div className={`cover ${className ?? ''}`} data-empty />;
+    return (
+      <div className={`cover ${className ?? ''}`} data-empty>
+        <Placeholder />
+      </div>
+    );
   }
   return (
     <div className={`cover ${className ?? ''}`}>
