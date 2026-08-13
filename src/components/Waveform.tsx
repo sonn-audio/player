@@ -188,11 +188,13 @@ export function Waveform({ zone }: { zone: ApiZoneState }) {
           <span className="wave-remain">-{formatTime(Math.max(0, zone.duration - position))}</span>
           <span className="wave-total">{formatTime(zone.duration)}</span>
         </span>
-      ) : (
+      ) : zone.track ? (
+        /* No end in sight *and something playing* is a live stream. An idle zone also has no
+           duration, and calling silence LIVE was this label lying with confidence. */
         <span className="wave-time wave-time-end">
           <span className="wave-live">{LIVE_LABEL}</span>
         </span>
-      )}
+      ) : null}
     </div>
   );
 }
