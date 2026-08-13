@@ -610,6 +610,33 @@
     filter 0.6s;
 }
 
+/*
+ * The gloss of a printed sleeve.
+ *
+ * One diagonal breath of light across the top-left corner, at an alpha you would not name if asked —
+ * the difference between a JPEG pasted on the page and an object lying on it. Soft-light so it rides
+ * the artwork's own tones instead of sitting on them as a grey film; `pointer-events` cost nothing
+ * because a pseudo-element has none. The empty cover keeps its dashed border and gets no gloss —
+ * there is nothing printed there to catch the light.
+ */
+.cx-cover::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    118deg,
+    rgb(255 255 255 / 10%) 0%,
+    rgb(255 255 255 / 4%) 22%,
+    transparent 38%
+  );
+  mix-blend-mode: soft-light;
+}
+
+.cx-cover-empty::after {
+  content: none;
+}
+
 /* Paused is stated by the artwork itself: 3% smaller and half the colour drained out of it, which is a
    quieter way to say "not playing" than a badge. */
 .cx-cover[data-paused] {
@@ -717,6 +744,9 @@
   /* −0.045em, tighter than the display face's own default: at 112px the tracking that makes a 19px
      heading breathe makes a title look spaced out. */
   letter-spacing: -0.045em;
+  /* A two-line title breaks at its middle rather than dropping one word — supported since
+     Chrome 114/Safari 17.5, and a title that ignores it is exactly what it was before. */
+  text-wrap: balance;
   /* Optical alignment: Hanken's 800 weight carries enough side bearing at this size that a left-aligned
      title reads as indented next to a 10px mono eyebrow above it. */
   margin-left: -0.035em;
@@ -978,6 +1008,28 @@
 .cx-bar-wrap {
   max-width: 640px;
   margin-top: clamp(14px, 4.6vh, 42px);
+}
+
+/*
+ * The envelope on the desk (see `ArtWave`): in the flow where the plain bar would be, not riding an
+ * edge — the desk has a column for it. A touch taller than the phone's 34px, because it sits under a
+ * title that can run to 112px and has to hold its own line against it. The bars themselves are the
+ * shared `.cx-wave i` rules; the phone's box-shadow whisper does nothing on the page's own black and
+ * is left alone.
+ */
+.cx-stage .cx-wave {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  height: 44px;
+  cursor: pointer;
+  touch-action: none;
+}
+
+/* At this width a bar is ~9px across — the phone's 1.5px rounding reads as a slab here. Soft ends,
+   as the drawing's own voice demands ("soft rounded bars", never a chart). */
+.cx-stage .cx-wave i {
+  border-radius: 3px;
 }
 
 .cx-bar {
@@ -4005,6 +4057,169 @@
   translate: 5px 0;
 }
 
+/* --- the billboard --------------------------------------------------------- */
+
+/*
+ * One record put forward, on a wall of its own light — see `Billboard` in Browse.tsx.
+ *
+ * The wall is the sleeve blurred past recognition, and the scrim fades it into the page at *both*
+ * edges: a band that starts and stops is a box, and a pool of light is not. Full-bleed past the
+ * page margin the same way the shelves run off the window's edge.
+ */
+.cx-bill {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: clamp(24px, 3.4vw, 52px);
+  margin: 0 calc(-1 * var(--browse-pad)) clamp(26px, 4vh, 48px);
+  padding: clamp(28px, 4.6vh, 56px) var(--browse-pad);
+  overflow: hidden;
+  animation: cx-door-in 0.5s var(--cx-ease) backwards;
+}
+
+.cx-bill-wall {
+  position: absolute;
+  inset: -14%;
+  background-position: center 30%;
+  background-size: cover;
+  filter: blur(84px) brightness(0.5) saturate(1.05);
+  pointer-events: none;
+}
+
+.cx-bill-scrim {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    var(--cx-bg),
+    rgb(10 10 12 / 34%) 30%,
+    rgb(10 10 12 / 34%) 62%,
+    var(--cx-bg)
+  );
+}
+
+.cx-bill-cover {
+  position: relative;
+  z-index: 1;
+  flex: none;
+  width: clamp(124px, 19vh, 204px);
+  aspect-ratio: 1;
+  overflow: hidden;
+  border-radius: 4px;
+  background-color: var(--cx-cover);
+  background-position: center;
+  background-size: cover;
+  box-shadow:
+    0 30px 60px -30px rgb(0 0 0 / 95%),
+    inset 0 0 0 1px rgb(255 255 255 / 14%);
+  transition: transform 0.4s var(--cx-ease);
+}
+
+/* The same printed-gloss breath the stage's sleeve carries. */
+.cx-bill-cover::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    118deg,
+    rgb(255 255 255 / 10%) 0%,
+    rgb(255 255 255 / 4%) 22%,
+    transparent 38%
+  );
+  mix-blend-mode: soft-light;
+}
+
+.cx-bill-cover:hover {
+  transform: scale(1.02);
+}
+
+.cx-bill-cover[data-person] {
+  border-radius: 50%;
+}
+
+.cx-bill-meta {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  min-width: 0;
+}
+
+.cx-bill-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 9.5px;
+  letter-spacing: 0.26em;
+  color: var(--t5);
+}
+
+/* Provenance, same figure as the stage's eyebrow: a dot, then where the pick came from. */
+.cx-bill-from {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  font-style: normal;
+  color: var(--t7);
+}
+
+.cx-bill-from::before {
+  content: '';
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: var(--t8);
+}
+
+.cx-bill-title {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  font-size: clamp(30px, 4.4vw, 56px);
+  line-height: 1.04;
+  letter-spacing: -0.035em;
+  text-align: left;
+  text-wrap: balance;
+  color: var(--t1);
+  transition: color 0.2s;
+}
+
+.cx-bill-title:hover {
+  color: #fff;
+}
+
+.cx-bill-sub {
+  font-size: 15px;
+  color: var(--t4);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+.cx-bill-actions {
+  display: inline-flex;
+  gap: 28px;
+  margin-top: 8px;
+}
+
+.cx-bill-open {
+  font-size: 10.5px;
+  letter-spacing: 0.2em;
+  color: var(--t5);
+  transition: color 0.18s;
+}
+
+.cx-bill-open:hover {
+  color: var(--t1);
+}
+
 /* --- grids and shelves ---------------------------------------------------- */
 
 .cx-grid {
@@ -4057,6 +4272,61 @@
   flex: none;
   width: clamp(140px, 13vw, 190px);
   scroll-snap-align: start;
+}
+
+/*
+ * A door, opened out into the shelf it was describing — see the doors block in Browse.tsx.
+ *
+ * The heading keeps the door's own type size and hover, because it *is* the door: the way into the
+ * whole folder. `all` hangs on the right margin the way a track's duration does, and steps aside
+ * with the same gesture the door's arrow makes.
+ */
+.cx-doorshelf {
+  animation: cx-door-in 0.5s var(--cx-ease) backwards;
+  animation-delay: calc(var(--i, 0) * 70ms);
+}
+
+.cx-doors .cx-doorshelf {
+  margin: 6px 0 clamp(22px, 3.4vh, 40px);
+}
+
+.cx-doorshelf-head {
+  display: flex;
+  align-items: baseline;
+  gap: 18px;
+  width: 100%;
+  padding: 0 0 14px;
+  text-align: left;
+}
+
+.cx-doorshelf-name {
+  font-size: clamp(24px, 2.6vw, 38px);
+  line-height: 1.1;
+  color: var(--t3);
+  transition: color 0.2s;
+}
+
+.cx-doorshelf-head:hover .cx-doorshelf-name {
+  color: var(--t1);
+}
+
+.cx-doorshelf-go {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: none;
+  margin-left: auto;
+  font-size: 9.5px;
+  letter-spacing: 0.2em;
+  color: var(--t7);
+  transition:
+    color 0.2s,
+    translate 0.35s var(--cx-ease);
+}
+
+.cx-doorshelf-head:hover .cx-doorshelf-go {
+  color: var(--t3);
+  translate: 4px 0;
 }
 
 .cx-tile {
@@ -4206,6 +4476,30 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/*
+ * Round for a person, square for a record — the sleeve is an object and a face is not.
+ *
+ * The chip moves in with the curve (a corner control on a circle floats in space), and the caption
+ * centres because a circle has no left edge for text to align to. The hover glow is already round.
+ */
+.cx-tile[data-person] .cx-tile-cov {
+  border-radius: 50%;
+}
+
+.cx-tile[data-person] .cx-tile-ov {
+  background: radial-gradient(circle at 50% 80%, rgb(0 0 0 / 40%), transparent 65%);
+}
+
+.cx-tile[data-person] .cx-tile-chip {
+  right: 6%;
+  bottom: 6%;
+}
+
+.cx-tile[data-person] .cx-tile-title,
+.cx-tile[data-person] .cx-tile-sub {
+  text-align: center;
 }
 
 /* --- track rows ----------------------------------------------------------- */
