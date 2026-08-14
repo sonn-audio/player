@@ -38,6 +38,7 @@ export type IconName =
   | 'wave'
   | 'plus'
   | 'minus'
+  | 'folder'
   | 'check';
 
 /**
@@ -83,6 +84,9 @@ const PATHS: Record<IconName, string> = {
   plus: 'M11 5h2v6h6v2h-6v6h-2v-6H5v-2h6V5z',
   // The pair the nudge buttons need: one step earlier, one step later.
   minus: 'M5 11h14v2H5v-2z',
+  // A place in the catalogue, for a browsable folder that has no artwork of its own. Records
+  // stacked in a rack rather than a document folder: what is behind it is music, not files.
+  folder: 'M5 8h14v12H5V8zm2-3h10v2H7V5zm2-3h6v1.5H9V2z',
   check: 'M9.6 16.2L5.4 12l-1.4 1.4 5.6 5.6 12-12-1.4-1.4z',
   // Four bars of a level meter: the mark for "this is what is playing", used by the bar's own label.
   wave: 'M4 10h2v4H4v-4zm4.5-3h2v10h-2V7zm4.5-3h2v16h-2V4zm4.5 5h2v6h-2V9z',

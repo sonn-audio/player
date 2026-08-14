@@ -3110,6 +3110,10 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
  * `auto-fill` with a minimum rather than a column count: the middle column's width changes with
  * the rails, and a fixed count would give five cramped covers at one width and five stretched
  * ones at another.
+ *
+ * The rules below are written `:is(.grid, .shelf)` because a shelf *is* this card, laid along the
+ * other axis — same cover, same text block, same actions on hover. Only the track that carries
+ * them differs, which is the whole reason `ItemGrid` can render both from one piece of markup.
  */
 .item-list.grid {
   display: grid;
@@ -3117,33 +3121,33 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
   gap: 6px;
 }
 
-.item-list.grid > li {
+.item-list:is(.grid, .shelf:not(.rows)) > li {
   flex-direction: column;
   align-items: stretch;
   gap: 0;
   padding: 8px;
 }
 
-.item-list.grid .item-row {
+.item-list:is(.grid, .shelf:not(.rows)) .item-row {
   flex-direction: column;
   align-items: stretch;
   gap: 9px;
   padding: 0;
 }
 
-.item-list.grid .cover.tiny {
+.item-list:is(.grid, .shelf:not(.rows)) .cover.tiny {
   width: 100%;
   height: auto;
   aspect-ratio: 1;
   box-shadow: var(--shadow-1);
 }
 
-.item-list.grid .item-meta {
+.item-list:is(.grid, .shelf:not(.rows)) .item-meta {
   margin-left: 0;
   padding-left: 0;
 }
 
-.item-list.grid .row-actions {
+.item-list:is(.grid, .shelf:not(.rows)) .row-actions {
   justify-content: flex-end;
   padding: 6px 0 0;
 }
@@ -3157,8 +3161,8 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
   transition: opacity var(--dur) var(--ease);
 }
 
-.item-list.grid > li:hover .item-overlay,
-.item-list.grid > li:focus-within .item-overlay {
+.item-list:is(.grid, .shelf:not(.rows)) > li:hover .item-overlay,
+.item-list:is(.grid, .shelf:not(.rows)) > li:focus-within .item-overlay {
   opacity: 1;
 }
 
@@ -3174,6 +3178,909 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
   margin-top: 12px;
 }
 
+/* --- the catalogue: arriving ----------------------------------------------- */
+
+/*
+ * The head of an album, a playlist, an artist.
+ *
+ * The sleeve at a size that makes it the subject, the name in the display face, and one filled
+ * verb. Everything on it came out of the browse call that drew the list below — a page about a
+ * record should not need a second request to know what record it is.
+ */
+.detail {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  gap: 22px;
+  margin: -20px -18px 6px;
+  padding: 26px 18px 22px;
+  border-radius: var(--r-xl);
+  overflow: hidden;
+}
+
+/*
+ * The sleeve's colour behind it.
+ *
+ * One image, blown up past the edges and blurred until it is only light. Masked away downward so
+ * the first row of the listing sits on the page's own black rather than on a wash — the head is
+ * lit, the list is not.
+ */
+.detail-bloom {
+  position: absolute;
+  inset: -70% -20%;
+  opacity: 0.4;
+  filter: blur(64px) saturate(160%);
+  mask-image: linear-gradient(180deg, rgb(0 0 0 / 95%) 30%, transparent 92%);
+}
+
+.detail-bloom img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.detail > .cover.detail-cover {
+  position: relative;
+  flex: none;
+  width: 188px;
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-3);
+}
+
+/* An artist is a face here too — the same rule the shelves follow, at the size of a subject. */
+.detail[data-kind='artist'] > .cover.detail-cover {
+  border-radius: var(--r-pill);
+}
+
+.detail-text {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  padding-bottom: 4px;
+}
+
+.detail-kind {
+  margin: 0;
+  color: var(--text-dim);
+  font-size: 10px;
+}
+
+/*
+ * The name, as large as it can be without becoming a poster.
+ *
+ * `clamp` against the viewport rather than a fixed size: "Greatest Hits I / Disc One" and "WILD"
+ * are the same element, and a size that suits one wraps the other onto three lines in a column
+ * that changes width with the rails.
+ */
+.detail-title {
+  font-family: var(--font-display);
+  font-size: clamp(26px, 3.4vw, 44px);
+  font-weight: 800;
+  letter-spacing: -0.035em;
+  line-height: 1.03;
+  /* Two lines, then an ellipsis: a fourteen-word playlist name must not push the listing off. */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  /* And a single unbroken word — a hashed playlist name, a German compound — breaks rather than
+     running out of the head, which clips it mid-letter with no ellipsis to explain why. */
+  overflow-wrap: break-word;
+}
+
+.detail-artist {
+  margin: 0;
+  color: var(--text);
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.detail-meta {
+  margin: 0;
+  color: var(--text-dim);
+  font-size: 12.5px;
+}
+
+.detail-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+/*
+ * The one filled control on the page.
+ *
+ * A pill rather than the disc the tiles carry, because this one is labelled: the tile's mark is
+ * understood from its corner and its colour, and at this size a bare disc beside a title reads as
+ * decoration rather than as the thing to press.
+ */
+.detail-play {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px 10px 16px;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-size: 14px;
+  font-weight: 700;
+  box-shadow: var(--shadow-2);
+  transition:
+    filter var(--dur) var(--ease),
+    transform var(--dur) var(--ease);
+}
+
+.detail-play svg {
+  width: 16px;
+  height: 16px;
+}
+
+.detail-play:hover:not(:disabled) {
+  filter: brightness(1.12);
+  transform: translateY(-1px);
+}
+
+.detail-actions .icon-button {
+  background: var(--well);
+  border-color: transparent;
+}
+
+/*
+ * The head stacks on a phone, and the sleeve stops being a hero there.
+ *
+ * A 188px cover above a 26px title on a 390px screen is a page you scroll past to reach the music.
+ * Side by side at a smaller size it stays a header.
+ */
+@media (max-width: 620px) {
+  .detail {
+    gap: 14px;
+    padding: 18px 14px;
+  }
+
+  .detail > .cover.detail-cover {
+    width: 96px;
+  }
+
+  /*
+   * A smaller floor for the name.
+   *
+   * The desk clamp bottoms out at 26px, which on a 420px screen leaves "Greatest Hits I / Disc
+   * One" about four pixels too wide for the column beside the sleeve — one line, clipped mid-word
+   * rather than wrapped, which reads as a broken layout rather than as a long title.
+   */
+  .detail-title {
+    font-size: clamp(21px, 5.4vw, 30px);
+  }
+
+  .detail-actions {
+    margin-top: 8px;
+  }
+}
+
+/*
+ * A numbered row, where the sleeve used to be.
+ *
+ * Right-aligned in the width the 40px cover had, so the titles beside it line up with every other
+ * list in the product — a track list that indents differently from a queue is two designs.
+ */
+.item-index {
+  flex: none;
+  width: 40px;
+  padding-right: 12px;
+  color: var(--text-mute);
+  font-size: 11px;
+  text-align: right;
+}
+
+.item-list > li:hover .item-index {
+  color: var(--text-dim);
+}
+
+/* --- the catalogue: doorways ---------------------------------------------- */
+
+/*
+ * A folder drawn as what is inside it.
+ *
+ * Four sleeves at a 1px remove from each other — the gap is the page showing through, not a
+ * border, which is the same trick the hairlines use and the reason this sits on the wash instead
+ * of on top of it. `object-fit` on the quadrants for the same reason the single cover has it:
+ * provider artwork is not reliably square.
+ */
+.folder-quilt {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 1px;
+  width: 100%;
+  height: 100%;
+}
+
+.folder-quilt img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/*
+ * The square is drawn before its answer arrives, but empty.
+ *
+ * A rack glyph that appears and is then replaced by artwork is two pictures where there should be
+ * one; holding the box and colouring the glyph out means the tile has its final size from the
+ * first frame and only ever fills in.
+ */
+.cover[data-pending] {
+  color: transparent;
+}
+
+/*
+ * A service root, once it is shelves.
+ *
+ * Roomier than the grid it replaces: shelves are read as a sequence of rooms, and the space
+ * between them is what stops seven of them reading as one long list.
+ */
+.hub {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.hub-head {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+/* Room for the wash to exist in, and a radius for it to be clipped to. Only when there is one. */
+.hub-head[data-bloom] {
+  margin: -20px -18px 0;
+  padding: 20px 18px;
+  border-radius: var(--r-xl);
+  overflow: hidden;
+}
+
+/*
+ * The colour of what is behind the title.
+ *
+ * The first shelf's sleeves, blurred past recognition and dropped to a third — so the header takes
+ * the temperature of the music inside without claiming to show any of it. It is the same move the
+ * now-playing view makes under the cover, and it is the reason this page no longer opens on an
+ * empty black band. Masked away downward so it never competes with the first row of real artwork.
+ */
+.hub-bloom {
+  position: absolute;
+  inset: -60% -12%;
+  display: flex;
+  opacity: 0.34;
+  filter: blur(52px) saturate(150%);
+  /*
+   * Radial and anchored at the title, not a band across the top.
+   *
+   * A vertical fade alone left two hard vertical edges where the header's `overflow` cut it, which
+   * read as a stripe laid over the page rather than as light coming off the artwork. Anchoring the
+   * falloff at the top-left corner puts the strongest colour behind the mark and the name and lets
+   * it die out before it reaches anything else.
+   */
+  mask-image: radial-gradient(125% 115% at 14% 8%, rgb(0 0 0 / 95%), transparent 68%);
+}
+
+.hub-bloom img {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  object-fit: cover;
+}
+
+.hub-head > .hub-mark,
+.hub-head > .hub-titles {
+  position: relative;
+}
+
+/* Big enough to be identity rather than a badge, and on its own plate so a mark with a
+   transparent ground (most of them) still has something to sit on. */
+.hub-mark {
+  flex: none;
+  padding: 7px;
+  border-radius: var(--r-lg);
+  background: var(--well);
+}
+
+.hub-titles {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.hub-title {
+  font-family: var(--font-display);
+  font-size: 30px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+}
+
+.hub-sub {
+  margin: 0;
+  color: var(--text-mute);
+  font-size: 12px;
+}
+
+.shelf {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.shelf-head {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+}
+
+/*
+ * The shelf's name *is* the way in, so it is the button rather than carrying one.
+ *
+ * The chevron slides on hover instead of the row lighting up: at this size a background tint on a
+ * heading reads as a selected state, and this is a link, not a selection.
+ */
+.shelf-open {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--text);
+}
+
+.shelf-open h2,
+.shelf-static {
+  font-size: 18px;
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/*
+ * The doorways, when a provider's own rows are the page.
+ *
+ * Sits directly under the header and above the first curated row: this is the "where else can I
+ * go" strip, and it belongs with the title rather than between two shelves of music, where it
+ * would read as a row that had lost its artwork.
+ */
+.hub-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: -10px;
+}
+
+.shelf-open svg {
+  flex: none;
+  width: 15px;
+  height: 15px;
+  color: var(--text-mute);
+  transition:
+    transform var(--dur) var(--ease),
+    color var(--dur) var(--ease);
+}
+
+.shelf-open:hover svg,
+.shelf-open:focus-visible svg {
+  transform: translateX(2px);
+  color: var(--accent);
+}
+
+.shelf-count {
+  color: var(--text-mute);
+  font-size: 10px;
+}
+
+/*
+ * The scrolling track.
+ *
+ * The negative margin lets a card's hover tint reach the column's real edge while the row still
+ * starts flush with the heading above it — without it the first cover sits 8px inboard of the
+ * title and the whole page looks kerned wrong.
+ */
+.shelf-body {
+  display: flex;
+  gap: 6px;
+  margin: 0 -8px;
+  padding: 0 8px 2px;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x proximity;
+}
+
+.item-list.shelf {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 154px;
+  gap: 6px;
+}
+
+.item-list.shelf > li {
+  scroll-snap-align: start;
+}
+
+/* The end of the shelf, which is the rest of the folder. Same footprint as a card so the row
+   ends on the grid it was drawn on. */
+.shelf-all {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 154px;
+  padding: 8px;
+  border: 0;
+  border-radius: var(--r);
+  background: none;
+  color: var(--text-dim);
+  transition:
+    background var(--dur) var(--ease),
+    color var(--dur) var(--ease);
+}
+
+.shelf-all:hover,
+.shelf-all:focus-visible {
+  background: var(--tint);
+  color: var(--text);
+}
+
+.shelf-all-mark {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border-radius: var(--r-pill);
+  background: var(--well);
+}
+
+.shelf-all-mark svg {
+  width: 18px;
+  height: 18px;
+}
+
+.shelf-all:hover .shelf-all-mark {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.shelf-all-label {
+  font-size: 12.5px;
+}
+
+/*
+ * A shelf whose contents are more doorways: the names, not a row of empty squares.
+ *
+ * Deliberately not tile-shaped. These are a table of contents and they should not compete with a
+ * shelf of real artwork one row above — a chip says "a way on" where a 154px square says "a
+ * record", and only one of those is true here.
+ */
+.shelf-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.shelf-chip {
+  padding: 7px 13px;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: var(--well);
+  color: var(--text-dim);
+  font-size: 12.5px;
+  transition:
+    background var(--dur) var(--ease),
+    color var(--dur) var(--ease);
+}
+
+.shelf-chip:hover:not(:disabled),
+.shelf-chip:focus-visible {
+  background: var(--well-hover);
+  color: var(--text);
+}
+
+/* The last chip is the folder itself, and it should not read as one more sibling of the rest. */
+.shelf-chip.ghost {
+  background: none;
+  box-shadow: inset 0 0 0 1px var(--line);
+  color: var(--text-mute);
+}
+
+.shelf-chip.ghost:hover {
+  box-shadow: inset 0 0 0 1px var(--accent-line);
+  color: var(--accent);
+}
+
+/*
+ * The play mark on a cover.
+ *
+ * The box is pinned to the *cover* rather than to the card: `top/left/right` clear the card's 8px
+ * padding and `aspect-ratio: 1` closes the square, so the button lands on the artwork's bottom
+ * corner and not below the title. `pointer-events` are off on the box and back on for the button,
+ * or an invisible square would sit over the artwork eating the click that opens it.
+ */
+.item-play {
+  display: none;
+}
+
+.item-list:is(.grid, .shelf:not(.rows)) .item-play {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  left: 8px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  aspect-ratio: 1;
+  padding: 9px;
+  pointer-events: none;
+}
+
+/*
+ * Filled with the accent, which nothing else on a browse page is.
+ *
+ * This was a bordered ghost button the same colour as everything around it, sitting in the corner
+ * with two other icons — three grey glyphs of equal weight, one of which was the primary action of
+ * a music player. The page is album art and near-black; one green disc is unmistakable at a glance
+ * and needs no label to be understood.
+ */
+.item-play .play-all {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: var(--accent);
+  color: var(--accent-ink);
+  box-shadow: var(--shadow-2);
+  pointer-events: auto;
+  opacity: 0;
+  transform: translateY(8px);
+  transition:
+    opacity var(--dur) var(--ease),
+    transform var(--dur) var(--ease),
+    filter var(--dur) var(--ease);
+}
+
+.item-play .play-all svg {
+  width: 17px;
+  height: 17px;
+  /* The glyph's own left bearing makes a centred triangle look left-of-centre in a disc. */
+  margin-left: 2px;
+}
+
+.item-list > li:hover .play-all,
+.item-list > li:focus-within .play-all {
+  opacity: 1;
+  transform: none;
+}
+
+.item-play .play-all:hover {
+  filter: brightness(1.12);
+}
+
+/* Nothing hovers on a touch screen, so the mark is simply there. */
+@media (hover: none) {
+  .item-play .play-all {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/*
+ * An artist is a face, not a sleeve.
+ *
+ * The single most legible signal in a music browser: a round frame says "person" before a word is
+ * read, so a shelf of artists stops looking like a shelf of albums with the wrong pictures. The
+ * name centres with it, because a caption under a circle that starts at the left edge reads as
+ * belonging to the gap beside it.
+ */
+.item-list:is(.grid, .shelf:not(.rows)) > li[data-kind='artist'] .cover {
+  border-radius: var(--r-pill);
+}
+
+.item-list:is(.grid, .shelf:not(.rows)) > li[data-kind='artist'] .item-text {
+  align-items: center;
+  text-align: center;
+}
+
+/* The mark would hang off the curve at the corner, so it moves in to meet it. */
+.item-list:is(.grid, .shelf:not(.rows)) > li[data-kind='artist'] .item-play {
+  padding: 18px;
+}
+
+/*
+ * The lift.
+ *
+ * Three pixels and a shadow, on the artwork only — enough that a card answers the pointer, small
+ * enough that a shelf of fourteen does not ripple. The row already tints; this is what makes the
+ * tint read as depth rather than as a selection.
+ */
+.item-list:is(.grid, .shelf:not(.rows)) .cover.tiny {
+  transition:
+    transform var(--dur) var(--ease),
+    box-shadow var(--dur) var(--ease);
+}
+
+.item-list:is(.grid, .shelf:not(.rows)) > li:hover .cover.tiny,
+.item-list:is(.grid, .shelf:not(.rows)) > li:focus-within .cover.tiny {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-3);
+}
+
+/*
+ * A shelf of tracks, stacked three deep.
+ *
+ * A track's cover is its album's, and the album is usually the row above — so fourteen squares of
+ * the same six sleeves is the least informative shape this page can take. Stacked, the artwork
+ * shrinks to the 40px it is worth and three names occupy the height one cover used to.
+ */
+.item-list.shelf.rows {
+  grid-template-rows: repeat(3, auto);
+  grid-auto-columns: min(340px, 82vw);
+  gap: 1px 14px;
+}
+
+/*
+ * The row actions inside a stacked shelf.
+ *
+ * The base `.item-overlay` is drawn at `opacity: 0` and only ever revealed by the artwork layouts,
+ * so in a row form the favourite button and the playlist picker were invisible *and still
+ * focusable* — a control a keyboard reaches and an eye cannot. (The old track list has always had
+ * this; a shelf of tracks is where it started mattering.) So they are revealed here too, parked at
+ * the end of the row, and the duration steps aside for them rather than being drawn through.
+ */
+.item-list.shelf.rows .item-overlay {
+  top: 50%;
+  right: 4px;
+  transform: translateY(-50%);
+}
+
+.item-list.shelf.rows > li:hover .item-overlay,
+.item-list.shelf.rows > li:focus-within .item-overlay {
+  opacity: 1;
+}
+
+.item-list.shelf.rows > li:hover .item-meta,
+.item-list.shelf.rows > li:focus-within .item-meta {
+  opacity: 0;
+}
+
+.item-list.shelf.rows .item-meta {
+  transition: opacity var(--dur) var(--ease);
+}
+
+/*
+ * The scrolling track and its two arrows.
+ *
+ * The gradient is on the buttons themselves, which is what makes it truthful: the arrow only
+ * exists when there is more that way, so the fade only appears where the row genuinely continues.
+ * A permanent mask on both ends would dim a shelf that ends exactly where the column does.
+ */
+.shelf-track {
+  position: relative;
+}
+
+.shelf-nudge {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  width: 72px;
+  padding: 0;
+  border: 0;
+  opacity: 0;
+  transition: opacity var(--dur) var(--ease);
+}
+
+.shelf-track:hover .shelf-nudge,
+.shelf-nudge:focus-visible {
+  opacity: 1;
+}
+
+.shelf-nudge.back {
+  left: -8px;
+  justify-content: flex-start;
+  background: linear-gradient(90deg, var(--bg) 34%, transparent);
+}
+
+.shelf-nudge.on {
+  right: -8px;
+  justify-content: flex-end;
+  background: linear-gradient(270deg, var(--bg) 34%, transparent);
+}
+
+.shelf-nudge svg {
+  width: 32px;
+  height: 32px;
+  padding: 8px;
+  border-radius: var(--r-pill);
+  background: var(--surface-3);
+  box-shadow: var(--shadow-2);
+  color: var(--text);
+  transition: background var(--dur) var(--ease);
+}
+
+.shelf-nudge.back svg {
+  transform: rotate(180deg);
+}
+
+.shelf-nudge:hover svg {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+/* A pointer that cannot hover is a finger, and a finger already swipes the row. */
+@media (hover: none) {
+  .shelf-nudge {
+    display: none;
+  }
+}
+
+.shelf-empty {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 18px 10px;
+  border-radius: var(--r);
+  background: var(--well);
+  color: var(--text-mute);
+  font-size: 12.5px;
+}
+
+.shelf-empty-badge {
+  flex: none;
+}
+
+/*
+ * Shelves before they have loaded, and the page before it has any.
+ *
+ * Flat, unanimated squares. A shimmer would be the only moving thing on a surface that has
+ * deliberately none, and it would be moving to say "wait" — which the shape already says.
+ */
+.shelf-skeleton {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 154px;
+  gap: 6px;
+}
+
+.shelf-skeleton > span {
+  aspect-ratio: 1;
+  margin: 8px;
+  border-radius: var(--r-sm);
+  background: var(--well);
+}
+
+.hub-loading {
+  height: 190px;
+  border-radius: var(--r);
+  background: linear-gradient(180deg, var(--well), transparent);
+}
+
+/*
+ * The providers themselves, at the top of the tree.
+ *
+ * A row of marks rather than a row of covers, because a service has no artwork to borrow: its own
+ * children are doorways too, so a mosaic of them would resolve to the same empty square this is
+ * here to remove. Wide cards rather than squares — there are five of them, they are read as a
+ * list of names, and five squares of logo is a lot of nothing.
+ */
+.service-cards {
+  display: grid;
+  /* `auto-fit`, not `auto-fill`: the empty tracks collapse, so a handful of providers become one
+     band across the column instead of four and a widow. The minimum is what decides how many fit
+     — 178px puts the usual five in one row at a desk width and still wraps rather than crushing
+     them on a narrower one. */
+  grid-template-columns: repeat(auto-fit, minmax(172px, 1fr));
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.service-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 11px;
+  border: 0;
+  border-radius: var(--r-lg);
+  background: var(--well);
+  color: var(--text);
+  text-align: left;
+  transition:
+    background var(--dur) var(--ease),
+    transform var(--dur) var(--ease);
+}
+
+.service-card:hover,
+.service-card:focus-visible {
+  background: var(--well-hover);
+}
+
+.service-card-plate {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--r);
+  background: rgb(255 255 255 / 5%);
+}
+
+.service-card-letter {
+  font-size: 17px;
+}
+
+.service-card-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.service-card-name {
+  font-size: 14.5px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/*
+ * The count in running text rather than in the mono label voice.
+ *
+ * `.mono` carries 0.16em of tracking, which is right for a three-letter readout and wrong for two
+ * words inside a 172px card: "7 COLLECTIONS" wrapped onto its own line and pushed the provider's
+ * name into an ellipsis. The label voice is for measurements; this is a sentence.
+ */
+.service-card-count {
+  color: var(--text-mute);
+  font-size: 11px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.service-card-go {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  margin-left: auto;
+  color: var(--text-mute);
+  transition:
+    transform var(--dur) var(--ease),
+    color var(--dur) var(--ease);
+}
+
+.service-card:hover .service-card-go {
+  transform: translateX(2px);
+  color: var(--accent);
+}
+
 /*
  * The add-to-playlist picker, in a row action.
  *
@@ -3182,12 +4089,15 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
  * stretching the row.
  */
 .playlist-add {
-  width: 30px;
-  padding: 4px 2px;
+  width: 26px;
+  padding: 4px 0;
   border-color: transparent;
   background: none;
   color: var(--text-dim);
-  font-size: 12px;
+  font-size: 14px;
+  text-align: center;
+  /* The native arrow doubles the width of a control whose whole label is one character. */
+  appearance: none;
 }
 
 .playlist-add:hover:not(:disabled) {
@@ -3236,6 +4146,18 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
   min-height: 0;
   overflow-y: auto;
   padding-bottom: 18px;
+}
+
+/*
+ * Nothing in a scrolling column shrinks.
+ *
+ * Flex items shrink before their parent overflows, so an eighteen-track listing squeezed the
+ * detail head above it — and because that head clips its own bloom (`overflow: hidden`), the
+ * squeeze cut the cover and the title off rather than making the column scroll. The list has no
+ * clipping of its own, which is why only the two headers ever showed the symptom.
+ */
+.content-scroll > * {
+  flex: none;
 }
 
 /*

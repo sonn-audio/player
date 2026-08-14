@@ -24,15 +24,16 @@ import { useState } from 'react';
  */
 const LOGOS: Record<string, string> = {
   applemusic: 'apple-music.svg',
+  spotify: 'spotify.svg',
   soundcloud: 'soundcloud.svg',
   tidal: 'tidal.svg',
   deezer: 'deezer.svg',
   ytmusic: 'youtube-music.svg',
   youtube: 'youtube.svg',
   musicassistant: 'music-assistant.png',
-  // No `spotify` entry: the server ships no spotify asset, and a mapping to a file that does
-  // not exist is a broken image rather than a missing one. It falls back to the letter chip
-  // until an asset is added, and the `onError` below covers the same mistake generally.
+  // `spotify.svg` was the one provider the shared asset set was missing, so the busiest service in
+  // the product wore a letter chip while the others carried their mark. The asset now ships beside
+  // the rest; a mapping that outruns the server still degrades to the chip via `onError` below.
 };
 
 /**
