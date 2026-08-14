@@ -17,18 +17,35 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useApi, useServer } from '@/state/ServerContext';
 import type { ContentItem, ContentListing, ContentService } from '@/api/content';
-import { ItemCover } from '@/components/Cover';
+import { CatalogueDetail, artistOf } from '@/components/CatalogueDetail';
+import { CatalogueHub } from '@/components/CatalogueHub';
 import { Icon } from '@/components/Icon';
-import { FavoriteButton } from '@/components/FavoriteButton';
 import { FavoritesPanel } from '@/components/FavoritesPanel';
+import { ItemGrid, type BrowseActions } from '@/components/ItemGrid';
 import { RecentsPanel } from '@/components/RecentsPanel';
-import { ServiceBadge } from '@/components/ServiceBadge';
-import { useAddFavorite, type AddFavoriteState } from '@/state/useAddFavorite';
-import { formatTime } from '@/lib/format';
+import { ServiceCards } from '@/components/ServiceCards';
+import { useAddFavorite } from '@/state/useAddFavorite';
 import type { ApiPlaylist, ApiZoneState } from '@/api/types';
 
 /** One page. The server caps it; this is a screenful of a grid. */
 const PAGE_SIZE = 60;
+
+/**
+ * How many doorways a listing may hold before it is drawn as a grid instead of as shelves.
+ *
+ * A shelf is a request, so this is the point where opening one folder to introduce it stops being
+ * an introduction and becomes a download. Spotify's root has seven; a genre directory has sixty-
+ * nine and is a grid — which is right for it anyway, since those *do* carry artwork.
+ */
+const MAX_SHELVES = 10;
+
+/**
+ * How many coverless folders may borrow a mosaic from their contents in one grid.
+ *
+ * Same trade, one request per tile, but bounded lower because a grid is where the long listings
+ * are. Past this the plain rack glyph is the answer.
+ */
+const MAX_MOSAICS = 24;
 
 /** The order search buckets are shown in — most specific first. */
 const KIND_ORDER = ['track', 'album', 'artist', 'playlist', 'radio', 'show', 'episode'];
@@ -319,6 +336,53 @@ function ContentBrowser({
       ? (extra.length > 0 ? extra.length % PAGE_SIZE === 0 : listing.items.length === PAGE_SIZE)
       : items.length < listing.total);
 
+  /* Everything a listing needs to be interactive, in one object — see `BrowseActions`. */
+  const actions: BrowseActions = {
+    zone,
+    onOpen: open,
+    onPlay: play,
+    favorites,
+    serviceNames,
+    onRenamePlaylist: renamePlaylist,
+    onDeletePlaylist: deletePlaylist,
+    playlistOptions: playlists,
+    onAddToPlaylist: addToPlaylist,
+  };
+
+  /*
+   * How this listing should be drawn — decided from what came back, never from where we are.
+   *
+   * A listing of browsable, unplayable, artwork-less items is a set of doorways rather than a set
+   * of records, and the artwork grid is the wrong instrument for it: it draws seven empty sleeves
+   * and calls it a page. There are two kinds of doorway and they want opposite treatments —
+   *
+   *  - **services** (the root) have no contents worth borrowing a picture from, because their
+   *    children are doorways too. They get their brand mark.
+   *  - **folders inside a service** are full of music, so they are drawn as that music.
+   *
+   * Read off the items rather than off `trail.length` so a provider that nests one level deeper
+   * than Spotify does gets the same treatment at whatever depth its doorways appear.
+   */
+  const doorways = items.length > 0 && items.every((item) => item.browsable && !item.coverUrl);
+  const asServices = doorways && trail.length === 0;
+  const asShelves = doorways && !asServices && items.length <= MAX_SHELVES;
+  // The grid's fallback: mosaics, while there are few enough of them to be worth the requests.
+  const mosaics = items.filter((item) => item.browsable && !item.coverUrl).length <= MAX_MOSAICS;
+
+  /*
+   * Somewhere with a face of its own — an album, a playlist, an artist — gets a head above its
+   * listing. Gated on artwork rather than on kind: what makes the head worth the height is the
+   * cover, and a container without one has nothing to show that the breadcrumb was not already
+   * saying. Never over search results, which are about the query rather than about a place.
+   */
+  const detail = !results && !asShelves && !asServices && listing?.container?.coverUrl ? listing.container : null;
+  // An album's rows are numbered; a playlist's keep their sleeves, because there they differ.
+  const numbered = detail?.kind === 'album' && items.every((item) => item.kind === 'track');
+  // What the head has already said, so the rows below can stop repeating it.
+  const said = detail
+    ? { artist: artistOf(detail, items), album: detail.kind === 'album' ? detail.name : undefined }
+    : undefined;
+
   return (
     <div className="content">
       <div className="content-bar">
@@ -384,7 +448,10 @@ function ContentBrowser({
         you.
       */}
       <div className="content-scroll">
-      {!results && listing?.sections && listing.sections.length > 0 && <h1 className="home-title">Home</h1>}
+      {/* The hub draws its own header, and "Home" above "Apple Music" is the page named twice. */}
+      {!results && !asShelves && !asServices && listing?.sections && listing.sections.length > 0 && (
+        <h1 className="home-title">Home</h1>
+      )}
 
       {failedServices.length > 0 && (
         <p className="notice warn">
@@ -397,22 +464,28 @@ function ContentBrowser({
       )}
 
       {results ? (
-        <SearchResults
-          results={results}
-          zone={zone}
-          onOpen={open}
-          onPlay={play}
-          favorites={favorites}
-          serviceNames={serviceNames}
-          onRenamePlaylist={renamePlaylist}
-          onDeletePlaylist={deletePlaylist}
-          playlistOptions={playlists}
-          onAddToPlaylist={addToPlaylist}
-        />
+        <SearchResults results={results} actions={actions} />
       ) : busy && items.length === 0 ? (
-        <p className="hint">Loading…</p>
+        /* A block the size of what is coming rather than the word "Loading…", which occupied one
+           line and then jumped the whole page down as the real thing replaced it. */
+        <div className="hub-loading" aria-label="Loading" />
       ) : items.length === 0 ? (
         <p className="hint">Nothing here.</p>
+      ) : asServices ? (
+        <ServiceCards services={items} serviceNames={serviceNames} onOpen={open} />
+      ) : asShelves ? (
+        <CatalogueHub
+          // The trail's name, not the container's: providers put their own junk in that field —
+          // Spotify answers with the account id — and this is the largest text on the page.
+          title={here?.name || listing?.container?.name || 'Catalogue'}
+          service={listing?.container?.service}
+          serviceName={
+            listing?.container?.service ? serviceNames[listing.container.service] : undefined
+          }
+          folders={items}
+          sections={listing?.sections ?? []}
+          actions={actions}
+        />
       ) : (
         <>
           {listing?.sections?.map((section) => (
@@ -420,31 +493,25 @@ function ContentBrowser({
               <header className="panel-header">
                 <h2>{section.name}</h2>
               </header>
-              <ItemGrid
-                items={section.items}
-                zone={zone}
-                onOpen={open}
-                onPlay={play}
-                favorites={favorites}
-                serviceNames={serviceNames}
-                onRenamePlaylist={renamePlaylist}
-                onDeletePlaylist={deletePlaylist}
-                playlistOptions={playlists}
-                onAddToPlaylist={addToPlaylist}
-              />
+              <ItemGrid {...actions} items={section.items} previewFolders={mosaics} />
             </section>
           ))}
+          {detail && (
+            <CatalogueDetail
+              container={detail}
+              items={items}
+              total={listing?.total ?? null}
+              zone={zone}
+              onPlay={play}
+              favorites={favorites}
+            />
+          )}
           <ItemGrid
+            {...actions}
             items={items}
-            zone={zone}
-            onOpen={open}
-            onPlay={play}
-            favorites={favorites}
-            serviceNames={serviceNames}
-            onRenamePlaylist={renamePlaylist}
-            onDeletePlaylist={deletePlaylist}
-            playlistOptions={playlists}
-            onAddToPlaylist={addToPlaylist}
+            previewFolders={mosaics}
+            numbered={numbered}
+            {...(said ? { said } : {})}
             {...(playlistId
               ? {
                   playlistId,
@@ -469,26 +536,10 @@ function ContentBrowser({
 
 function SearchResults({
   results,
-  zone,
-  onOpen,
-  onPlay,
-  favorites,
-  serviceNames,
-  onRenamePlaylist,
-  onDeletePlaylist,
-  playlistOptions,
-  onAddToPlaylist,
+  actions,
 }: {
   results: Record<string, ContentItem[]>;
-  zone: ApiZoneState | null;
-  onOpen: (item: ContentItem) => void;
-  onPlay: (item: ContentItem) => void;
-  favorites: AddFavoriteState;
-  serviceNames: Record<string, string>;
-  onRenamePlaylist: (item: ContentItem) => void;
-  onDeletePlaylist: (item: ContentItem) => void;
-  playlistOptions: ApiPlaylist[];
-  onAddToPlaylist: (playlistId: string, itemId: string) => void;
+  actions: BrowseActions;
 }) {
   // Known kinds first in a sensible order, then anything the server added since — the kind
   // list is open, so an unrecognised bucket must still be shown.
@@ -508,213 +559,9 @@ function SearchResults({
           <header className="panel-header">
             <h2>{KIND_LABELS[kind] ?? kind}</h2>
           </header>
-          <ItemGrid
-            items={results[kind]!}
-            zone={zone}
-            onOpen={onOpen}
-            onPlay={onPlay}
-            favorites={favorites}
-            serviceNames={serviceNames}
-            onRenamePlaylist={onRenamePlaylist}
-            onDeletePlaylist={onDeletePlaylist}
-            playlistOptions={playlistOptions}
-            onAddToPlaylist={onAddToPlaylist}
-          />
+          <ItemGrid {...actions} items={results[kind]!} showService />
         </section>
       ))}
     </>
-  );
-}
-
-function ItemGrid({
-  items,
-  zone,
-  onOpen,
-  onPlay,
-  favorites,
-  serviceNames,
-  onRenamePlaylist,
-  onDeletePlaylist,
-  playlistOptions,
-  onAddToPlaylist,
-  playlistId,
-  onRemovePlaylistItem,
-  onMovePlaylistItem,
-}: {
-  items: ContentItem[];
-  zone: ApiZoneState | null;
-  onOpen: (item: ContentItem) => void;
-  onPlay: (item: ContentItem) => void;
-  favorites: AddFavoriteState;
-  serviceNames: Record<string, string>;
-  onRenamePlaylist: (item: ContentItem) => void;
-  onDeletePlaylist: (item: ContentItem) => void;
-  playlistOptions: ApiPlaylist[];
-  onAddToPlaylist: (playlistId: string, itemId: string) => void;
-  playlistId?: string;
-  onRemovePlaylistItem?: (position: number) => void;
-  onMovePlaylistItem?: (from: number, to: number) => void;
-}) {
-  const trackList = items.length > 0 && items.every((item) => item.kind === 'track');
-  return (
-    <ul className={`item-list ${trackList ? 'track-list' : 'grid'}`}>
-      {items.map((item, index) => (
-        <li key={item.id}>
-          <button
-            type="button"
-            className="item-row"
-            // Opening wins for something that is both, since that is the non-destructive
-            // action; playing the whole thing is the explicit button below.
-            onClick={() => (item.browsable ? onOpen(item) : onPlay(item))}
-            disabled={!item.browsable && !zone}
-            title={
-              item.browsable
-                ? `Open ${item.name}`
-                : zone
-                  ? `Play in ${zone.name}`
-                  : 'Select a zone first'
-            }
-          >
-            {/*
-              `tiny` is what the list geometry is built on: 40px in a row, and back to the full column
-              width inside a grid (`.item-list.grid .cover.tiny`). Without it a row's artwork fell through
-              to the base `.cover { width: 100% }` — which is invisibly correct in the grid and 826px tall
-              in a track list, so this looked like the list view was broken rather than one class missing.
-            */}
-            <ItemCover
-              url={item.coverUrl ?? ''}
-              className="tiny"
-              {...(item.animatedCoverUrl ? { animatedUrl: item.animatedCoverUrl } : {})}
-            />
-            <span className="item-text">
-              <span className="item-title">{item.name}</span>
-              {/* Artist/album when there is one, and always the provider. Previously the
-                  service was only a *fallback* for a missing artist, so the rows that most
-                  needed attributing — a fully-tagged track from one of four providers — were
-                  the ones that never showed it. */}
-              {(item.artist || item.album) && (
-                <span className="item-sub">
-                  {[item.artist, item.album].filter(Boolean).join(' — ')}
-                </span>
-              )}
-              <ServiceBadge
-                service={item.service}
-                label={serviceNames[item.service]}
-                className="item-service"
-              />
-            </span>
-            {item.duration ? <span className="item-meta">{formatTime(item.duration)}</span> : null}
-          </button>
-
-          {/* Overlaid on the artwork: the actions that are not "what a tap does". */}
-          <span className="item-overlay">
-            {/* A container that is also playable gets its own verb — "play the whole album". */}
-            {item.browsable && item.playable && zone && (
-              <button
-                type="button"
-                className="icon-button small ghost play-all"
-                title={`Play all in ${zone.name}`}
-                onClick={() => onPlay(item)}
-              >
-                <Icon name="play" />
-              </button>
-            )}
-            {/* Anything with an id can be a favourite — a track, an album, a whole playlist —
-                because the API stores the id and resolves it at play time. */}
-            {item.playable && (
-              <FavoriteButton
-                zone={zone}
-                uri={item.id}
-                name={item.name}
-                pending={favorites.pending === item.id}
-                saved={favorites.saved === item.id}
-                onAdd={favorites.add}
-              />
-            )}
-            {item.kind === 'track' && (
-              <select
-                className="playlist-add"
-                defaultValue=""
-                aria-label={`Add ${item.name} to playlist`}
-                title="Add to playlist"
-                disabled={playlistOptions.length === 0}
-                onClick={(event) => event.stopPropagation()}
-                onChange={(event) => {
-                  event.stopPropagation();
-                  if (event.currentTarget.value) {
-                    onAddToPlaylist(event.currentTarget.value, item.id);
-                    event.currentTarget.value = '';
-                  }
-                }}
-              >
-                <option value="">＋ Add to playlist…</option>
-                {playlistOptions.map((playlist) => (
-                  <option key={playlist.id} value={playlist.id}>{playlist.name}</option>
-                ))}
-              </select>
-            )}
-            {playlistId && item.kind === 'track' && (
-              <>
-                {index > 0 && (
-                  <button
-                    type="button"
-                    className="text-button playlist-action"
-                    title="Move up"
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      onMovePlaylistItem?.(index, index - 1);
-                    }}
-                  >↑</button>
-                )}
-                {index < items.length - 1 && (
-                  <button
-                    type="button"
-                    className="text-button playlist-action"
-                    title="Move down"
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      onMovePlaylistItem?.(index, index + 1);
-                    }}
-                  >↓</button>
-                )}
-                <button
-                  type="button"
-                  className="text-button playlist-action"
-                  title="Remove from playlist"
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    onRemovePlaylistItem?.(index);
-                  }}
-                >Remove</button>
-              </>
-            )}
-            {item.kind === 'playlist' && item.service === 'library' && (
-              <>
-                <button
-                  type="button"
-                  className="text-button playlist-action"
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    onRenamePlaylist(item);
-                  }}
-                >
-                  Rename
-                </button>
-                <button
-                  type="button"
-                  className="text-button playlist-action"
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    onDeletePlaylist(item);
-                  }}
-                >
-                  Delete
-                </button>
-              </>
-            )}
-          </span>
-        </li>
-      ))}
-    </ul>
   );
 }
