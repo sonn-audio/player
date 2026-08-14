@@ -31,6 +31,7 @@
  */
 import { useEffect, useRef } from 'react';
 import { describeFormat, isLosslessCodec } from '@/components/StreamFormat';
+import { useServer } from '@/state/ServerContext';
 import type { ApiProcessingChain, ApiStreamFormat, ApiZoneState } from '@/api/types';
 
 /**
@@ -332,13 +333,51 @@ function stagesOf(zone: ApiZoneState): Stage[] {
 }
 
 /**
+ * Which rooms cannot play the source as it arrived, this one first.
+ *
+ * A speaker is only ever handed a format it declared: the server checks `supported_formats` before
+ * it follows the source's own rate, and a grouped room is fed the leader's stream verbatim — so one
+ * member that never declared 44.1 kHz holds the whole group at 48 kHz, and the room you are looking
+ * at may not be the one that cannot do it. Naming the wrong device is worse than naming none: the
+ * point of the reason line is that it tells you what to change.
+ *
+ * Read off each room's own `output.capabilities.formats` — the devices' own word, not a second copy
+ * of the server's negotiation rule, so it stays true if that rule changes. A room that declared no
+ * formats at all is not accused; no answer is not a no. An empty result means nothing can be pinned
+ * on a device, and the caller says what happened without blaming anyone.
+ */
+function roomsThatCannotPlay(
+  zone: ApiZoneState,
+  zones: ApiZoneState[],
+  target: { sampleRate: number; bitDepth: number; channels: number },
+): ApiZoneState[] {
+  const byId = new Map(zones.map((entry) => [entry.id, entry]));
+  const others = (zone.group?.members ?? []).filter((id) => id !== zone.id);
+  return [zone, ...others.map((id) => byId.get(id))]
+    .filter((room): room is ApiZoneState => room != null)
+    .filter((room) => {
+      const formats = room.output?.capabilities?.formats;
+      if (!formats?.length) {
+        return false;
+      }
+      return !formats.some(
+        (fmt) =>
+          fmt.sampleRate === target.sampleRate &&
+          fmt.bitDepth === target.bitDepth &&
+          fmt.channels === target.channels,
+      );
+    });
+}
+
+/**
  * The headline: is this the file, or something we made from it?
  *
  * The goal this player is built around is that the source reaches the speaker unaltered — every stage in
  * the chain below is a way that can fail, and a list of eight rows does not tell you at a glance whether
  * it did. So the panel leads with the answer and, when the answer is "no", with the *reason*, which is
- * what turns a readout into something you can act on: "resampled — the output is fixed at 44.1 kHz" names
- * the setting to change.
+ * what turns a readout into something you can act on: "grouped with Kitchen, which cannot play 44.1 kHz"
+ * names the thing to change. It said "this output is fixed at 48 kHz" for a while, which named nothing —
+ * the rate was not a setting on this output at all, it was another room in the group.
  *
  * Three verdicts, and the distinction between the first two is the one audiophiles actually care about:
  *
@@ -348,6 +387,9 @@ function stagesOf(zone: ApiZoneState): Stage[] {
  *  - **Altered** — this server changed the samples, and the reason says which stage did it.
  */
 function Verdict({ zone }: { zone: ApiZoneState }) {
+  // The other rooms, for the resample reason: a group shares one format, so the device that cannot
+  // take the source's rate may be any of them.
+  const { zones } = useServer();
   const format = zone.format;
   // Absent rather than "false" when nothing is streaming: "not bit-perfect" reads as a fault in a room
   // that is simply idle.
@@ -377,7 +419,25 @@ function Verdict({ zone }: { zone: ApiZoneState }) {
       return `depth reduced to ${output.bitDepth}-bit for this output`;
     }
     if (chain.resampled && source && source.sampleRate !== output.sampleRate) {
-      return `resampled — this output is fixed at ${output.sampleRate / 1000} kHz`;
+      const rate = `${source.sampleRate / 1000} kHz`;
+      const blocked = roomsThatCannotPlay(zone, zones, {
+        sampleRate: source.sampleRate,
+        // A lossy source has no depth of its own to preserve, so the depth on offer was the
+        // output's own — which is the same rule the server applies when it picks the format.
+        bitDepth: source.bitDepth ?? output.bitDepth,
+        channels: output.channels,
+      });
+      const culprit = blocked[0];
+      if (!culprit) {
+        return `resampled to ${output.sampleRate / 1000} kHz for this output`;
+      }
+      if (culprit.id === zone.id) {
+        return `resampled — this speaker cannot play ${rate}`;
+      }
+      if (blocked.length === 1) {
+        return `resampled — grouped with ${culprit.name}, which cannot play ${rate}`;
+      }
+      return `resampled — grouped with rooms that cannot play ${rate}`;
     }
     if (chain.equalizer) {
       return 'the zone equalizer is not flat';
