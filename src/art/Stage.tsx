@@ -33,11 +33,13 @@ import {
   PauseGlyph,
   PlayGlyph,
   PrevGlyph,
+  QueueGlyph,
   RepeatGlyph,
   ShuffleGlyph,
   SpeakerGlyph,
 } from '@/art/glyphs';
-import type { Channel, Cur } from '@/art/useCur';
+import { formatTime } from '@/lib/format';
+import type { Cur } from '@/art/useCur';
 
 /** Greeting by hour — the welcome screen's line, reused as the stage's eyebrow. */
 export function greeting(hour = new Date().getHours()): string {
@@ -63,24 +65,23 @@ function Transport({ cur, size }: { cur: Cur; size: 'desk' | 'phone' }) {
   return (
     <div className="cx-transport" data-size={size}>
       {/*
-       * Shuffle and repeat are a desk's affordances.
+       * Five controls on both, now that the phone's player has the room for them.
        *
-       * On a phone they are two of five equal-looking targets around the one button anyone is reaching for,
-       * and they are *modes* — set once a month, glanced at never. Three buttons under a full-bleed sleeve
-       * is a player; five is a remote control. Both still live one tap away in the queue sheet's own header
-       * on that screen.
+       * They were a desk's affordances only: on the old phone screen the transport was five
+       * equal-looking targets crammed under a full-bleed sleeve, which is a remote control rather
+       * than a player. What changed is the hierarchy around them — a 74px solid white play against
+       * 19px outline glyphs is not five equal targets, it is one button with four settings beside
+       * it, which is what the design asks for and what every phone player draws.
        */}
-      {!phone && (
-        <button
-          type="button"
-          className="cx-tr-side"
-          data-on={cur.shuffle || undefined}
-          aria-label="Shuffle"
-          onClick={() => leader && void api.setShuffle(leader.id, !cur.shuffle)}
-        >
-          <ShuffleGlyph size={19} />
-        </button>
-      )}
+      <button
+        type="button"
+        className="cx-tr-side"
+        data-on={cur.shuffle || undefined}
+        aria-label="Shuffle"
+        onClick={() => leader && void api.setShuffle(leader.id, !cur.shuffle)}
+      >
+        <ShuffleGlyph size={19} />
+      </button>
       <button type="button" className="cx-tr-skip" aria-label="Previous" onClick={() => leader && void api.previous(leader.id)}>
         <PrevGlyph size={phone ? 23 : 25} />
       </button>
@@ -90,17 +91,15 @@ function Transport({ cur, size }: { cur: Cur; size: 'desk' | 'phone' }) {
       <button type="button" className="cx-tr-skip" aria-label="Next" onClick={() => leader && void api.next(leader.id)}>
         <NextGlyph size={phone ? 23 : 25} />
       </button>
-      {!phone && (
-        <button
-          type="button"
-          className="cx-tr-side"
-          data-on={cur.repeat || undefined}
-          aria-label="Repeat"
-          onClick={() => leader && void api.setRepeat(leader.id, cur.repeat ? 'off' : 'all')}
-        >
-          <RepeatGlyph size={19} />
-        </button>
-      )}
+      <button
+        type="button"
+        className="cx-tr-side"
+        data-on={cur.repeat || undefined}
+        aria-label="Repeat"
+        onClick={() => leader && void api.setRepeat(leader.id, cur.repeat ? 'off' : 'all')}
+      >
+        <RepeatGlyph size={19} />
+      </button>
     </div>
   );
 }
@@ -513,23 +512,22 @@ function tick(): void {
 export function MobileStage({
   cur,
   artKey,
-  channels,
   currentLeaderId,
   onOpenRooms,
   onOpenQueue,
   onBrowse,
-  onPickChannel,
   onDismiss,
+  queueCount = 0,
 }: {
   cur: Cur;
   artKey: string;
-  channels: Channel[];
   currentLeaderId: number | null;
   onOpenRooms: () => void;
-  /** Raised by swiping up on the canvas — what is *behind* this track, pulled up from under it. */
+  /** Raised by swiping up on the canvas, and by the row along the bottom. */
   onOpenQueue: () => void;
   onBrowse: () => void;
-  onPickChannel: (leaderId: number) => void;
+  /** How many entries are lined up, shown beside the queue's own way in. */
+  queueCount?: number;
   /**
    * Put the player away — it is a layer over the app now, not the app's home screen.
    *
@@ -561,12 +559,6 @@ export function MobileStage({
   const swipe = useRef<{ x: number; y: number; moved: boolean } | null>(null);
   const [dx, setDx] = useState(0);
   const [dragging, setDragging] = useState(false);
-
-  /*
-   * The track's scanned shape, when the server has one — the timeline becomes the envelope of
-   * the record (see `ArtWave`). Null for every streaming source, which keeps the plain bar.
-   */
-  const shape = useTrackWaveform(leader);
 
   const onDown = (event: React.PointerEvent): void => {
     swipe.current = { x: event.clientX, y: event.clientY, moved: false };
@@ -642,39 +634,26 @@ export function MobileStage({
         />
       )}
 
-      {/*
-       * The room name, floating over the artwork.
-       *
-       * There is no header bar on this screen while something is playing — a 54px strip with a logo in it
-       * is 54px the sleeve could have had, and the one thing it carried that matters is which room this is.
-       * So the name sits on the artwork itself, centred, with a shadow under it so it reads over a light
-       * sleeve as well as a dark one.
-       */}
-      {/* The way back down, where a sheet's handle would be — the swipe's visible twin. */}
+      {/* The way back down, where the mockup puts it: top-left, a chevron, nothing else. */}
       {onDismiss && (
-        <button type="button" className="cx-mdown" onClick={onDismiss} aria-label="Close the player">
-          <ChevronGlyph size={16} />
+        <button type="button" className="cx-np-close" onClick={onDismiss} aria-label="Close the player">
+          <ChevronGlyph size={26} />
         </button>
       )}
 
-      <button type="button" className="cx-mroom mono" onClick={onOpenRooms}>
-        {cur.name || 'rooms'}
-        {cur.grouped && <i className="cx-mroom-plus">+{cur.groupExtra}</i>}
-        <ChevronGlyph size={12} />
-      </button>
-
-      {cur.hasTrack ? (
-        /*
-         * The sleeve as a hung canvas.
-         *
-         * Full width, edge to edge, and *not* square — `min(100vw, 48vh)`, so on a tall phone it is a band
-         * rather than a block and there is room under it for the player. It was an inset card with rounded
-         * corners and a shadow, which made the artwork a *component on* the screen; full-bleed with its
-         * bottom third melting into black makes the screen the artwork's.
-         */
-        <div className="cx-doek">
-          <span
-            className="cx-doek-art"
+      {/*
+       * The sleeve as a square, inset, with corners.
+       *
+       * It was full-bleed and *not* square — a landscape crop of the artwork bleeding to all four
+       * edges with its bottom third melting into black. On a wall panel that reads as the record
+       * taking the room; in a hand it reads as a picture that has been cut, and it cost the screen
+       * its centre of gravity. A square with margins is what a record is, and what every phone
+       * player shows, and it leaves the type below a clean edge to start from.
+       */}
+      <div className="cx-np-art">
+        {cur.hasTrack ? (
+          <div
+            className="cx-np-cover"
             style={{
               backgroundImage: zoneCoverCss(api, leader),
               translate: dx ? `${dx}px 0` : undefined,
@@ -687,43 +666,29 @@ export function MobileStage({
             onPointerCancel={settle}
           >
             <Motion src={cur.motion} />
-          </span>
-
-          {/* Two gradients doing two jobs: the top one buys contrast for the room name, the bottom one is
-              how the canvas stops — it fades to the page's own black rather than ending on an edge. */}
-          <span className="cx-doek-top" aria-hidden="true" />
-          <span className="cx-doek-fade" aria-hidden="true" />
-
-          {/* Only when paused. A play button over a playing sleeve is a button that lies. */}
-          {!cur.isPlaying && (
-            <span className="cx-doek-play" aria-hidden="true">
-              <PlayGlyph size={20} />
-            </span>
-          )}
-
-          {/* Riding the canvas's bottom edge, half on and half off it — as the record's own
-              envelope where a scanned shape exists, as the plain bar where none can. */}
-          {cur.showBar && (shape ? <ArtWave cur={cur} levels={shape} /> : <Timeline cur={cur} bare />)}
-        </div>
-      ) : (
-        <div className="cx-doek cx-doek-empty">
-          <EmptyArtGlyph size={42} />
-          <span className="mono cx-cover-empty-txt">nothing playing</span>
-        </div>
-      )}
-
-      <div className="cx-mstage-controls">
-        {cur.showBar && <Times cur={cur} />}
-        {cur.isLive && <Live />}
-
-        {/* Keyed on the room *and* the track, so the block crossfades when you switch channels — feedback
-            for a tap that otherwise changes nothing visible — and again when the record moves on, which is
-            the same moment the desktop stage marks with its rise. */}
-        <div className="cx-mstage-meta" key={`${currentLeaderId ?? 'none'}:${cur.title}`}>
-          <div className="cx-mstage-titles">
-            <span className="disp cx-mtitle">{cur.title}</span>
-            {cur.artist && <span className="cx-martist">{cur.artist}</span>}
+            {/* The printed gloss, the same breath the desk's sleeve carries. */}
+            <span className="cx-np-gloss" aria-hidden="true" />
+            {!cur.isPlaying && (
+              <span className="cx-doek-play" aria-hidden="true">
+                <PlayGlyph size={20} />
+              </span>
+            )}
           </div>
+        ) : (
+          <div className="cx-np-cover cx-np-cover-empty">
+            <EmptyArtGlyph size={42} />
+            <span className="mono cx-cover-empty-txt">nothing playing</span>
+          </div>
+        )}
+      </div>
+
+      <div className="cx-np-meta">
+        {/* Keyed on the room *and* the track, so the block crossfades when either changes. */}
+        <div className="cx-np-head" key={`${currentLeaderId ?? 'none'}:${cur.title}`}>
+          <span className="cx-np-titles">
+            <span className="disp cx-np-title">{cur.title}</span>
+            {cur.artist && <span className="cx-np-artist">{cur.artist}</span>}
+          </span>
           {cur.hasTrack && <Favourite cur={cur} round />}
         </div>
 
@@ -737,27 +702,46 @@ export function MobileStage({
           </span>
         )}
 
-        <Transport cur={cur} size="phone" />
-
-        {cur.zone && <VolumeRow cur={cur} className="cx-mvol" />}
-
-        {/* The room switcher: one quiet row, a breathing dot on the rooms that are playing. */}
-        {channels.length > 1 && (
-          <div className="cx-chips">
-            {channels.map((channel) => (
-              <button
-                type="button"
-                key={channel.leader.id}
-                className="mono cx-chip"
-                data-current={channel.leader.id === currentLeaderId || undefined}
-                onClick={() => onPickChannel(channel.leader.id)}
-              >
-                {channel.short}
-                {channel.playing && channel.hasTrack && <span className="cx-chip-dot" />}
-              </button>
-            ))}
+        {/*
+         * The position, as a hairline with its two clocks under it.
+         *
+         * Elapsed and *total* rather than elapsed and remaining: this is the one screen where the
+         * record's own length is the more useful of the two, and it is what the design asks for.
+         * A scanned envelope belongs to the desk — at this size it was texture rather than shape.
+         */}
+        {cur.showBar && (
+          <div className="cx-np-prog">
+            <Timeline cur={cur} bare />
+            <div className="cx-np-times mono">
+              <span>{cur.elapsed}</span>
+              <span>{formatTime(cur.durationSec)}</span>
+            </div>
           </div>
         )}
+        {cur.isLive && <Live />}
+
+        <Transport cur={cur} size="phone" />
+
+        {/*
+         * The room on the left, the running order on the right.
+         *
+         * This row replaces the strip of room chips. Chips put every room on screen at all times
+         * and asked the thumb to aim at 60px words; the room you are in is one press from the
+         * sheet that shows all of them properly, and the space buys the queue a way in that the
+         * player screen never had.
+         */}
+        <div className="cx-np-foot">
+          <button type="button" className="cx-np-room" onClick={onOpenRooms}>
+            <SpeakerGlyph size={17} />
+            {cur.name || 'rooms'}
+            {cur.grouped && <i className="cx-np-plus">+{cur.groupExtra}</i>}
+          </button>
+          <button type="button" className="cx-np-queue" onClick={onOpenQueue}>
+            queue
+            {queueCount > 0 && <b>{queueCount}</b>}
+            <QueueGlyph size={19} />
+          </button>
+        </div>
       </div>
     </div>
   );
