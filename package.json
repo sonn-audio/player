@@ -1,7 +1,7 @@
 {
   "name": "@sonn-audio/player",
   "private": true,
-  "version": "0.2.3",
+  "version": "0.2.4",
   "type": "module",
   "description": "The Sonn web player — built entirely on the server's public /api/v1 contract.",
   "scripts": {
