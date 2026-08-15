@@ -38,6 +38,26 @@
 }
 
 /*
+ * Installed, `dvh` is the wrong height.
+ *
+ * In a browser tab the dynamic viewport is exactly right: it shrinks and grows with the toolbars, so
+ * a bottom bar sits on the toolbar's edge instead of behind it. Installed on iOS with a translucent
+ * status bar there are no toolbars — the web view *is* the screen — and `dvh` reports the height
+ * between the safe areas instead. The page is drawn from y=0, so the difference piles up at the
+ * bottom as a black band with the tab bar floating above it, which is what this looked like on a
+ * phone: a nav a centimetre off the edge.
+ *
+ * `100vh` in that mode is the whole screen, which is what the layout wants — every bar already
+ * insets itself with `env(safe-area-inset-*)`, so nothing lands under the notch or the home
+ * indicator.
+ */
+@media (display-mode: standalone) {
+  .face {
+    height: 100vh;
+  }
+}
+
+/*
  * The entrance, and *only* when someone chose.
  *
  * `data-entered` is set by `Root` for a face reached by pressing the switch, and absent for one reached by
