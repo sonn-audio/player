@@ -393,6 +393,25 @@ export function ArtApp() {
                     cover: item.coverUrl,
                     play: () => zone && void api.play(zone.id, item.source),
                   }))}
+                  /*
+                   * Every room, led by the one you are in. Pressing a room *selects* it — and
+                   * opens the player when it has something on, because "take me to the kitchen"
+                   * and "show me what the kitchen is playing" are the same intent from here.
+                   */
+                  house={channels.map((channel) => ({
+                    key: String(channel.leader.id),
+                    name: channel.leader.name,
+                    title: channel.leader.track?.title ?? '',
+                    cover: zoneCoverCss(api, channel.leader, 240),
+                    playing: channel.playing && channel.hasTrack,
+                    current: channel.leader.id === leaderOf(zone, zones)?.id,
+                    open: () => {
+                      select(channel.leader.id);
+                      if (channel.hasTrack) {
+                        setPlayerOpen(true);
+                      }
+                    },
+                  }))}
                   /* The room's saved list — the one shelf here that is a deliberate choice rather
                      than a trace of what happened, which is why it leads. */
                   favorites={favorites.slice(0, 12).map((item) => ({
@@ -743,6 +762,7 @@ function Welcome({
   scenes,
   recents,
   favorites = [],
+  house = [],
 }: {
   greetingText: string;
   rooms: number;
@@ -755,6 +775,16 @@ function Welcome({
   scenes: Array<{ key: string; title: string; cover: string; play: () => void }>;
   recents: Array<{ key: string; title: string; cover: string; play: () => void }>;
   favorites?: Array<{ key: string; title: string; cover: string; play: () => void }>;
+  /** Every room, for the shelf that is this product rather than this genre of app. */
+  house?: Array<{
+    key: string;
+    name: string;
+    title: string;
+    cover: string | undefined;
+    playing: boolean;
+    current: boolean;
+    open: () => void;
+  }>;
 }) {
   return (
     <div className="cx-welcome">
@@ -776,6 +806,41 @@ function Welcome({
           inputs
         </button>
       </div>
+
+      {/*
+       * The house, on the home screen.
+       *
+       * This is the shelf no other music app has, and it was the thing this one kept in a sheet:
+       * every room, what is on in it, and one press to stand in it. A phone home that led with
+       * recents and favourites was a good *music* home and said nothing about the product — the
+       * whole reason there is a server in the hall is that the music is in more than one place.
+       *
+       * The room you are in leads, marked; the rest follow in the house's own order. A room with
+       * nothing on says so rather than being hidden, because "the kitchen is quiet" is an answer.
+       */}
+      {house.length > 1 && (
+        <div className="cx-welcome-recents">
+          <span className="cx-welcome-recents-lbl mono">the house</span>
+          <div className="cx-welcome-recents-row cx-rooms-row">
+            {house.map((room) => (
+              <button
+                type="button"
+                className="cx-roomcard"
+                key={room.key}
+                data-current={room.current || undefined}
+                data-quiet={!room.title || undefined}
+                onClick={room.open}
+              >
+                <span className="cx-roomcard-cov" style={{ backgroundImage: room.cover }}>
+                  {room.playing && <span className="cx-roomcard-dot" />}
+                </span>
+                <span className="cx-roomcard-name mono">{room.name}</span>
+                <span className="cx-roomcard-track">{room.title || 'quiet'}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {favorites.length > 0 && (
         <div className="cx-welcome-recents">
