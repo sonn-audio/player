@@ -4,7 +4,7 @@
  * The contract's first rule is that reading state never requires polling, and this is
  * the whole of it. Two properties make the consumer simpler than a socket client:
  *
- *  - The stream **opens with a `server.ready` snapshot**, so there is no bootstrap
+ *  - The stream **opens with a `server.snapshot` snapshot**, so there is no bootstrap
  *    request to sequence against the first change. `GET /zones` exists for one-shot
  *    scripts; a live client never needs it.
  *  - `zone.changed` carries the **complete zone**, never a patch, so a reconnect is

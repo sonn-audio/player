@@ -474,8 +474,8 @@ export interface ApiReadyReport {
 // --- events -----------------------------------------------------------------
 
 /** Opens every SSE connection, so a client can render before the first change. */
-export interface ApiServerReadyEvent {
-  type: 'server.ready';
+export interface ApiServerSnapshotEvent {
+  type: 'server.snapshot';
   zones: ApiZoneState[];
 }
 
@@ -534,7 +534,7 @@ export interface ApiUnknownEvent {
 }
 
 export type ApiEvent =
-  | ApiServerReadyEvent
+  | ApiServerSnapshotEvent
   | ApiZoneChangedEvent
   | ApiZoneProgressEvent
   | ApiQueueChangedEvent

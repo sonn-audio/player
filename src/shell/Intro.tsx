@@ -4,7 +4,7 @@
  * Brought back from the older player, where it was the best thing about the first second: the mark
  * draws its roofline, the bars breathe like a level meter, and the wordmark and tagline rise in
  * behind it. It is not decoration — it *is* the connecting phase. The event stream takes a beat to
- * open (`server.ready` carries the whole zone snapshot), and a player that shows an empty shell for
+ * open (`server.snapshot` carries the whole zone snapshot), and a player that shows an empty shell for
  * that beat looks broken in a way that a mark holding on a black field does not.
  *
  * Controlled in two steps by whoever owns it, which is what keeps the hand-off invisible:

@@ -65,7 +65,7 @@ export default defineConfig(({ mode }) => {
         '/api': {
           target,
           changeOrigin: true,
-          // SSE must stream rather than buffer, or `server.ready` never arrives.
+          // SSE must stream rather than buffer, or `server.snapshot` never arrives.
           configure: (proxy) => {
             proxy.on('proxyRes', (proxyRes) => {
               if (proxyRes.headers['content-type']?.includes('text/event-stream')) {
