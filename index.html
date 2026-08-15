@@ -20,9 +20,10 @@
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <!-- Safari ignores the manifest; these are the lines it reads instead. `-capable` is what
-         drops the browser chrome once the app is on the home screen, and `black-translucent`
-         lets the near-black page run under the status bar (the layout already insets itself
-         with `viewport-fit=cover` and `env(safe-area-inset-*)`).
+         drops the browser chrome once the app is on the home screen. The status bar is `black`
+         rather than `black-translucent`: translucent lays the page out from y=0 but keeps
+         reporting the shorter usable area as the viewport, so everything measured against it
+         ends a status bar's height above the screen's bottom edge.
 
          The `-v2` in the filenames is not decoration. iOS keeps its home-screen icons in a cache
          keyed by *url*, and that cache outlives removing the app — so replacing the artwork behind
@@ -31,22 +32,6 @@
     <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon-v2.png" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
-    <!--
-      `black`, not `black-translucent`, and this one line is the whole story of the black band
-      that sat under the tab bar for four attempts.
-
-      `black-translucent` asks iOS for the full screen and gives it: the page is laid out from
-      y=0, under the status bar. What it does *not* do is report a viewport of that height — the
-      viewport stays the usable area, so every honest measurement of it (`vh`, `dvh`,
-      `innerHeight`, `position: fixed`) is short by exactly the status bar, and the difference
-      falls off the bottom as a strip nothing can reach. Four fixes anchored harder to a viewport
-      that was itself the wrong size.
-
-      `black` asks for the ordinary thing: the web view begins below the status bar, the viewport
-      is the whole of it, and the bottom edge is the bottom edge. The status bar takes the page's
-      own near-black either way, so nothing is lost visually — the app simply stops being drawn
-      partly outside the box it is measured in.
-    -->
     <meta name="apple-mobile-web-app-status-bar-style" content="black" />
     <meta name="apple-mobile-web-app-title" content="sonn" />
   </head>
