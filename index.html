@@ -10,14 +10,24 @@
     <!--
       Installable: a phone puts the player on its home screen, a wall panel runs it without a
       URL bar. The manifest's relative paths resolve against /player/, where the audioserver
-      serves this bundle; Vite prefixes the absolute hrefs below with the same base. There is
-      deliberately no service worker — the bundle is served by the audioserver itself, and a
-      cache-first shell on a wall panel would keep replaying an old build after every upgrade.
+      serves this bundle; Vite prefixes the absolute hrefs below with the same base.
+
+      There is a service worker now, and the reason there was none still stands — a cache-first
+      shell would keep replaying an old build after every upgrade. So it is network-first and
+      never consults the cache while a response is coming; see `public/sw.js`. What it buys is
+      the install prompt, which Chromium will not offer without one.
     -->
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-    <!-- Safari ignores the manifest; this is the one line it reads for the home-screen icon. -->
+    <!-- Safari ignores the manifest; these are the lines it reads instead. `-capable` is what
+         drops the browser chrome once the app is on the home screen, and `black-translucent`
+         lets the near-black page run under the status bar (the layout already insets itself
+         with `viewport-fit=cover` and `env(safe-area-inset-*)`). -->
     <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="sonn" />
   </head>
   <body>
     <div id="root"></div>
