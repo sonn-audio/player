@@ -4923,16 +4923,19 @@
 /* --- phone nav ------------------------------------------------------------ */
 
 /*
- * The phone's player, as a layer over the app.
+ * The phone's player, as a layer over the app — all of it.
  *
- * Home is where you decide what to play now; this is where you look at what you chose. It covers
- * everything but the nav — the tab bar stays reachable so the player is a *place you are*, not a
- * modal you are trapped in — and it rises from the bar that opened it.
+ * It stopped short of the tab bar for a while, on the argument that leaving the nav reachable makes
+ * the player a place you are rather than a modal you are trapped in. In the hand that argument is
+ * wrong twice over: the record is the whole subject of this screen and a strip of navigation under
+ * it says otherwise, and the way out is already the most learned gesture a phone has — the chevron
+ * where a sheet's handle sits, and a downward swipe on the sleeve. So it covers everything, which
+ * is what the design draws.
  */
 .cx-player-sheet {
   position: fixed;
-  inset: 0 0 calc(56px + env(safe-area-inset-bottom)) 0;
-  z-index: 6;
+  inset: 0;
+  z-index: 60;
   display: flex;
   flex-direction: column;
   background: var(--cx-stage);
