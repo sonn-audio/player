@@ -21,8 +21,6 @@ import { horizontalDrag } from '@/art/drag';
 import { useVolumeControl } from '@/art/volume';
 import { Crossfade } from '@/art/Crossfade';
 import { Motion } from '@/art/Motion';
-import { ArtWave } from '@/art/Wave';
-import { useTrackWaveform } from '@/state/useTrackWaveform';
 import { useZoneFavorite } from '@/state/useZoneFavorite';
 import { useCoverAnchor } from '@/shell/coverMorph';
 import {
@@ -306,17 +304,6 @@ export function Stage({
   const leader = cur.leader;
   const coverAnchor = useCoverAnchor();
 
-  /*
-   * The record's own shape, on the desk too.
-   *
-   * The phone got this first (see `ArtWave`): where the server has scanned the file, the timeline is
-   * the track's envelope — the quiet intro and the chorus visible before they happen. The desk was
-   * still drawing the plain bar under a 100px title, which made the biggest layout the least musical
-   * one. Same hook, same fallback: a streaming source keeps the bar, because a fabricated envelope
-   * would be a prettier picture and a lie.
-   */
-  const shape = useTrackWaveform(leader);
-
   const toggle = (): void => {
     if (!leader || !cur.hasTrack) {
       return;
@@ -440,15 +427,16 @@ export function Stage({
           )}
 
           {cur.isLive && <Live />}
-          {cur.showBar &&
-            (shape ? (
-              <div className="cx-bar-wrap">
-                <ArtWave cur={cur} levels={shape} />
-                <Times cur={cur} />
-              </div>
-            ) : (
-              <Timeline cur={cur} />
-            ))}
+          {/*
+           * The plain bar, on this face, at every width.
+           *
+           * The desk drew the track's scanned envelope here for a while — the same shape the phone
+           * player once carried — and it was the wrong instrument on the wrong stage: forty bars of
+           * measurement under a 100px title is a reading, and this face's argument is that readings
+           * live on the other one. The line says the one thing the room needs from it, which is how
+           * far in it is.
+           */}
+          {cur.showBar && <Timeline cur={cur} />}
 
           <Transport cur={cur} size="desk" />
 

@@ -1011,25 +1011,24 @@
 }
 
 /*
- * The envelope on the desk (see `ArtWave`): in the flow where the plain bar would be, not riding an
- * edge — the desk has a column for it. A touch taller than the phone's 34px, because it sits under a
- * title that can run to 112px and has to hold its own line against it. The bars themselves are the
- * shared `.cx-wave i` rules; the phone's box-shadow whisper does nothing on the page's own black and
- * is left alone.
+ * The stage's timeline, in the phone player's clothes.
+ *
+ * One rail, rounded, no knob — the same line the phone draws, because it is the same statement and
+ * this face has one voice at both widths. The knob was a pointer's affordance and it is not needed:
+ * the whole rail takes the press, and a dot riding a hairline under a 100px title was the loudest
+ * thing in the composition after the sleeve.
  */
-.cx-stage .cx-wave {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  height: 44px;
-  cursor: pointer;
-  touch-action: none;
+.cx-stage .cx-bar-rail {
+  height: 3px;
+  border-radius: 999px;
 }
 
-/* At this width a bar is ~9px across — the phone's 1.5px rounding reads as a slab here. Soft ends,
-   as the drawing's own voice demands ("soft rounded bars", never a chart). */
-.cx-stage .cx-wave i {
-  border-radius: 3px;
+.cx-stage .cx-bar-fill {
+  border-radius: 999px;
+}
+
+.cx-stage .cx-bar-knob {
+  display: none;
 }
 
 .cx-bar {
