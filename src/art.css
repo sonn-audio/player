@@ -5445,6 +5445,57 @@
     border-top: 0;
   }
 
+  /*
+   * The two bars are pinned to the viewport, not stacked at the end of a column.
+   *
+   * This is the fix for the black band under the tab bar in the installed app, and it is a
+   * structural answer rather than another guess at a height. As flex children the bars inherit
+   * whatever the shell believes the window to be — and on iOS, installed with a translucent
+   * status bar, that belief is short by the status bar's own height, so the column ends early and
+   * the bars end with it. Three attempts to correct the belief (a `display-mode` media query,
+   * `--app-h` from `innerHeight`, anchoring the face with `position: fixed`) each shipped without
+   * moving them.
+   *
+   * `position: fixed; bottom: 0` does not consult the belief: it resolves against the viewport
+   * itself, which is where the screen's bottom edge actually is. The previous player (`player.x`)
+   * pins its bar and its mini player exactly this way and has always sat correctly on this
+   * hardware — the pattern is borrowed rather than invented.
+   *
+   * The column then pads itself to clear them, by the same arithmetic, so nothing scrolls behind
+   * a bar it cannot see past.
+   */
+  .cx-root {
+    --nav-h: calc(56px + env(safe-area-inset-bottom));
+    --mini-h: 60px;
+  }
+
+  .cx-root .cx-bnav {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 55;
+    height: var(--nav-h);
+  }
+
+  .cx-root .cx-mini {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: var(--nav-h);
+    z-index: 54;
+    height: var(--mini-h);
+  }
+
+  .cx-root .cx-body {
+    padding-bottom: var(--nav-h);
+  }
+
+  /* Only when the bar is actually there — an always-reserved strip is a gap on a quiet house. */
+  .cx-root:has(.cx-mini) .cx-body {
+    padding-bottom: calc(var(--nav-h) + var(--mini-h));
+  }
+
   .cx-mini-vol {
     display: none;
   }
