@@ -226,9 +226,6 @@ export function ArtApp() {
   const goHome = (): void => setView({ kind: 'home' });
   const openBrowse = (node: BrowseNode = {}): void => setView({ kind: 'browse', node });
 
-  /** Selecting a channel means selecting its leader — the room that owns the playback. */
-  const pickChannel = (leaderId: number): void => select(leaderId);
-
   const browsing = view.kind !== 'home';
 
   return (
@@ -473,7 +470,6 @@ export function ArtApp() {
           <MobileStage
             cur={cur}
             artKey={artKey}
-            channels={channels}
             currentLeaderId={leaderOf(zone, zones)?.id ?? null}
             onOpenRooms={() => setSheet('rooms')}
             onOpenQueue={() => setSheet('queue')}
@@ -481,7 +477,7 @@ export function ArtApp() {
               setPlayerOpen(false);
               openBrowse();
             }}
-            onPickChannel={pickChannel}
+            queueCount={queue.total}
             onDismiss={() => setPlayerOpen(false)}
           />
         </div>

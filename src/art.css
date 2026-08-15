@@ -1291,7 +1291,15 @@
   position: relative;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  /*
+   * Stretch, not centre.
+   *
+   * Centring was right when the children were a full-bleed canvas and a controls block that sized
+   * themselves; the sleeve and the type below it want the column's own width to measure against —
+   * centred, they collapsed to their content and `min(100% - 36px, …)` resolved against 16px of
+   * padding, so the cover computed to zero and simply was not there.
+   */
+  align-items: stretch;
   flex: 1;
   min-height: 0;
   /*
@@ -4945,23 +4953,266 @@
 }
 
 /*
- * The way back down, opposite the room name.
+ * The phone's now-playing screen, to the handoff's own drawing.
  *
- * Where a sheet would put its handle, because that is the gesture it stands for — the swipe has a
- * visible twin so the way out is discoverable without one.
+ * What it replaces: a landscape crop of the sleeve bleeding to all four edges, its bottom third
+ * melting into black, with the type stacked underneath and a strip of room chips at the foot. That
+ * composition was built when this screen *was* home and the record had to be the room. As a place
+ * you go to look at one record it reads as a picture that has been cut — so the sleeve is a square
+ * with margins and corners again, the type starts on a clean edge under it, and the foot carries
+ * the two things a player needs a way to: the room, and the running order.
  */
-.cx-mdown {
+/*
+ * The player screen is black, not the room's colour.
+ *
+ * Everywhere else in this face the record lights the surface it sits on, and on the old phone home
+ * that was the whole argument — the sleeve *was* the screen. Here the sleeve is a square object on
+ * a page, and the same wash at full strength turned the page the album's colour, so the artwork sat
+ * on a field of its own light and stopped being the brightest thing on screen. Held right down: a
+ * whisper of the record's temperature, no more, which is what the design asks for.
+ */
+.cx-player-sheet .cx-mstage-bg {
+  opacity: 0.34;
+}
+
+.cx-player-sheet .cx-mstage-scrim {
+  background: linear-gradient(180deg, rgb(10 10 11 / 62%), rgb(10 10 11 / 88%));
+}
+
+.cx-np-close {
   position: absolute;
-  top: calc(env(safe-area-inset-top) + 8px);
-  left: 12px;
-  z-index: 4;
+  top: calc(env(safe-area-inset-top) + 12px);
+  left: 14px;
+  z-index: 8;
   display: grid;
   place-items: center;
-  width: 40px;
-  height: 40px;
+  width: 42px;
+  height: 42px;
   color: var(--t2);
-  /* Legible over a light sleeve as well as a dark one, like the room name beside it. */
-  filter: drop-shadow(0 1px 6px rgb(0 0 0 / 55%));
+  opacity: 0.9;
+  transition: transform 0.15s var(--cx-ease);
+}
+
+.cx-np-close:active {
+  transform: scale(0.88);
+}
+
+.cx-np-art {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: calc(env(safe-area-inset-top) + 48px) 8px 0;
+}
+
+.cx-np-cover {
+  position: relative;
+  width: min(100% - 36px, 560px, 58vh);
+  aspect-ratio: 1;
+  overflow: hidden;
+  border-radius: 12px;
+  background-color: var(--cx-cover);
+  background-position: center;
+  background-size: cover;
+  box-shadow: 0 26px 70px -32px rgb(0 0 0 / 90%);
+  touch-action: pan-y;
+  transition:
+    translate 0.32s var(--cx-ease),
+    scale 0.32s var(--cx-ease);
+}
+
+/* While the finger is on it nothing may lag: the sleeve follows the drag exactly. */
+.cx-np-cover[data-dragging] {
+  transition: none;
+}
+
+.cx-np-gloss {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    125deg,
+    rgb(255 255 255 / 14%) 0%,
+    rgb(255 255 255 / 3%) 18%,
+    transparent 42%,
+    transparent 78%,
+    rgb(0 0 0 / 16%)
+  );
+  mix-blend-mode: soft-light;
+}
+
+.cx-np-cover-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 8%);
+  color: var(--t7);
+}
+
+.cx-np-meta {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  flex: none;
+  padding: 0 26px calc(env(safe-area-inset-bottom) + 22px);
+}
+
+.cx-np-head {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: clamp(12px, 2.4vh, 22px);
+  animation: cx-title-swap 0.42s var(--cx-ease) both;
+}
+
+.cx-np-titles {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+
+.cx-np-title {
+  font-size: clamp(26px, 7vw, 32px);
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  line-height: 1.14;
+  color: var(--t1);
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+}
+
+.cx-np-artist {
+  margin-top: 5px;
+  font-size: 16.5px;
+  font-weight: 500;
+  color: var(--t4);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* The heart, as a filled disc — the one solid control on this screen, and the design asks for it. */
+.cx-np-head .cx-fav-round {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: rgb(255 255 255 / 8%);
+  color: var(--t3);
+}
+
+.cx-np-prog {
+  margin-top: clamp(18px, 3.4vh, 30px);
+}
+
+/* The bar is the shared `Timeline` in its `bare` form; here it is a 3px rail with no knob. */
+.cx-np-prog .cx-bar {
+  height: 14px;
+}
+
+.cx-np-prog .cx-bar-rail {
+  height: 3px;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 10%);
+}
+
+.cx-np-prog .cx-bar-fill {
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--g) 60%, rgb(245 244 242 / 90%));
+}
+
+.cx-np-prog .cx-bar-knob {
+  display: none;
+}
+
+.cx-np-times {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 10px;
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+  color: var(--t6);
+}
+
+/* Five controls, spread, with the one anyone is reaching for solid and white in the middle. */
+.cx-np-meta .cx-transport[data-size='phone'] {
+  justify-content: space-between;
+  gap: 0;
+  padding: 0 6px;
+  margin-top: clamp(14px, 2.8vh, 24px);
+}
+
+.cx-np-meta .cx-transport[data-size='phone'] .cx-tr-play {
+  width: 74px;
+  height: 74px;
+  background: #fff;
+  box-shadow: 0 12px 30px -12px rgb(0 0 0 / 70%);
+  color: #0a0a0b;
+}
+
+.cx-np-meta .cx-transport[data-size='phone'] .cx-tr-play:active {
+  transform: scale(0.93);
+}
+
+.cx-np-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-top: clamp(20px, 3.8vh, 34px);
+}
+
+.cx-np-room,
+.cx-np-queue {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 8px 2px;
+  font-size: 15px;
+  transition: transform 0.15s var(--cx-ease);
+}
+
+.cx-np-room {
+  font-weight: 600;
+  color: var(--t1);
+  min-width: 0;
+}
+
+.cx-np-room svg {
+  color: var(--t4);
+  flex: none;
+}
+
+.cx-np-plus {
+  font-style: normal;
+  font-weight: 800;
+  font-size: 13px;
+  color: var(--g);
+}
+
+.cx-np-queue {
+  gap: 10px;
+  flex: none;
+  color: var(--t4);
+}
+
+.cx-np-queue b {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--t1);
+}
+
+.cx-np-room:active,
+.cx-np-queue:active {
+  transform: scale(0.96);
 }
 
 /* On a phone the bar is the player's doorway, so it sits on the nav rather than in the page. */
