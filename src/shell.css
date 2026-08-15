@@ -31,30 +31,28 @@
 
 /* --- the face, and the transition between faces ---------------------------- */
 
+/*
+ * The face is exactly as tall as the window, and installed that is measured rather than declared.
+ *
+ * In a browser tab `dvh` is exactly right: the dynamic viewport shrinks and grows with the
+ * toolbars, so a bottom bar rides the toolbar's edge instead of hiding behind it. Installed on iOS
+ * with a translucent status bar there are no toolbars — the web view *is* the screen — and the
+ * viewport units do not agree about that. The page is drawn from y=0, so whatever they under-report
+ * piles up at the bottom: a black band with the tab bar floating a centimetre off the edge.
+ *
+ * A `@media (display-mode: standalone)` override was the first attempt and it shipped without
+ * fixing anything, which is the useful part of the story — either iOS does not match that query
+ * or its `vh` is the same short number, and from the outside those are indistinguishable. So the
+ * installed app stops asking CSS what the window is and is told: `main.tsx` writes `--app-h` from
+ * `window.innerHeight`, the one number that has never been ambiguous, and keeps it in step on
+ * resize. Browsers never see the variable and keep `dvh`, whose smooth behaviour during a toolbar
+ * collapse is worth keeping.
+ */
 .face {
   height: 100vh;
   height: 100dvh;
+  height: var(--app-h, 100dvh);
   overflow: hidden;
-}
-
-/*
- * Installed, `dvh` is the wrong height.
- *
- * In a browser tab the dynamic viewport is exactly right: it shrinks and grows with the toolbars, so
- * a bottom bar sits on the toolbar's edge instead of behind it. Installed on iOS with a translucent
- * status bar there are no toolbars — the web view *is* the screen — and `dvh` reports the height
- * between the safe areas instead. The page is drawn from y=0, so the difference piles up at the
- * bottom as a black band with the tab bar floating above it, which is what this looked like on a
- * phone: a nav a centimetre off the edge.
- *
- * `100vh` in that mode is the whole screen, which is what the layout wants — every bar already
- * insets itself with `env(safe-area-inset-*)`, so nothing lands under the notch or the home
- * indicator.
- */
-@media (display-mode: standalone) {
-  .face {
-    height: 100vh;
-  }
 }
 
 /*
