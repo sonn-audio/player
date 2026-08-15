@@ -25,6 +25,7 @@ import { useMediaSession } from '@/state/useMediaSession';
 import { useScenes } from '@/state/useScenes';
 import { useWakeLock } from '@/state/useWakeLock';
 import { Brand } from '@/shell/Brand';
+import { InstallHint } from '@/shell/InstallHint';
 import { Mark } from '@/components/Mark';
 import { Stage, MobileStage, greeting } from '@/art/Stage';
 import { RoomsSheet } from '@/art/Channels';
@@ -795,6 +796,9 @@ function Welcome({
           ? `${playing} of ${rooms} room${rooms === 1 ? '' : 's'} playing`
           : `the house is quiet — ${rooms} room${rooms === 1 ? '' : 's'} ready`}
       </p>
+
+      {/* Once, quietly, on the screen the app opens onto — see `InstallHint`. */}
+      <InstallHint />
 
       <div className="cx-welcome-shortcuts mono">
         {services.map((service) => (

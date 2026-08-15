@@ -33,3 +33,18 @@ createRoot(root).render(
     </ServerProvider>
   </StrictMode>,
 );
+
+/*
+ * The service worker, which is what makes this installable — see `public/sw.js` for why it is
+ * network-first and what it deliberately never touches.
+ *
+ * Production only. In dev the module graph is served by Vite and a worker sitting in front of it
+ * is a way to spend an afternoon wondering why an edit did nothing.
+ */
+if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    void navigator.serviceWorker.register(`${import.meta.env.BASE_URL}sw.js`, {
+      scope: import.meta.env.BASE_URL,
+    });
+  });
+}
