@@ -5311,18 +5311,63 @@
 }
 
 /*
- * The bar, at a phone's width.
+ * The bar and the nav, as one plate at the foot of the phone.
  *
- * It was built for a desk, where it has a whole window to spread across: 26px gaps, a 30px inset
- * and a volume fader on the end. At 390px that arithmetic left the title about two characters —
- * `B.` over `A…` — which is a now-playing bar that does not say what is playing. The fader goes
- * (the player one press up has one, and so do the hardware keys), the gaps close, and the title
- * gets everything that is left.
+ * Two problems, one answer. The bar was built for a desk — 26px gaps, a 30px inset, a volume fader
+ * on the end — and at 390px that arithmetic left the title about two characters: `B.` over `A…`.
+ * And the nav was translucent over the artwork wash, so it took the record's colour: a teal strip
+ * under a black page, the one part of the screen wearing a tint nothing else had.
+ *
+ * So the two become one surface: opaque, neutral, near-black, with a single hairline along the top
+ * of the *assembly* rather than one between its halves, and the position drawn on that hairline —
+ * the progress *is* the top edge. The record's colour lives on the screens the record is on; the
+ * furniture underneath is furniture.
  */
 @media (max-width: 979px) {
-  .cx-mini {
+  .cx-root .cx-mini {
     gap: 12px;
     padding: 9px 14px;
+    background: var(--cx-bg);
+    border-top: 1px solid var(--hair);
+  }
+
+  /* No album wash down here — see the note above. */
+  .cx-mini-bg,
+  .cx-mini-scrim {
+    display: none;
+  }
+
+  /* The played part of the track, as the plate's own top edge. Neutral: this is the one line on
+     the screen that is furniture and information at once, and it should not shout either. */
+  .cx-mini-prog {
+    inset: 0 0 auto;
+    height: 2px;
+  }
+
+  .cx-mini-prog i {
+    background: rgb(255 255 255 / 42%);
+  }
+
+  .cx-mini-cov {
+    box-shadow:
+      0 6px 16px -8px rgb(0 0 0 / 90%),
+      inset 0 0 0 1px rgb(255 255 255 / 12%);
+  }
+
+  /*
+   * Opaque and untinted: the blur was what let the record's colour through.
+   *
+   * Scoped through `.cx-root` on purpose — these overrides sit above the base definitions in this
+   * file, and at equal specificity the later rule would win.
+   */
+  .cx-root .cx-bnav {
+    background: var(--cx-bg);
+    backdrop-filter: none;
+  }
+
+  /* One line above the pair, not one between them. */
+  .cx-root .cx-mini + .cx-bnav {
+    border-top: 0;
   }
 
   .cx-mini-vol {
@@ -5346,6 +5391,27 @@
 
   .cx-mini-title {
     font-size: 13.5px;
+  }
+
+  /*
+   * The nav's own type, quieter and further apart.
+   *
+   * Five labels at 8px with the icons right on top of them read as a dense little keyboard. A step
+   * of air between glyph and word, a step down in weight for the word, and the live one goes white
+   * — no accent, because the accent here is the record's and this row is not about the record.
+   */
+  .cx-root .cx-bnav-tab {
+    gap: 6px;
+    color: var(--t7);
+  }
+
+  .cx-root .cx-bnav-tab span {
+    font-size: 8.5px;
+    letter-spacing: 0.18em;
+  }
+
+  .cx-root .cx-bnav-tab[data-on] {
+    color: var(--t1);
   }
 }
 
