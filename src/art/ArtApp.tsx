@@ -50,7 +50,6 @@ import {
   SearchGlyph,
 } from '@/art/glyphs';
 import type { ContentService } from '@/api/content';
-import type { Face } from '@/shell/useFace';
 
 /** Where the desktop tree ends and the phone tree begins. Matches `art.css`. */
 const PHONE_MAX = 979;
@@ -81,7 +80,7 @@ type View = { kind: 'home' } | { kind: 'browse'; node: BrowseNode } | { kind: 'i
 
 type Sheet = null | 'rooms' | 'queue' | 'more';
 
-export function ArtApp({ onSwitchFace }: { onSwitchFace: (face: Face) => void }) {
+export function ArtApp() {
   const api = useApi();
   const { zones: serverZones, status, synced, content } = useServer();
   const local = useLocalPlayback();
@@ -536,20 +535,14 @@ export function ArtApp({ onSwitchFace }: { onSwitchFace: (face: Face) => void })
               <ForwardGlyph size={15} />
             </span>
           </button>
-          <button
-            type="button"
-            className="cx-more-row"
-            onClick={() => {
-              setSheet(null);
-              onSwitchFace('technical');
-            }}
-          >
-            <span className="cx-more-name">Technical player</span>
-            <span className="cx-more-sub mono">signal path · formats · spectrum</span>
-            <span className="cx-more-go">
-              <ForwardGlyph size={15} />
-            </span>
-          </button>
+          {/*
+           * No way to the technical face from here any more.
+           *
+           * This sheet is phone-only, and a phone has one face (see `useFace`): that player is four
+           * instruments read side by side, and the honest one-column version of it is a different
+           * app rather than the same one in a narrow coat. Offering the door meant offering the
+           * squeeze — this face *is* the phone product.
+           */}
           {/*
            * The console, which this face's corner cannot offer on a phone.
            *

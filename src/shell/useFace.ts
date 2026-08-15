@@ -22,14 +22,24 @@
  * two stances (`what the music is` / `what the audio is`) and the footer says the truth that makes
  * the choice weightless — the other face stays one press away, always.
  *
- * **And a phone is not asked at all.** The two faces are a *desk* question: a desk has the width for
- * a spectrum beside a signal path, and a person at one may genuinely be either kind of listener. A
- * phone is one product — the full-screen player, the record's own colours, the thumb's gestures —
- * and asking it to choose between that and a rack instrument squeezed into one column is asking a
- * question with a right answer, which is not a question. So below the shell's phone line the ask
- * never appears and the art player simply starts; the technical face stays what it is there — the
- * specialist view, one row away in the player sheet, or a deep link (`#/technical`) that still works
- * for the person who wants the instrument in their pocket anyway.
+ * **And a phone does not have two faces at all.** The two faces are a *desk* question: a desk has
+ * the width for a spectrum beside a signal path, and a person at one may genuinely be either kind of
+ * listener. A phone is one product — the full-screen player, the record's own colours, the thumb's
+ * gestures — and asking it to choose between that and a rack instrument squeezed into one column is
+ * asking a question with a right answer, which is not a question.
+ *
+ * For a while the answer to that was softer: the ask was skipped but the technical face stayed
+ * reachable on a phone, through a row in the player sheet and through `#/technical`. Building that
+ * one-column technical layout properly is what showed it was the wrong softness. The face is four
+ * instruments read side by side; a phone can hold one of them at a time, so the honest phone version
+ * of it is a *different app* — a tab bar over four screens — which is not the same product wearing a
+ * narrow coat, it is a second product to design, ship and keep true. The art player already *is* the
+ * phone product, made for exactly this hand.
+ *
+ * So below the phone line there is one face and it is the art player. The deep link does not
+ * override it — it is answered with the face the device has, and the address bar is corrected to say
+ * so rather than left lying. The technical face is a desk instrument, stated plainly, which is a
+ * better promise than one that technically works and is nobody's favourite screen.
  *
  * A bare url thereafter opens the face you were last in. (Where storage is unwritable — private-mode
  * Safari — the ask would return each visit for the same reason the face itself cannot be remembered;
@@ -68,10 +78,18 @@ function readStored(): Face | null {
 }
 
 /**
- * The shell's phone line — the art face's own 979px breakpoint, read once at load. Below it the
- * ask never shows (see the note above): a phone is one product, and it is the art player.
+ * The shell's phone line — the art face's own 979px breakpoint.
+ *
+ * Read once at load rather than watched, and that is the point: dragging a desktop window narrow
+ * must not swap the face out from under the person doing it. It answers "what kind of device is
+ * this", which does not change while the page is open, and a resize is a window changing size.
  */
 const PHONE = window.matchMedia?.('(max-width: 979px)').matches ?? false;
+
+/** The one face a phone has. See the note above. */
+function resolveFace(): Face {
+  return PHONE ? 'art' : (parse(window.location.hash) ?? readStored() ?? DEFAULT_FACE);
+}
 
 /**
  * Whether an answer, once given, would actually be kept. Asking a browser that cannot remember
@@ -103,9 +121,7 @@ export function useFace(): {
   morphing: boolean;
   undecided: boolean;
 } {
-  const [face, setFace] = useState<Face>(
-    () => parse(window.location.hash) ?? readStored() ?? DEFAULT_FACE,
-  );
+  const [face, setFace] = useState<Face>(resolveFace);
   const [chose, setChose] = useState(false);
   /*
    * Whether this browser has ever answered the "which player" question — by pressing the switch,
@@ -120,14 +136,16 @@ export function useFace(): {
   const [morphing, setMorphing] = useState(false);
 
   /*
-   * A url that named no face gets the one we resolved written into it.
+   * The address bar is made to say what is on screen.
    *
-   * `/player/` and `/player/#/` both open a player now, and leaving the hash empty behind them means a
-   * reload is a second guess at the same question and the back button has nothing to go back to. One
-   * `replaceState` and the address bar says what is on screen.
+   * Two cases, one rule. A url that named no face (`/player/`, `/player/#/`) gets the one we
+   * resolved written into it, because leaving the hash empty means a reload is a second guess at
+   * the same question and the back button has nothing to go back to. And a phone that was handed
+   * `#/technical` gets it corrected, because it is showing the art face and a url that disagrees
+   * with the screen is the kind of small lie that later reads as a bug.
    */
   useEffect(() => {
-    if (parse(window.location.hash) === null) {
+    if (parse(window.location.hash) !== face) {
       window.history.replaceState(null, '', `#/${face}`);
     }
     // Once, on mount: afterwards `go` keeps the hash in step.
@@ -139,6 +157,13 @@ export function useFace(): {
     const onHash = (): void => {
       const next = parse(window.location.hash);
       if (next === null) {
+        return;
+      }
+      if (PHONE) {
+        // One face here, so a link to the other one is answered rather than followed.
+        if (next !== 'art') {
+          window.history.replaceState(null, '', '#/art');
+        }
         return;
       }
       setChose(false);
