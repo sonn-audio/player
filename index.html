@@ -22,8 +22,13 @@
     <!-- Safari ignores the manifest; these are the lines it reads instead. `-capable` is what
          drops the browser chrome once the app is on the home screen, and `black-translucent`
          lets the near-black page run under the status bar (the layout already insets itself
-         with `viewport-fit=cover` and `env(safe-area-inset-*)`). -->
-    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+         with `viewport-fit=cover` and `env(safe-area-inset-*)`).
+
+         The `-v2` in the filenames is not decoration. iOS keeps its home-screen icons in a cache
+         keyed by *url*, and that cache outlives removing the app — so replacing the artwork behind
+         the same name leaves the old tile on the home screen no matter how many times it is added
+         again. A new name is the only thing it cannot have seen before. Rename on every change. -->
+    <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon-v2.png" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
