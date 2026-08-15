@@ -124,7 +124,7 @@ export function Root() {
         data-morph={morphing || undefined}
       >
         {face === 'technical' && <App />}
-        {face === 'art' && <ArtApp onSwitchFace={go} />}
+        {face === 'art' && <ArtApp />}
       </div>
 
       {/*
