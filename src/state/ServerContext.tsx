@@ -99,12 +99,12 @@ export function ServerProvider({
 
   useEffect(() => {
     const unsubscribe = store.subscribe(setZones);
-    // No bootstrap fetch: the stream opens with a `server.ready` snapshot, so a
+    // No bootstrap fetch: the stream opens with a `server.snapshot` snapshot, so a
     // `GET /zones` here would only race it and render the same thing twice.
     const stream = new EventStream(api.base, {
       onEvent: (event) => {
         store.apply(event);
-        if (event.type === 'server.ready') {
+        if (event.type === 'server.snapshot') {
           setSynced(true);
         }
       },

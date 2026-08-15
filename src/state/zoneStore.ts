@@ -7,7 +7,7 @@
  *
  * The contract does the hard part. Because `zone.changed` always carries the complete
  * zone and every stream opens with a full snapshot, this store never merges partial
- * state: it replaces a zone wholesale, or replaces the entire map on `server.ready`.
+ * state: it replaces a zone wholesale, or replaces the entire map on `server.snapshot`.
  * There is no reconciliation, no "which field won" and no staleness to age out.
  *
  * Events are stored **verbatim** — not normalised on the way in. `powerState`, `format` and
@@ -72,7 +72,7 @@ export class ZoneStore {
    */
   apply(event: ApiEvent): void {
     switch (event.type) {
-      case 'server.ready': {
+      case 'server.snapshot': {
         // A fresh snapshot is the whole truth — including zones that disappeared while
         // we were disconnected, which is why this replaces the map instead of merging.
         const { zones } = event as { zones: ApiZoneState[] };
