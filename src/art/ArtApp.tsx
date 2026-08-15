@@ -328,14 +328,18 @@ export function ArtApp() {
       )}
 
       {/*
-       * The phone header, absent exactly when the canvas is up.
+       * The phone header, on every screen.
        *
-       * On the home screen with a record playing, the artwork runs to all four edges and carries the room
-       * name itself (`.cx-mroom`) — so a 54px strip above it holding a logo and a second copy of that name
-       * is 54px of sleeve, spent twice. Everywhere else (browsing, a quiet house) there is no canvas to
-       * carry it and the header comes back.
+       * It used to vanish on home whenever a record was playing, and that was right while home *was*
+       * the player: the artwork ran to all four edges and carried the room name itself, so a 54px
+       * strip above it holding a logo and a second copy of that name was 54px of sleeve, spent twice.
+       *
+       * Home is a list now and the full-bleed sleeve lives in its own layer, so the rule had nothing
+       * left to protect — and it was doing real damage once the installed app started filling the
+       * screen properly: the header is what holds `env(safe-area-inset-top)`, so on a phone with
+       * music playing the greeting ran straight under the status bar and the notch sat on it.
        */}
-      {phone && !(view.kind === 'home' && !houseQuiet && cur.hasTrack) && (
+      {phone && (
         <header className="cx-mhead">
           <span className="cx-brand">
             <Mark className="cx-brand-mark" />

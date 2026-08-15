@@ -3766,7 +3766,9 @@
     align-items: stretch;
     justify-content: flex-start;
     gap: 0;
-    padding: 22px 0 26px;
+    /* A belt beside the header's braces: if this screen is ever shown without the bar above it,
+       the greeting still clears the notch rather than being drawn under it. */
+    padding: max(22px, env(safe-area-inset-top)) 0 26px;
     text-align: left;
   }
 

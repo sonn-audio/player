@@ -20,29 +20,18 @@ import '@/shell.css';
 import '@/art.css';
 
 /*
- * Installed, the window's height is measured rather than declared — see the note on `.face`.
+ * Mark the document when the app is running installed — see the note on `.face` for what that buys.
  *
- * Only there: in a browser `dvh` is right and moves smoothly with the toolbars, and replacing it
- * with a number that lands on `resize` would make every toolbar collapse a step instead of a
- * glide. `navigator.standalone` is the reliable signal on iOS, which is the platform that gets
- * this wrong; the media query is the one everywhere else.
+ * `navigator.standalone` is the reliable signal on iOS, which is the platform this is about; the
+ * media query is the one everywhere else. Read once: a page cannot become installed while it is
+ * open.
  */
-function trackInstalledHeight(): void {
-  const standalone =
-    (navigator as Navigator & { standalone?: boolean }).standalone === true ||
-    window.matchMedia?.('(display-mode: standalone)').matches === true;
-  if (!standalone) {
-    return;
-  }
-  const apply = (): void => {
-    document.documentElement.style.setProperty('--app-h', `${window.innerHeight}px`);
-  };
-  apply();
-  window.addEventListener('resize', apply);
-  window.addEventListener('orientationchange', apply);
+if (
+  (navigator as Navigator & { standalone?: boolean }).standalone === true ||
+  window.matchMedia?.('(display-mode: standalone)').matches === true
+) {
+  document.documentElement.dataset.standalone = '';
 }
-
-trackInstalledHeight();
 
 const root = document.getElementById('root');
 if (!root) {

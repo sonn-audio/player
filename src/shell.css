@@ -31,28 +31,38 @@
 
 /* --- the face, and the transition between faces ---------------------------- */
 
-/*
- * The face is exactly as tall as the window, and installed that is measured rather than declared.
- *
- * In a browser tab `dvh` is exactly right: the dynamic viewport shrinks and grows with the
- * toolbars, so a bottom bar rides the toolbar's edge instead of hiding behind it. Installed on iOS
- * with a translucent status bar there are no toolbars — the web view *is* the screen — and the
- * viewport units do not agree about that. The page is drawn from y=0, so whatever they under-report
- * piles up at the bottom: a black band with the tab bar floating a centimetre off the edge.
- *
- * A `@media (display-mode: standalone)` override was the first attempt and it shipped without
- * fixing anything, which is the useful part of the story — either iOS does not match that query
- * or its `vh` is the same short number, and from the outside those are indistinguishable. So the
- * installed app stops asking CSS what the window is and is told: `main.tsx` writes `--app-h` from
- * `window.innerHeight`, the one number that has never been ambiguous, and keeps it in step on
- * resize. Browsers never see the variable and keep `dvh`, whose smooth behaviour during a toolbar
- * collapse is worth keeping.
- */
 .face {
   height: 100vh;
   height: 100dvh;
-  height: var(--app-h, 100dvh);
   overflow: hidden;
+}
+
+/*
+ * Installed, the app is anchored to the viewport instead of measured against it.
+ *
+ * In a browser tab `dvh` is exactly right: the dynamic viewport shrinks and grows with the
+ * toolbars, so a bottom bar rides the toolbar's edge instead of hiding behind it. Installed on iOS
+ * with a translucent status bar there are no toolbars — the web view *is* the screen — and nothing
+ * that *reports* a height agrees about that. The page is drawn from y=0, so whatever they
+ * under-report piles up at the bottom: the tab bar floating a centimetre off the edge with a black
+ * band beneath it.
+ *
+ * Two attempts went out before this one, and both failed the same way, which is what makes the
+ * third different. `@media (display-mode: standalone) { height: 100vh }` changed nothing. Then
+ * `--app-h` from `window.innerHeight` changed nothing either — so `innerHeight` there is the same
+ * short number the units give, and every remaining variation on "ask how tall the window is" would
+ * be a fourth guess at the same wrong question.
+ *
+ * So stop asking. `position: fixed; inset: 0` resolves against the viewport itself rather than
+ * against anyone's opinion of its height, which is the whole point: the bar sits on the bottom
+ * edge because it *is* the bottom edge, and its own `env(safe-area-inset-bottom)` lifts the
+ * glyphs clear of the home indicator. Only when installed — in a browser this would be the layout
+ * viewport, which does not shrink with the toolbars, and the bar would hide behind them.
+ */
+html[data-standalone] .face {
+  position: fixed;
+  inset: 0;
+  height: auto;
 }
 
 /*
