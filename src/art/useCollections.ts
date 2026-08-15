@@ -9,12 +9,13 @@
  * One page each. This face shows a rail and a sheet, not a database browser: fifty entries is more
  * than anyone scrolls in a sheet, and "load more" is a technical-player affordance.
  *
- * Favourites are not here — the heart is the same state in both faces, so it lives in
- * `state/useZoneFavorite`.
+ * Whether a *given track* is a favourite is not here — the heart is the same state in both faces,
+ * so that lives in `state/useZoneFavorite`. The room's saved list is a collection like the other
+ * two and reads exactly like them.
  */
 import { useApi } from '@/state/ServerContext';
 import { useZoneCollection } from '@/state/useZoneCollection';
-import type { ApiQueue, ApiRecentItem } from '@/api/types';
+import type { ApiFavorite, ApiQueue, ApiRecentItem } from '@/api/types';
 
 const PAGE = 50;
 
@@ -28,6 +29,17 @@ export function useQueue(zoneId: number | null): { queue: ApiQueue; refresh: () 
     'queue',
   );
   return { queue: data ?? EMPTY_QUEUE, refresh };
+}
+
+/** The room's saved list — home's second shelf, and the only one that is a deliberate choice. */
+export function useFavorites(zoneId: number | null): ApiFavorite[] {
+  const api = useApi();
+  const { data } = useZoneCollection<ApiFavorite[]>(
+    async (id) => (await api.getFavorites(id, 0, PAGE)).items,
+    zoneId,
+    'favorites',
+  );
+  return data ?? [];
 }
 
 export function useRecents(zoneId: number | null): ApiRecentItem[] {
