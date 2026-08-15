@@ -35,7 +35,7 @@ import { QueueSheet, QueueTabs, type QueueTab } from '@/art/Rail';
 import { Crossfade } from '@/art/Crossfade';
 import { Browse, MiniBar, Sources, type BrowseNode } from '@/art/Browse';
 import { channelsOf, leaderOf, useCur } from '@/art/useCur';
-import { useQueue, useRecents } from '@/art/useCollections';
+import { useFavorites, useQueue, useRecents } from '@/art/useCollections';
 import { accentOf, artKeyOf } from '@/art/accent';
 import { useClock, useIdle } from '@/art/useIdle';
 import { zoneCoverCss, itemCoverCss } from '@/art/cover';
@@ -102,6 +102,19 @@ export function ArtApp() {
   const phone = useIsPhone();
 
   const [view, setView] = useState<View>({ kind: 'home' });
+  /*
+   * The phone's player, as a place you go rather than the place you start.
+   *
+   * Home used to *be* the player: opening the app put you in front of one record with the catalogue
+   * a tab away. That is the right shape for a wall panel and the wrong one for a phone, where the
+   * first question is almost always "what shall I put on" and only sometimes "what is on". So the
+   * phone follows the shape every music app has settled on for good reasons — a home you browse, a
+   * bar along the bottom that says what is playing, and the full player one press up from it.
+   *
+   * A layer over the app rather than a fourth view, because that is what it is: dismissing it puts
+   * you back exactly where you were, mid-scroll in whatever you were reading.
+   */
+  const [playerOpen, setPlayerOpen] = useState(false);
   const [sheet, setSheet] = useState<Sheet>(null);
   const [queueTab, setQueueTab] = useState<QueueTab>('queue');
   const [services, setServices] = useState<ContentService[]>([]);
@@ -111,6 +124,7 @@ export function ArtApp() {
   const leader = cur.leader;
   const { queue } = useQueue(leader?.id ?? null);
   const recents = useRecents(zone?.id ?? null);
+  const favorites = useFavorites(zone?.id ?? null);
   const { scenes, recall } = useScenes();
 
   // The lock screen and the media keys follow the room this face controls — the leader,
@@ -351,10 +365,19 @@ export function ArtApp() {
                 />
               ) : view.kind === 'inputs' ? (
                 <Sources zone={zone} onDone={goHome} />
-              ) : houseQuiet ? (
+              ) : phone || houseQuiet ? (
+                /*
+                 * Home is where you decide what to play.
+                 *
+                 * On a phone that is *always* true now — the record you are listening to lives in
+                 * the bar along the bottom and in the player above it — while a desk keeps the
+                 * stage on home and only falls back to this when the whole house is quiet, because
+                 * a desk has the width to be both at once and a wall panel should show the record.
+                 */
                 <Welcome
                   greetingText={greeting()}
                   rooms={zones.length}
+                  playing={zones.filter((candidate) => Boolean(candidate.track)).length}
                   services={services}
                   onBrowse={openBrowse}
                   onInputs={() => setView({ kind: 'inputs' })}
@@ -367,23 +390,20 @@ export function ArtApp() {
                     cover: scene.coverUrl,
                     play: () => void recall(scene),
                   }))}
-                  recents={recents.slice(0, 4).map((item) => ({
+                  recents={recents.slice(0, 12).map((item) => ({
                     key: item.source,
                     title: item.title || item.album || item.source,
                     cover: item.coverUrl,
                     play: () => zone && void api.play(zone.id, item.source),
                   }))}
-                />
-              ) : phone ? (
-                <MobileStage
-                  cur={cur}
-                  artKey={artKey}
-                  channels={channels}
-                  currentLeaderId={leaderOf(zone, zones)?.id ?? null}
-                  onOpenRooms={() => setSheet('rooms')}
-                  onOpenQueue={() => setSheet('queue')}
-                  onBrowse={() => openBrowse()}
-                  onPickChannel={pickChannel}
+                  /* The room's saved list — the one shelf here that is a deliberate choice rather
+                     than a trace of what happened, which is why it leads. */
+                  favorites={favorites.slice(0, 12).map((item) => ({
+                    key: String(item.id),
+                    title: item.name,
+                    cover: item.coverUrl,
+                    play: () => zone && void api.play(zone.id, item.source),
+                  }))}
                 />
               ) : (
                 <Stage
@@ -441,13 +461,64 @@ export function ArtApp() {
         />
       )}
 
-      {/* --- phone nav --- */}
+      {/*
+       * The phone's player, over everything, and the bar that opens it.
+       *
+       * The bar is the same `MiniBar` the desk shows while browsing — one object for "what is
+       * playing, wherever you are" rather than two that drift apart. It sits directly on the nav,
+       * and it is the only way up to the player, which is what makes the player a *place*.
+       */}
+      {phone && playerOpen && (
+        <div className="cx-player-sheet">
+          <MobileStage
+            cur={cur}
+            artKey={artKey}
+            channels={channels}
+            currentLeaderId={leaderOf(zone, zones)?.id ?? null}
+            onOpenRooms={() => setSheet('rooms')}
+            onOpenQueue={() => setSheet('queue')}
+            onBrowse={() => {
+              setPlayerOpen(false);
+              openBrowse();
+            }}
+            onPickChannel={pickChannel}
+            onDismiss={() => setPlayerOpen(false)}
+          />
+        </div>
+      )}
+
+      {phone && !playerOpen && leader && cur.hasTrack && (
+        <MiniBar cur={cur} onOpen={() => setPlayerOpen(true)} />
+      )}
+
+      {/*
+        --- phone nav ---
+
+        Every tab puts the player away first. The bar sits *under* the player layer and stays
+        pressable there on purpose — that is what makes the player a place rather than a trap — but
+        a tab that navigated without dismissing left the new destination hidden behind the sleeve,
+        with only the lit tab to say anything had happened.
+      */}
       {phone && (
         <nav className="cx-bnav">
-          <NavTab label="home" on={view.kind === 'home'} onClick={goHome}>
+          <NavTab
+            label="home"
+            on={view.kind === 'home' && !playerOpen}
+            onClick={() => {
+              setPlayerOpen(false);
+              goHome();
+            }}
+          >
             <HomeGlyph size={19} />
           </NavTab>
-          <NavTab label="music" on={view.kind === 'browse'} onClick={() => openBrowse()}>
+          <NavTab
+            label="music"
+            on={view.kind === 'browse' && !playerOpen}
+            onClick={() => {
+              setPlayerOpen(false);
+              openBrowse();
+            }}
+          >
             <GridGlyph size={19} />
           </NavTab>
           {/*
@@ -651,36 +722,52 @@ function Sheet({
 }
 
 /**
- * The house is quiet.
+ * Home.
  *
- * A greeting, what the house is, and the ways in — the shortcuts are the configured services, so
- * this screen has no hardcoded list of providers either. The recents strip is the fastest way back
- * into whatever you were listening to yesterday, which is what most people want from a quiet house.
+ * On a desk this is the quiet-house screen and nothing else — the stage has the room when there is
+ * music. On a phone it is the screen you open the app onto, every time, playing or not: the first
+ * question a phone gets asked is almost always *what shall I put on*, and the record you already
+ * chose lives in the bar along the bottom.
+ *
+ * Which is why the greeting states what is true rather than what would be pretty. `The house is
+ * quiet` under a bar showing a playing record is the kind of small lie a home screen cannot afford
+ * — it is the one screen someone reads without looking for anything.
+ *
+ * Everything below the greeting is a shelf, and the shelves are the same object browsing uses:
+ * they bleed past the page's margin so the row is *visibly* cut by the window rather than ending
+ * at a tidy edge, which is the oldest way to say "keep going" and costs no chrome to say it.
  */
 function Welcome({
   greetingText,
   rooms,
+  playing,
   services,
   onBrowse,
   onInputs,
   scenes,
   recents,
+  favorites = [],
 }: {
   greetingText: string;
   rooms: number;
+  /** How many rooms have music loaded — the difference between a home and a waiting room. */
+  playing: number;
   services: ContentService[];
   onBrowse: (node?: BrowseNode) => void;
   onInputs: () => void;
   /** Saved moments, drawn exactly like the recents: a scene is also a record on the shelf. */
   scenes: Array<{ key: string; title: string; cover: string; play: () => void }>;
   recents: Array<{ key: string; title: string; cover: string; play: () => void }>;
+  favorites?: Array<{ key: string; title: string; cover: string; play: () => void }>;
 }) {
   return (
     <div className="cx-welcome">
       <Mark className="cx-welcome-mark" />
       <h1 className="disp cx-welcome-greet">{greetingText}.</h1>
       <p className="cx-welcome-sub mono">
-        the house is quiet — {rooms} room{rooms === 1 ? '' : 's'} ready
+        {playing > 0
+          ? `${playing} of ${rooms} room${rooms === 1 ? '' : 's'} playing`
+          : `the house is quiet — ${rooms} room${rooms === 1 ? '' : 's'} ready`}
       </p>
 
       <div className="cx-welcome-shortcuts mono">
@@ -693,6 +780,20 @@ function Welcome({
           inputs
         </button>
       </div>
+
+      {favorites.length > 0 && (
+        <div className="cx-welcome-recents">
+          <span className="cx-welcome-recents-lbl mono">favourites</span>
+          <div className="cx-welcome-recents-row">
+            {favorites.map((item) => (
+              <button type="button" className="cx-welcome-recent" key={item.key} onClick={item.play}>
+                <span className="cx-welcome-recent-cov" style={{ backgroundImage: itemCoverCss(item.cover) }} />
+                <span className="cx-welcome-recent-title">{item.title}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/*
         Scenes before recents, because they are the stronger promise: a recent needs a room to be

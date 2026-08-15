@@ -3746,6 +3746,95 @@
  * and a record that is playing are the same kind of object. The bloom layer stands down here; a
  * full-bleed picture does not need its own halo behind it.
  */
+/*
+ * Home, on a phone: a page you read, not a statement you look at.
+ *
+ * The desk version of this screen exists for a quiet house — one greeting, centred, everything
+ * else small under it. A phone opens onto it every time, so it has to work as a *daily* home: the
+ * greeting steps down to a heading, the type goes left where reading starts, and everything below
+ * becomes a shelf that runs off the right edge the way browsing's do.
+ */
+@media (max-width: 979px) {
+  .cx-welcome {
+    align-items: stretch;
+    justify-content: flex-start;
+    gap: 0;
+    padding: 22px 0 26px;
+    text-align: left;
+  }
+
+  .cx-welcome > *:not(.cx-welcome-recents) {
+    padding-inline: var(--home-pad, 22px);
+  }
+
+  .cx-welcome-greet {
+    font-size: clamp(30px, 8vw, 40px);
+    letter-spacing: -0.035em;
+  }
+
+  .cx-welcome-sub {
+    margin-top: 7px;
+    color: var(--t7);
+  }
+
+  /* The services, as a row that scrolls rather than a paragraph of words that wraps. */
+  .cx-welcome-shortcuts {
+    display: flex;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    gap: 10px;
+    margin-top: 20px;
+    padding-bottom: 4px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .cx-welcome-shortcuts::-webkit-scrollbar {
+    display: none;
+  }
+
+  .cx-welcome-shortcuts button {
+    flex: none;
+    padding: 9px 15px;
+    border-radius: var(--r-pill, 999px);
+    background: rgb(255 255 255 / 6%);
+    color: var(--t2);
+    font-size: 9.5px;
+  }
+
+  .cx-welcome-recents {
+    align-items: stretch;
+    gap: 12px;
+    margin-top: 30px;
+  }
+
+  .cx-welcome-recents-lbl {
+    padding-inline: var(--home-pad, 22px);
+    text-align: left;
+  }
+
+  /* The shelf: one row, cut by the window, the first sleeve on the page's own margin. */
+  .cx-welcome-recents-row {
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    gap: 14px;
+    padding: 2px var(--home-pad, 22px) 6px;
+    overflow-x: auto;
+    scroll-snap-type: x proximity;
+    scrollbar-width: none;
+  }
+
+  .cx-welcome-recents-row::-webkit-scrollbar {
+    display: none;
+  }
+
+  .cx-welcome-recent {
+    flex: none;
+    width: 132px;
+    scroll-snap-align: start;
+  }
+}
+
 @media (max-width: 979px) {
   .cx-browse-inner[data-detail] {
     padding-top: 0;
@@ -4824,6 +4913,101 @@
 }
 
 /* --- phone nav ------------------------------------------------------------ */
+
+/*
+ * The phone's player, as a layer over the app.
+ *
+ * Home is where you decide what to play now; this is where you look at what you chose. It covers
+ * everything but the nav — the tab bar stays reachable so the player is a *place you are*, not a
+ * modal you are trapped in — and it rises from the bar that opened it.
+ */
+.cx-player-sheet {
+  position: fixed;
+  inset: 0 0 calc(56px + env(safe-area-inset-bottom)) 0;
+  z-index: 6;
+  display: flex;
+  flex-direction: column;
+  background: var(--cx-stage);
+  animation: cx-player-up 0.34s var(--cx-ease);
+}
+
+@keyframes cx-player-up {
+  from {
+    transform: translateY(14%);
+    opacity: 0;
+  }
+}
+
+/* The stage fills the layer; its own scrolling rules are unchanged. */
+.cx-player-sheet .cx-mstage {
+  flex: 1;
+  min-height: 0;
+}
+
+/*
+ * The way back down, opposite the room name.
+ *
+ * Where a sheet would put its handle, because that is the gesture it stands for — the swipe has a
+ * visible twin so the way out is discoverable without one.
+ */
+.cx-mdown {
+  position: absolute;
+  top: calc(env(safe-area-inset-top) + 8px);
+  left: 12px;
+  z-index: 4;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  color: var(--t2);
+  /* Legible over a light sleeve as well as a dark one, like the room name beside it. */
+  filter: drop-shadow(0 1px 6px rgb(0 0 0 / 55%));
+}
+
+/* On a phone the bar is the player's doorway, so it sits on the nav rather than in the page. */
+.cx-mini {
+  position: relative;
+  z-index: 3;
+}
+
+/*
+ * The bar, at a phone's width.
+ *
+ * It was built for a desk, where it has a whole window to spread across: 26px gaps, a 30px inset
+ * and a volume fader on the end. At 390px that arithmetic left the title about two characters —
+ * `B.` over `A…` — which is a now-playing bar that does not say what is playing. The fader goes
+ * (the player one press up has one, and so do the hardware keys), the gaps close, and the title
+ * gets everything that is left.
+ */
+@media (max-width: 979px) {
+  .cx-mini {
+    gap: 12px;
+    padding: 9px 14px;
+  }
+
+  .cx-mini-vol {
+    display: none;
+  }
+
+  .cx-mini-transport {
+    gap: 10px;
+  }
+
+  .cx-mini-play {
+    width: 38px;
+    height: 38px;
+  }
+
+  .cx-mini-cov {
+    width: 42px;
+    height: 42px;
+    border-radius: 4px;
+  }
+
+  .cx-mini-title {
+    font-size: 13.5px;
+  }
+}
 
 .cx-bnav {
   /* Above the wash, for the same reason the strip is. */

@@ -519,6 +519,7 @@ export function MobileStage({
   onOpenQueue,
   onBrowse,
   onPickChannel,
+  onDismiss,
 }: {
   cur: Cur;
   artKey: string;
@@ -529,6 +530,15 @@ export function MobileStage({
   onOpenQueue: () => void;
   onBrowse: () => void;
   onPickChannel: (leaderId: number) => void;
+  /**
+   * Put the player away — it is a layer over the app now, not the app's home screen.
+   *
+   * Both the chevron and a downward swipe on the sleeve call this. Down was deliberately dead
+   * before, on the argument that a pull which opens what a push closes feels broken; that held
+   * while the player *was* home and there was nowhere to go. Now down is the one gesture every
+   * phone has taught for exactly this, and up (the queue) keeps its opposite.
+   */
+  onDismiss?: (() => void) | undefined;
 }) {
   const api = useApi();
   const leader = cur.leader;
@@ -600,6 +610,10 @@ export function MobileStage({
       if (travelledY < 0) {
         tick();
         onOpenQueue();
+      } else if (onDismiss) {
+        // Down puts the player away — see `onDismiss`.
+        tick();
+        onDismiss();
       }
     } else if (start.moved && Math.abs(travelledX) >= SWIPE_COMMIT_PX) {
       tick();
@@ -636,6 +650,13 @@ export function MobileStage({
        * So the name sits on the artwork itself, centred, with a shadow under it so it reads over a light
        * sleeve as well as a dark one.
        */}
+      {/* The way back down, where a sheet's handle would be — the swipe's visible twin. */}
+      {onDismiss && (
+        <button type="button" className="cx-mdown" onClick={onDismiss} aria-label="Close the player">
+          <ChevronGlyph size={16} />
+        </button>
+      )}
+
       <button type="button" className="cx-mroom mono" onClick={onOpenRooms}>
         {cur.name || 'rooms'}
         {cur.grouped && <i className="cx-mroom-plus">+{cur.groupExtra}</i>}
