@@ -6,8 +6,9 @@
  *  - **`browsable` and `playable` are independent.** An album is both. So a row opens on tap
  *    when it can be opened, and carries a separate play affordance when it can be played —
  *    rather than one behaviour inferred from `kind`.
- *  - **`total` may be `null`,** meaning the provider cannot count. "Load more" is therefore
- *    offered whenever a page came back full, not when a running count says there is more.
+ *  - **`total` may be `null`,** meaning the provider cannot count. So there is taken to be more
+ *    whenever a page came back full, rather than when a running count says so — and a page that
+ *    comes back empty (or fails) is what ends a listing no one can measure.
  *
  * Breadcrumbs are kept as a client-side stack. The server names the container it listed, but a
  * listing does not carry its ancestors — and for the folder case it cannot even name itself
@@ -155,6 +156,8 @@ function ContentBrowser({
   const [busy, setBusy] = useState(false);
   const [playlistRefresh, setPlaylistRefresh] = useState(0);
   const [playlists, setPlaylists] = useState<ApiPlaylist[]>([]);
+  /* Set when a page came back empty or failed: the only end an uncountable listing has. */
+  const [exhausted, setExhausted] = useState(false);
   const favorites = useAddFavorite();
   // Browse and pagination requests can finish after the user has moved to another folder.
   // Results from that old route must never be appended to the current listing.
@@ -168,6 +171,11 @@ function ContentBrowser({
    * so arriving by any other route does not steal focus.
    */
   const searchRef = useRef<HTMLInputElement>(null);
+  /* The scrolling column and the marker at the foot of the list, which is what asks for more. */
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const sentinelRef = useRef<HTMLParagraphElement>(null);
+  /* A page already on its way. The marker stays on screen while it loads, and would ask again. */
+  const loadingMore = useRef(false);
   useEffect(() => {
     if (searchNonce > 0) {
       searchRef.current?.focus();
@@ -227,6 +235,7 @@ function ContentBrowser({
     setBusy(true);
     setListing(null);
     setExtra([]);
+    setExhausted(false);
     content
       .browse(here?.id, 0, PAGE_SIZE)
       .then((page) => {
@@ -317,24 +326,76 @@ function ContentBrowser({
     }
   };
 
-  const loadMore = () => {
+  /**
+   * Appends the next page.
+   *
+   * Guarded rather than debounced: the marker that triggers this stays on screen while the page
+   * is in flight, so without the flag a slow answer would be asked for several times over and
+   * arrive several times over.
+   *
+   * An empty page ends the listing, and so does a failed one — otherwise a provider that has
+   * stopped answering would be asked again every time the marker came back into view.
+   */
+  const loadMore = useCallback(() => {
+    if (loadingMore.current) return;
     const generation = browseGeneration.current;
     const loaded = (listing?.items.length ?? 0) + extra.length;
-    void content.browse(here?.id, loaded, PAGE_SIZE).then((page) => {
-      if (generation === browseGeneration.current) {
+    loadingMore.current = true;
+    void content
+      .browse(here?.id, loaded, PAGE_SIZE)
+      .then((page) => {
+        if (generation !== browseGeneration.current) return;
+        if (page.items.length === 0) {
+          setExhausted(true);
+          return;
+        }
         setExtra((prev) => [...prev, ...page.items]);
-      }
-    });
-  };
+      })
+      .catch(() => {
+        if (generation === browseGeneration.current) setExhausted(true);
+      })
+      .finally(() => {
+        loadingMore.current = false;
+      });
+  }, [content, extra.length, here?.id, listing]);
 
   const items = [...(listing?.items ?? []), ...extra];
   // `total === null` means the provider cannot count, so completeness is judged by whether
   // the last page came back full rather than by comparing against a number that does not exist.
   const maybeMore =
+    !exhausted &&
     listing !== null &&
     (listing.total === null
       ? (extra.length > 0 ? extra.length % PAGE_SIZE === 0 : listing.items.length === PAGE_SIZE)
       : items.length < listing.total);
+
+  /*
+   * The next page arrives because the end of this one came into view, not because someone asked
+   * for it. The marker at the foot of the list is both the trigger and the whole of the
+   * interface: it is on screen only while there is more, and only where more would go.
+   *
+   * `root` is the scrolling column rather than the viewport. The page itself never scrolls, so a
+   * viewport-rooted observer would call the marker visible from the moment it mounts and pull a
+   * six-thousand-row listing down in one go. The margin starts the fetch a screenful early, so
+   * the grid grows ahead of the reader instead of stalling under them.
+   *
+   * Re-running as `loadMore` changes identity is deliberate: a fresh page re-attaches the
+   * observer, and if the marker is *still* in view — a listing shorter than the column, or a
+   * fast scroll — it simply fires again until the column is full or the listing runs out.
+   */
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    const root = scrollRef.current;
+    if (!sentinel || !root) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) loadMore();
+      },
+      { root, rootMargin: '600px' },
+    );
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [loadMore, maybeMore]);
 
   /* Everything a listing needs to be interactive, in one object — see `BrowseActions`. */
   const actions: BrowseActions = {
@@ -447,7 +508,7 @@ function ContentBrowser({
         have to scroll back to — and the crumbs are how you get out of where that scrolling took
         you.
       */}
-      <div className="content-scroll">
+      <div className="content-scroll" ref={scrollRef}>
       {/* The hub draws its own header, and "Home" above "Apple Music" is the page named twice. */}
       {!results && !asShelves && !asServices && listing?.sections && listing.sections.length > 0 && (
         <h1 className="home-title">Home</h1>
@@ -521,10 +582,10 @@ function ContentBrowser({
               : {})}
           />
           {maybeMore && (
-            <p className="load-more">
-              <button type="button" className="text-button" onClick={loadMore}>
-                Load more
-              </button>
+            /* Only ever read while it is true: it sits below the last row, and by the time it is
+               on screen the page it announces has been asked for. */
+            <p className="load-more hint" ref={sentinelRef} role="status">
+              Loading more…
             </p>
           )}
         </>
