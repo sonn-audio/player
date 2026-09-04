@@ -7,7 +7,7 @@
  * of entries, so the stream says "yours is stale" and leaves the re-read to whoever is showing one.
  *
  * One page each. This face shows a rail and a sheet, not a database browser: fifty entries is more
- * than anyone scrolls in a sheet, and "load more" is a technical-player affordance.
+ * than anyone scrolls in a sheet, and paging past that is a technical-player affordance.
  *
  * Whether a *given track* is a favourite is not here — the heart is the same state in both faces,
  * so that lives in `state/useZoneFavorite`. The room's saved list is a collection like the other
