@@ -352,7 +352,7 @@ export function Stage({
   nextUp: { title: string; artist: string } | null;
   /** How many entries the queue holds. */
   queueCount: number;
-  /** What comes after this one, as sleeves — the room's own shelf. See `.cx-shelf`. */
+  /** What comes after this one, as sleeves — the room's own shelf. See `.cx-upnext`. */
   upNext: { key: string; title: string; artist: string; cover: string | undefined; play: () => void }[];
 }) {
   const api = useApi();
@@ -630,23 +630,23 @@ export function Stage({
            * next few, and "and 40 more" is a fact only type can carry.
            */}
           {upNext.length > 0 && (
-            <div className="cx-shelf">
+            <div className="cx-upnext">
               {upNext.map((entry) => (
                 <button
                   type="button"
                   key={entry.key}
-                  className="cx-shelf-item"
+                  className="cx-upnext-item"
                   onClick={entry.play}
                   title={`Play ${entry.title}${entry.artist ? ` — ${entry.artist}` : ''}`}
                 >
                   <span
-                    className="cx-shelf-art"
+                    className="cx-upnext-art"
                     style={{ backgroundImage: entry.cover }}
                     aria-hidden="true"
                   />
-                  <span className="cx-shelf-txt">
-                    <span className="cx-shelf-title">{entry.title}</span>
-                    {entry.artist && <i className="cx-shelf-artist">{entry.artist}</i>}
+                  <span className="cx-upnext-txt">
+                    <span className="cx-upnext-title">{entry.title}</span>
+                    {entry.artist && <i className="cx-upnext-artist">{entry.artist}</i>}
                   </span>
                 </button>
               ))}
@@ -662,7 +662,7 @@ export function Stage({
            */}
           {upNext.length > 0 ? (
             queueCount > upNext.length + 1 && (
-              <button type="button" className="mono cx-shelf-more" onClick={onOpenQueue}>
+              <button type="button" className="mono cx-upnext-more" onClick={onOpenQueue}>
                 {queueCount - upNext.length - 1} more in the queue
               </button>
             )

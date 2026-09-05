@@ -1654,7 +1654,12 @@
 }
 
 /*
- * The shelf: what is next, as records.
+ * What is next, as records.
+ *
+ * Named `cx-upnext`, not `cx-shelf`: Browse has owned `.cx-shelf` for its sections since long before
+ * this existed, and a second meaning for one class turned every listing's heading into a column beside
+ * its own row instead of a line above it. A player's up-next strip and a catalogue's shelf are two
+ * different objects that happen to share a metaphor.
  *
  * Under the composition rather than beside it, because a running order belongs to a room and this is
  * the room's panel. Four sleeves at 54px — small enough that the record above them is still the subject,
@@ -1664,13 +1669,13 @@
  * The rows reveal themselves the way every other list in this face does: the picture is always there,
  * the words come up under the pointer. A queue that shouts its contents competes with the thing playing.
  */
-.cx-shelf {
+.cx-upnext {
   display: flex;
   gap: 14px;
   margin-top: 26px;
 }
 
-.cx-shelf-item {
+.cx-upnext-item {
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -1679,7 +1684,7 @@
   text-align: left;
 }
 
-.cx-shelf-art {
+.cx-upnext-art {
   width: 54px;
   height: 54px;
   border-radius: 3px;
@@ -1692,12 +1697,12 @@
     box-shadow 0.35s var(--cx-ease);
 }
 
-.cx-shelf-item:hover .cx-shelf-art {
+.cx-upnext-item:hover .cx-upnext-art {
   scale: 1.06;
   box-shadow: inset 0 0 0 1px rgb(255 255 255 / 22%);
 }
 
-.cx-shelf-txt {
+.cx-upnext-txt {
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -1706,12 +1711,12 @@
   transition: opacity 0.3s var(--cx-ease);
 }
 
-.cx-shelf-item:hover .cx-shelf-txt {
+.cx-upnext-item:hover .cx-upnext-txt {
   opacity: 1;
 }
 
-.cx-shelf-title,
-.cx-shelf-artist {
+.cx-upnext-title,
+.cx-upnext-artist {
   overflow: hidden;
   font-size: 10px;
   color: var(--t5);
@@ -1719,14 +1724,14 @@
   white-space: nowrap;
 }
 
-.cx-shelf-artist {
+.cx-upnext-artist {
   font-size: 9.5px;
   font-style: normal;
   color: var(--t7);
 }
 
 /* How much more there is, and the way to all of it. */
-.cx-shelf-more {
+.cx-upnext-more {
   margin-top: 18px;
   font-size: 9.5px;
   letter-spacing: 0.18em;
@@ -1734,13 +1739,13 @@
   transition: color 0.25s;
 }
 
-.cx-shelf-more:hover {
+.cx-upnext-more:hover {
   color: var(--t3);
 }
 
 /* At rest a running order is a plan, and the screen is not making plans. */
-.cx-root[data-idle] .cx-shelf,
-.cx-root[data-idle] .cx-shelf-more {
+.cx-root[data-idle] .cx-upnext,
+.cx-root[data-idle] .cx-upnext-more {
   max-height: 0;
   margin: 0;
   overflow: hidden;
