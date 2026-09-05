@@ -1625,51 +1625,137 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
  * ever reachable by scrolling anyway.
  */
 /*
- * The house concept, in this face's medium.
+ * The house, as tabs in a column — the wall, turned ninety degrees.
  *
- * On the art face the rooms are panels in a row and the one you are listening in takes the width. Here
- * they are lanes in a column and the one you are listening in takes the height. Same idea, same
- * gesture, and it retires the picker in the rail — two ways to choose a room on one screen is the
- * duplication this face has been removing everywhere else.
+ * On the art face every room is a panel in one row: the room you are listening in takes the width and
+ * the others stand at their own places in the row as spines of their own artwork. This is that, in a
+ * column. Every room is a line; the open one takes the height and holds the instrument; the others
+ * keep their places above and below it. Nothing reorders when you choose another room — the house
+ * holds still and the tab you opened grows, which is exactly what the wall does when a panel widens.
  *
- * The name column is what makes it one table with a tall row in it rather than a panel with a list
- * stapled underneath: every room's name starts on the same edge, whether the row is 40px or 700.
+ * What makes it read as tabs rather than as a player with a table under it: every room's line has the
+ * same shape and the same left edge, and only the open one is lifted — a brighter ground, a stated
+ * edge, a shadow, and an accent spine down its side.
  */
 .np-room {
-  display: grid;
-  grid-template-columns: var(--room-name) minmax(0, 1fr);
-  gap: clamp(14px, 1.8vw, 34px);
-  min-height: 0;
+  position: relative;
+  display: flex;
+  /*
+   * Shrinks with the window, but never past the floors its own rows declare.
+   *
+   * The panel's rows have minimums — a nameplate, a control strip, 120px of display and a chain — and
+   * on a short window they add up to more than the tab has. A grid told to fit anyway lays its rows
+   * over each other, which is how the chain came to be printed through the spectrum. `min-content`
+   * holds them apart and the column takes the overflow.
+   */
+  min-height: min-content;
+  flex: 1 1 0;
+  flex-direction: column;
+  margin: 1px 0 4px;
+  padding: 8px var(--tab-pad) clamp(10px, 1.2vh, 16px);
+  border-radius: 9px;
+  background: linear-gradient(180deg, rgb(255 255 255 / 7%), rgb(255 255 255 / 3.5%) 260px);
+  box-shadow:
+    inset 0 0 0 1px rgb(255 255 255 / 11%),
+    0 26px 56px -32px rgb(0 0 0 / 90%);
+  animation: np-tab-lift 0.26s ease-out;
+}
+
+/* The spine: what survives at a glance on a screen where every row starts the same way. */
+.np-room::before {
+  content: '';
+  position: absolute;
+  top: 12px;
+  bottom: 12px;
+  left: 0;
+  width: 2px;
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--accent) 60%, transparent);
 }
 
 /*
- * The plate: the room's name over the record playing in it.
+ * The tab's own line.
  *
- * This column was a name and eleven hundred pixels of nothing under it, which is exactly what made this
- * read as unlike the art face — there a room is a sliver *filled* with its own artwork. The sleeve
- * belongs here rather than in the panel's first cell: it is the thing that says which room this is, in
- * the column the other rooms say it in. The panel keeps the words and the readings.
+ * Built on the shut rooms' columns: their record is 36px wide, so the lamp stands in a 36px slot and
+ * every room's name — open or shut — begins on one edge. A tab strip whose labels do not line up is
+ * a set of boxes.
  */
+.np-room-head {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  padding: 6px 0 10px;
+  border-bottom: 1px solid var(--hair, rgb(255 255 255 / 7%));
+  margin-bottom: clamp(10px, 1.2vh, 16px);
+}
+
+.np-room-lamp {
+  justify-self: center;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--line-strong);
+  transition:
+    background 0.3s,
+    box-shadow 0.3s;
+}
+
+.np-room-lamp[data-lit] {
+  background: var(--accent);
+  box-shadow: 0 0 9px 1px rgb(74 222 128 / 45%);
+}
+
+/* The instrument, hanging under the tab's line: the record and its column on the left, the reading on
+   the right — the arrangement this face has settled on, now inside a tab. */
+.np-room-body {
+  display: grid;
+  /* `min-content`, not 0: a zero minimum here and on the panel below cut the chain of content-based
+     floors, so the tab could be squeezed to nothing and its rows landed on top of each other. */
+  min-height: min-content;
+  flex: 1 1 auto;
+  grid-template-columns: var(--room-name) minmax(0, 1fr);
+  gap: clamp(14px, 1.8vw, 34px);
+  animation: np-tab-open 0.38s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
 /*
- * The plate: the room's record, full height, with its name engraved on it.
+ * Opening a tab.
  *
- * A square sleeve at the top of a 700px column left the rest of that column empty, and an empty column
- * is what made this face read as unlike the art one — there a room is a *band* of its own artwork, top
- * to bottom, with the name on it. So the sleeve fills the plate: cropped to the column, held down to
- * this face's light so the readings beside it stay the brightest thing on the panel, and the name over
- * it where a label plate goes.
- *
- * The room's own light still comes off it (`.np-bloom`), which is what keeps a dimmed band from reading
- * as a photograph behind glass.
+ * The surface arrives first and the instrument wipes down out of the tab's own line — which is the
+ * direction the thing actually opens in, and it reads as a panel being pulled out rather than a screen
+ * being replaced. Cheap to run: a clip and an opacity, both on the compositor.
  */
-/*
- * The room's column: the record, its name, and the running order under them.
- *
- * Three things that are all about *this room*, which is what makes the space under a square sleeve
- * worth having. Filling it with more of the record was tried twice and both answers were worse than
- * the hole: a tall crop threw the sleeve's sides away and read as stretched, and the same picture
- * blurred top to bottom was a flat grey box with a photograph on it.
- */
+@keyframes np-tab-lift {
+  from {
+    box-shadow:
+      inset 0 0 0 1px rgb(255 255 255 / 0%),
+      0 0 0 0 rgb(0 0 0 / 0%);
+    background-color: rgb(255 255 255 / 0%);
+  }
+}
+
+@keyframes np-tab-open {
+  from {
+    clip-path: inset(0 0 100% 0);
+    opacity: 0.25;
+    transform: translateY(-6px);
+  }
+
+  to {
+    clip-path: inset(0 0 0 0);
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .np-room,
+  .np-room-body {
+    animation: none;
+  }
+}
+
 .np-side {
   display: flex;
   flex-direction: column;
@@ -1854,34 +1940,9 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
  * and white, like every other light on this face, so what varies per album is how much light there is
  * and where it falls, never the palette.
  */
-.np-plate::before {
-  content: '';
-  position: absolute;
-  inset: -30%;
-  background-image: var(--rec);
-  background-position: center;
-  background-size: cover;
-  filter: grayscale(1) blur(34px) brightness(0.55);
-  opacity: 0.6;
-}
+/* No light and no scrim behind the plate any more: the plate *is* the sleeve now — the room's name
+   moved up to the tab's own line, so there is nothing under the record for a gradient to darken. */
 
-/* The foot of the column, so the band ends rather than being cut off by the row below it. */
-.np-plate::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  pointer-events: none;
-  background: linear-gradient(180deg, transparent 55%, rgb(8 10 13 / 70%));
-}
-
-/*
- * The sleeve itself: the column's width, and square.
- *
- * `aspect-ratio` rather than a height, because the one number that decides a record's shape is its
- * width — the column is as wide as it is and the sleeve follows. `cover` on a square box of a square
- * picture crops nothing, and it is what keeps a rare non-square cover from being distorted.
- */
 .np-plate-art {
   position: relative;
   z-index: 2;
@@ -1898,30 +1959,6 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
 }
 
 /* Under the sleeve, on the record's own light: the room this is. */
-/* The lamp, as on every lane below: a room that is playing says so on its own plate. */
-.np-plate .np-room-name::before {
-  content: '';
-  display: inline-block;
-  width: 5px;
-  height: 5px;
-  margin-right: 9px;
-  border-radius: 50%;
-  background: var(--line-strong);
-  vertical-align: middle;
-  transition: background 0.25s;
-}
-
-.np-plate[data-playing] .np-room-name::before {
-  background: var(--accent);
-  box-shadow: 0 0 8px 1px rgb(74 222 128 / 40%);
-}
-
-.np-plate .np-room-name {
-  position: relative;
-  z-index: 2;
-  display: block;
-  padding: 13px 15px 14px;
-}
 
 .np-room[data-current] {
   min-height: 0;
@@ -1937,9 +1974,12 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
 
 .now-playing {
   position: relative;
-  display: grid;
-  /* One column, stated: the rows are the rooms. */
-  grid-template-columns: minmax(0, 1fr);
+  /* A column of rooms: shut ones keep their line, the open one takes what is left. It scrolls only
+     when the instrument genuinely does not fit — see `min-height: min-content` on `.np-room`. */
+  display: flex;
+  flex-direction: column;
+  overflow: hidden auto;
+  --tab-pad: clamp(12px, 1.1vw, 20px);
   /*
    * The plate column, once, for the tall row and for every lane — so the two cannot drift apart.
    *
@@ -1952,9 +1992,12 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
      definite maximum up to that maximum *before* an `fr` track gets anything, so a capped row and an
      elastic one meant the empty queue claimed 40vh and the display took what was left. The cap lives
      on `.tab-body` instead, where it limits the row through the item's own max-content contribution. */
-  grid-template-rows: minmax(0, 1fr) auto;
-  gap: 14px;
   height: 100%;
+}
+
+/* Only the shut rooms keep their line; the open one takes what is left (see `.np-room`). */
+.now-playing > .house-lane {
+  flex: none;
 }
 
 /*
@@ -2038,7 +2081,8 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
     'chain chain';
   gap: 18px 22px;
   min-width: 0;
-  min-height: 0;
+  /* See `.np-room-body`: the panel's own rows declare the floors, and this is what passes them up. */
+  min-height: min-content;
 }
 
 /*
@@ -3429,10 +3473,6 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
 /* No `grid-area`. It named a row on `.np-player`, and now that the lanes are a sibling of the whole
    room rather than a section inside the panel, that name means nothing here — a named area nobody
    declares is placed in an implicit track, which is what put the lanes *beside* the panel. */
-.house {
-  min-width: 0;
-}
-
 .house-head {
   margin: 0 0 10px;
   font-family: var(--font-mono);
@@ -3443,35 +3483,89 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
   text-transform: uppercase;
 }
 
-.house-lanes {
-  display: flex;
-  flex-direction: column;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
 
 .house-lane {
   display: grid;
-  /* The first column is the panel's name column, stated in the same variable, so every room's name —
-     the tall row's included — starts on one edge. */
+  /* The open tab's own columns: a 36px record, then the name column, then the readings. Every room's
+     line — open or shut — starts on one edge. */
   grid-template-columns:
     var(--room-name, clamp(108px, 11vw, 168px)) auto minmax(150px, 1.2fr)
-    minmax(80px, 0.8fr) minmax(90px, 0.8fr) minmax(110px, 1fr);
+    minmax(80px, 0.8fr) minmax(90px, 0.8fr) minmax(110px, 1fr) 10px;
   align-items: center;
   gap: clamp(10px, 1.4vw, 28px);
   width: 100%;
-  padding: 9px 0;
-  border-bottom: 1px solid var(--hair, rgb(255 255 255 / 6%));
+  margin: 2px 0;
+  padding: 9px var(--tab-pad, 16px);
+  border-radius: 7px;
+  /* Recessed: darker than the page, edged in almost nothing. It is the contrast with the open tab's
+     lift that says which one is open. */
+  background: rgb(0 0 0 / 26%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 4%);
   text-align: left;
-  transition: background 0.2s;
+  transition:
+    background 0.22s ease,
+    box-shadow 0.22s ease,
+    transform 0.22s cubic-bezier(0.2, 0.7, 0.2, 1);
 }
 
+/*
+ * A tab that has just shut arrives rather than appearing.
+ *
+ * Opening one room closes another, and the room that closed is a new row in the column — mounted, so
+ * it can be animated. It settles down out of the space its own panel occupied a moment ago, which is
+ * the other half of the gesture the opening tab makes: one wipes down into place, the other folds up
+ * into its line.
+ */
+.house-lane {
+  animation: np-lane-in 0.3s ease-out;
+}
+
+@keyframes np-lane-in {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+}
+
+/* Under the pointer a shut tab comes forward — the row you can open is the row that answers you. */
 .house-lane:hover {
-  background: rgb(255 255 255 / 3%);
+  background: rgb(255 255 255 / 5%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 10%);
+  transform: translateX(3px);
 }
 
-/* The lane's plate: the same pairing as the tall row's, one size down. */
+.house-lane:active {
+  transform: translateX(1px);
+}
+
+/* The opener: a chevron at the end of the line, dim until the row is under the pointer. */
+.house-open {
+  width: 6px;
+  height: 6px;
+  margin-left: auto;
+  border-top: 1.5px solid var(--text-mute);
+  border-right: 1.5px solid var(--text-mute);
+  opacity: 0.5;
+  transform: rotate(45deg);
+  transition:
+    opacity 0.22s,
+    border-color 0.22s;
+}
+
+.house-lane:hover .house-open {
+  border-color: var(--text);
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .house-lane,
+  .house-lane:hover,
+  .house-lane:active {
+    transform: none;
+    animation: none;
+  }
+}
+
 .house-plate {
   display: flex;
   align-items: center;

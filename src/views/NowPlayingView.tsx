@@ -8,6 +8,7 @@
  * `source.kind` as the hint for *what* it is. Both are rendered as given: `kind` is an open
  * set, so this must not switch exhaustively on it.
  */
+import { useLayoutEffect, useRef } from 'react';
 import { Crossfade } from '@/art/Crossfade';
 import { zoneCoverCss } from '@/art/cover';
 import { Transport } from '@/components/Transport';
@@ -16,7 +17,7 @@ import { Waveform } from '@/components/Waveform';
 import { SourceChip } from '@/components/StreamFormat';
 import { AnalysisPanel, Readout } from '@/components/AnalysisPanel';
 import { SignalPath } from '@/components/SignalPath';
-import { HouseLanes } from '@/components/HouseLanes';
+import { HouseLane } from '@/components/HouseLanes';
 import { RunningOrder } from '@/components/RunningOrder';
 import { Icon } from '@/components/Icon';
 import { splitQualifier } from '@/lib/format';
@@ -24,7 +25,6 @@ import { useZoneFavorite } from '@/state/useZoneFavorite';
 import { useApi } from '@/state/ServerContext';
 import { useCoverAnchor } from '@/shell/coverMorph';
 import type { ApiZoneState } from '@/api/types';
-
 
 /**
  * The heart, for the room you are looking at.
@@ -40,19 +40,11 @@ function TrackHeart({ zone }: { zone: ApiZoneState }) {
   }
   const title = saved ? `Saved to ${zone.name}` : `Add to ${zone.name}’s favourites`;
   return (
-    <button
-      type="button"
-      className="np-action"
-      data-on={saved ? '' : undefined}
-      title={title}
-      aria-label={title}
-      onClick={toggle}
-    >
+    <button type="button" className="np-action" data-on={saved ? '' : undefined} title={title} aria-label={title} onClick={toggle}>
       <Icon name="star" />
     </button>
   );
 }
-
 
 /**
  * How big the title is set, decided by how long it is — the same ladder the art face uses.
@@ -76,6 +68,48 @@ function titleStep(title: string): 1 | 2 | 3 | 4 {
   return 4;
 }
 
+/**
+ * The rooms slide to their new places.
+ *
+ * Opening a tab moves every other room in the column — the one below the room that opened travels the
+ * whole height of an instrument — and without this they teleport. So each row's position is remembered
+ * between renders and any row that has moved is animated from where it *was* to where it is, which is
+ * the same gesture the art face's wall makes when a panel widens and its neighbours slide along the
+ * row.
+ *
+ * Measured from the DOM rather than through a ref per row: the rows are a list whose length changes
+ * with the house, and a `data-` attribute is a stabler handle than a map of refs that has to be kept
+ * in step with it. Web Animations rather than CSS, because the distance is only known at the moment
+ * the layout changes.
+ *
+ * A row that has just appeared (the room that closed) has no previous position and is left to its own
+ * entrance; see `np-lane-in`.
+ */
+function useHouseSlide(key: unknown): void {
+  const seen = useRef(new Map<number, number>());
+
+  useLayoutEffect(() => {
+    const now = new Map<number, number>();
+    const quiet = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    for (const row of document.querySelectorAll<HTMLElement>('[data-lane-id]')) {
+      const id = Number(row.dataset.laneId);
+      const top = row.getBoundingClientRect().top;
+      now.set(id, top);
+      const was = seen.current.get(id);
+      if (quiet || was === undefined || Math.abs(was - top) < 1) {
+        continue;
+      }
+      row.animate([{ transform: `translateY(${was - top}px)` }, { transform: 'none' }], {
+        duration: 340,
+        easing: 'cubic-bezier(0.2, 0.7, 0.2, 1)',
+      });
+    }
+
+    seen.current = now;
+  }, [key]);
+}
+
 export function NowPlayingView({
   zone,
   zones,
@@ -91,10 +125,23 @@ export function NowPlayingView({
 }) {
   const api = useApi();
   const coverAnchor = useCoverAnchor();
+  useHouseSlide(`${zone.id}|${zones.length}`);
 
   const track = zone.track;
 
-  const others = zones.filter((candidate) => candidate.id !== zone.id);
+  /*
+   * The house, in its own order, split around the room that is open.
+   *
+   * Every room is a tab and the open one stays *where it lives* in the house rather than being lifted
+   * to the top with the rest listed underneath — which is the arrangement the art face's wall makes:
+   * the room you are listening in is the wide panel standing between its neighbours' spines, in its
+   * own place in the row. Choosing another room widens that one and narrows this one; nothing
+   * reorders, so the house holds still while the tab you opened grows.
+   */
+  const at = zones.findIndex((candidate) => candidate.id === zone.id);
+  const above = at < 0 ? [] : zones.slice(0, at);
+  const below = at < 0 ? zones.filter((candidate) => candidate.id !== zone.id) : zones.slice(at + 1);
+  const lane = (room: ApiZoneState) => <HouseLane key={room.id} zone={room} onSelect={onSelectZone} />;
 
   return (
     <div className="now-playing">
@@ -133,76 +180,93 @@ export function NowPlayingView({
        * It also retires the picker in the rail. Two ways to choose a room on one screen is the
        * duplication this face has been removing everywhere else.
        */}
-      <div className="np-room" data-current>
-        {/*
-         * The room's plate: its name, and the record playing in it.
-         *
-         * This column was the room's *name* and eleven hundred pixels of nothing under it — which is
-         * exactly what made this read as unlike the art face, where a room is a sliver *filled* with its
-         * own artwork. The sleeve belongs here, not in the panel's first column: it is the thing that
-         * says which room this is, in the same column the other rooms say it in. The panel keeps the
-         * words and the readings.
-         */}
-        {/*
-         * The plate *is* the record: the artwork as the column itself, full height.
-         *
-         * A square sleeve at the top with seven hundred pixels of nothing under it is what made this
-         * column read as a label rather than as a room — on the art face a room is a band of its own
-         * artwork, top to bottom. Painted rather than placed: an `<img>` in a box wants its own aspect
-         * ratio and the box wants the row's height, and those two cannot both win. A background can
-         * simply be cropped to the column, which is what a band is.
-         *
-         * The sleeve keeps its flight to the art player: the anchor rides this element now, so pressing
-         * `ART` still carries the record across instead of dissolving one screen into another.
-         */}
-        {/*
-         * The room's column: the record, its name, and what follows it.
-         *
-         * One column holding three things that are all about *this room* — which is what makes the
-         * space under a square sleeve worth having rather than a hole to be filled. The panel beside
-         * it is about the audio; this is about the room the audio is in.
-         */}
-        <div className="np-side">
-        <div
-            className="np-plate"
-            data-playing={zone.state === 'playing' || undefined}
-            {...(track
-              ? {
-                  style: {
-                    /* The record goes in as a custom property, not as this element's own background: it
+      {above.map(lane)}
+
+      {/*
+       * The open tab.
+       *
+       * Same line as every shut room — a lamp and the room's name, on the same left edge — with the
+       * instrument hanging under it on a surface the shut rooms do not have. That is what makes the
+       * column read as tabs rather than as a player with a table stapled beneath it: which room is
+       * open is a fact of the drawing, not something to work out from what is on screen.
+       */}
+      <section className="np-room" data-current key={zone.id}>
+        <div className="np-room-head">
+          <span className="np-room-lamp" data-lit={zone.state === 'playing' || undefined} aria-hidden="true" />
+          <h2 className="np-room-name">{zone.name}</h2>
+        </div>
+
+        <div className="np-room-body">
+          {/*
+           * The room's plate: its name, and the record playing in it.
+           *
+           * This column was the room's *name* and eleven hundred pixels of nothing under it — which is
+           * exactly what made this read as unlike the art face, where a room is a sliver *filled* with its
+           * own artwork. The sleeve belongs here, not in the panel's first column: it is the thing that
+           * says which room this is, in the same column the other rooms say it in. The panel keeps the
+           * words and the readings.
+           */}
+          {/*
+           * The plate *is* the record: the artwork as the column itself, full height.
+           *
+           * A square sleeve at the top with seven hundred pixels of nothing under it is what made this
+           * column read as a label rather than as a room — on the art face a room is a band of its own
+           * artwork, top to bottom. Painted rather than placed: an `<img>` in a box wants its own aspect
+           * ratio and the box wants the row's height, and those two cannot both win. A background can
+           * simply be cropped to the column, which is what a band is.
+           *
+           * The sleeve keeps its flight to the art player: the anchor rides this element now, so pressing
+           * `ART` still carries the record across instead of dissolving one screen into another.
+           */}
+          {/*
+           * The room's column: the record, its name, and what follows it.
+           *
+           * One column holding three things that are all about *this room* — which is what makes the
+           * space under a square sleeve worth having rather than a hole to be filled. The panel beside
+           * it is about the audio; this is about the room the audio is in.
+           */}
+          <div className="np-side">
+            <div
+              className="np-plate"
+              data-playing={zone.state === 'playing' || undefined}
+              {...(track
+                ? {
+                    style: {
+                      /* The record goes in as a custom property, not as this element's own background: it
                        is painted twice from here — once square and sharp as the sleeve, once blurred
                        across the whole column as the room's light — and a single background could only
                        be one of those. */
-                    '--rec': `url("${api.coverUrl(zone.id, { size: 640, cacheKey: track.coverUrl })}")`,
-                  } as React.CSSProperties,
-                }
-              : {})}
-          >
-            {/*
-             * The sleeve, square.
-             *
-             * It was the column: one tall crop of a square photograph, which keeps a strip of the middle
-             * and throws the sides away — a record read as stretched because it *was* stretched across a
-             * shape a record does not have. So it is a square again, at the column's width, in the
-             * proportion the sleeve was made in.
-             *
-             * The column still fills, but with the record's own light rather than with more of the
-             * record: `::before` paints the same picture blurred from top to bottom, which is the same
-             * device the rest of this face uses and the reason the plate does not read as a label on a
-             * dark box.
-             *
-             * The anchor rides the sleeve, so pressing `ART` still flies this square across to the art
-             * player rather than dissolving one screen into another.
-             */}
-            <span className="np-plate-art" aria-hidden="true" {...coverAnchor} />
-            <span className="np-room-name">{zone.name}</span>
+                      '--rec': `url("${api.coverUrl(zone.id, { size: 640, cacheKey: track.coverUrl })}")`,
+                    } as React.CSSProperties,
+                  }
+                : {})}
+            >
+              {/*
+               * The sleeve, square.
+               *
+               * It was the column: one tall crop of a square photograph, which keeps a strip of the middle
+               * and throws the sides away — a record read as stretched because it *was* stretched across a
+               * shape a record does not have. So it is a square again, at the column's width, in the
+               * proportion the sleeve was made in.
+               *
+               * The column still fills, but with the record's own light rather than with more of the
+               * record: `::before` paints the same picture blurred from top to bottom, which is the same
+               * device the rest of this face uses and the reason the plate does not read as a label on a
+               * dark box.
+               *
+               * The anchor rides the sleeve, so pressing `ART` still flies this square across to the art
+               * player rather than dissolving one screen into another.
+               */}
+              {/* No name under the sleeve: the tab's own line names the room a few pixels above this,
+                and the same words twice is the duplication this face keeps removing. */}
+              <span className="np-plate-art" aria-hidden="true" {...coverAnchor} />
+            </div>
+
+            <RunningOrder zone={zone} onOpenQueue={onOpenQueue} />
           </div>
 
-          <RunningOrder zone={zone} onOpenQueue={onOpenQueue} />
-        </div>
-
-        <div className="np-player">
-        {/*
+          <div className="np-player">
+            {/*
           The playing block, in the order a listener reads it: what it is, what it *is* technically,
           where it has got to, and only then the controls.
 
@@ -211,8 +275,8 @@ export function NowPlayingView({
           plain grey with the provider's mark beside it. The old single "Artist — Album" line made
           both equally important and neither findable.
         */}
-        <div className="np-meta">
-          {/*
+            <div className="np-meta">
+              {/*
             The three lines are one block, not three rows.
 
             Their own tight rhythm — 5px between title and artist, 3px more before the album — is what
@@ -220,57 +284,57 @@ export function NowPlayingView({
             three separate fields that happened to be stacked. The `key` is the track title, so the block
             crossfades when the music changes instead of snapping to the next song mid-glance.
           */}
-          <div className="np-heading" key={track?.title ?? 'idle'}>
-            {/* Who, then what — a nameplate's order, and the same one the art face's label reads in.
+              <div className="np-heading" key={track?.title ?? 'idle'}>
+                {/* Who, then what — a nameplate's order, and the same one the art face's label reads in.
                 Under the title it was the second half of a search result; above it, it is the line
                 that says whose equipment-load this is. */}
-            {track?.artist && <p className="np-artist">{track.artist}</p>}
+                {track?.artist && <p className="np-artist">{track.artist}</p>}
 
-            {/*
+                {/*
               The edition, at a size that matches its importance.
               `(Radio Version)`, `(2010 Remastered Version)`, `[Explicit]` — the catalogue puts these
               inside the title, so at 46px they arrive with the same weight as the song's name while
               usually being the longer half of it. Same line, smaller and quieter; see
               `splitQualifier` for why only a trailing group is treated this way.
             */}
-            <h1 className="np-title" data-len={titleStep(track?.title || 'Nothing playing')}>
-              {(() => {
-                const { main, qualifier } = splitQualifier(track?.title || 'Nothing playing');
-                return (
-                  <>
-                    {main}
-                    {qualifier && <span className="np-qualifier"> {qualifier}</span>}
-                  </>
-                );
-              })()}
-            </h1>
+                <h1 className="np-title" data-len={titleStep(track?.title || 'Nothing playing')}>
+                  {(() => {
+                    const { main, qualifier } = splitQualifier(track?.title || 'Nothing playing');
+                    return (
+                      <>
+                        {main}
+                        {qualifier && <span className="np-qualifier"> {qualifier}</span>}
+                      </>
+                    );
+                  })()}
+                </h1>
 
-            {/* Just the album. The provider moved down into the chip row, where "where did this come
+                {/* Just the album. The provider moved down into the chip row, where "where did this come
                 from" sits with the rest of what this audio *is* — trailing the album title it read as
                 an afterthought, and it is the first thing people check. */}
-            {track?.album && (
-              <p className="np-album">
-                {(() => {
-                  const { main, qualifier } = splitQualifier(track.album);
-                  return (
-                    <>
-                      {main}
-                      {qualifier && <span className="np-qualifier"> {qualifier}</span>}
-                    </>
-                  );
-                })()}
-              </p>
-            )}
-          </div>
+                {track?.album && (
+                  <p className="np-album">
+                    {(() => {
+                      const { main, qualifier } = splitQualifier(track.album);
+                      return (
+                        <>
+                          {main}
+                          {qualifier && <span className="np-qualifier"> {qualifier}</span>}
+                        </>
+                      );
+                    })()}
+                  </p>
+                )}
+              </div>
 
-          {/*
+              {/*
             Why the last attempt failed. This is the whole reason no view polls after a play:
             `play` answers 204 before anything is resolved, and the failure arrives here on a
             `zone.changed` with a reason worth showing — beside `track: null`, not inside it.
           */}
-          {zone.error && <p className="notice warn">{zone.error}</p>}
+              {zone.error && <p className="notice warn">{zone.error}</p>}
 
-          {/* The nameplate: where it came from, then what it is. The rail's signal path no longer
+              {/* The nameplate: where it came from, then what it is. The rail's signal path no longer
               repeats the verdict — see `FormatChips` and `SignalPath`.
 
               Keyed on the *wire* format, so the row re-arrives — the same small rise the heading
@@ -278,50 +342,50 @@ export function NowPlayingView({
               is a moment on this face the way a track change is on the other. The signature leaves
               the bitrate out (it moves every second) and the track out (an unchanged wire across a
               whole album should sit perfectly still). */}
-          <p
-            className="format-chips"
-            key={
-              zone.format?.output
-                ? `${zone.format.output.codec}/${zone.format.output.sampleRate}/${zone.format.output.bitDepth}/${zone.format.bitPerfect}/${zone.format.source?.codec ?? ''}`
-                : 'silent'
-            }
-          >
-            {/*
-             * Provenance only. The formats moved out.
-             *
-             * `TRACK · CONVERTED · PCM · 48 KHZ · 24-BIT` was the signal path's own reading, written a
-             * second time in the one place on this screen where the eye lands first — and now that the
-             * rail is the tallest thing on the panel and legible end to end, the chips were the summary
-             * of a document that is already open. What they said that the rail does not is *where the
-             * music came from*, so that is what stays.
-             */}
-            {zone.source && <SourceChip source={zone.source} />}
-          </p>
+              <p
+                className="format-chips"
+                key={
+                  zone.format?.output
+                    ? `${zone.format.output.codec}/${zone.format.output.sampleRate}/${zone.format.output.bitDepth}/${zone.format.bitPerfect}/${zone.format.source?.codec ?? ''}`
+                    : 'silent'
+                }
+              >
+                {/*
+                 * Provenance only. The formats moved out.
+                 *
+                 * `TRACK · CONVERTED · PCM · 48 KHZ · 24-BIT` was the signal path's own reading, written a
+                 * second time in the one place on this screen where the eye lands first — and now that the
+                 * rail is the tallest thing on the panel and legible end to end, the chips were the summary
+                 * of a document that is already open. What they said that the rail does not is *where the
+                 * music came from*, so that is what stays.
+                 */}
+                {zone.source && <SourceChip source={zone.source} />}
+              </p>
 
-          {/*
+              {/*
             No Stop / Power off row: three controls and a sentence at the bottom of a block whose subject
             is the music, two of which act on the *room* rather than on it. The Zone tab that held them —
             along with the room's inputs — is gone too: this view is about what is playing, and the tabs
             under it are the three lists that feed it.
           */}
-        </div>
+            </div>
 
-        {/*
-         * The transport, across the panel rather than under the words.
-         *
-         * The nameplate row was three islands with six hundred pixels of nothing between the middle and
-         * the right: a picture, a column of type that stopped where its longest line stopped, and a pair
-         * of readings pinned to the far edge. A timeline that runs the width of the panel and a
-         * transport centred beneath it turns that row into one object — and it is what the control strip
-         * on a piece of equipment actually looks like, which is the argument this face has been making
-         * everywhere else.
-         */}
-        <div className="np-transport">
-          {/* The envelope of what has played, the position, and the seek gesture — one element. A slim
+            {/*
+             * The transport, across the panel rather than under the words.
+             *
+             * The nameplate row was three islands with six hundred pixels of nothing between the middle and
+             * the right: a picture, a column of type that stopped where its longest line stopped, and a pair
+             * of readings pinned to the far edge. A timeline that runs the width of the panel and a
+             * transport centred beneath it turns that row into one object — and it is what the control strip
+             * on a piece of equipment actually looks like, which is the argument this face has been making
+             * everywhere else.
+             */}
+            <div className="np-transport">
+              {/* The envelope of what has played, the position, and the seek gesture — one element. A slim
               bar under it drew the position a second time; see `Waveform`. */}
-          <Waveform zone={zone} />
+              <Waveform zone={zone} />
 
-          {/*
+              {/*
             Transport, the room's volume beside it, and the one per-track action opposite.
 
             The volume is *here* rather than in a bar because that is where a hand already is: it was in
@@ -329,9 +393,9 @@ export function NowPlayingView({
             player. And it has to be here now — the bar along the bottom is absent in this view, so
             there is nothing else in sight that carries it.
           */}
-          <div className="np-controls">
-            <Transport zone={zone} />
-            {/*
+              <div className="np-controls">
+                <Transport zone={zone} />
+                {/*
               The volume and the one per-track action, as a unit.
 
               They were siblings of the transport, and `flex-wrap` treated them as strangers: at the
@@ -340,63 +404,47 @@ export function NowPlayingView({
               Grouped, the pair wraps together into a full second row (fader left, star at the far
               edge) or fits beside the transport whole. Both arrangements look decided.
             */}
-            <div className="np-tail">
-              <Volume zone={zone} compact percent />
-              {/* One action beside the transport, not two: the "…" that used to sit here held things
+                <div className="np-tail">
+                  <Volume zone={zone} compact percent />
+                  {/* One action beside the transport, not two: the "…" that used to sit here held things
                   that belong to the room rather than to the track. */}
-              <div className="np-actions">
-                <TrackHeart zone={zone} />
+                  <div className="np-actions">
+                    <TrackHeart zone={zone} />
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
 
-        </div>
-
-        {/* The reading, at a size worth the name of this face — see `Readout`. It fills the half of
+            {/* The reading, at a size worth the name of this face — see `Readout`. It fills the half of
             the nameplate row that was empty page, with the numbers that were living at 10px in the
             corner of the display below. */}
-        <Readout
-          zoneId={zone.id}
-          active={zone.state === 'playing'}
-          capabilities={zone.output?.capabilities}
-        />
+            <Readout zoneId={zone.id} active={zone.state === 'playing'} capabilities={zone.output?.capabilities} />
 
-        {/*
+            {/*
           The spectrum runs the full width, under the artwork as well as the controls.
           It is the one element with no natural width — it is a reading of the audio, not a piece
           of metadata — so it takes the space beneath the cover that nothing else was using.
         */}
-        <AnalysisPanel
-          zoneId={zone.id}
-          active={zone.state === 'playing'}
-          capabilities={zone.output?.capabilities}
-        />
+            <AnalysisPanel zoneId={zone.id} active={zone.state === 'playing'} capabilities={zone.output?.capabilities} />
 
-        {/*
-         * The chain, under the display it explains.
-         *
-         * It used to be a column down the right edge — the shape of an inspector, which is a thing you
-         * consult *about* what you are looking at. Here it is a rack strip: the stations in the order
-         * the audio passes through them, laid left to right across the full width, directly beneath the
-         * picture of what that audio looks like at the end of them. The layout is the argument — this
-         * face is a signal path with a record going through it, not a record with a signal path beside
-         * it.
-         */}
-        <div className="np-chain">
-          <SignalPath zone={zone} />
+            {/*
+             * The chain, under the display it explains.
+             *
+             * It used to be a column down the right edge — the shape of an inspector, which is a thing you
+             * consult *about* what you are looking at. Here it is a rack strip: the stations in the order
+             * the audio passes through them, laid left to right across the full width, directly beneath the
+             * picture of what that audio looks like at the end of them. The layout is the argument — this
+             * face is a signal path with a record going through it, not a record with a signal path beside
+             * it.
+             */}
+            <div className="np-chain">
+              <SignalPath zone={zone} />
+            </div>
+          </div>
         </div>
+      </section>
 
-        </div>
-      </div>
-
-      {/*
-       * And the rest of the house, in the same column: one line a room.
-       *
-       * A server feeds several rooms at once, each with its own source, processing, output and clock,
-       * and no other player can draw that because no other player knows it. Pressing a lane makes that
-       * room the tall row.
-       */}
-      <HouseLanes zones={others} onSelect={onSelectZone} />
+      {below.map(lane)}
 
       {/*
        * No tab strip, and no lists under the instrument.
