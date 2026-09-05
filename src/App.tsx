@@ -176,6 +176,7 @@ export function App() {
           ) : navTarget.kind !== 'playing' && navTarget.kind !== 'inputs' ? (
             <ContentView
               zone={zone}
+              zones={zones}
               {...(navTarget.kind === 'browse' && navTarget.id
                 ? { initialId: navTarget.id, initialLabel: navTarget.label }
                 : {})}
@@ -183,7 +184,7 @@ export function App() {
               searchNonce={view.searchNonce}
             />
           ) : zone ? (
-            <NowPlayingView zone={zone} zones={zones} isLocal={local.zone?.id === zone.id} />
+            <NowPlayingView zone={zone} />
           ) : (
             <div className="content-empty">
               <Icon name="speaker" className="content-empty-icon" />

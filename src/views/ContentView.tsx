@@ -24,6 +24,7 @@ import { Icon } from '@/components/Icon';
 import { FavoritesPanel } from '@/components/FavoritesPanel';
 import { ItemGrid, type BrowseActions } from '@/components/ItemGrid';
 import { RecentsPanel } from '@/components/RecentsPanel';
+import { QueuePanel } from '@/components/QueuePanel';
 import { ServiceCards } from '@/components/ServiceCards';
 import { useAddFavorite } from '@/state/useAddFavorite';
 import type { ApiPlaylist, ApiZoneState } from '@/api/types';
@@ -76,8 +77,10 @@ export type ContentViewProps = {
   initialId?: string;
   /** Its display name, so the crumb reads correctly before the listing has loaded. */
   initialLabel?: string;
+  /** Every room, for the queue panel's hand-off control. */
+  zones?: ApiZoneState[];
   /** Show a zone-scoped collection instead of the catalogue. */
-  collection?: 'favorites' | 'recents';
+  collection?: 'favorites' | 'recents' | 'queue';
   /**
    * Bumped every time the rail's search button is pressed; focuses the field.
    *
@@ -124,6 +127,8 @@ export function ContentView({ zone, ...rest }: ContentViewProps) {
       <div className="content">
         {rest.collection === 'favorites' ? (
           <FavoritesPanel zone={zone} />
+        ) : rest.collection === 'queue' ? (
+          <QueuePanel zone={zone} zones={rest.zones ?? []} />
         ) : (
           <RecentsPanel zone={zone} />
         )}

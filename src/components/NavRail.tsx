@@ -39,7 +39,7 @@ export type NavTarget =
    */
   | { kind: 'browse'; id?: string; label?: string }
   /** A zone-scoped collection, rendered by the panels rather than the browser. */
-  | { kind: 'collection'; id: 'favorites' | 'recents' }
+  | { kind: 'collection'; id: 'favorites' | 'recents' | 'queue' }
   /**
    * The physical inputs — a turntable, a CD player, a line-in jack.
    *
@@ -331,6 +331,14 @@ export function NavRail({
             <h2 className="nav-group-head">This room</h2>
             <ul className="nav-list">
               {leaf({ kind: 'playing' }, 'speaker', 'Now playing', active?.kind === 'playing')}
+              {/* The running order is a place now, not a drawer under the instrument — see the note in
+                  `NowPlayingView` about what the tabs were costing the display. */}
+              {leaf(
+                { kind: 'collection', id: 'queue' },
+                'queue',
+                'Queue',
+                active?.kind === 'collection' && active.id === 'queue',
+              )}
               {leaf(
                 { kind: 'collection', id: 'favorites' },
                 'star',

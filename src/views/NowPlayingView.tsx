@@ -8,7 +8,6 @@
  * `source.kind` as the hint for *what* it is. Both are rendered as given: `kind` is an open
  * set, so this must not switch exhaustively on it.
  */
-import { useEffect, useState } from 'react';
 import { Crossfade } from '@/art/Crossfade';
 import { zoneCoverCss } from '@/art/cover';
 import { Cover } from '@/components/Cover';
@@ -16,9 +15,6 @@ import { Transport } from '@/components/Transport';
 import { Volume } from '@/components/Volume';
 import { Waveform } from '@/components/Waveform';
 import { SourceChip } from '@/components/StreamFormat';
-import { QueuePanel } from '@/components/QueuePanel';
-import { FavoritesPanel } from '@/components/FavoritesPanel';
-import { RecentsPanel } from '@/components/RecentsPanel';
 import { AnalysisPanel, Readout } from '@/components/AnalysisPanel';
 import { SignalPath } from '@/components/SignalPath';
 import { Icon } from '@/components/Icon';
@@ -28,13 +24,6 @@ import { useApi } from '@/state/ServerContext';
 import { useCoverAnchor } from '@/shell/coverMorph';
 import type { ApiZoneState } from '@/api/types';
 
-type Tab = 'queue' | 'favorites' | 'recents';
-
-const TABS: Array<{ id: Tab; label: string }> = [
-  { id: 'queue', label: 'Queue' },
-  { id: 'favorites', label: 'Favourites' },
-  { id: 'recents', label: 'Recents' },
-];
 
 /**
  * The heart, for the room you are looking at.
@@ -64,27 +53,9 @@ function TrackHeart({ zone }: { zone: ApiZoneState }) {
 }
 
 
-export function NowPlayingView({
-  zone,
-  zones,
-  isLocal = false,
-}: {
-  zone: ApiZoneState;
-  zones: ApiZoneState[];
-  isLocal?: boolean;
-}) {
-  const [tab, setTab] = useState<Tab>('queue');
+export function NowPlayingView({ zone }: { zone: ApiZoneState }) {
   const api = useApi();
   const coverAnchor = useCoverAnchor();
-  const tabs = isLocal ? TABS.filter((entry) => entry.id !== 'favorites' && entry.id !== 'recents') : TABS;
-
-  // A zone switch keeps this view mounted. Do not leave the user on a tab that is not available
-  // for the temporary browser destination.
-  useEffect(() => {
-    if (isLocal && (tab === 'favorites' || tab === 'recents')) {
-      setTab('queue');
-    }
-  }, [isLocal, tab]);
 
   const track = zone.track;
 
@@ -311,31 +282,16 @@ export function NowPlayingView({
       </div>
 
       {/*
-        The tabs belong to the pinned half, not the scrolling one.
-        Sticky-inside-the-scroller would work, but a sticky strip needs an opaque fill to hide the
-        rows passing under it — and any fill is a visible band across the artwork wash. Keeping them
-        above the scroll boundary means they stay put with no fill at all.
-      */}
-      <nav className="tabs">
-        {tabs.map((entry) => (
-          <button
-            key={entry.id}
-            type="button"
-            className="tab"
-            data-active={tab === entry.id || undefined}
-            onClick={() => setTab(entry.id)}
-          >
-            {entry.label}
-          </button>
-        ))}
-      </nav>
-
-      {/* The only part that scrolls. */}
-      <div className="tab-body">
-        {tab === 'queue' && <QueuePanel zone={zone} zones={zones} />}
-        {tab === 'favorites' && <FavoritesPanel zone={zone} />}
-        {tab === 'recents' && <RecentsPanel zone={zone} />}
-      </div>
+       * No tab strip, and no lists under the instrument.
+       *
+       * Queue, favourites and recents were three tabs and a scrolling body pinned beneath the display —
+       * and grid gives content that states a size what it asks for, so a twelve-track queue took its
+       * 208px off the top of the spectrum every time. On a face whose subject is the signal, the
+       * paperwork cannot be the thing that decides how tall the reading is.
+       *
+       * All three are places in the rail now: favourites and recents already were, and the queue joined
+       * them. This view is the instrument, end to end, and it keeps every pixel the window has.
+       */}
     </div>
   );
 }
