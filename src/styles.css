@@ -2134,7 +2134,41 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
   background-image: var(--rec);
   background-position: center;
   background-size: cover;
-  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 8%);
+  /*
+   * A photograph in light, not pasted on.
+   *
+   * One hairline for its edge, an ambient shadow beneath it so it stands on the page rather than
+   * floating a millimetre above it, and a hair of light along its top edge — which is what an object
+   * lit from above the screen actually looks like. A shadow is not a box: it is where the object is.
+   */
+  box-shadow:
+    inset 0 0 0 1px rgb(255 255 255 / 9%),
+    inset 0 1px 0 rgb(255 255 255 / 7%),
+    0 28px 60px -34px rgb(0 0 0 / 95%),
+    0 6px 18px -12px rgb(0 0 0 / 55%);
+}
+
+/*
+ * The light the record throws.
+ *
+ * The same picture, blurred past recognition and pushed out past the sleeve's own edges, faded to
+ * nothing before it reaches the running order below. Grayscale, because on this face what varies per
+ * record is how much light there is and where it falls — never the colour. It is the difference
+ * between a square on a dark page and a lit object in a room.
+ */
+.np-plate::after {
+  content: '';
+  position: absolute;
+  z-index: 0;
+  inset: -14% -18% -22%;
+  background-image: var(--rec);
+  background-position: center;
+  background-size: cover;
+  filter: grayscale(1) blur(46px) brightness(0.55);
+  opacity: 0.42;
+  -webkit-mask: radial-gradient(closest-side, #000 34%, transparent 78%);
+  mask: radial-gradient(closest-side, #000 34%, transparent 78%);
+  pointer-events: none;
 }
 
 /* Under the sleeve, on the record's own light: the room this is. */
@@ -2627,14 +2661,24 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
   letter-spacing: -0.025em;
 }
 
+/*
+ * The artist, engraved.
+ *
+ * This face has two voices — display for names, mono for everything the equipment says — and the
+ * nameplate was using a third: a 17px sans line that belonged to neither. Set as a label, letterspaced
+ * and small, it does what a record label does above a title: it names whose record this is and then
+ * gets out of the way, and the title lands twice as hard for it.
+ */
 .np-artist {
-  margin-top: 5px;
-  color: var(--text);
-  font-size: 17px;
-  font-weight: 500;
-  letter-spacing: -0.005em;
+  margin-top: 2px;
   overflow: hidden;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  color: var(--text-dim);
   text-overflow: ellipsis;
+  text-transform: uppercase;
   white-space: nowrap;
 }
 
@@ -2806,7 +2850,9 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
      dead strip across the middle of the scrubber — the one row a pointer is most likely to aim at. */
   pointer-events: none;
   border-radius: var(--r-pill);
-  background: var(--line);
+  /* A groove, not a hairline: the played line lies *in* something now, which is what makes a position
+     legible at a glance instead of measured against the page. */
+  background: rgb(255 255 255 / 9%);
   translate: 0 -50%;
 }
 
@@ -2908,7 +2954,7 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
   height: 2px;
   border-radius: var(--r-pill);
   /* Silver, with the bars: how far in you are is a reading, not a verdict. */
-  background: rgb(255 255 255 / 42%);
+  background: rgb(255 255 255 / 62%);
   translate: 0 -50%;
   pointer-events: none;
 }
@@ -2920,16 +2966,24 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
  * and not only a colour change — at 0:03 into a track there is almost no colour to change. It grows a
  * knob while dragging, which is what makes a 40px-tall picture read as a control.
  */
+/*
+ * The playhead: a point, not a bar.
+ *
+ * A 2px rule across the whole height of the strip read as a cut through the reading; a small lit dot on
+ * the line is where the music *is*, and it is the one thing on this strip that moves every second — so
+ * it is the one thing allowed to glow.
+ */
 .wave-head {
   position: absolute;
-  top: 0;
-  bottom: 0;
+  top: 50%;
   z-index: 2;
-  width: 2px;
-  margin-left: -1px;
-  border-radius: 1px;
+  width: 7px;
+  height: 7px;
+  margin-left: -3.5px;
+  border-radius: 50%;
   background: var(--text);
-  opacity: 0.85;
+  box-shadow: 0 0 10px 1px rgb(255 255 255 / 30%);
+  translate: 0 -50%;
   pointer-events: none;
 }
 
@@ -4162,6 +4216,28 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
   .np-chain .signal-path {
     column-gap: clamp(18px, 2.4vw, 40px);
   }
+}
+
+/*
+ * The stations are engraved, like every other label this face uses.
+ *
+ * `Source`, `Gain`, `Resample` were set in 13.5px semibold sans — the one voice on the strip that was
+ * neither a name nor a reading, so eight of them read as eight little headings stacked over eight
+ * little numbers. Engraved uppercase at the labels' own size, they are what they are: the names of the
+ * stations on a rack, in the same hand as `SPECTRUM`, `CLOCK` and `LEVEL`. The readings under them are
+ * the only thing on the strip that varies, and now they are the only thing that reads as data.
+ */
+.np-chain .signal-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.np-chain .signal-stage[data-state='on'] .signal-label {
+  color: var(--text);
 }
 
 /* The connector runs *between* the dots rather than down the page. */
