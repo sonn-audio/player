@@ -745,13 +745,19 @@ svg {
  * reads as what this actually is — a token, engraved — and the one chip that *is* saying something
  * (`data-lossless`) keeps its ring and its lamp, which now stand out instead of matching.
  */
+/*
+ * A chip is a label, not a plate.
+ *
+ * These were filled rounded boxes, four or five of them in a row under a title — which is the look the
+ * whole player has just spent a pass getting rid of. Engraved uppercase at 9.5px is already a chip:
+ * the type says "this is a small fact about the audio" without a box drawn around it, and a row of
+ * them reads as a line rather than as a form.
+ */
 .chip {
   display: inline-flex;
   align-items: center;
-  padding: 3px 8px;
-  border-radius: 5px;
-  background: rgb(255 255 255 / 5%);
-  color: var(--text-dim);
+  padding: 3px 0;
+  color: var(--text-mute);
   font-size: 9.5px;
   font-weight: 700;
   letter-spacing: 0.14em;
@@ -766,11 +772,8 @@ svg {
  * the front of the equipment: on when the signal is exactly what the source sent, and the fact
  * that it neither blinks nor breathes is what makes it read as a state rather than an event.
  */
+/* Lossless is the one chip with an opinion, so it keeps the accent — as ink, not as a lozenge. */
 .chip[data-lossless] {
-  box-shadow:
-    inset 0 0 0 1px var(--accent-line),
-    0 0 14px rgb(74 222 128 / 13%);
-  background: var(--accent-soft);
   color: var(--accent);
 }
 
@@ -1301,15 +1304,23 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
  * reads as one pasted on. The well plus the icon is enough to say "type here", and hover deepens it
  * rather than drawing an edge.
  */
+/*
+ * Search is a line.
+ *
+ * A filled rounded well at the top of the rail was the first box on screen and it set the tone for
+ * everything under it. A hairline says the same thing — there is a place to type here — and it is the
+ * same hairline the labels in the player use.
+ */
 .nav-search {
   display: flex;
   align-items: center;
   gap: 9px;
   width: 100%;
-  padding: 9px 11px;
+  padding: 8px 2px;
   border: 0;
-  border-radius: var(--r);
-  background: var(--well);
+  border-bottom: 1px solid var(--hair, rgb(255 255 255 / 9%));
+  border-radius: 0;
+  background: none;
   color: var(--text-mute);
   font-size: 13px;
   text-align: left;
@@ -1319,7 +1330,8 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
 }
 
 .nav-search:hover {
-  background: var(--well-hover);
+  border-bottom-color: rgb(255 255 255 / 22%);
+  background: none;
   color: var(--text);
 }
 
@@ -1433,8 +1445,10 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
  * The selected entry: accent text and a bar, not a filled pill. The rail holds a dozen of these,
  * and a solid block on one fights the artwork.
  */
+/* The same mark the open room's tab carries — a spine and accent ink. A filled pill beside a player
+   with no fills anywhere was the shell speaking an older language than the thing it frames. */
 .nav-item[data-active] {
-  background: var(--tint);
+  background: none;
   color: var(--accent);
 }
 
@@ -2572,7 +2586,7 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 5px;
+  gap: 14px;
   margin-top: 3px;
   /* The relock. The row is keyed on the wire format (see `NowPlayingView`), so this runs exactly
      when codec, rate, depth or the verdict change — the nameplate re-engraving itself — and sits
@@ -5682,24 +5696,27 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
  * top-left corner of a green trough. A field's width is a promise about how much you are expected to
  * type, and nobody types a paragraph into this one.
  */
+/* A line, like the rail's own search: the trough was the last filled control in the shell, and a
+   field that is a hairline still says "type here" while matching everything around it. */
 .search {
   display: flex;
   align-items: center;
   gap: 9px;
   flex: 1 1 320px;
   max-width: 460px;
-  padding: 10px 13px;
+  padding: 9px 2px;
   border: 0;
-  border-radius: var(--r);
-  background: var(--well);
-  transition: background var(--dur) var(--ease);
+  border-bottom: 1px solid var(--hair, rgb(255 255 255 / 9%));
+  border-radius: 0;
+  background: none;
+  transition: border-color var(--dur) var(--ease);
 }
 
-/* Focus is the one state that gets colour — an inset ring rather than a border, so the field does
-   not change size when it lights up. */
+/* Focus is the one state that gets colour: the line lights, and nothing moves. */
 .search:focus-within {
-  background: var(--well-hover);
-  box-shadow: inset 0 0 0 1px var(--accent-line);
+  border-bottom-color: var(--accent);
+  background: none;
+  box-shadow: none;
 }
 
 /*
