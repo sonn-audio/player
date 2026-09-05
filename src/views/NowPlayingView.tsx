@@ -10,7 +10,6 @@
  */
 import { Crossfade } from '@/art/Crossfade';
 import { zoneCoverCss } from '@/art/cover';
-import { Cover } from '@/components/Cover';
 import { Transport } from '@/components/Transport';
 import { Volume } from '@/components/Volume';
 import { Waveform } from '@/components/Waveform';
@@ -118,31 +117,31 @@ export function NowPlayingView({
          * says which room this is, in the same column the other rooms say it in. The panel keeps the
          * words and the readings.
          */}
-        <div className="np-plate">
-          <span className="np-room-name">{zone.name}</span>
         {/*
-            The hero and the light it throws, lit the way the art player lights it.
-            The bloom is the sleeve blurred behind the sleeve — see `.np-bloom`.
-          */}
-          <div className="np-cover" data-playing={zone.state === 'playing' || undefined}>
-            {track && (
-              <span
-                className="np-bloom"
-                style={{ backgroundImage: `url("${api.coverUrl(zone.id, { size: 320, cacheKey: track.coverUrl })}")` }}
-                aria-hidden="true"
-              />
-            )}
-            <Cover
-              zone={zone}
-              {...(track?.animatedCoverUrl ? { animatedUrl: track.animatedCoverUrl } : {})}
-              size={480}
-              className="hero"
-              // The one object both faces have in common: switching to the art player flies this sleeve to
-              // where that player puts it, rather than crossfading one screen into another.
-              anchor={coverAnchor}
-            />
-          </div>
-
+         * The plate *is* the record: the artwork as the column itself, full height.
+         *
+         * A square sleeve at the top with seven hundred pixels of nothing under it is what made this
+         * column read as a label rather than as a room — on the art face a room is a band of its own
+         * artwork, top to bottom. Painted rather than placed: an `<img>` in a box wants its own aspect
+         * ratio and the box wants the row's height, and those two cannot both win. A background can
+         * simply be cropped to the column, which is what a band is.
+         *
+         * The sleeve keeps its flight to the art player: the anchor rides this element now, so pressing
+         * `ART` still carries the record across instead of dissolving one screen into another.
+         */}
+        <div
+          className="np-plate"
+          data-playing={zone.state === 'playing' || undefined}
+          {...(track
+            ? {
+                style: {
+                  backgroundImage: `url("${api.coverUrl(zone.id, { size: 640, cacheKey: track.coverUrl })}")`,
+                },
+              }
+            : {})}
+          {...coverAnchor}
+        >
+          <span className="np-room-name">{zone.name}</span>
         </div>
 
         <div className="np-player">

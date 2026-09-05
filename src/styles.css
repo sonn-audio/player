@@ -1650,11 +1650,64 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
  * belongs here rather than in the panel's first cell: it is the thing that says which room this is, in
  * the column the other rooms say it in. The panel keeps the words and the readings.
  */
+/*
+ * The plate: the room's record, full height, with its name engraved on it.
+ *
+ * A square sleeve at the top of a 700px column left the rest of that column empty, and an empty column
+ * is what made this face read as unlike the art one — there a room is a *band* of its own artwork, top
+ * to bottom, with the name on it. So the sleeve fills the plate: cropped to the column, held down to
+ * this face's light so the readings beside it stay the brightest thing on the panel, and the name over
+ * it where a label plate goes.
+ *
+ * The room's own light still comes off it (`.np-bloom`), which is what keeps a dimmed band from reading
+ * as a photograph behind glass.
+ */
 .np-plate {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+  position: relative;
   min-width: 0;
+  overflow: hidden;
+  border-radius: var(--r-sm);
+  /* The record, cropped to the column and held down to this face's light so the readings beside it stay
+     the brightest thing on the panel. `center 30%` because a sleeve's subject is usually in its upper
+     half, and a tall crop of one should keep the face rather than the floor. */
+  background-color: var(--surface-3);
+  background-position: center 30%;
+  background-size: cover;
+}
+
+/* Its own light, as everywhere else on this face: the record's colour, in black and white. */
+.np-plate::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: inherit;
+  filter: grayscale(1) blur(30px) brightness(0.5);
+  opacity: 0.5;
+}
+
+/* Dark where the name sits, clear where the record is. */
+.np-plate::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  /* Dark where the name sits, clear across the record, dark again at the foot so the column has a
+     bottom rather than being cut off by the row below it. */
+  background: linear-gradient(
+    180deg,
+    rgb(8 10 13 / 86%),
+    rgb(8 10 13 / 22%) 30%,
+    rgb(8 10 13 / 30%) 62%,
+    rgb(8 10 13 / 88%)
+  );
+}
+
+.np-plate .np-room-name {
+  position: relative;
+  z-index: 2;
+  display: block;
+  padding: 14px 16px;
 }
 
 .np-room[data-current] {
@@ -1933,10 +1986,6 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
  * very edge it is supposed to spill past.
  */
 /* In the plate it takes the column's width; the column is what states the size now. */
-.np-plate .np-cover {
-  width: 100%;
-}
-
 .np-cover {
   position: relative;
   /* No `grid-area`: the sleeve lives in the room's plate now, not in a named cell of the panel. */
