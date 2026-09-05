@@ -18,7 +18,6 @@ import { useServer } from '@/state/ServerContext';
 import { useSelectedZone } from '@/state/useSelectedZone';
 import { NavRail, type NavTarget } from '@/components/NavRail';
 import { AppBar, type BarView } from '@/components/AppBar';
-import { ZoneRail } from '@/components/ZoneRail';
 import { NowBar } from '@/components/NowBar';
 import { GroupingView } from '@/views/GroupingView';
 import { NowPlayingView } from '@/views/NowPlayingView';
@@ -200,7 +199,18 @@ export function App() {
 
         {/* Absent rather than empty without a room: the rail is about where audio goes, and
             there is nowhere for it to go. */}
-        {zone && <ZoneRail zone={zone} />}
+        {/*
+         * No inspector rail.
+         *
+         * The signal path spent its life in a 300px column on the right, which is the shape of a
+         * plugin's sidebar and it made the layout say the wrong thing: a music player with a
+         * technical panel bolted to it. The chain is not an aside about this face — it is what this
+         * face is *for*, so it moved into the player itself and runs horizontally under the display
+         * it explains. See `NowPlayingView`.
+         *
+         * The listings get the freed 300px, which they needed more than a rail nobody browsing was
+         * reading.
+         */}
       </div>
 
       {/*

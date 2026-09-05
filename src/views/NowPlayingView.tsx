@@ -20,6 +20,7 @@ import { QueuePanel } from '@/components/QueuePanel';
 import { FavoritesPanel } from '@/components/FavoritesPanel';
 import { RecentsPanel } from '@/components/RecentsPanel';
 import { AnalysisPanel, Readout } from '@/components/AnalysisPanel';
+import { SignalPath } from '@/components/SignalPath';
 import { Icon } from '@/components/Icon';
 import { splitQualifier } from '@/lib/format';
 import { useZoneFavorite } from '@/state/useZoneFavorite';
@@ -293,6 +294,20 @@ export function NowPlayingView({
           active={zone.state === 'playing'}
           capabilities={zone.output?.capabilities}
         />
+
+        {/*
+         * The chain, under the display it explains.
+         *
+         * It used to be a column down the right edge — the shape of an inspector, which is a thing you
+         * consult *about* what you are looking at. Here it is a rack strip: the stations in the order
+         * the audio passes through them, laid left to right across the full width, directly beneath the
+         * picture of what that audio looks like at the end of them. The layout is the argument — this
+         * face is a signal path with a record going through it, not a record with a signal path beside
+         * it.
+         */}
+        <div className="np-chain">
+          <SignalPath zone={zone} />
+        </div>
       </div>
 
       {/*
