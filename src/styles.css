@@ -1637,9 +1637,24 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
  */
 .np-room {
   display: grid;
-  grid-template-columns: var(--room-name, clamp(108px, 11vw, 168px)) minmax(0, 1fr);
-  gap: clamp(10px, 1.4vw, 28px);
+  grid-template-columns: var(--room-name) minmax(0, 1fr);
+  gap: clamp(14px, 1.8vw, 34px);
   min-height: 0;
+}
+
+/*
+ * The plate: the room's name over the record playing in it.
+ *
+ * This column was a name and eleven hundred pixels of nothing under it, which is exactly what made this
+ * read as unlike the art face — there a room is a sliver *filled* with its own artwork. The sleeve
+ * belongs here rather than in the panel's first cell: it is the thing that says which room this is, in
+ * the column the other rooms say it in. The panel keeps the words and the readings.
+ */
+.np-plate {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
 }
 
 .np-room[data-current] {
@@ -1647,10 +1662,10 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
 }
 
 .np-room-name {
-  padding-top: 4px;
-  font-size: 13.5px;
-  font-weight: 600;
-  letter-spacing: -0.01em;
+  font-family: var(--font-display);
+  font-size: clamp(17px, 1.5vw, 23px);
+  font-weight: 700;
+  letter-spacing: -0.02em;
   color: var(--text);
 }
 
@@ -1659,6 +1674,14 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
   display: grid;
   /* One column, stated: the rows are the rooms. */
   grid-template-columns: minmax(0, 1fr);
+  /*
+   * The plate column, once, for the tall row and for every lane — so the two cannot drift apart.
+   *
+   * Wide enough to be a record rather than a label: the sleeve is what makes a room a room on the art
+   * face, and it does the same work here. Capped by height as well, so a short window spends its pixels
+   * on the readings instead of on a bigger sleeve.
+   */
+  --room-name: min(clamp(132px, 15vw, 260px), 26vh);
   /* `auto` for the lists, not `minmax(0, 40vh)`: grid's maximise-tracks step grows a track with a
      definite maximum up to that maximum *before* an `fr` track gets anything, so a capped row and an
      elastic one meant the empty queue claimed 40vh and the display took what was left. The cap lives
@@ -1736,15 +1759,17 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
    * only 236, so the photograph alone was setting the row's height and the display was paying for it.
    * Below roughly 780px of window the nameplate becomes the floor instead and this stops mattering.
    */
-  grid-template-columns: min(clamp(150px, 24vw, 420px), 28vh) minmax(0, 1fr) auto;
+  /* Two columns: the sleeve moved to the room's plate, so what is left here is the words and the
+     readings. */
+  grid-template-columns: minmax(0, 1fr) auto;
   /* The nameplate, the control strip and the chain size to their contents; the display takes what is
      between them. */
   grid-template-rows: auto auto minmax(0, 1fr) auto;
   grid-template-areas:
-    'cover meta readout'
-    'transport transport transport'
-    'analysis analysis analysis'
-    'chain chain chain';
+    'meta readout'
+    'transport transport'
+    'analysis analysis'
+    'chain chain';
   gap: 18px 22px;
   min-width: 0;
   min-height: 0;
@@ -1907,9 +1932,14 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
  * `overflow: hidden` (it crops the artwork to its radius), so a glow inside it would be cut off at the
  * very edge it is supposed to spill past.
  */
+/* In the plate it takes the column's width; the column is what states the size now. */
+.np-plate .np-cover {
+  width: 100%;
+}
+
 .np-cover {
   position: relative;
-  grid-area: cover;
+  /* No `grid-area`: the sleeve lives in the room's plate now, not in a named cell of the panel. */
   align-self: start;
 }
 
@@ -3122,6 +3152,23 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
 
 .house-lane:hover {
   background: rgb(255 255 255 / 3%);
+}
+
+/* The lane's plate: the same pairing as the tall row's, one size down. */
+.house-plate {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+/* `.cover` is `width: 100%` by default and one class each is a tie — which is how a 36px sleeve renders
+   at 168. Stated through the plate so it wins outright. */
+.house-plate .house-cover {
+  flex: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 3px;
 }
 
 .house-name {

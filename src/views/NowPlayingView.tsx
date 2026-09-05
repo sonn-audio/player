@@ -109,31 +109,43 @@ export function NowPlayingView({
        * duplication this face has been removing everywhere else.
        */}
       <div className="np-room" data-current>
-        <span className="np-room-name">{zone.name}</span>
-        <div className="np-player">
         {/*
-          The hero and the light it throws, lit the way the art player lights it.
-          The bloom is the sleeve blurred behind the sleeve — see `.np-bloom`.
-        */}
-        <div className="np-cover" data-playing={zone.state === 'playing' || undefined}>
-          {track && (
-            <span
-              className="np-bloom"
-              style={{ backgroundImage: `url("${api.coverUrl(zone.id, { size: 320, cacheKey: track.coverUrl })}")` }}
-              aria-hidden="true"
+         * The room's plate: its name, and the record playing in it.
+         *
+         * This column was the room's *name* and eleven hundred pixels of nothing under it — which is
+         * exactly what made this read as unlike the art face, where a room is a sliver *filled* with its
+         * own artwork. The sleeve belongs here, not in the panel's first column: it is the thing that
+         * says which room this is, in the same column the other rooms say it in. The panel keeps the
+         * words and the readings.
+         */}
+        <div className="np-plate">
+          <span className="np-room-name">{zone.name}</span>
+        {/*
+            The hero and the light it throws, lit the way the art player lights it.
+            The bloom is the sleeve blurred behind the sleeve — see `.np-bloom`.
+          */}
+          <div className="np-cover" data-playing={zone.state === 'playing' || undefined}>
+            {track && (
+              <span
+                className="np-bloom"
+                style={{ backgroundImage: `url("${api.coverUrl(zone.id, { size: 320, cacheKey: track.coverUrl })}")` }}
+                aria-hidden="true"
+              />
+            )}
+            <Cover
+              zone={zone}
+              {...(track?.animatedCoverUrl ? { animatedUrl: track.animatedCoverUrl } : {})}
+              size={480}
+              className="hero"
+              // The one object both faces have in common: switching to the art player flies this sleeve to
+              // where that player puts it, rather than crossfading one screen into another.
+              anchor={coverAnchor}
             />
-          )}
-          <Cover
-            zone={zone}
-            {...(track?.animatedCoverUrl ? { animatedUrl: track.animatedCoverUrl } : {})}
-            size={480}
-            className="hero"
-            // The one object both faces have in common: switching to the art player flies this sleeve to
-            // where that player puts it, rather than crossfading one screen into another.
-            anchor={coverAnchor}
-          />
+          </div>
+
         </div>
 
+        <div className="np-player">
         {/*
           The playing block, in the order a listener reads it: what it is, what it *is* technically,
           where it has got to, and only then the controls.

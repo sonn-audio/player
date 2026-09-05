@@ -20,6 +20,7 @@
  * `stagesOf`, the same function the chain draws.
  */
 import { stagesOf } from '@/components/SignalPath';
+import { Cover } from '@/components/Cover';
 import type { ApiZoneState } from '@/api/types';
 
 /** How a stage's state maps to the lane's dot — the same three states the chain uses. */
@@ -76,7 +77,17 @@ export function HouseLanes({
                 onClick={() => onSelect(zone.id)}
                 title={`Show ${zone.name}`}
               >
-                <span className="house-name">{zone.name}</span>
+                {/*
+                 * Name and record, in the plate column the tall row's own name and sleeve stand in.
+                 *
+                 * A lane was three grey words where the art face gives a room a sliver of its own
+                 * artwork. The cover is what makes it a room rather than a row of a table — and it is
+                 * the same object, one size down.
+                 */}
+                <span className="house-plate">
+                  <Cover zone={zone} size={96} className="house-cover" />
+                  <span className="house-name">{zone.name}</span>
+                </span>
 
                 {/* The chain, at a glance: one dot a station, lit where that station is doing work. */}
                 <span className="house-chain" aria-hidden="true">
