@@ -114,7 +114,7 @@ export function HouseLanes({
                  * and no frame to be early or late. The columns stay aligned and the eye keeps its
                  * track.
                  */}
-                <span className="house-verdict mono" data-altered={altered || undefined}>
+                <span className="house-verdict mono" data-altered={(playing && altered) || undefined}>
                   {playing ? (altered ? 'altered' : 'untouched') : '—'}
                 </span>
 

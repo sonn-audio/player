@@ -1698,8 +1698,15 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
 .np-order {
   display: flex;
   min-height: 0;
+  /* Fills the column, like the display fills its row: the list stands at the top of a window rather
+     than floating above an empty column. Same device, so the two columns read as one instrument. */
+  flex: 1 1 auto;
   flex-direction: column;
   gap: 9px;
+  padding: 11px 12px 10px;
+  border-radius: 5px;
+  background: rgb(255 255 255 / 2.5%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 8%);
   overflow: hidden;
 }
 
@@ -1891,6 +1898,24 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
 }
 
 /* Under the sleeve, on the record's own light: the room this is. */
+/* The lamp, as on every lane below: a room that is playing says so on its own plate. */
+.np-plate .np-room-name::before {
+  content: '';
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  margin-right: 9px;
+  border-radius: 50%;
+  background: var(--line-strong);
+  vertical-align: middle;
+  transition: background 0.25s;
+}
+
+.np-plate[data-playing] .np-room-name::before {
+  background: var(--accent);
+  box-shadow: 0 0 8px 1px rgb(74 222 128 / 40%);
+}
+
 .np-plate .np-room-name {
   position: relative;
   z-index: 2;
@@ -3285,6 +3310,22 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
    * short for even that, the panel clips itself instead of painting on its neighbours.
    */
   min-height: 120px;
+  /*
+   * A window, not loose bars on a page.
+   *
+   * The field had no edge, so its rules ran into the panel's own background and the reading looked
+   * like ink that had been spilled where the display should be. One hairline and a ground a shade
+   * above the page turn it into an instrument's window — which is also what lets the rules stop at
+   * an edge instead of trailing off.
+   */
+  /* The window's top and sides; its foot is the frequency strip below (see `.analysis-axis`), so the
+     field and the scale that explains it are one object. */
+  border-radius: 5px 5px 0 0;
+  background: rgb(255 255 255 / 2.5%);
+  box-shadow:
+    inset 1px 0 0 rgb(255 255 255 / 8%),
+    inset -1px 0 0 rgb(255 255 255 / 8%),
+    inset 0 1px 0 rgb(255 255 255 / 8%);
 }
 
 /*
@@ -3304,7 +3345,15 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
 
 .np-transport .np-controls {
   display: grid;
-  grid-template-columns: 1fr auto 1fr;
+  /*
+   * Left and right, not centre and nothing.
+   *
+   * `1fr auto 1fr` put the transport in the middle of a 1600px panel with the fader at the far right
+   * and the whole left third empty — three groups floating at three unrelated places. A rack strip
+   * reads from its ends: the controls under the title they belong to, the level at the edge where
+   * every other number on this face is set.
+   */
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   /*
    * And no cap.
@@ -3321,8 +3370,10 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
 /* The transport takes the middle column, so it is centred on the *panel* and not on whatever is left
    over beside the volume. */
 .np-transport .transport {
-  grid-column: 2;
-  justify-content: center;
+  /* Column 1: the controls stand under the title they belong to. Left in column 2 they sat between
+     the title's edge and the fader at no distance from either — a cluster centred on nothing. */
+  grid-column: 1;
+  justify-content: start;
 }
 
 /* The room's level and the one per-track action ride the right-hand third, ending on the same edge
@@ -3957,10 +4008,28 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
  * `--pull` is set per tick by the component: -50% to centre, and 0 / -100% at the ends where
  * centring would hang half the label off the panel.
  */
+/*
+ * The frequency scale, as the window's foot.
+ *
+ * Loose under the field the labels read as three numbers adrift on the page — and once the display
+ * had an edge, they were three numbers adrift *outside* it. Same ground, same hairline, no gap: the
+ * strip is where the window ends, and the scale is part of the instrument rather than a caption
+ * beneath it.
+ */
 .analysis-axis {
   position: relative;
-  height: 12px;
-  margin-top: 7px;
+  /* Never the thing that gives way: squeezed to 5px on a short window the strip kept its ground and
+     lost its numbers, which is a bar of nothing under the display. The field is what shrinks here. */
+  flex: none;
+  height: 21px;
+  padding-top: 5px;
+  border-radius: 0 0 5px 5px;
+  background: rgb(255 255 255 / 2.5%);
+  box-shadow:
+    inset 1px 0 0 rgb(255 255 255 / 8%),
+    inset -1px 0 0 rgb(255 255 255 / 8%),
+    inset 0 -1px 0 rgb(255 255 255 / 8%),
+    inset 0 1px 0 rgb(255 255 255 / 6%);
 }
 
 .analysis-axis span {
@@ -5994,9 +6063,22 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
  * The lead's roll display — see `LeadTrace`. The band is the promise, the line is the delivery,
  * and a healthy stream is the one chart nobody has to learn to read: flat line, inside the glow.
  */
+/*
+ * The lead, over the last few seconds.
+ *
+ * It read as a bright green line floating over the stations — debris, not a reading. The cause is the
+ * geometry being right: a healthy lead sits at the *top* of its own band, so the line is drawn near
+ * the top edge of an invisible box, and a line with nothing around it is a scratch on the panel.
+ * Drawing the band it is measured against gives it a shape, and once there is a shape the line can be
+ * quiet.
+ */
 .signal-trace {
-  height: 40px;
-  margin-top: 12px;
+  height: 30px;
+  margin-top: 10px;
+  border-radius: 2px;
+  background: rgb(255 255 255 / 2.5%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 5%);
+  overflow: hidden;
 }
 
 .signal-trace svg {
@@ -6005,18 +6087,19 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
   height: 100%;
 }
 
+/* The band it is supposed to stay inside: light enough to be a ground, present enough to be a fact. */
 .signal-trace-band {
-  fill: rgb(74 222 128 / 5%);
+  fill: rgb(74 222 128 / 9%);
 }
 
 .signal-trace-line {
   fill: none;
   stroke: var(--accent);
-  stroke-width: 1.5;
+  stroke-width: 1;
   stroke-linejoin: round;
   stroke-linecap: round;
   vector-effect: non-scaling-stroke;
-  opacity: 0.85;
+  opacity: 0.6;
 }
 
 .signal-timing-head {
