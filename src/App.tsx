@@ -70,6 +70,32 @@ function barViewOf(target: NavTarget, zone: ApiZoneState | null): BarView {
 
 export function App() {
   const { zones: serverZones, status, synced } = useServer();
+  /*
+   * Whether the rail is folded to its icons, remembered.
+   *
+   * A choice about how much room the instrument gets is a choice about this browser and this screen —
+   * someone on a 2560px monitor and someone on a 13" laptop want different answers and both want theirs
+   * to survive a reload. `try`/`catch` because private-mode Safari throws on the read as well as the
+   * write, and a player that will not start because it could not remember a sidebar is absurd.
+   */
+  const [railFolded, setRailFolded] = useState(() => {
+    try {
+      return localStorage.getItem('sonn.rail') === 'folded';
+    } catch {
+      return false;
+    }
+  });
+  const toggleRail = useCallback(() => {
+    setRailFolded((was) => {
+      const next = !was;
+      try {
+        localStorage.setItem('sonn.rail', next ? 'folded' : 'open');
+      } catch {
+        // A browser that will not remember it still folds for this visit.
+      }
+      return next;
+    });
+  }, []);
   const [view, setView] = useState<View>({ target: { kind: 'playing' }, searchNonce: 0 });
   const local = useLocalPlayback();
 
@@ -154,8 +180,10 @@ export function App() {
       */}
       <AppBar view={barViewOf(navTarget, zone)} />
 
-      <div className="app-body">
+      <div className="app-body" data-rail={railFolded ? 'folded' : undefined}>
         <NavRail
+          folded={railFolded}
+          onToggleFold={toggleRail}
           active={navTarget}
           onNavigate={navigate}
           onSearch={openSearch}

@@ -380,6 +380,27 @@ svg {
   grid-template-columns: 244px minmax(0, 1fr) 312px;
   flex: 1;
   min-height: 0;
+  transition: grid-template-columns 0.42s var(--ease);
+}
+
+/*
+ * Folded: the rail keeps its icons and gives back its words.
+ *
+ * The rest of this face became a panel — one grid, one right edge, the signal drawn across it — and
+ * 244px of navigation stood beside it as an app sidebar. Folding is the honest answer to that: every
+ * destination stays one press away, and the instrument gets the width on the screens and the moments
+ * that want it, rather than the layout deciding once for everybody.
+ *
+ * 62px is a 34px control with the same air around it the unfolded rail gives its rows, so the icons do
+ * not move horizontally when the words leave — the fold reads as the labels sliding out rather than as
+ * the whole column being rebuilt.
+ */
+.app-body[data-rail='folded'] {
+  grid-template-columns: 62px minmax(0, 1fr) 312px;
+}
+
+.app-body[data-rail='folded']:not(:has(.rail)) {
+  grid-template-columns: 62px minmax(0, 1fr);
 }
 
 /* No zones means no right rail; the grid must not then leave a 312px hole. */
@@ -1142,6 +1163,72 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
   min-height: 0;
   padding: 0;
   border-right: 1px solid var(--line);
+}
+
+/*
+ * The fold control, at the top of the rail where a chevron pointing at the edge means "away".
+ *
+ * It turns rather than swaps: the same mark rotated is one control with two states, where two glyphs
+ * would be two controls that happen to sit in the same place.
+ */
+.nav-fold {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  margin-left: auto;
+  border-radius: var(--r);
+  color: var(--text-mute);
+  rotate: 180deg;
+  transition:
+    color 0.2s,
+    background 0.2s,
+    rotate 0.42s var(--ease);
+}
+
+.nav-fold:hover {
+  background: var(--surface-2);
+  color: var(--text);
+}
+
+[data-rail='folded'] .nav-fold {
+  rotate: 0deg;
+  margin: 0 auto;
+}
+
+/*
+ * What leaves when it folds: every word, and nothing else.
+ *
+ * The icons stay exactly where they were — same size, same left edge — because the fold is meant to
+ * read as the labels sliding out from beside them, not as a second, narrower rail being swapped in.
+ */
+[data-rail='folded'] .nav-label,
+[data-rail='folded'] .nav-group-head,
+[data-rail='folded'] .nav-search span,
+[data-rail='folded'] .nav-caret,
+[data-rail='folded'] .nav-caret-spacer,
+[data-rail='folded'] .nav-badge,
+[data-rail='folded'] .zone-menu-text {
+  display: none;
+}
+
+[data-rail='folded'] .nav-head {
+  padding: 12px 6px 14px;
+}
+
+[data-rail='folded'] .nav-item,
+[data-rail='folded'] .nav-search,
+[data-rail='folded'] .zone-menu-button {
+  justify-content: center;
+  padding-right: 0;
+  padding-left: 0;
+}
+
+/* A group is still a group; with its name gone the rule says so instead. */
+[data-rail='folded'] .nav-group + .nav-group {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
 }
 
 .nav-head {
