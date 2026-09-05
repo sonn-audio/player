@@ -174,7 +174,20 @@ export function RunningOrder({
    * that case there is nothing "after this", so the whole page is what is coming.
    */
   const from = data?.currentIndex == null ? 0 : data.currentIndex + 1;
-  const ahead = data?.items.slice(from) ?? [];
+  /*
+   * The one playing is not one of the ones coming.
+   *
+   * `currentIndex` is the server's answer and it is usually right, but it is null for a queue nobody
+   * started from and it can lag a reorder by a beat — and in both cases the first row of "up next" was
+   * the track named in 60px type directly above it. Dropping a leading entry that matches what is
+   * playing costs one comparison and closes both holes.
+   */
+  const sliced = data?.items.slice(from) ?? [];
+  const first = sliced[0];
+  const ahead =
+    first && first.title === zone.track?.title && first.artist === zone.track?.artist
+      ? sliced.slice(1)
+      : sliced;
   const remaining = Math.max(0, (data?.total ?? 0) - from);
 
   const move = useCallback(

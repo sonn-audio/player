@@ -1991,13 +1991,13 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
 }
 
 .np-order-title {
-  font-size: 13px;
+  font-size: 13.5px;
   color: var(--text-dim);
   transition: color 0.15s;
 }
 
 .np-order-artist {
-  font-size: 11px;
+  font-size: 11.5px;
   font-style: normal;
   color: var(--text-mute);
 }
@@ -2064,7 +2064,7 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
 
 .np-room-name {
   font-family: var(--font-display);
-  font-size: clamp(17px, 1.5vw, 23px);
+  font-size: clamp(18px, 1.6vw, 25px);
   font-weight: 700;
   letter-spacing: -0.02em;
   color: var(--text);
@@ -2085,7 +2085,9 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
    * face, and it does the same work here. Capped by height as well, so a short window spends its pixels
    * on the readings instead of on a bigger sleeve.
    */
-  --room-name: min(clamp(132px, 15vw, 260px), 26vh);
+  /* The sleeve is the only picture on this face and the column has the room: 340, was 260. Still
+     capped against the window's height so a short screen spends its pixels on the reading. */
+  --room-name: min(clamp(132px, 17vw, 340px), 30vh);
   /* `auto` for the lists, not `minmax(0, 40vh)`: grid's maximise-tracks step grows a track with a
      definite maximum up to that maximum *before* an `fr` track gets anything, so a capped row and an
      elastic one meant the empty queue claimed 40vh and the display took what was left. The cap lives
@@ -2998,9 +3000,16 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
   gap: clamp(18px, 2.4vw, 34px);
 }
 
+/*
+ * Bigger, because this is the panel's one set of controls.
+ *
+ * 34px icons under a 96px title on a 1600px strip read as an afterthought — the transport is the thing
+ * a hand comes to, and on this face it is the only place it appears (there is no bar along the bottom
+ * in this view). 40, with the play button at 60 and wider gaps, is presence without plates.
+ */
 .transport .icon-button {
-  width: 34px;
-  height: 34px;
+  width: 40px;
+  height: 40px;
   border: 0;
   background: none;
   /* Bright, and dimmed by opacity rather than by a greyer colour: at this size a mid-grey stroke on
@@ -3015,8 +3024,22 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
 }
 
 .transport .icon-button svg {
-  width: 23px;
-  height: 23px;
+  width: 25px;
+  height: 25px;
+}
+
+.np-transport .transport {
+  gap: clamp(20px, 2.8vw, 40px);
+}
+
+.np-transport .icon-button.primary {
+  width: 60px;
+  height: 60px;
+}
+
+.np-transport .icon-button.primary svg {
+  width: 22px;
+  height: 22px;
 }
 
 .transport .icon-button:hover:not(:disabled) {
@@ -3250,7 +3273,9 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
   padding: 13px 0 9px;
   border: 0;
   border-top: 1px solid var(--line);
-  border-bottom: 1px solid var(--line);
+  /* No rule at the foot: the chain below has its own, and two hairlines 28px apart is one hairline
+     drawn twice. */
+  border-bottom: 0;
   border-radius: 0;
   background: none;
 }
