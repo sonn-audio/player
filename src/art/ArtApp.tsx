@@ -479,18 +479,62 @@ export function ArtApp() {
         <div className="cx-main-wrap">
           <div className="cx-content-row">
             <main className="cx-main">
-              {view.kind === 'browse' ? (
+              {/*
+               * On a desk with music in the house, the wall is the shell — and what the room is doing
+               * goes *inside* its panel.
+               *
+               * Browsing used to replace the whole screen, which put a page with a menu bar over a
+               * player that had just spent its whole design becoming a room. It also lost the one thing
+               * a browser needs to be unambiguous about: which room this is going to play in. Inside the
+               * panel, between the slivers, that question answers itself — you are looking for something
+               * *in this room*, and the rest of the house is still standing either side of it.
+               *
+               * A quiet house has no wall to put anything in, so it keeps the old shape: the welcome
+               * screen, or a listing at full width.
+               */}
+              {!phone && !houseQuiet ? (
+                <Wall
+                  channels={channels}
+                  currentLeaderId={leaderOf(zone, zones)?.id ?? null}
+                  onSelect={select}
+                  drag={drag}
+                >
+                  {view.kind === 'browse' ? (
+                    <Browse
+                      zone={zone}
+                      root={view.node}
+                      onExit={goHome}
+                      // Remount on a different root so the internal path stack starts fresh rather than
+                      // keeping the last service's trail.
+                      key={view.node.id ?? 'root'}
+                    />
+                  ) : view.kind === 'inputs' ? (
+                    <Sources zone={zone} onDone={goHome} />
+                  ) : (
+                    <Stage
+                      cur={cur}
+                      drag={drag}
+                      onCanvas={() => setAsked(true)}
+                      onLeaveCanvas={() => setAsked(false)}
+                      resting={idle}
+                      onOpenRooms={() => setSheet('rooms')}
+                      onOpenQueue={() => setSheet('queue')}
+                      onBrowse={() => openBrowse()}
+                      nextUp={nextUp}
+                      queueCount={queue.total}
+                    />
+                  )}
+                </Wall>
+              ) : view.kind === 'browse' ? (
                 <Browse
                   zone={zone}
                   root={view.node}
                   onExit={goHome}
-                  // Remount on a different root so the internal path stack starts fresh rather than
-                  // keeping the last service's trail.
                   key={view.node.id ?? 'root'}
                 />
               ) : view.kind === 'inputs' ? (
                 <Sources zone={zone} onDone={goHome} />
-              ) : phone || houseQuiet ? (
+              ) : (
                 /*
                  * Home is where you decide what to play.
                  *
@@ -549,33 +593,6 @@ export function ArtApp() {
                     play: () => zone && void api.play(zone.id, item.source),
                   }))}
                 />
-              ) : (
-                /*
-                 * The room you are in, standing in the house rather than in front of it.
-                 *
-                 * `Wall` draws every room as a panel and gives this one the width; the others are
-                 * slivers of their own artwork at their own place in the row. It replaces the strip of
-                 * names along the bottom, which was the house rendered as a footnote.
-                 */
-                <Wall
-                  channels={channels}
-                  currentLeaderId={leaderOf(zone, zones)?.id ?? null}
-                  onSelect={select}
-                  drag={drag}
-                >
-                  <Stage
-                    cur={cur}
-                    drag={drag}
-                    onCanvas={() => setAsked(true)}
-                    onLeaveCanvas={() => setAsked(false)}
-                    resting={idle}
-                    onOpenRooms={() => setSheet('rooms')}
-                    onOpenQueue={() => setSheet('queue')}
-                    onBrowse={() => openBrowse()}
-                    nextUp={nextUp}
-                    queueCount={queue.total}
-                  />
-                </Wall>
               )}
             </main>
 
