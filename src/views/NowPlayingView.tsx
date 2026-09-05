@@ -157,12 +157,32 @@ export function NowPlayingView({
           {...(track
             ? {
                 style: {
-                  backgroundImage: `url("${api.coverUrl(zone.id, { size: 640, cacheKey: track.coverUrl })}")`,
-                },
+                  /* The record goes in as a custom property, not as this element's own background: it
+                     is painted twice from here — once square and sharp as the sleeve, once blurred
+                     across the whole column as the room's light — and a single background could only
+                     be one of those. */
+                  '--rec': `url("${api.coverUrl(zone.id, { size: 640, cacheKey: track.coverUrl })}")`,
+                } as React.CSSProperties,
               }
             : {})}
-          {...coverAnchor}
         >
+          {/*
+           * The sleeve, square.
+           *
+           * It was the column: one tall crop of a square photograph, which keeps a strip of the middle
+           * and throws the sides away — a record read as stretched because it *was* stretched across a
+           * shape a record does not have. So it is a square again, at the column's width, in the
+           * proportion the sleeve was made in.
+           *
+           * The column still fills, but with the record's own light rather than with more of the
+           * record: `::before` paints the same picture blurred from top to bottom, which is the same
+           * device the rest of this face uses and the reason the plate does not read as a label on a
+           * dark box.
+           *
+           * The anchor rides the sleeve, so pressing `ART` still flies this square across to the art
+           * player rather than dissolving one screen into another.
+           */}
+          <span className="np-plate-art" aria-hidden="true" {...coverAnchor} />
           <span className="np-room-name">{zone.name}</span>
         </div>
 

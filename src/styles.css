@@ -1662,52 +1662,83 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
  * The room's own light still comes off it (`.np-bloom`), which is what keeps a dimmed band from reading
  * as a photograph behind glass.
  */
+/*
+ * The plate is as tall as it is.
+ *
+ * Two ways to fill a 960px column with a square sleeve were tried and both were worse than not
+ * filling it: cropping the record to a tall band threw its sides away and read as stretched, and
+ * blurring the record down the column left a flat grey box with a picture at the top. So the plate
+ * stops under the name (`align-self: start`) and what is beneath it is the page — which already
+ * carries this record's light, from `.np-wash` across the whole view. An empty column of page is
+ * quiet; an empty column of *box* is a mistake you can see.
+ */
 .np-plate {
   position: relative;
+  display: flex;
+  align-self: start;
+  flex-direction: column;
   min-width: 0;
   overflow: hidden;
   border-radius: var(--r-sm);
-  /* The record, cropped to the column and held down to this face's light so the readings beside it stay
-     the brightest thing on the panel. `center 30%` because a sleeve's subject is usually in its upper
-     half, and a tall crop of one should keep the face rather than the floor. */
-  background-color: var(--surface-3);
-  background-position: center 30%;
-  background-size: cover;
 }
 
-/* Its own light, as everywhere else on this face: the record's colour, in black and white. */
+/*
+ * The room's light: the same record, blurred across the whole column.
+ *
+ * This is what lets the sleeve keep its own square proportion without leaving the column empty under
+ * it — the band is made of the record's colour rather than of a stretched crop of the record. Black
+ * and white, like every other light on this face, so what varies per album is how much light there is
+ * and where it falls, never the palette.
+ */
 .np-plate::before {
   content: '';
   position: absolute;
-  inset: 0;
-  background: inherit;
-  filter: grayscale(1) blur(30px) brightness(0.5);
-  opacity: 0.5;
+  inset: -30%;
+  background-image: var(--rec);
+  background-position: center;
+  background-size: cover;
+  filter: grayscale(1) blur(34px) brightness(0.55);
+  opacity: 0.6;
 }
 
-/* Dark where the name sits, clear where the record is. */
+/* The foot of the column, so the band ends rather than being cut off by the row below it. */
 .np-plate::after {
   content: '';
   position: absolute;
   inset: 0;
   z-index: 1;
   pointer-events: none;
-  /* Dark where the name sits, clear across the record, dark again at the foot so the column has a
-     bottom rather than being cut off by the row below it. */
-  background: linear-gradient(
-    180deg,
-    rgb(8 10 13 / 86%),
-    rgb(8 10 13 / 22%) 30%,
-    rgb(8 10 13 / 30%) 62%,
-    rgb(8 10 13 / 88%)
-  );
+  background: linear-gradient(180deg, transparent 55%, rgb(8 10 13 / 70%));
 }
 
+/*
+ * The sleeve itself: the column's width, and square.
+ *
+ * `aspect-ratio` rather than a height, because the one number that decides a record's shape is its
+ * width — the column is as wide as it is and the sleeve follows. `cover` on a square box of a square
+ * picture crops nothing, and it is what keeps a rare non-square cover from being distorted.
+ */
+.np-plate-art {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: var(--r-sm);
+  background-color: rgb(255 255 255 / 4%);
+  background-image: var(--rec);
+  background-position: center;
+  background-size: cover;
+  box-shadow:
+    inset 0 0 0 1px rgb(255 255 255 / 8%),
+    0 18px 40px -22px rgb(0 0 0 / 85%);
+}
+
+/* Under the sleeve, on the record's own light: the room this is. */
 .np-plate .np-room-name {
   position: relative;
   z-index: 2;
   display: block;
-  padding: 14px 16px;
+  padding: 13px 15px 14px;
 }
 
 .np-room[data-current] {
