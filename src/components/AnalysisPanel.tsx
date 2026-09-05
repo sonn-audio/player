@@ -250,17 +250,21 @@ export function AnalysisPanel({
   const dimId = `spectrum-dim-${zoneId}`;
 
   /*
-   * The reading in silver, the memory in green.
+   * One colour, two weights — which is how the mark is drawn.
    *
-   * The display tried a saturated green wall (a slab), a frequency-coloured ramp (beautiful, and
-   * shouting over everything else on the page) — and landed on the rule the rest of the product
-   * already lives by: a control surface is silver when it is not saying anything, and the accent
-   * is spent on the one thing that *is* saying something. The bars are the reading — quiet,
-   * near-monochrome, mass without volume. The peak caps are the statement: where the music just
-   * was, in the product's own green, floating over a silver field. (The polychrome ramp lives one
-   * commit back if the pendulum swings again.)
+   * Silver bars under a green line is an *outline around something else*: two materials, and the eye
+   * reads the green as a border rather than as part of the same object. `Mark` uses one fill at
+   * descending opacities — 0.4 to 1.0 across its bars, and the roof solid — so the roof and the
+   * waveform are visibly the same ink. Here: the accent at 26% for the columns, the accent solid for
+   * the roof. On near-black, 26% green reads as a dark green-grey, which is quiet enough to stay a
+   * reading and not the saturated wall this display was rescued from once already.
+   *
+   * It is also the one place on this face where the accent is not a verdict. That rule stands
+   * everywhere else — `ALTERED`, `LOCKED`, a lit stage — and here the accent means something better:
+   * the instrument is drawing the product's own mark. A logo does not need a second colour to be a
+   * logo, and the display should not need one to be the logo.
    */
-  const BAR_INK = 'rgb(255 255 255 / 20%)';
+  const BAR_INK = 'rgb(74 222 128 / 26%)';
 
   /*
    * The cells are back — in silver, where they never were the problem.
