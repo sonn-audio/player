@@ -1171,29 +1171,68 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
  * It turns rather than swaps: the same mark rotated is one control with two states, where two glyphs
  * would be two controls that happen to sit in the same place.
  */
+/*
+ * A strip down the rail's own border, not a button parked in the corner.
+ *
+ * 14px wide, the full height, and nothing drawn in it until a pointer is near: the chevron fades up,
+ * the border under it brightens, and pressing anywhere along that edge folds the column. What moves is
+ * exactly what you pressed.
+ */
 .nav-fold {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 2;
   display: grid;
   place-items: center;
-  width: 34px;
-  height: 34px;
-  margin-left: auto;
-  border-radius: var(--r);
+  width: 14px;
+  height: 100%;
   color: var(--text-mute);
-  rotate: 180deg;
+  opacity: 0;
   transition:
-    color 0.2s,
-    background 0.2s,
-    rotate 0.42s var(--ease);
+    opacity 0.25s var(--ease),
+    color 0.2s;
+}
+
+/* Present the moment the rail is: reaching for an edge you cannot see is a puzzle, not a gesture. */
+.nav-rail:hover .nav-fold,
+.nav-fold:focus-visible {
+  opacity: 1;
 }
 
 .nav-fold:hover {
-  background: var(--surface-2);
   color: var(--text);
 }
 
-[data-rail='folded'] .nav-fold {
+/* The line the strip sits on brightens with it, so the edge itself reads as the control. */
+.nav-fold::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--line-strong);
+  opacity: 0;
+  transition: opacity 0.25s var(--ease);
+}
+
+.nav-fold:hover::before {
+  opacity: 1;
+}
+
+/* The mark turns rather than swapping: one control with two states. */
+.nav-fold svg {
+  rotate: 180deg;
+  transition: rotate 0.42s var(--ease);
+}
+
+[data-rail='folded'] .nav-fold svg {
   rotate: 0deg;
-  margin: 0 auto;
+}
+
+.nav-rail {
+  position: relative;
 }
 
 /*

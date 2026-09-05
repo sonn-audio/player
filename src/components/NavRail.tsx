@@ -307,6 +307,25 @@ export function NavRail({
   return (
     <nav className="nav-rail">
       {/*
+       * The fold, as the rail's own edge.
+       *
+       * It was a 34px rounded square at the top — the one boxed thing in a column where the picker, the
+       * search and every destination are full-width rows, so it read as a control somebody had dropped
+       * in rather than as part of the rail. The edge is what actually moves when you fold it, so the
+       * edge is the thing to press: a strip down the border with the chevron appearing under the
+       * pointer. The same idea as the folded edges on the other face, where nothing is boxed either.
+       */}
+      <button
+        type="button"
+        className="nav-fold"
+        onClick={onToggleFold}
+        aria-label={folded ? 'Show the navigation labels' : 'Fold the navigation'}
+        aria-expanded={!folded}
+        title={folded ? 'Unfold' : 'Fold'}
+      >
+        <Icon name="chevron-right" />
+      </button>
+      {/*
         The head does not scroll — and it is not merely a preference.
         `overflow-y: auto` clips absolutely-positioned descendants, so the room picker's popover
         would be trapped inside the scroll box. Keeping the overflow on the tree below instead is
@@ -316,25 +335,6 @@ export function NavRail({
       <div className="nav-head">
         {/* No wordmark and no status badge: both moved to the bar above, which is where a product
             says its own name. What is left here is navigation, and only navigation. */}
-
-        {/*
-         * The fold.
-         *
-         * The rest of this face became a panel — one grid, one right edge, the signal drawn across it
-         * — and the 244px of navigation beside it stayed an app sidebar. Folding it to its icons gives
-         * the instrument the width when you want it and keeps every destination one press away, which
-         * is a better answer than choosing once, for everybody, between navigation and room.
-         */}
-        <button
-          type="button"
-          className="nav-fold"
-          onClick={onToggleFold}
-          aria-label={folded ? 'Show the navigation labels' : 'Fold the navigation'}
-          aria-expanded={!folded}
-          title={folded ? 'Unfold' : 'Fold'}
-        >
-          <Icon name="chevron-right" />
-        </button>
 
         {/* Which room everything on this page acts on. First, because it scopes what follows. */}
         {zones.length > 0 && (
