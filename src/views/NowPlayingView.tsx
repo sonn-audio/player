@@ -261,7 +261,19 @@ export function NowPlayingView({
           <section className="np-room" data-current key={zone.id}>
             <div className="np-room-head">
               <span className="np-room-lamp" data-lit={zone.state === 'playing' || undefined} aria-hidden="true" />
-              <h2 className="np-room-name">{zone.name}</h2>
+              {/*
+           * The name folds it too.
+           *
+           * A heading that is the label of the thing it opens should be the way you shut it — the
+           * chevron at the end of the line is the affordance, not the only target. The button lives
+           * *inside* the heading so the room keeps being a heading in the document; a heading inside a
+           * button is not phrasing content and browsers are entitled to make a mess of it.
+           */}
+          <h2 className="np-room-name">
+            <button type="button" onClick={() => setFold(true)} title={`Fold ${zone.name}`}>
+              {zone.name}
+            </button>
+          </h2>
 
               {/*
                * Fold the instrument away.

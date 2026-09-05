@@ -88,9 +88,25 @@ export function HouseLane({
        * artwork. The cover is what makes it a room rather than a row of a table — and it is
        * the same object, one size down.
        */}
+      {/*
+       * The room, and what is on in it.
+       *
+       * The line named the room and then went straight to codecs — so an overview of twenty-four rooms
+       * could tell you which ones were resampling and not one of them what it was playing. That is the
+       * question a house gets asked. Title and artist under the name, dim, one line, ellipsised: it is
+       * the same pairing the panel's nameplate makes, at the size a row can hold.
+       */}
       <span className="house-plate">
         <Cover zone={zone} size={96} className="house-cover" />
-        <span className="house-name">{zone.name}</span>
+        <span className="house-text">
+          <span className="house-name">{zone.name}</span>
+          {zone.track && (
+            <span className="house-now">
+              {zone.track.title}
+              {zone.track.artist ? <i> — {zone.track.artist}</i> : null}
+            </span>
+          )}
+        </span>
       </span>
 
       {/* The chain, at a glance: one dot a station, lit where that station is doing work. */}
@@ -101,7 +117,7 @@ export function HouseLane({
       </span>
 
       <span className="house-wire mono">{playing ? wire(zone) : 'idle'}</span>
-      <span className="house-out mono">{zone.output?.protocol ?? '—'}</span>
+      <span className="house-out mono">{zone.output?.protocol ?? ''}</span>
 
       {/*
        * The verdict, in one word.
@@ -110,21 +126,21 @@ export function HouseLane({
        * word and not the sentence, which is the right amount for a row you are scanning.
        */}
       {/*
-       * A dash, not a hole.
+       * Nothing, not a dash.
        *
-       * An idle room left the verdict and the clock columns empty, so half the table was ghost
-       * columns holding air — and a column you scan is only worth scanning if every row
-       * answers. `—` is the answer: nothing is flowing, so there is nothing to have altered
-       * and no frame to be early or late. The columns stay aligned and the eye keeps its
-       * track.
+       * These columns held `—` for every idle room, which was right when a lane was a row of a bordered
+       * table: a column you scan is only worth scanning if every row answers. In a house of twenty-four
+       * quiet rooms it is ninety-six dashes — noise in the shape of information. The grid keeps the
+       * columns aligned whether the cells are filled or not, and a silent room says `idle` once, in the
+       * one column that is about flow.
        */}
       <span className="house-verdict mono" data-altered={(playing && altered) || undefined}>
-        {playing ? (altered ? 'altered' : 'untouched') : '—'}
+        {playing ? (altered ? 'altered' : 'untouched') : ''}
       </span>
 
       <span className="house-clock mono" data-locked={(playing && sync?.state === 'synchronized') || undefined}>
-        {!sync
-          ? '—'
+        {!playing || !sync
+          ? ''
           : sync.state === 'synchronized'
             ? `locked${typeof sync.leadMs === 'number' ? ` · ${sync.leadMs} ms` : ''}`
             : sync.state}
