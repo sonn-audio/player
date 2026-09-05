@@ -15,7 +15,7 @@ import { Cover } from '@/components/Cover';
 import { Transport } from '@/components/Transport';
 import { Volume } from '@/components/Volume';
 import { Waveform } from '@/components/Waveform';
-import { FormatChips, SourceChip } from '@/components/StreamFormat';
+import { SourceChip } from '@/components/StreamFormat';
 import { QueuePanel } from '@/components/QueuePanel';
 import { FavoritesPanel } from '@/components/FavoritesPanel';
 import { RecentsPanel } from '@/components/RecentsPanel';
@@ -218,8 +218,16 @@ export function NowPlayingView({
                 : 'silent'
             }
           >
+            {/*
+             * Provenance only. The formats moved out.
+             *
+             * `TRACK · CONVERTED · PCM · 48 KHZ · 24-BIT` was the signal path's own reading, written a
+             * second time in the one place on this screen where the eye lands first — and now that the
+             * rail is the tallest thing on the panel and legible end to end, the chips were the summary
+             * of a document that is already open. What they said that the rail does not is *where the
+             * music came from*, so that is what stays.
+             */}
             {zone.source && <SourceChip source={zone.source} />}
-            <FormatChips format={zone.format} />
           </p>
 
           {/* The envelope of what has played, the position, and the seek gesture — one element. A slim

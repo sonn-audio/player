@@ -29,6 +29,20 @@ import type { ApiOutputCapabilities } from '@/api/types';
 /** Frequencies to label under the spectrum. Three decades, enough to read it by. */
 const AXIS_TICKS = [100, 1000, 10000];
 
+/**
+ * The horizontal rules, in dB.
+ *
+ * A display that is 530px tall and only two thirds full of bars is a large empty box; the same box with
+ * the scale drawn across it is a *reading*. Every analyser that ever shipped in a rack has these, for the
+ * same reason: a bar is a height, and a height means nothing without a line to measure it against —
+ * "is that loud" becomes "that peak is at −12".
+ *
+ * Four, not eight. They are a scale, not a grid, and the one thing they must never do is compete with
+ * what they are measuring. Any that fall outside the stream's own floor are dropped rather than clamped
+ * to the bottom edge, where they would draw a rule that lies about where it is.
+ */
+const DB_RULES = [-6, -12, -24, -36];
+
 /** Hz → the label a person expects to see. */
 function tickLabel(hz: number): string {
   return hz >= 1000 ? `${hz / 1000}k` : `${hz}`;
@@ -155,6 +169,19 @@ export function AnalysisPanel({
   const ticks = AXIS_TICKS.map((hz) => ({ hz, at: spectrumPosition(hz) })).filter(
     (tick): tick is { hz: number; at: number } => tick.at !== null,
   );
+
+  /*
+   * Where each rule lands, in the same space the bars are drawn in.
+   *
+   * The stream's encoding is linear in dB between `floorDb` and 0 (see `toHeight`), so a dB value's
+   * height is simply its position in that window — which is why this needs no inverse of anything and
+   * cannot drift away from the bars it is measuring.
+   */
+  const floorDb = spectrumGeometry().floorDb;
+  const rules = DB_RULES.filter((db) => db > floorDb).map((db) => ({
+    db,
+    y: 1 + (dims.h - 2) * (1 - (db - floorDb) / -floorDb),
+  }));
 
   /*
    * The bars' shared geometry, in pixel space. The ballistics in `useAnalysis` drive every height
@@ -286,6 +313,17 @@ export function AnalysisPanel({
                 ))}
               </mask>
             </defs>
+            {/* Behind the bars, because a scale is something they stand in front of. */}
+            <g className="spectrum-rules" aria-hidden="true">
+              {rules.map((rule) => (
+                <g key={rule.db}>
+                  <line x1="0" x2={dims.w} y1={rule.y} y2={rule.y} />
+                  <text x={dims.w - 4} y={rule.y - 4} textAnchor="end">
+                    {rule.db}
+                  </text>
+                </g>
+              ))}
+            </g>
             <g className="spectrum-bars" mask={`url(#spectrum-seg-${zoneId})`}>
               {bars.map((bin, index) => {
                 const height = Math.max(2, toHeight(bin) * (dims.h - 2));

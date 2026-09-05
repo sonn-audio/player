@@ -1479,10 +1479,27 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
  * scrolls as one and the pinning does nothing — so the view owns its scrolling and takes the full
  * height of the column to do it.
  */
+/*
+ * The instrument takes the room, and the lists take what they need.
+ *
+ * The rows were `auto auto 1fr`: the player sized itself to its contents and the *queue* was handed
+ * everything left over — so on a 1440px-tall monitor the reading of the audio was a 236px band in the
+ * top third and the bottom half of the window was an empty list. That is the wrong way round for a
+ * face whose subject is the signal: on a piece of equipment the display is the biggest thing on the
+ * panel and the paperwork is a drawer.
+ *
+ * So the player row is elastic and the tab body is capped at 40vh, which is enough for six or seven
+ * rows before it scrolls — a queue is read a few entries at a time, and the ones past that were only
+ * ever reachable by scrolling anyway.
+ */
 .now-playing {
   position: relative;
   display: grid;
-  grid-template-rows: auto auto minmax(0, 1fr);
+  /* `auto` for the lists, not `minmax(0, 40vh)`: grid's maximise-tracks step grows a track with a
+     definite maximum up to that maximum *before* an `fr` track gets anything, so a capped row and an
+     elastic one meant the empty queue claimed 40vh and the display took what was left. The cap lives
+     on `.tab-body` instead, where it limits the row through the item's own max-content contribution. */
+  grid-template-rows: minmax(0, 1fr) auto auto;
   gap: 14px;
   height: 100%;
 }
@@ -1535,12 +1552,22 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
  */
 .np-player {
   display: grid;
-  grid-template-columns: clamp(150px, 22vw, 320px) minmax(0, 1fr);
+  /*
+   * 460, was 320.
+   *
+   * The old ceiling was written when the analyser was a fixed band and the queue owned the rest of the
+   * window; with the display now taking the slack there is height to spend, and the one photograph on
+   * the page was the smallest thing on a 2560px screen.
+   */
+  grid-template-columns: clamp(150px, 24vw, 460px) minmax(0, 1fr);
+  /* The nameplate row sizes to its contents; the display takes everything after it. */
+  grid-template-rows: auto minmax(0, 1fr);
   grid-template-areas:
     'cover meta'
     'analysis analysis';
   gap: 18px 22px;
   min-width: 0;
+  min-height: 0;
 }
 
 .np-meta {
@@ -1554,6 +1581,8 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
 
 .np-player > .analysis-panel {
   grid-area: analysis;
+  /* A grid item's default `min-height: auto` would let its contents set a floor and defeat the row. */
+  min-height: 0;
 }
 
 /*
@@ -2443,7 +2472,12 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
  * its unlit segments *are* its ground, and they read better against the page than against a lighter
  * grey. A hairline above and below sets it apart as an instrument without boxing it in.
  */
+/* A column, so the heading sits on top and the display below it takes the rest of the height the
+   layout hands the panel. */
 .analysis-panel {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
   padding: 13px 0 9px;
   border: 0;
   border-top: 1px solid var(--line);
@@ -2612,11 +2646,43 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
  * separates from the music), so it takes the slack. Clamped at both ends: below 120 px the segments
  * stop reading as a column, and past ~260 px it starts to dominate a page whose subject is a song.
  */
+/*
+ * As tall as the panel gives it, with a floor.
+ *
+ * It was `clamp(120px, 20vh, 236px)` — a band, because the layout above had nothing to give it. Now
+ * the row it sits in is the elastic one, so the display can be what a display is: the largest surface
+ * on the panel. The floor is what keeps it a reading rather than a stripe on a short window; the
+ * `ResizeObserver` in `AnalysisPanel` means the bars re-fit whenever that number changes.
+ */
 .spectrum {
   --spec-h: clamp(120px, 20vh, 236px);
 
   position: relative;
-  height: var(--spec-h);
+  flex: 1;
+  min-height: var(--spec-h);
+}
+
+/*
+ * The scale across the display.
+ *
+ * A hairline at 4% and a two-digit number at 8.5px: present when you look for it, invisible when you
+ * are watching the music. The number sits *above* its line rather than beside it, because a label on
+ * the line is a label with a bar running through it half the time.
+ *
+ * `--line` rather than a colour of its own: the rules belong to the same family as every other hairline
+ * on this face, and a scale that is more visible than the reading is a scale nobody asked for.
+ */
+.spectrum-rules line {
+  stroke: rgb(255 255 255 / 6.5%);
+  stroke-width: 1;
+  shape-rendering: crispEdges;
+}
+
+.spectrum-rules text {
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  letter-spacing: 0.08em;
+  fill: rgb(255 255 255 / 30%);
 }
 
 /*
@@ -2834,6 +2900,9 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
   flex-direction: column;
   gap: 14px;
   min-height: 0;
+  /* Six or seven rows before it scrolls. A queue is read a few entries at a time; past that it was
+     only ever reachable by scrolling anyway, and the display deserves the height more. */
+  max-height: 40vh;
   overflow-y: auto;
   /*
    * Six pixels of air at the top, for the ring that would otherwise be cut in half.
