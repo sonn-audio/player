@@ -20,7 +20,8 @@
  * `stagesOf`, the same function the chain draws.
  */
 import { stagesOf } from '@/components/SignalPath';
-import { Cover } from '@/components/Cover';
+import { useApi } from '@/state/ServerContext';
+import { zoneCoverCss } from '@/art/cover';
 import type { ApiZoneState } from '@/api/types';
 
 /** How a stage's state maps to the lane's dot — the same three states the chain uses. */
@@ -65,6 +66,8 @@ export function HouseLane({
    */
   current?: boolean;
 }) {
+  const api = useApi();
+  const art = zoneCoverCss(api, zone, 320);
   const stages = stagesOf(zone);
   const altered = stages.some((stage) => stage.state === 'on' && stage.label !== 'Source');
   const sync = zone.output?.sync;
@@ -89,6 +92,17 @@ export function HouseLane({
        * the same object, one size down.
        */}
       {/*
+       * The room's own record, as a band across its line — the wall, turned ninety degrees.
+       *
+       * On the art face a shut room is a *sliver of its own artwork*, dimmed hard, with its name on it;
+       * that is what makes the wall read as the house rather than as a menu. These rows had nothing but
+       * type, so they sat in the dark with no edges and no identity. The band is the same device at this
+       * face's temperature: grayscale, held far down, and faded out before it reaches the readings, so
+       * the numbers stay the brightest thing on the line.
+       */}
+      {art && <span className="house-art" style={{ backgroundImage: art }} aria-hidden="true" />}
+
+      {/*
        * The room, and what is on in it.
        *
        * The line named the room and then went straight to codecs — so an overview of twenty-four rooms
@@ -97,7 +111,9 @@ export function HouseLane({
        * the same pairing the panel's nameplate makes, at the size a row can hold.
        */}
       <span className="house-plate">
-        <Cover zone={zone} size={96} className="house-cover" />
+        {/* The lamp stands where the open tab's does, in the same 36px, so every room's name — open or
+            shut — begins on one edge. The record is the band behind the line now. */}
+        <span className="house-lamp" data-lit={playing || undefined} aria-hidden="true" />
         <span className="house-text">
           <span className="house-name">{zone.name}</span>
           {zone.track && (

@@ -3741,10 +3741,12 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
   width: 100%;
   margin: 0;
   padding: 11px var(--tab-pad, 16px);
-  /* No plate and no rule. A shut room is a line on the page — the open room's ground is what marks
-     the difference, and a row that needs a box around it to be a row was never a row. */
+  /* A line above every room, so the column is a stack of bands rather than type floating in the dark —
+     the same edges the wall's panels have, turned ninety degrees. */
+  border-top: 1px solid var(--hair, rgb(255 255 255 / 7%));
   background: none;
   text-align: left;
+  overflow: hidden;
   transition:
     background 0.22s ease,
     box-shadow 0.22s ease,
@@ -3836,46 +3838,78 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
   }
 }
 
+/* The lane's plate: the lamp's slot and the room's words, on the open tab's own columns — so every
+   room's name, open or shut, begins on one edge. */
 .house-plate {
-  display: flex;
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr);
   align-items: center;
   gap: 12px;
   min-width: 0;
 }
 
-/* `.cover` is `width: 100%` by default and one class each is a tie — which is how a 36px sleeve renders
-   at 168. Stated through the plate so it wins outright. */
-.house-plate .house-cover {
-  flex: none;
-  width: 36px;
-  height: 36px;
-  border-radius: 3px;
+/* The lamp, in the slot the open tab's own lamp stands in. */
+.house-lamp {
+  justify-self: center;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--line-strong);
+  transition:
+    background 0.3s,
+    box-shadow 0.3s;
+}
+
+.house-lamp[data-lit] {
+  background: var(--accent);
+  box-shadow: 0 0 9px 1px rgb(74 222 128 / 45%);
 }
 
 /*
- * A room with nothing on shows nothing, not a chip.
+ * The room's record, behind its line.
  *
- * The placeholder is a filled square with a note in it, which on a row that is otherwise type reads as
- * a little tile — and a column of them reads as a form. The slot stays (the names line up on it) and
- * it is simply empty, which is also what an idle room is.
+ * On the art face a shut room is a sliver of its own artwork, dimmed hard, with its name on it — that
+ * is what makes the wall read as the house rather than as a menu. Here the row is that sliver turned
+ * ninety degrees: sized to the row's height rather than cropped to its width (a 1700x58 slice through
+ * a square sleeve is a smudge), so the record lands as a square where the name is, and masked out well
+ * before the readings. This is the room's identity, not a picture to look at, and a number on top of a
+ * photograph is a number you cannot read.
  */
-.house-plate .house-cover[data-empty] {
-  background: none;
+.house-art {
+  position: absolute;
+  /* Starting where the line's own content starts: run to the row's edge and the record is a square
+     sliced by the left margin, which reads as a thumbnail that did not fit rather than as the room's
+     band. */
+  inset: 0 0 0 var(--tab-pad, 16px);
+  background-repeat: no-repeat;
+  background-position: left center;
+  background-size: auto 100%;
+  filter: grayscale(1) brightness(0.45);
+  opacity: 0.5;
+  -webkit-mask: linear-gradient(90deg, #000, transparent 58%);
+  mask: linear-gradient(90deg, #000, transparent 58%);
+  transition:
+    opacity 0.25s,
+    filter 0.25s;
 }
 
-.house-plate .house-cover[data-empty] .cover-placeholder {
-  display: none;
+.house-lane:hover .house-art {
+  filter: grayscale(0.7) brightness(0.55);
+  opacity: 0.64;
 }
 
-/*
- * Two lines where there is something to say, one where there is not — and the row does not change
- * height either way.
- *
- * The block is exactly as tall as the record beside it and its content is centred in that, so a silent
- * room's name sits on the sleeve's midline and a playing room's pair fills it. Without the fixed height
- * a playing room's line was 61px against its neighbours' 58, and a column of rooms with three-pixel
- * steps in it is not a column.
- */
+/* Everything real stands above the band. */
+.house-plate,
+.house-chain,
+.house-wire,
+.house-out,
+.house-verdict,
+.house-clock,
+.house-open {
+  position: relative;
+  z-index: 1;
+}
+
 .house-text {
   display: grid;
   align-content: center;
