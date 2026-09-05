@@ -73,8 +73,16 @@ function useReorder(
   const live = useRef(rows);
   live.current = draft ?? rows;
 
-  /* The server's answer always wins: a fresh read replaces whatever the drag left behind. */
-  useEffect(() => setDraft(null), [rows]);
+  /*
+   * The server's answer always wins — but only once it has actually said something.
+   *
+   * Keyed on the rows' *contents*, not on the array: the caller slices a fresh array every render, so
+   * depending on its identity dropped the drag's own result on the very next paint. The draft now
+   * stands until the ids come back in a different order, which is the server confirming the move (or
+   * refusing it).
+   */
+  const serverOrder = rows.map((entry) => entry.id).join(',');
+  useEffect(() => setDraft(null), [serverOrder]);
 
   const begin = useCallback(
     (itemId: string, event: React.PointerEvent) => {
@@ -87,9 +95,7 @@ function useReorder(
       let target: Drop | null = null;
 
       const at = (x: number, y: number): Drop | null => {
-        const row = document
-          .elementFromPoint(x, y)
-          ?.closest<HTMLElement>('[data-queue-id]');
+        const row = document.elementFromPoint(x, y)?.closest<HTMLElement>('[data-queue-id]');
         if (!row) {
           return null;
         }
@@ -109,8 +115,7 @@ function useReorder(
       };
 
       const move = (moveEvent: PointerEvent): void => {
-        const travelled =
-          Math.abs(moveEvent.clientX - from.x) + Math.abs(moveEvent.clientY - from.y);
+        const travelled = Math.abs(moveEvent.clientX - from.x) + Math.abs(moveEvent.clientY - from.y);
         if (!dragging && travelled < THRESHOLD_PX) {
           return;
         }
@@ -160,12 +165,19 @@ export function RunningOrder({
   onOpenQueue: () => void;
 }) {
   const api = useApi();
-  const { data } = useZoneCollection<ApiQueue>((id) => api.getQueue(id, 0, PAGE), zone.id, 'queue');
-  const recent = useZoneCollection<ApiRecents>(
-    (id) => api.getRecents(id, 0, PAGE),
-    zone.id,
-    'recents',
-  );
+  /*
+   * The list moves with the player, not only with the queue.
+   *
+   * `queue.changed` fires when someone appends, reorders or clears — not when the room simply reaches
+   * the next track, which is the commonest way a queue moves at all. So the read is also keyed on what
+   * is playing: a track change re-asks the server, `currentIndex` comes back pointing at the new one,
+   * and `Up next` advances by one. Without this the list sat exactly where it was for the whole album
+   * and the second entry was the one you were listening to.
+   */
+  const playingKey = `${zone.track?.title ?? ''}|${zone.track?.artist ?? ''}`;
+  const { data } = useZoneCollection<ApiQueue>((id) => api.getQueue(id, 0, PAGE), zone.id, 'queue', [playingKey]);
+  /* Recents gain an entry every time a track ends, which is the same moment. */
+  const recent = useZoneCollection<ApiRecents>((id) => api.getRecents(id, 0, PAGE), zone.id, 'recents', [playingKey]);
 
   /*
    * Everything after the one playing.
@@ -184,10 +196,7 @@ export function RunningOrder({
    */
   const sliced = data?.items.slice(from) ?? [];
   const first = sliced[0];
-  const ahead =
-    first && first.title === zone.track?.title && first.artist === zone.track?.artist
-      ? sliced.slice(1)
-      : sliced;
+  const ahead = first && first.title === zone.track?.title && first.artist === zone.track?.artist ? sliced.slice(1) : sliced;
   const remaining = Math.max(0, (data?.total ?? 0) - from);
 
   const move = useCallback(
@@ -199,9 +208,7 @@ export function RunningOrder({
   const order = useReorder(ahead, move);
 
   /* What played before, minus the one playing — a room's recents lead with the current track. */
-  const played = (recent.data?.items ?? []).filter(
-    (item) => !(item.title === zone.track?.title && item.artist === zone.track?.artist),
-  );
+  const played = (recent.data?.items ?? []).filter((item) => !(item.title === zone.track?.title && item.artist === zone.track?.artist));
 
   if (ahead.length === 0 && played.length === 0) {
     return null;
@@ -295,9 +302,7 @@ export function RunningOrder({
                 </span>
                 {/* The length, right-aligned and tabular — the one number a running order has always
                     carried, and what makes this read as the back of a sleeve rather than a menu. */}
-                <span className="np-order-time mono">
-                  {entry.duration > 0 ? formatTime(entry.duration) : ''}
-                </span>
+                <span className="np-order-time mono">{entry.duration > 0 ? formatTime(entry.duration) : ''}</span>
               </button>
             </li>
           );
@@ -305,12 +310,7 @@ export function RunningOrder({
 
         {/* The end of the list is a target too: dropping past the last row sends the entry there. */}
         {order.dragId && (
-          <li
-            className="np-order-tail"
-            data-queue-id=""
-            data-drop={order.drop?.beforeId === null || undefined}
-            aria-hidden="true"
-          />
+          <li className="np-order-tail" data-queue-id="" data-drop={order.drop?.beforeId === null || undefined} aria-hidden="true" />
         )}
       </ol>
 
