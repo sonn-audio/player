@@ -1651,13 +1651,18 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
   min-height: min-content;
   flex: 1 1 0;
   flex-direction: column;
-  margin: 1px 0 4px;
+  margin: 1px 0 6px;
   padding: 8px var(--tab-pad) clamp(10px, 1.2vh, 16px);
-  border-radius: 9px;
-  background: linear-gradient(180deg, rgb(255 255 255 / 7%), rgb(255 255 255 / 3.5%) 260px);
-  box-shadow:
-    inset 0 0 0 1px rgb(255 255 255 / 11%),
-    0 26px 56px -32px rgb(0 0 0 / 90%);
+  /*
+   * One ground, no frame.
+   *
+   * This column went through a phase of boxes inside boxes — a card for the tab, a card for the
+   * sleeve, a card for the running order, a card for the display, a card per shut room — which is
+   * the look of a framework, not of an instrument. What is left is the least that still says which
+   * room is open: a ground a few percent above the page and the accent spine down its edge. No
+   * border, no shadow, no rounded plate; the space around it is the separation.
+   */
+  background: rgb(255 255 255 / 3%);
   animation: np-tab-lift 0.26s ease-out;
 }
 
@@ -1728,9 +1733,6 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
  */
 @keyframes np-tab-lift {
   from {
-    box-shadow:
-      inset 0 0 0 1px rgb(255 255 255 / 0%),
-      0 0 0 0 rgb(0 0 0 / 0%);
     background-color: rgb(255 255 255 / 0%);
   }
 }
@@ -1784,15 +1786,11 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
 .np-order {
   display: flex;
   min-height: 0;
-  /* Fills the column, like the display fills its row: the list stands at the top of a window rather
-     than floating above an empty column. Same device, so the two columns read as one instrument. */
+  /* Fills the column so the list stands at its top rather than floating in the middle of it — but as
+     a list, not as a panel: the label and its rule are the whole frame this needs. */
   flex: 1 1 auto;
   flex-direction: column;
   gap: 9px;
-  padding: 11px 12px 10px;
-  border-radius: 5px;
-  background: rgb(255 255 255 / 2.5%);
-  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 8%);
   overflow: hidden;
 }
 
@@ -1943,6 +1941,13 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
 /* No light and no scrim behind the plate any more: the plate *is* the sleeve now — the room's name
    moved up to the tab's own line, so there is nothing under the record for a gradient to darken. */
 
+/* Silent room, empty slot: a hairline square where the record goes, rather than a filled tile with a
+   note drawn in it. */
+.np-plate[data-quiet] .np-plate-art {
+  background-color: transparent;
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 6%);
+}
+
 .np-plate-art {
   position: relative;
   z-index: 2;
@@ -1953,9 +1958,7 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
   background-image: var(--rec);
   background-position: center;
   background-size: cover;
-  box-shadow:
-    inset 0 0 0 1px rgb(255 255 255 / 8%),
-    0 18px 40px -22px rgb(0 0 0 / 85%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 8%);
 }
 
 /* Under the sleeve, on the record's own light: the room this is. */
@@ -3362,14 +3365,6 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
    * above the page turn it into an instrument's window — which is also what lets the rules stop at
    * an edge instead of trailing off.
    */
-  /* The window's top and sides; its foot is the frequency strip below (see `.analysis-axis`), so the
-     field and the scale that explains it are one object. */
-  border-radius: 5px 5px 0 0;
-  background: rgb(255 255 255 / 2.5%);
-  box-shadow:
-    inset 1px 0 0 rgb(255 255 255 / 8%),
-    inset -1px 0 0 rgb(255 255 255 / 8%),
-    inset 0 1px 0 rgb(255 255 255 / 8%);
 }
 
 /*
@@ -3494,13 +3489,11 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
   align-items: center;
   gap: clamp(10px, 1.4vw, 28px);
   width: 100%;
-  margin: 2px 0;
-  padding: 9px var(--tab-pad, 16px);
-  border-radius: 7px;
-  /* Recessed: darker than the page, edged in almost nothing. It is the contrast with the open tab's
-     lift that says which one is open. */
-  background: rgb(0 0 0 / 26%);
-  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 4%);
+  margin: 0;
+  padding: 11px var(--tab-pad, 16px);
+  /* No plate and no rule. A shut room is a line on the page — the open room's ground is what marks
+     the difference, and a row that needs a box around it to be a row was never a row. */
+  background: none;
   text-align: left;
   transition:
     background 0.22s ease,
@@ -3529,8 +3522,7 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
 
 /* Under the pointer a shut tab comes forward — the row you can open is the row that answers you. */
 .house-lane:hover {
-  background: rgb(255 255 255 / 5%);
-  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 10%);
+  background: rgb(255 255 255 / 4%);
   transform: translateX(3px);
 }
 
@@ -3580,6 +3572,21 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
   width: 36px;
   height: 36px;
   border-radius: 3px;
+}
+
+/*
+ * A room with nothing on shows nothing, not a chip.
+ *
+ * The placeholder is a filled square with a note in it, which on a row that is otherwise type reads as
+ * a little tile — and a column of them reads as a form. The slot stays (the names line up on it) and
+ * it is simply empty, which is also what an idle room is.
+ */
+.house-plate .house-cover[data-empty] {
+  background: none;
+}
+
+.house-plate .house-cover[data-empty] .cover-placeholder {
+  display: none;
 }
 
 .house-name {
@@ -4103,27 +4110,17 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
  * centring would hang half the label off the panel.
  */
 /*
- * The frequency scale, as the window's foot.
+ * The frequency scale: labels under the field, and nothing else.
  *
- * Loose under the field the labels read as three numbers adrift on the page — and once the display
- * had an edge, they were three numbers adrift *outside* it. Same ground, same hairline, no gap: the
- * strip is where the window ends, and the scale is part of the instrument rather than a caption
- * beneath it.
+ * It spent a version inside a bordered strip attached to a bordered display, which is two frames
+ * around three numbers. The field's own rules give the reading its shape; these say where it is on
+ * the axis. `flex: none` because a scale squeezed to 5px keeps its ground and loses its numbers.
  */
 .analysis-axis {
   position: relative;
-  /* Never the thing that gives way: squeezed to 5px on a short window the strip kept its ground and
-     lost its numbers, which is a bar of nothing under the display. The field is what shrinks here. */
   flex: none;
-  height: 21px;
-  padding-top: 5px;
-  border-radius: 0 0 5px 5px;
-  background: rgb(255 255 255 / 2.5%);
-  box-shadow:
-    inset 1px 0 0 rgb(255 255 255 / 8%),
-    inset -1px 0 0 rgb(255 255 255 / 8%),
-    inset 0 -1px 0 rgb(255 255 255 / 8%),
-    inset 0 1px 0 rgb(255 255 255 / 6%);
+  height: 16px;
+  padding-top: 4px;
 }
 
 .analysis-axis span {
