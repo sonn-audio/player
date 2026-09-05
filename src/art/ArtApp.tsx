@@ -30,6 +30,7 @@ import { Mark } from '@/components/Mark';
 import { Stage, MobileStage, greeting } from '@/art/Stage';
 import { RoomsSheet } from '@/art/Channels';
 import { Wall } from '@/art/Wall';
+import { useRoomDrag } from '@/art/useRoomDrag';
 import { Lane } from '@/art/Lane';
 import { useEdges, useEscape } from '@/art/useEdges';
 import { QueueSheet, QueueTabs, type QueueTab } from '@/art/Rail';
@@ -265,6 +266,56 @@ export function ArtApp() {
     return next ? { title: next.title, artist: next.artist } : null;
   }, [queue]);
 
+  /*
+   * The two gestures the wall invites.
+   *
+   * Drag the sleeve onto another room and the music goes there; drag a room onto the one you are in and
+   * they play together. Both were already in the contract and both were a list with checkboxes.
+   *
+   * The wall follows the music after a handoff. Someone who threw the record into the kitchen is now
+   * thinking about the kitchen, and leaving the screen on the room they just emptied would be answering
+   * a gesture with a shrug.
+   */
+  const [dropSaid, setDropSaid] = useState<string | null>(null);
+  const drag = useRoomDrag((payload, target) => {
+    if (payload.kind === 'record') {
+      void api
+        .handoff(payload.zoneId, target.zoneId)
+        .then(() => select(target.zoneId))
+        .catch(() => setDropSaid('that room would not take it'));
+      return;
+    }
+    const leader = leaderOf(zone, zones);
+    if (!leader) {
+      return;
+    }
+    /* `members` already leads with the leader — see `ApiGroup`. The room you are in stays at the head,
+       so its music is the one that continues, which is what dragging *into* it means. */
+    const members = leader.group?.members ?? [leader.id];
+    void api
+      .setGroup(leader.id, [...members, payload.zoneId])
+      .then((result) => {
+        const refused = result.rejected[0];
+        if (refused) {
+          setDropSaid(
+            refused.reason === 'protocol-mismatch'
+              ? `${payload.name} can’t stay in step with this room`
+              : `${payload.name} is not there any more`,
+          );
+        }
+      })
+      .catch(() => setDropSaid('that did not work'));
+  });
+
+  /* A refusal is worth one sentence and then silence. */
+  useEffect(() => {
+    if (!dropSaid) {
+      return undefined;
+    }
+    const timer = window.setTimeout(() => setDropSaid(null), 4200);
+    return () => window.clearTimeout(timer);
+  }, [dropSaid]);
+
   const goHome = (): void => setView({ kind: 'home' });
   const openBrowse = (node: BrowseNode = {}): void => setView({ kind: 'browse', node });
 
@@ -277,6 +328,7 @@ export function ArtApp() {
       /* Which room the wash is lighting — see `.cx-bg-scrim`: a record's colour belongs to the page
          that is showing that record, and nowhere near a wall of thirty other people's covers. */
       data-view={view.kind}
+      data-dragging={drag.active?.kind}
       style={accent as React.CSSProperties}
     >
       {/*
@@ -301,6 +353,29 @@ export function ArtApp() {
           )}
         />
       )}
+
+      {/*
+       * What is in the hand.
+       *
+       * Fixed to the pointer rather than parented to what it came from, because it has to cross panels
+       * that clip their own overflow — a ghost inside the sliver it was picked up from would be cut off
+       * at the first edge it met.
+       */}
+      {drag.active && (
+        <span
+          className="cx-hand"
+          style={{
+            left: `${drag.active.x}px`,
+            top: `${drag.active.y}px`,
+            backgroundImage: drag.active.cover,
+          }}
+          aria-hidden="true"
+        >
+          {!drag.active.cover && <i className="cx-hand-name mono">{drag.active.name}</i>}
+        </span>
+      )}
+
+      {dropSaid && <span className="cx-said mono">{dropSaid}</span>}
 
       {/* The dimmed screen's one readout: a panel on a wall is also a clock — and a calendar. */}
       {idle && (
@@ -482,9 +557,15 @@ export function ArtApp() {
                  * slivers of their own artwork at their own place in the row. It replaces the strip of
                  * names along the bottom, which was the house rendered as a footnote.
                  */
-                <Wall channels={channels} currentLeaderId={leaderOf(zone, zones)?.id ?? null} onSelect={select}>
+                <Wall
+                  channels={channels}
+                  currentLeaderId={leaderOf(zone, zones)?.id ?? null}
+                  onSelect={select}
+                  drag={drag}
+                >
                   <Stage
                     cur={cur}
+                    drag={drag}
                     onCanvas={() => setAsked(true)}
                     onLeaveCanvas={() => setAsked(false)}
                     resting={idle}

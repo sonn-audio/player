@@ -770,6 +770,123 @@
     opacity 1.2s var(--cx-ease);
 }
 
+/* --- picking a room up ---------------------------------------------------- */
+
+/*
+ * What is in the hand.
+ *
+ * A sleeve at 132px, tilted four degrees, following the pointer. Fixed to the viewport rather than
+ * parented to what it came from: every panel on this screen clips its own overflow, so a ghost that
+ * lived inside the sliver it was picked up from would be cut off at the first edge it crossed.
+ */
+.cx-hand {
+  position: fixed;
+  z-index: 90;
+  width: 132px;
+  height: 132px;
+  margin: -66px 0 0 -66px;
+  border-radius: 5px;
+  background-color: var(--cx-cover);
+  background-position: center;
+  background-size: cover;
+  pointer-events: none;
+  box-shadow:
+    0 30px 64px -20px rgb(0 0 0 / 88%),
+    inset 0 0 0 1px rgb(255 255 255 / 16%);
+  rotate: -4deg;
+  animation: cx-hand-in 0.16s var(--cx-ease);
+}
+
+@keyframes cx-hand-in {
+  from {
+    scale: 0.86;
+    opacity: 0;
+  }
+}
+
+/* A room with no artwork is carried by its name. */
+.cx-hand-name {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 10px;
+  font-size: 9.5px;
+  font-style: normal;
+  letter-spacing: 0.18em;
+  color: var(--t4);
+  text-align: center;
+}
+
+.cx-root[data-dragging] {
+  cursor: grabbing;
+}
+
+/* The record is in the air, so the place it came from says so. */
+.cx-root[data-dragging='record'] .cx-cover {
+  opacity: 0.5;
+}
+
+/* Where it can land. Nothing shouts: the panels that will take it simply come up a little. */
+.cx-sliver[data-hot] {
+  background: rgb(255 255 255 / 4.5%);
+}
+
+.cx-sliver[data-over] {
+  flex-basis: clamp(118px, 8.6vw, 184px);
+  background: rgb(255 255 255 / 9%);
+}
+
+.cx-sliver[data-over] .cx-sliver-art {
+  filter: grayscale(0) brightness(0.92) saturate(1);
+}
+
+.cx-sliver[data-over] .cx-sliver-name {
+  color: var(--t1);
+}
+
+/*
+ * The room you are in, as a target for another room.
+ *
+ * `outline` rather than a box-shadow, because the hairline between panels is already an inset shadow
+ * and one of the two would have to lose.
+ */
+.cx-wall-room[data-hot] {
+  outline: 1px solid var(--hair);
+  outline-offset: -1px;
+}
+
+.cx-wall-room[data-over] {
+  outline-color: color-mix(in srgb, var(--g) 60%, transparent);
+  background: rgb(255 255 255 / 2.5%);
+}
+
+/*
+ * What the house said, when it refused.
+ *
+ * One line, no box — a room that cannot stay in step with this one is worth a sentence and then
+ * silence, and this face does not have a component with a fill and a border to put it in.
+ */
+.cx-said {
+  position: absolute;
+  bottom: 22px;
+  left: 50%;
+  z-index: 40;
+  font-size: 10.5px;
+  letter-spacing: 0.16em;
+  color: var(--t4);
+  pointer-events: none;
+  translate: -50% 0;
+  animation: cx-said-in 0.3s var(--cx-ease) both;
+}
+
+@keyframes cx-said-in {
+  from {
+    opacity: 0;
+    translate: -50% 8px;
+  }
+}
+
 /* --- stage (desktop) ------------------------------------------------------ */
 
 /*
@@ -962,6 +1079,9 @@
 .cx-cover {
   position: relative;
   display: block;
+  /* It can be pressed and it can be carried; the cursor says the second, because the first is what
+     every cover in every player already does. */
+  cursor: grab;
   /* As large as the window can carry — the size itself lives on `.cx-stage-art`, which is also
      where the argument for it is written, because the two glows have to agree with it. */
   width: var(--cx-cover-size, min(clamp(220px, 44vh, 460px), 42vw));

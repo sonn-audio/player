@@ -21,6 +21,7 @@ import { horizontalDrag } from '@/art/drag';
 import { useVolumeControl } from '@/art/volume';
 import { Crossfade } from '@/art/Crossfade';
 import { artKeyOf } from '@/art/accent';
+import type { RoomDrag } from '@/art/useRoomDrag';
 import { Motion } from '@/art/Motion';
 import { useZoneFavorite } from '@/state/useZoneFavorite';
 import { useCoverAnchor } from '@/shell/coverMorph';
@@ -327,10 +328,13 @@ export function Stage({
   onCanvas,
   onLeaveCanvas,
   resting,
+  drag,
   nextUp,
   queueCount,
 }: {
   cur: Cur;
+  /** The room gestures — the sleeve is the thing you pick up. See `useRoomDrag`. */
+  drag: RoomDrag;
   onOpenRooms: () => void;
   onOpenQueue: () => void;
   onBrowse: () => void;
@@ -352,7 +356,8 @@ export function Stage({
   const artKey = artKeyOf(leader?.track);
 
   const toggle = (): void => {
-    if (!leader || !cur.hasTrack) {
+    /* A press that turned into a throw is not a press. See `useRoomDrag`. */
+    if (drag.consumed() || !leader || !cur.hasTrack) {
       return;
     }
     void (cur.isPlaying ? api.pause(leader.id) : api.play(leader.id));
@@ -415,6 +420,26 @@ export function Stage({
                 data-paused={!cur.isPlaying || undefined}
                 aria-label={cur.isPlaying ? 'Pause' : 'Play'}
                 onClick={toggle}
+                /*
+                 * Press it to stop the music, pull it to move the music.
+                 *
+                 * The same object doing both is the point: the record *is* what is playing, so carrying
+                 * it to another room is the gesture a person already has for that idea. Nine pixels of
+                 * travel separate the two — far enough that nobody pauses by accident, short enough that
+                 * the throw feels picked up rather than dragged.
+                 */
+                onPointerDown={(event) =>
+                  leader &&
+                  drag.begin(
+                    {
+                      kind: 'record',
+                      zoneId: leader.id,
+                      cover: zoneCoverCss(api, leader, 320),
+                      name: cur.title || cur.name,
+                    },
+                    event,
+                  )
+                }
                 {...coverAnchor}
               >
                 {/*

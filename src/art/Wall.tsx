@@ -27,17 +27,21 @@ import { useApi } from '@/state/ServerContext';
 import { zoneCoverCss } from '@/art/cover';
 import { useVolumeControl } from '@/art/volume';
 import type { Channel } from '@/art/useCur';
+import type { RoomDrag } from '@/art/useRoomDrag';
 
 export function Wall({
   channels,
   currentLeaderId,
   onSelect,
+  drag,
   children,
 }: {
   channels: Channel[];
   /** The room whose panel is the wall. */
   currentLeaderId: number | null;
   onSelect: (zoneId: number) => void;
+  /** The gesture in the air, if there is one — see `useRoomDrag`. */
+  drag: RoomDrag;
   /** What the current room's panel holds — the stage. */
   children: React.ReactNode;
 }) {
@@ -45,11 +49,23 @@ export function Wall({
     <div className="cx-wall">
       {channels.map((channel) =>
         channel.leader.id === currentLeaderId ? (
-          <div className="cx-wall-room" key={channel.leader.id}>
+          /*
+           * The room you are in is also a target: a room dragged onto it joins it. `data-room-drop` is
+           * what the drag hit-tests for, so the panel does not have to publish a rectangle that a
+           * `flex-grow` animation would immediately make stale.
+           */
+          <div
+            className="cx-wall-room"
+            key={channel.leader.id}
+            data-room-drop={channel.leader.id}
+            data-room-drop-kind="wall"
+            data-hot={drag.active?.kind === 'room' || undefined}
+            data-over={drag.over === channel.leader.id || undefined}
+          >
             {children}
           </div>
         ) : (
-          <Sliver key={channel.leader.id} channel={channel} onSelect={onSelect} />
+          <Sliver key={channel.leader.id} channel={channel} onSelect={onSelect} drag={drag} />
         ),
       )}
     </div>
@@ -68,7 +84,15 @@ export function Wall({
  * one element is how a mixing desk becomes a lottery, so they are separate elements — the same split the
  * dock made between a name you press and a fader you pull.
  */
-function Sliver({ channel, onSelect }: { channel: Channel; onSelect: (zoneId: number) => void }) {
+function Sliver({
+  channel,
+  onSelect,
+  drag,
+}: {
+  channel: Channel;
+  onSelect: (zoneId: number) => void;
+  drag: RoomDrag;
+}) {
   const api = useApi();
   const control = useVolumeControl(channel.leader);
   const playing = channel.playing && channel.hasTrack;
@@ -76,14 +100,36 @@ function Sliver({ channel, onSelect }: { channel: Channel; onSelect: (zoneId: nu
   const cover = zoneCoverCss(api, channel.leader, 320);
 
   return (
-    <div className="cx-sliver" data-activity={activity}>
+    <div
+      className="cx-sliver"
+      data-activity={activity}
+      data-room-drop={channel.leader.id}
+      data-room-drop-kind="room"
+      /* A record in the hand can land here; the panel says so before the pointer arrives. */
+      data-hot={drag.active?.kind === 'record' || undefined}
+      data-over={drag.over === channel.leader.id || undefined}
+    >
       {cover && <span className="cx-sliver-art" style={{ backgroundImage: cover }} aria-hidden="true" />}
       <span className="cx-sliver-veil" aria-hidden="true" />
 
       <button
         type="button"
         className="cx-sliver-hit"
-        onClick={() => onSelect(channel.leader.id)}
+        /* Press it and it selects; pull it and it is a room being carried to the one you are in. The
+           threshold in `useRoomDrag` is what keeps those two apart, and `consumed` is what stops the
+           click that follows a drag from also switching rooms. */
+        onPointerDown={(event) =>
+          drag.begin(
+            { kind: 'room', zoneId: channel.leader.id, cover, name: channel.leader.name },
+            event,
+          )
+        }
+        onClick={() => {
+          if (drag.consumed()) {
+            return;
+          }
+          onSelect(channel.leader.id);
+        }}
         title={
           channel.hasTrack
             ? `${channel.leader.name} — ${channel.leader.track?.title ?? ''}`
