@@ -49,7 +49,22 @@ function wire(zone: ApiZoneState): string {
  * in is the wide panel standing between its neighbours' spines. Pressing one opens it, which is the
  * same gesture there too.
  */
-export function HouseLane({ zone, onSelect }: { zone: ApiZoneState; onSelect: (zoneId: number) => void }) {
+export function HouseLane({
+  zone,
+  onSelect,
+  current,
+}: {
+  zone: ApiZoneState;
+  onSelect: (zoneId: number) => void;
+  /**
+   * This is the room you are in, drawn shut.
+   *
+   * With the instrument folded away every room is a line, this one included — and it has to stay
+   * findable in a column that can hold twenty-four of them. Pressing it opens the instrument again
+   * rather than switching room.
+   */
+  current?: boolean;
+}) {
   const stages = stagesOf(zone);
   const altered = stages.some((stage) => stage.state === 'on' && stage.label !== 'Source');
   const sync = zone.output?.sync;
@@ -62,8 +77,9 @@ export function HouseLane({ zone, onSelect }: { zone: ApiZoneState; onSelect: (z
       /* The column measures its rows by this between renders — see `useHouseSlide`. */
       data-lane-id={zone.id}
       data-playing={playing || undefined}
+      data-current={current || undefined}
       onClick={() => onSelect(zone.id)}
-      title={`Show ${zone.name}`}
+      title={current ? `Open ${zone.name}` : `Show ${zone.name}`}
     >
       {/*
        * Name and record, in the plate column the tall row's own name and sleeve stand in.

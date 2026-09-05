@@ -1682,16 +1682,22 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
   animation: np-tab-lift 0.26s ease-out;
 }
 
-/* The spine: what survives at a glance on a screen where every row starts the same way. */
+/*
+ * The spine, beside the name and no further.
+ *
+ * Running the whole height of the tab it was a rule down the side of the instrument — a frame by
+ * another name. Beside the room's own line it is what it means: this is the room that is open. Every
+ * shut room has the same mark in neutral ink on the same edge, so the column reads as one set.
+ */
 .np-room::before {
   content: '';
   position: absolute;
   top: 12px;
-  bottom: 12px;
   left: 0;
   width: 2px;
+  height: 28px;
   border-radius: 2px;
-  background: color-mix(in srgb, var(--accent) 60%, transparent);
+  background: var(--accent);
 }
 
 /*
@@ -1703,12 +1709,46 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
  */
 .np-room-head {
   display: grid;
-  grid-template-columns: 36px minmax(0, 1fr);
+  grid-template-columns: 36px minmax(0, 1fr) auto;
   align-items: center;
   gap: 12px;
   padding: 6px 0 10px;
   border-bottom: 1px solid var(--hair, rgb(255 255 255 / 7%));
   margin-bottom: clamp(10px, 1.2vh, 16px);
+}
+
+/*
+ * The fold, at the end of the tab's line.
+ *
+ * Quieter than the line it operates — the rail's fold had to be rebuilt three times to learn that. A
+ * chevron drawn from two borders rather than an icon, because the set has no chevron and a glyph rides
+ * its own baseline.
+ */
+.np-room-fold {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  color: var(--text-mute);
+  opacity: 0.55;
+  transition:
+    opacity 0.2s,
+    color 0.2s;
+}
+
+.np-room-fold i {
+  width: 7px;
+  height: 7px;
+  border-top: 1.5px solid currentcolor;
+  border-right: 1.5px solid currentcolor;
+  /* Pointing up: this folds away upward, into its own line. */
+  transform: rotate(-45deg) translateY(1px);
+}
+
+.np-room-fold:hover {
+  color: var(--text);
+  opacity: 1;
 }
 
 .np-room-lamp {
@@ -2028,6 +2068,29 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
   font-variant-numeric: tabular-nums;
 }
 
+/*
+ * The rooms that did not fit.
+ *
+ * A count rather than a scrollbar: with the instrument open only the nearest rooms are on screen, and
+ * the honest way to reach the others is to fold — which is what pressing this does. It sits on the
+ * rooms' own left edge so it reads as part of the column rather than as a control about it.
+ */
+.np-more-rooms {
+  align-self: start;
+  margin: 2px 0;
+  padding: 7px var(--tab-pad, 16px);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  color: var(--text-mute);
+  text-transform: uppercase;
+  transition: color 0.2s;
+}
+
+.np-more-rooms:hover {
+  color: var(--text);
+}
+
 .np-order-more {
   align-self: start;
   padding: 2px 0;
@@ -2095,7 +2158,9 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
      been cut off rather than having finished. The bar at the top is an edge and needs no inset; the
      bottom of the screen is not. */
   padding-bottom: 10px;
-  overflow: hidden;
+  /* Folded, a house of twenty-four is taller than the window and the column is the thing that scrolls.
+     Open, nothing does: the panel gives way instead (see `.np-player`). */
+  overflow: hidden auto;
   --tab-pad: clamp(12px, 1.1vw, 20px);
   /*
    * The plate column, once, for the tall row and for every lane — so the two cannot drift apart.
@@ -3702,6 +3767,18 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
 
 .house-lane:hover::before {
   background: rgb(255 255 255 / 22%);
+}
+
+/* The room you are in, drawn shut: the accent on its spine and its name at full strength, so it stays
+   findable in a folded column of twenty-four. */
+.house-lane[data-current]::before {
+  background: var(--accent);
+}
+
+.house-lane[data-current] .house-name {
+  color: var(--text);
+  font-family: var(--font-display);
+  font-size: 15px;
 }
 
 /* Under the pointer a shut tab comes forward — the row you can open is the row that answers you. */
