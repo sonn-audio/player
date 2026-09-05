@@ -51,7 +51,20 @@ const PEAK_FALL_PER_SEC = 0.26;
  * 30 fps panel and a 144 Hz monitor draw the same motion.
  */
 const RISE_TAU_MS = 35;
-const FALL_TAU_MS = 190;
+/*
+ * 95, not 190 — and this is what puts the air under the roofline.
+ *
+ * The peak hold and the bars are the same measurement at two speeds, so the *gap* between them is
+ * whatever the bars give back between transients. At 190ms they barely gave any: the columns sat at
+ * their own peak and the held line traced their tops, which is why the display read as a blob with a
+ * green outline drawn round it however long the hold was made. Fast bars under a slow hold is the
+ * oldest arrangement in metering, and the reason for it is exactly this — the two have to move at
+ * different rates or there is nothing to see between them.
+ *
+ * Still slow enough that a drumbeat leaves a wake rather than a blink: 95ms is about three frames at
+ * 30fps, so the fall is visible as a fall and not as a flicker.
+ */
+const FALL_TAU_MS = 95;
 
 /**
  * When a chasing value is allowed to arrive, as a fraction of full scale.
