@@ -90,6 +90,52 @@ function dbfs(loudness: number): string {
   return toDb(loudness).toFixed(1);
 }
 
+/**
+ * The nameplate's right half: what the audio is doing, in numbers, at a size you can read.
+ *
+ * These two values were already measured and were spending their life at 10px in the corner of the
+ * spectrum's heading — on a face whose entire subject is the reading. Beside the title instead, in
+ * tabular figures with the label engraved above them, they are what fills the half of the hero that
+ * was empty page, and they fill it with the one thing this player has that the others do not.
+ *
+ * It subscribes to the same stream the display does; `useAnalysis` is refcounted per zone, so a
+ * second reader of one room costs one more listener and no second connection.
+ *
+ * Idle says `—` rather than `-inf` or `0.0`: a meter that reports a number it did not measure is
+ * worse than one that admits it is not measuring.
+ */
+export function Readout({
+  zoneId,
+  active,
+  capabilities,
+}: {
+  zoneId: number;
+  active: boolean;
+  capabilities: ApiOutputCapabilities | null | undefined;
+}) {
+  const analysis = useAnalysis(zoneId, active, capabilities?.visualizer?.rateMax ?? 30);
+  const level = Math.min(100, analysis.loudness / (spectrumGeometry().fullScale / 100));
+
+  return (
+    <div className="np-readout">
+      <div className="np-read">
+        <span className="np-read-label">Level</span>
+        <span className="np-read-value">
+          {active ? dbfs(analysis.loudness) : '—'}
+          <i>dBFS</i>
+        </span>
+      </div>
+      <div className="np-read">
+        <span className="np-read-label">Note</span>
+        <span className="np-read-value">{(active && analysis.pitch) || '—'}</span>
+      </div>
+      {/* The peak lamp, as on the equipment this borrows from: lit while the loudest bin is inside the
+          top of the scale, which is the only moment the number beside it is worth reacting to. */}
+      <span className="np-read-lamp" data-lit={(active && level > 92) || undefined} title="Approaching full scale" />
+    </div>
+  );
+}
+
 export function AnalysisPanel({
   zoneId,
   active,
@@ -224,31 +270,10 @@ export function AnalysisPanel({
     <section className="analysis-panel">
       <div className="analysis-heading">
         <span>Spectrum</span>
-        {/* The note being played and how hard — the two numbers worth a glance. Pitch leads because
-            it changes meaningfully; the level is already drawn by the meter below. */}
+        {/* The numbers moved up to the nameplate, where there was a window's worth of empty page and
+            where a reading this face is *about* should be legible from across a desk — see `Readout`.
+            What stays here is the display's name and the door to the equalizer. */}
         <span className="analysis-readout">
-          {/* Idle says so, rather than showing a pitch of nothing and a level of zero as though it
-              had measured them. */}
-          {active ? (
-            <>
-              {/* A peak lamp, as on the equipment this borrows from: lit while the loudest bin is
-                  inside the top of the scale, which is the only moment the number below is worth
-                  reacting to. */}
-              <span
-                className="analysis-lamp"
-                data-lit={level > 92 || undefined}
-                title="Approaching full scale"
-                aria-hidden="true"
-              />
-              {analysis.pitch && <span className="analysis-pitch">{analysis.pitch}</span>}
-              <span className="analysis-level">
-                {dbfs(analysis.loudness)}
-                <i>dBFS</i>
-              </span>
-            </>
-          ) : (
-            <span className="analysis-level">idle</span>
-          )}
           <button
             type="button"
             className="text-button analysis-eq-toggle"

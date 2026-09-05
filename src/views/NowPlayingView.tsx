@@ -19,7 +19,7 @@ import { SourceChip } from '@/components/StreamFormat';
 import { QueuePanel } from '@/components/QueuePanel';
 import { FavoritesPanel } from '@/components/FavoritesPanel';
 import { RecentsPanel } from '@/components/RecentsPanel';
-import { AnalysisPanel } from '@/components/AnalysisPanel';
+import { AnalysisPanel, Readout } from '@/components/AnalysisPanel';
 import { Icon } from '@/components/Icon';
 import { splitQualifier } from '@/lib/format';
 import { useZoneFavorite } from '@/state/useZoneFavorite';
@@ -156,6 +156,11 @@ export function NowPlayingView({
             crossfades when the music changes instead of snapping to the next song mid-glance.
           */}
           <div className="np-heading" key={track?.title ?? 'idle'}>
+            {/* Who, then what — a nameplate's order, and the same one the art face's label reads in.
+                Under the title it was the second half of a search result; above it, it is the line
+                that says whose equipment-load this is. */}
+            {track?.artist && <p className="np-artist">{track.artist}</p>}
+
             {/*
               The edition, at a size that matches its importance.
               `(Radio Version)`, `(2010 Remastered Version)`, `[Explicit]` — the catalogue puts these
@@ -174,8 +179,6 @@ export function NowPlayingView({
                 );
               })()}
             </h1>
-
-            {track?.artist && <p className="np-artist">{track.artist}</p>}
 
             {/* Just the album. The provider moved down into the chip row, where "where did this come
                 from" sits with the rest of what this audio *is* — trailing the album title it read as
@@ -270,6 +273,15 @@ export function NowPlayingView({
             under it are the three lists that feed it.
           */}
         </div>
+
+        {/* The reading, at a size worth the name of this face — see `Readout`. It fills the half of
+            the nameplate row that was empty page, with the numbers that were living at 10px in the
+            corner of the display below. */}
+        <Readout
+          zoneId={zone.id}
+          active={zone.state === 'playing'}
+          capabilities={zone.output?.capabilities}
+        />
 
         {/*
           The spectrum runs the full width, under the artwork as well as the controls.

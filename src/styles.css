@@ -1572,15 +1572,107 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
    * only 236, so the photograph alone was setting the row's height and the display was paying for it.
    * Below roughly 780px of window the nameplate becomes the floor instead and this stops mattering.
    */
-  grid-template-columns: min(clamp(150px, 24vw, 460px), 34vh) minmax(0, 1fr);
+  grid-template-columns: min(clamp(150px, 24vw, 460px), 34vh) minmax(0, 1fr) auto;
   /* The nameplate row sizes to its contents; the display takes everything after it. */
   grid-template-rows: auto minmax(0, 1fr);
   grid-template-areas:
-    'cover meta'
-    'analysis analysis';
+    'cover meta readout'
+    'analysis analysis analysis';
   gap: 18px 22px;
   min-width: 0;
   min-height: 0;
+}
+
+/*
+ * The nameplate's right half: the reading, engraved.
+ *
+ * The hero was a title and four controls against 480px of empty page, on a face whose subject is the
+ * measurement — while the measurement itself sat at 10px in the corner of the display below. Here it
+ * is a column of readings at a size you can take in from a chair: the label engraved above, the figure
+ * in tabular mono under it, and the peak lamp beside them.
+ *
+ * Right-aligned and `auto`-sized, so the column is exactly as wide as its widest number and the middle
+ * column keeps everything else. `tabular-nums` is not decoration here: without it `-11.8` and `-9.4`
+ * have different widths and the whole cluster twitches once a second.
+ */
+/*
+ * And the one action beside the transport loses its box too.
+ *
+ * The four transport controls are bare glyphs; the star was a 40px pill with a border and a fill, so
+ * the row read as four marks and one button. It is the same kind of thing they are — one press, one
+ * result — and it is now drawn like one.
+ */
+.np-actions .np-action {
+  border-color: transparent;
+  background: none;
+}
+
+.np-actions .np-action:hover {
+  border-color: var(--line);
+  background: var(--surface-2);
+}
+
+.np-readout {
+  grid-area: readout;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  align-self: center;
+  padding-left: 26px;
+}
+
+.np-read {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: flex-end;
+}
+
+.np-read-label {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  color: var(--text-mute);
+  text-transform: uppercase;
+}
+
+.np-read-value {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  font-family: var(--font-mono);
+  font-size: clamp(20px, 2.4vh, 30px);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+  color: var(--text);
+}
+
+.np-read-value i {
+  font-size: 9.5px;
+  font-style: normal;
+  letter-spacing: 0.14em;
+  color: var(--text-mute);
+}
+
+/* Unlit it is a hole in the panel, which is what an unlit lamp is. */
+.np-read-lamp {
+  position: absolute;
+  /* In the column's own gutter, not on top of the first label — `right: 0` put it through the E of
+     LEVEL, which is what a lamp does when it is given the same corner as a word. */
+  top: 7px;
+  left: 6px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--line-strong);
+  transition: background 0.2s;
+}
+
+.np-read-lamp[data-lit] {
+  background: var(--warn);
+  box-shadow: 0 0 8px 1px rgb(250 204 21 / 45%);
 }
 
 .np-meta {
@@ -1836,9 +1928,19 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
   animation: np-heading-in 420ms var(--ease) both;
 }
 
+/*
+ * The nameplate's one chip loses its box.
+ *
+ * Nothing else in the hero has a fill — not the title, not the transport, not the readings — so the
+ * provider sat there as the single upholstered object on an engraved panel. The logo and the name say
+ * where the music came from perfectly well without a tray to sit in; what is left is a mono label in
+ * the same voice as `LEVEL` and `NOTE` on the other side of the row, which is what it always was.
+ */
 .format-chips .chip {
-  padding: 4px 9px;
-  border-radius: 4px;
+  padding: 4px 0;
+  border-radius: 0;
+  background: none;
+  color: var(--text-mute);
 }
 
 /*
