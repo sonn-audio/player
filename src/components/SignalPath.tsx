@@ -616,10 +616,12 @@ function Timing({ zone }: { zone: ApiZoneState }) {
  * could never get from watching a number change. Scaled to whichever is wider, the band or the
  * data, so an excursion bends the line instead of leaving the chart.
  *
- * Hidden until a few seconds have accumulated: two points make a line, not a trace.
+ * Hidden until it has something to say. Eight points was "enough to draw a line" and it showed as a
+ * band with a stub in it — a chart that looks broken rather than one still filling. Twenty reports is
+ * about twenty seconds, by which time the trace is a third of the way across and reads as history.
  */
 function LeadTrace({ samples, lo, hi }: { samples: number[]; lo: number; hi: number }) {
-  if (samples.length < 8) {
+  if (samples.length < 20) {
     return null;
   }
   const min = Math.min(lo, ...samples);
@@ -629,7 +631,19 @@ function LeadTrace({ samples, lo, hi }: { samples: number[]; lo: number; hi: num
   const bottom = min - pad;
   const y = (value: number): number => ((top - value) / (top - bottom)) * 100;
   const step = 100 / (TRACE_LENGTH - 1);
-  const points = samples.map((value, index) => `${(index * step).toFixed(2)},${y(value).toFixed(2)}`).join(' ');
+  /*
+   * A roll display fills from the right.
+   *
+   * Plotted from x=0 the first ten reports drew a short line in the left tenth of the chart and left
+   * the rest as an empty band — which looks like a chart that failed rather than one still filling.
+   * Offsetting so the newest sample sits on the right edge means the trace grows backwards out of
+   * "now", which is both what an oscilloscope does and what the reading means: the right-hand end is
+   * always this second.
+   */
+  const offset = 100 - (samples.length - 1) * step;
+  const points = samples
+    .map((value, index) => `${(offset + index * step).toFixed(2)},${y(value).toFixed(2)}`)
+    .join(' ');
 
   return (
     <div className="signal-trace" aria-hidden="true">

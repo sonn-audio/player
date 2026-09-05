@@ -2577,11 +2577,33 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
  */
 .analysis-meter {
   position: relative;
-  height: 3px;
+  /*
+   * The bridge grows with the display it sits under.
+   *
+   * 3px was right when the analyser was a 236px band; under 637px of spectrum it was a hairline
+   * somebody had forgotten to delete. It is a meter, and a meter is read at a glance from across a
+   * desk — so it takes a share of the window's height like everything else on this panel now does.
+   */
+  height: clamp(3px, 0.75vh, 7px);
   margin-top: 9px;
   overflow: hidden;
   border-radius: var(--r-pill);
   background: var(--line);
+}
+
+/* The scale under the rails: four notches, at the values the spectrum draws its rules at. */
+.analysis-meter-scale {
+  position: relative;
+  height: 5px;
+  margin-top: 2px;
+}
+
+.analysis-meter-scale i {
+  position: absolute;
+  top: 0;
+  width: 1px;
+  height: 4px;
+  background: rgb(255 255 255 / 16%);
 }
 
 /*

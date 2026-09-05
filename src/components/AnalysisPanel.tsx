@@ -400,6 +400,22 @@ export function AnalysisPanel({
             <span />
             <i aria-hidden="true" />
           </div>
+          {/*
+           * The scale, printed under the left rail and read by both.
+           *
+           * A bridge without one is a pair of growing lines: you can see that it is louder, never how
+           * loud. The notches are the same four values the spectrum rules use, mapped the same way —
+           * the stream is linear in dB between `floorDb` and 0 — so a peak sitting on the third notch
+           * means the same thing on both instruments. Unlabelled, because the display above has
+           * already said which line is which and a bridge with numbers on it is a ruler.
+           */}
+          <span />
+          <span className="analysis-meter-scale" aria-hidden="true">
+            {rules.map((rule) => (
+              <i key={rule.db} style={{ left: `${(rule.db - floorDb) / -floorDb * 100}%` }} />
+            ))}
+          </span>
+
           <span className="analysis-meter-ch">R</span>
           <div
             className="analysis-meter"
