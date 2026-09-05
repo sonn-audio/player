@@ -1641,14 +1641,15 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
   position: relative;
   display: flex;
   /*
-   * Shrinks with the window, but never past the floors its own rows declare.
+   * Fits the window.
    *
-   * The panel's rows have minimums — a nameplate, a control strip, 120px of display and a chain — and
-   * on a short window they add up to more than the tab has. A grid told to fit anyway lays its rows
-   * over each other, which is how the chain came to be printed through the spectrum. `min-content`
-   * holds them apart and the column takes the overflow.
+   * `min-height: min-content` was tried here and it is a trap: in an intrinsic sizing pass a `1fr`
+   * grid row is measured at its *max*-content, so the tab's minimum came out at 2200px and a tall
+   * window scrolled for no reason. The floors are enforced the other way round now — the panel clips
+   * itself (see `.np-player`) — which cannot overflow onto the room below whatever the arithmetic
+   * says.
    */
-  min-height: min-content;
+  min-height: 0;
   flex: 1 1 0;
   flex-direction: column;
   margin: 1px 0 6px;
@@ -1715,13 +1716,39 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
    the right — the arrangement this face has settled on, now inside a tab. */
 .np-room-body {
   display: grid;
-  /* `min-content`, not 0: a zero minimum here and on the panel below cut the chain of content-based
-     floors, so the tab could be squeezed to nothing and its rows landed on top of each other. */
-  min-height: min-content;
+  min-height: 0;
   flex: 1 1 auto;
   grid-template-columns: var(--room-name) minmax(0, 1fr);
   gap: clamp(14px, 1.8vw, 34px);
   animation: np-tab-open 0.38s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+/*
+ * A short window pays in air, and then in luxuries.
+ *
+ * The tab column costs the panel a line per shut room, and below roughly 900px the instrument's own
+ * floors add up to more than is left. The order things give way in is stated here: first the space
+ * between the panel's rows and around the tab, then the lead trace — the one reading in the clock
+ * block that is a nicety rather than a fact. The display and the chain keep their sizes.
+ */
+@media (max-height: 900px) {
+  .np-player {
+    gap: 10px 22px;
+  }
+
+  .np-room {
+    margin-bottom: 4px;
+    padding-bottom: 8px;
+  }
+
+  .np-room-head {
+    padding: 5px 0 8px;
+    margin-bottom: 8px;
+  }
+
+  .np-chain .signal-trace {
+    display: none;
+  }
 }
 
 /*
@@ -1963,9 +1990,6 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
 
 /* Under the sleeve, on the record's own light: the room this is. */
 
-.np-room[data-current] {
-  min-height: 0;
-}
 
 .np-room-name {
   font-family: var(--font-display);
@@ -1977,11 +2001,11 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
 
 .now-playing {
   position: relative;
-  /* A column of rooms: shut ones keep their line, the open one takes what is left. It scrolls only
-     when the instrument genuinely does not fit — see `min-height: min-content` on `.np-room`. */
+  /* A column of rooms: shut ones keep their line, the open one takes what is left. Nothing scrolls —
+     the panel gives way (and, at the very end, clips itself) so the column always fits the window. */
   display: flex;
   flex-direction: column;
-  overflow: hidden auto;
+  overflow: hidden;
   --tab-pad: clamp(12px, 1.1vw, 20px);
   /*
    * The plate column, once, for the tall row and for every lane — so the two cannot drift apart.
@@ -2074,8 +2098,20 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
   /* Two columns: the sleeve moved to the room's plate, so what is left here is the words and the
      readings. */
   grid-template-columns: minmax(0, 1fr) auto;
-  /* The nameplate, the control strip and the chain size to their contents; the display takes what is
-     between them. */
+  /*
+   * The nameplate, the control strip and the chain size to their contents; the display takes what is
+   * between them — but never less than it holds.
+   *
+   * `minmax(0, 1fr)` for the display was a lie the grid believed: the row said "I may shrink to
+   * nothing" while the display underneath it keeps a 120px floor, so on a tight panel the row was
+   * given less than its content and the reading painted straight through the chain and out of the tab,
+   * over the room below it. The lead trace appearing after twenty seconds of streaming was enough to
+   * trigger it.
+   *
+   * `min-content` is the honest floor, and it is what makes the whole chain work: the grid's minimum
+   * now includes the display's, the panel passes it to the tab, and the tab hands the overflow to the
+   * column, which scrolls. Nothing is ever drawn on top of anything.
+   */
   grid-template-rows: auto auto minmax(0, 1fr) auto;
   grid-template-areas:
     'meta readout'
@@ -2084,8 +2120,16 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
     'chain chain';
   gap: 18px 22px;
   min-width: 0;
-  /* See `.np-room-body`: the panel's own rows declare the floors, and this is what passes them up. */
-  min-height: min-content;
+  min-height: 0;
+  /*
+   * The panel keeps its contents to itself.
+   *
+   * Its rows have floors — 120px of display among them — so on a window too short for all of them the
+   * grid hands out less than they need and the surplus is *painted*, not dropped: the chain came out
+   * the bottom of the tab and over the room below it. Clipping is the containment: on a short window
+   * the strip loses a few pixels of its own instead of writing on its neighbour.
+   */
+  overflow: hidden;
 }
 
 /*
@@ -6166,9 +6210,6 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
 .signal-trace {
   height: 30px;
   margin-top: 10px;
-  border-radius: 2px;
-  background: rgb(255 255 255 / 2.5%);
-  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 5%);
   overflow: hidden;
 }
 
