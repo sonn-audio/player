@@ -205,6 +205,25 @@ export function NowPlayingView({ zone }: { zone: ApiZoneState }) {
             {zone.source && <SourceChip source={zone.source} />}
           </p>
 
+          {/*
+            No Stop / Power off row: three controls and a sentence at the bottom of a block whose subject
+            is the music, two of which act on the *room* rather than on it. The Zone tab that held them —
+            along with the room's inputs — is gone too: this view is about what is playing, and the tabs
+            under it are the three lists that feed it.
+          */}
+        </div>
+
+        {/*
+         * The transport, across the panel rather than under the words.
+         *
+         * The nameplate row was three islands with six hundred pixels of nothing between the middle and
+         * the right: a picture, a column of type that stopped where its longest line stopped, and a pair
+         * of readings pinned to the far edge. A timeline that runs the width of the panel and a
+         * transport centred beneath it turns that row into one object — and it is what the control strip
+         * on a piece of equipment actually looks like, which is the argument this face has been making
+         * everywhere else.
+         */}
+        <div className="np-transport">
           {/* The envelope of what has played, the position, and the seek gesture — one element. A slim
               bar under it drew the position a second time; see `Waveform`. */}
           <Waveform zone={zone} />
@@ -238,12 +257,6 @@ export function NowPlayingView({ zone }: { zone: ApiZoneState }) {
             </div>
           </div>
 
-          {/*
-            No Stop / Power off row: three controls and a sentence at the bottom of a block whose subject
-            is the music, two of which act on the *room* rather than on it. The Zone tab that held them —
-            along with the room's inputs — is gone too: this view is about what is playing, and the tabs
-            under it are the three lists that feed it.
-          */}
         </div>
 
         {/* The reading, at a size worth the name of this face — see `Readout`. It fills the half of

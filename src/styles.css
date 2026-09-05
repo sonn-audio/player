@@ -1590,10 +1590,12 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
    * Below roughly 780px of window the nameplate becomes the floor instead and this stops mattering.
    */
   grid-template-columns: min(clamp(150px, 24vw, 460px), 30vh) minmax(0, 1fr) auto;
-  /* The nameplate and the chain size to their contents; the display takes everything between. */
-  grid-template-rows: auto minmax(0, 1fr) auto;
+  /* The nameplate, the control strip and the chain size to their contents; the display takes what is
+     between them. */
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
   grid-template-areas:
     'cover meta readout'
+    'transport transport transport'
     'analysis analysis analysis'
     'chain chain chain';
   gap: 18px 22px;
@@ -2843,6 +2845,59 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
 }
 
 /*
+ * The control strip: one object across the panel.
+ *
+ * The timeline runs the full width with its times at the ends, and the transport sits centred under it
+ * — which is where a transport sits on equipment, and which is what closes the canyon the nameplate row
+ * used to have between the type on the left and the readings on the right.
+ */
+.np-transport {
+  grid-area: transport;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 4px;
+}
+
+.np-transport .np-controls {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+}
+
+/* The transport takes the middle column, so it is centred on the *panel* and not on whatever is left
+   over beside the volume. */
+.np-transport .transport {
+  grid-column: 2;
+  justify-content: center;
+}
+
+/* The room's level and the one per-track action ride the right-hand third, ending on the same edge
+   every other reading on this panel ends on. */
+.np-transport .np-tail {
+  grid-column: 3;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 14px;
+}
+
+/*
+ * A fader with a stated length, ending on the panel's edge.
+ *
+ * `.volume` is a flex row of two buttons, a rail and a readout, and the rail took whatever was left —
+ * which beside a centred transport was about seventy pixels. The width goes on the *rail*, because that
+ * is the part that means something: a fader you can place a value on rather than a stub.
+ */
+.np-transport .np-tail .volume {
+  flex: none;
+}
+
+.np-transport .np-tail .volume input[type='range'] {
+  width: clamp(120px, 13vw, 210px);
+}
+
+/*
  * The chain, laid out as a rack strip.
  *
  * Down the right edge it was eight rows of label-and-value — the shape of an inspector, a thing you
@@ -2873,6 +2928,12 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
   align-items: baseline;
   gap: 12px;
   flex-wrap: wrap;
+  /* No rule under it. In a rail it separated the verdict from the stages below; across a strip it was a
+     line that started at the left edge and stopped in the middle of the panel, which is the one thing a
+     hairline must never do. The seam above the whole strip already does that work. */
+  margin: 0;
+  padding-bottom: 0;
+  border-bottom: 0;
 }
 
 .np-chain .signal-verdict-head,
@@ -2976,12 +3037,21 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
   max-width: 62ch;
 }
 
-/* The clock reads across, like everything else in the strip. */
+/*
+ * The clock's readings end on the same edge as the display's.
+ *
+ * `LEVEL` and `NOTE` sit against the right edge of the panel at the top; `LEAD`, `FLOOR` and `DRIFT`
+ * sat in a loose row wherever the flex ran out. Two blocks of readings, one at each end of the panel,
+ * on one edge and in one voice — that is what makes equipment look designed rather than assembled, and
+ * it costs nothing but alignment.
+ */
 .np-chain .signal-timing {
   display: flex;
   align-items: baseline;
-  gap: clamp(18px, 3vw, 54px);
+  justify-content: flex-end;
+  gap: clamp(16px, 2.4vw, 40px);
   flex-wrap: wrap;
+  text-align: right;
 }
 
 .np-chain .signal-timing-head {
@@ -2990,8 +3060,28 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
 
 .np-chain .signal-metrics {
   display: flex;
-  gap: clamp(18px, 3vw, 54px);
+  align-items: baseline;
+  gap: clamp(16px, 2.4vw, 40px);
   margin: 0;
+}
+
+/* Each reading is its own column: engraved label, figure under it, right-aligned like the pair above. */
+.np-chain .signal-metrics > div {
+  text-align: right;
+}
+
+/*
+ * The trace stops being a box.
+ *
+ * A filled rectangle with a border is the one shape this panel does not have anywhere else, and with a
+ * flat lead inside it read as an empty green tray parked in the corner. As a bare hairline the same
+ * data is what it always was — a line lying flat inside the band it is supposed to lie flat inside.
+ */
+.np-chain .signal-trace {
+  width: clamp(90px, 9vw, 150px);
+  height: 22px;
+  margin: 0 0 0 clamp(8px, 1vw, 20px);
+  align-self: flex-end;
 }
 
 /*
@@ -5216,7 +5306,7 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
 }
 
 .signal-trace-band {
-  fill: rgb(74 222 128 / 7%);
+  fill: rgb(74 222 128 / 5%);
 }
 
 .signal-trace-line {
