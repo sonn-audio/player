@@ -1589,7 +1589,7 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
    * only 236, so the photograph alone was setting the row's height and the display was paying for it.
    * Below roughly 780px of window the nameplate becomes the floor instead and this stops mattering.
    */
-  grid-template-columns: min(clamp(150px, 24vw, 460px), 34vh) minmax(0, 1fr) auto;
+  grid-template-columns: min(clamp(150px, 24vw, 460px), 30vh) minmax(0, 1fr) auto;
   /* The nameplate and the chain size to their contents; the display takes everything between. */
   grid-template-rows: auto minmax(0, 1fr) auto;
   grid-template-areas:
@@ -2830,7 +2830,16 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
    * automatic minimum is its content, which is exactly the floor being removed here.
    */
   flex: 1 1 var(--spec-h);
-  min-height: 0;
+  /*
+   * A floor, because a display that can reach zero does.
+   *
+   * `min-height: 0` was right for the bug it fixed — the panel outgrowing its row and painting the axis
+   * through the tab strip — and wrong as a resting state: with a tall chain under it the spectrum was
+   * handed what was left, and what was left was nothing. 120px is the smallest thing that still reads
+   * as a spectrum. `overflow: hidden` on the panel is what makes this safe now; if the window is too
+   * short for even that, the panel clips itself instead of painting on its neighbours.
+   */
+  min-height: 120px;
 }
 
 /*
@@ -2847,8 +2856,28 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
  */
 .np-chain {
   grid-area: chain;
-  padding-top: 16px;
+  padding-top: 13px;
   border-top: 1px solid var(--line);
+}
+
+/*
+ * The strip earns its height back.
+ *
+ * At 979px of window the panel above it had 43px left — a display clipped to a sliver, which is the
+ * one thing this face cannot afford. Everything here is the same information at the size a rack strip
+ * states it: the verdict on one line rather than two, the clock's numbers beside their labels rather
+ * than under them, and the stations closer together.
+ */
+.np-chain .signal-verdict {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.np-chain .signal-verdict-head,
+.np-chain .signal-verdict-note {
+  margin: 0;
 }
 
 /*
@@ -2891,9 +2920,22 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
 .np-chain .signal-stage {
   flex: 1 1 0;
   flex-direction: column;
-  gap: 9px;
+  gap: 8px;
   min-width: 0;
   padding: 0 14px 0 0;
+}
+
+/*
+ * Two lines a station, never three.
+ *
+ * `lossy — encoded before it reached us`, `lossless container`, `padded — nothing lost`: read down a
+ * rail those third lines are the reason the chain is worth having. Read *across*, eight of them at once
+ * turn a 90px strip into a 200px block, and the block comes out of the display above it — which is how
+ * the spectrum ended up two pixels tall. The verdict on the left already says the sentence that
+ * matters about the whole chain; the stations state their readings.
+ */
+.np-chain .signal-detail {
+  display: none;
 }
 
 /* The connector runs *between* the dots rather than down the page. */
@@ -3190,9 +3232,16 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
   flex-direction: column;
   gap: 14px;
   min-height: 0;
-  /* Six or seven rows before it scrolls. A queue is read a few entries at a time; past that it was
-     only ever reachable by scrolling anyway, and the display deserves the height more. */
-  max-height: 40vh;
+  /*
+   * Three or four rows before it scrolls, and no more.
+   *
+   * `auto` rows take their content before the elastic one gets anything, so on a 1440px screen a
+   * one-track queue was quietly claiming 428px — its header, its rows, its padding and its empty-state
+   * line — and the display was living on what came back. A queue is read a few entries at a time and
+   * scrolls for the rest; a spectrum cannot scroll. The cap is the only place that argument can be
+   * made, because grid will otherwise always side with the content that states a size.
+   */
+  max-height: min(28vh, 208px);
   overflow-y: auto;
   /*
    * Six pixels of air at the top, for the ring that would otherwise be cut in half.
