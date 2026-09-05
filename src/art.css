@@ -558,6 +558,13 @@
   }
 }
 
+/* The way into the catalogue: the glyph and the word travel together. */
+.cx-nav-browse {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
 /* --- the wall: the house, one panel to a room ------------------------------ */
 
 /*

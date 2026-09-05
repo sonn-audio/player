@@ -454,13 +454,24 @@ export function ArtApp() {
                 home
               </button>
             )}
+            {/*
+             * A word, not only a glyph.
+             *
+             * Trading eight service names for one unlabelled magnifier moved the whole catalogue behind
+             * an icon: the sources were still one press away and the bar had stopped saying so, which is
+             * the same unread-corner failure `useFace` describes for the face switch. The argument for
+             * dropping the list holds — the root *is* the list of services, and naming them twice was
+             * the problem — but a door has to be a door. So the glyph keeps its meaning and takes the
+             * word with it.
+             */}
             <button
               type="button"
+              className="cx-nav-browse"
               data-on={view.kind === 'browse' || undefined}
               onClick={() => openBrowse()}
-              aria-label="Browse and search"
             >
-              <SearchGlyph size={14} />
+              <SearchGlyph size={13} />
+              music
             </button>
             <button
               type="button"
