@@ -217,7 +217,22 @@ body {
   letter-spacing: -0.03em;
 }
 
+/*
+ * The reset every bare button was missing.
+ *
+ * This set `font`, `colour` and `cursor` and left the rest to the user agent — so any `<button>` whose
+ * class did not happen to state a background and a border rendered as a *native* one: a grey fill and a
+ * 2px light border, which is how the rail's fold control turned up as an ugly box twice. Measured on it
+ * before this: `background: rgb(107 107 107)`, `border: 2px rgb(255 255 255)`, from nowhere in this
+ * stylesheet.
+ *
+ * Every styled control here states its own fill and border, so removing the UA's costs them nothing and
+ * means the next bare button inherits this face's look instead of the browser's.
+ */
 button {
+  appearance: none;
+  border: 0;
+  background: none;
   font: inherit;
   color: inherit;
   cursor: pointer;
