@@ -71,7 +71,16 @@ function probeHz(hz: number): string {
  * columns countable instead of fusing them at the point where the fraction alone would round to
  * nothing.
  */
-const BAR_FRACTION = 0.86;
+/*
+ * The mark's own proportion: 2.17 wide on a 5.78 pitch, which is a duty cycle of 0.375.
+ *
+ * 0.86 was written for a dense LED wall with square corners, where filling the pitch is the point. Give
+ * those same columns the mark's pill ends and they fuse: a 26px-wide lozenge with a 13px radius is not a
+ * band any more, and forty-eight of them side by side are a textured slab where the reading used to be.
+ * The mark works because ten strokes stand in air. 0.44 is that proportion with a little more presence,
+ * which 48 bands need and 10 do not.
+ */
+const BAR_FRACTION = 0.44;
 const MIN_SEAM_PX = 2.5;
 
 /**
@@ -413,7 +422,14 @@ export function AnalysisPanel({
               rounded end outward and the flat end on the axis, so the pair reads as one bar hinged in
               the middle rather than two bars that happen to meet.
             */}
-            <g className="spectrum-bars" mask={`url(#spectrum-seg-${zoneId})`}>
+            {/*
+              No cell mask on the bars any more.
+              The chop was right for a wall of square columns — a dot-matrix reads as craft where a solid
+              green wall reads as retro. The mark's bars are *solid pills*, and a pill chopped into six-
+              pixel rows is a string of beads: two textures arguing inside one shape. The level-based
+              wash below still carries what the cells were also saying.
+            */}
+            <g className="spectrum-bars">
               {bars.map((bin, index) => {
                 const full = toHeight(bin) * (mid - 1);
                 const up = Math.max(1, full * gainL);
