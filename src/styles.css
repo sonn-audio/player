@@ -1666,7 +1666,8 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
   min-height: 0;
   flex: 1 1 0;
   flex-direction: column;
-  margin: 1px 0 6px;
+  /* The same air above and below: 1px over and 6px under read as the tab having slipped down. */
+  margin: 6px 0;
   padding: 8px var(--tab-pad) clamp(10px, 1.2vh, 16px);
   /*
    * One ground, no frame.
@@ -2090,6 +2091,10 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
      the panel gives way (and, at the very end, clips itself) so the column always fits the window. */
   display: flex;
   flex-direction: column;
+  /* The last room's line ended flush against the bottom of the window, which read as the column having
+     been cut off rather than having finished. The bar at the top is an edge and needs no inset; the
+     bottom of the screen is not. */
+  padding-bottom: 10px;
   overflow: hidden;
   --tab-pad: clamp(12px, 1.1vw, 20px);
   /*
@@ -3633,7 +3638,16 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
 }
 
 
+/*
+ * A shut room carries the same mark as the open one, in neutral ink.
+ *
+ * Without it the open tab had a ground and a spine and the shut rooms had nothing at all, so the last
+ * one read as something hanging under the player rather than as its peer. Two pixels at eight percent
+ * on the same left edge is the cheapest possible way to say "these are the same kind of thing, and one
+ * of them is open" — the accent on the open tab does the rest.
+ */
 .house-lane {
+  position: relative;
   display: grid;
   /* The open tab's own columns: a 36px record, then the name column, then the readings. Every room's
      line — open or shut — starts on one edge. */
@@ -3672,6 +3686,22 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
     opacity: 0;
     transform: translateY(-5px);
   }
+}
+
+.house-lane::before {
+  content: '';
+  position: absolute;
+  top: 9px;
+  bottom: 9px;
+  left: 0;
+  width: 2px;
+  border-radius: 2px;
+  background: rgb(255 255 255 / 8%);
+  transition: background 0.22s;
+}
+
+.house-lane:hover::before {
+  background: rgb(255 255 255 / 22%);
 }
 
 /* Under the pointer a shut tab comes forward — the row you can open is the row that answers you. */
