@@ -2863,6 +2863,16 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
   display: grid;
   grid-template-columns: 1fr auto 1fr;
   align-items: center;
+  /*
+   * And no cap.
+   *
+   * `max-width: 720px` was written when this row lived inside the nameplate column, where it was the
+   * thing that stopped a transport from stretching across a wide screen. As a strip across the panel
+   * the cap did the opposite: the row ended a third of the way in, so the transport was centred on 720
+   * pixels of nothing in particular and the fader sat wherever that left it. Centred means centred on
+   * the panel.
+   */
+  max-width: none;
 }
 
 /* The transport takes the middle column, so it is centred on the *panel* and not on whatever is left
@@ -2889,8 +2899,21 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
  * which beside a centred transport was about seventy pixels. The width goes on the *rail*, because that
  * is the part that means something: a fader you can place a value on rather than a stub.
  */
+/*
+ * The tail is a group, not a spread.
+ *
+ * `.np-actions { margin-left: auto }` sent the star to the far edge — right, when the tail was one
+ * flexible block inside the nameplate column and the star had to find the layout's edge itself. In the
+ * strip the *tail* already ends on that edge, so the auto margin only prised the star away from the
+ * fader it belongs beside and left three hundred pixels of nothing between them.
+ */
+.np-transport .np-tail .np-actions {
+  margin-left: 0;
+}
+
 .np-transport .np-tail .volume {
   flex: none;
+  max-width: none;
 }
 
 .np-transport .np-tail .volume input[type='range'] {
