@@ -3453,10 +3453,43 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
  * `--line` rather than a colour of its own: the rules belong to the same family as every other hairline
  * on this face, and a scale that is more visible than the reading is a scale nobody asked for.
  */
+/* The axis the two channels are folded on: the one line in the display that is not a reading. */
+.spectrum-axis-line {
+  stroke: rgb(255 255 255 / 14%);
+  stroke-width: 1;
+  shape-rendering: crispEdges;
+}
+
 .spectrum-rules line {
   stroke: rgb(255 255 255 / 6.5%);
   stroke-width: 1;
   shape-rendering: crispEdges;
+}
+
+/*
+ * `L` and `R`, engraved at the fold.
+ *
+ * The bridge that used to carry them is gone: the halves *are* the channels, so what is left to say is
+ * which half is which, once, where they meet.
+ */
+.spectrum-side {
+  position: absolute;
+  left: 0;
+  z-index: 1;
+  font-family: var(--font-mono);
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: rgb(255 255 255 / 30%);
+  pointer-events: none;
+}
+
+.spectrum-side[data-side='l'] {
+  top: calc(50% - 13px);
+}
+
+.spectrum-side[data-side='r'] {
+  top: calc(50% + 3px);
 }
 
 .spectrum-rules text {

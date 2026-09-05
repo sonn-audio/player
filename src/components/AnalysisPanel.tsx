@@ -211,7 +211,6 @@ export function AnalysisPanel({
    * display costs no traffic.
    */
   const bars = analysis.bins.length > 0 ? analysis.bins : new Array(SPECTRUM_BARS).fill(0);
-  const level = Math.min(100, analysis.loudness / (spectrumGeometry().fullScale / 100));
   const ticks = AXIS_TICKS.map((hz) => ({ hz, at: spectrumPosition(hz) })).filter(
     (tick): tick is { hz: number; at: number } => tick.at !== null,
   );
@@ -226,7 +225,9 @@ export function AnalysisPanel({
   const floorDb = spectrumGeometry().floorDb;
   const rules = DB_RULES.filter((db) => db > floorDb).map((db) => ({
     db,
-    y: 1 + (dims.h - 2) * (1 - (db - floorDb) / -floorDb),
+    /* Mirrored with the reading: the same value above and below the axis, so a peak on the third rule
+       means the same thing whichever channel drew it. */
+    y: dims.h / 2 - ((db - floorDb) / -floorDb) * (dims.h / 2 - 1),
   }));
 
   /*
@@ -261,10 +262,36 @@ export function AnalysisPanel({
    */
   const SEG_H = 6;
   const SEG_GAP = 3;
+  /*
+   * The cell rows, built outward from the centre line.
+   *
+   * They used to march up from the floor, which is where the bars stood. The display is a stereo field
+   * now — the two channels growing away from a middle axis — so the rows have to be laid from that axis
+   * out, or the two halves are chopped on different grids and the whole thing reads as two displays
+   * bolted together instead of one mirrored around its own centre.
+   */
+  const mid = dims.h / 2;
   const segRows: number[] = [];
-  for (let y = dims.h; y > -SEG_H; y -= SEG_H + SEG_GAP) {
-    segRows.push(y - SEG_H);
+  for (let offset = 0; offset < mid + SEG_H; offset += SEG_H + SEG_GAP) {
+    segRows.push(mid - offset - SEG_H);
+    if (offset > 0) {
+      segRows.push(mid + offset - SEG_H + 1);
+    }
   }
+
+  /*
+   * How tall each half draws: the channel's own measured level against the louder of the two.
+   *
+   * Stated plainly, because this face does not report what it did not measure: the *shape* is one
+   * spectrum, because the stream sends one set of bins (`spectrum` carries `bins`; the channels arrive
+   * separately as `stereo` with a level each). What is per-channel here is the gain of each half — real
+   * numbers off the wire — so a centred mix draws symmetric, a mix leaning left draws a taller top, and
+   * the asymmetry you see is the balance the audio actually has. It is the convention a mono analyser
+   * with a stereo meter has always used, drawn as one instrument instead of two.
+   */
+  const loudest = Math.max(analysis.left ?? 0, analysis.right ?? 0);
+  const gainL = loudest > 0 ? (analysis.left ?? 0) / loudest : 1;
+  const gainR = loudest > 0 ? (analysis.right ?? 0) / loudest : 1;
 
   return (
     <section className="analysis-panel">
@@ -310,6 +337,14 @@ export function AnalysisPanel({
         }}
         onPointerLeave={() => setProbe(null)}
       >
+        {/* Which half is which, said once, at the fold. */}
+        <span className="spectrum-side mono" data-side="l" aria-hidden="true">
+          L
+        </span>
+        <span className="spectrum-side mono" data-side="r" aria-hidden="true">
+          R
+        </span>
+
         {dims.w > 0 && (
           <svg
             className="spectrum-curve"
@@ -343,49 +378,78 @@ export function AnalysisPanel({
               {rules.map((rule) => (
                 <g key={rule.db}>
                   <line x1="0" x2={dims.w} y1={rule.y} y2={rule.y} />
+                  <line x1="0" x2={dims.w} y1={dims.h - rule.y} y2={dims.h - rule.y} />
                   <text x={dims.w - 4} y={rule.y - 4} textAnchor="end">
                     {rule.db}
                   </text>
                 </g>
               ))}
             </g>
+            {/*
+              Two halves of one reading, growing away from the centre.
+              Each bar is drawn twice — up at the left channel's gain, down at the right's — with the
+              rounded end outward and the flat end on the axis, so the pair reads as one bar hinged in
+              the middle rather than two bars that happen to meet.
+            */}
             <g className="spectrum-bars" mask={`url(#spectrum-seg-${zoneId})`}>
               {bars.map((bin, index) => {
-                const height = Math.max(2, toHeight(bin) * (dims.h - 2));
+                const full = toHeight(bin) * (mid - 1);
+                const up = Math.max(1, full * gainL);
+                const down = Math.max(1, full * gainR);
+                const x = (index + 0.5) * pitch - barW / 2;
                 return (
-                  <rect
-                    key={index}
-                    x={(index + 0.5) * pitch - barW / 2}
-                    y={dims.h - 1 - height}
-                    /* Extended past the floor by the corner radius, which the svg clips off: a
-                       rounded top and a *flat* foot. A bar standing on the baseline with a rounded
-                       bottom is a floating pill; meters stand on their bridge. */
-                    width={barW}
-                    height={height + barR}
-                    rx={barR}
-                    fill={BAR_INK}
-                  />
+                  <g key={index}>
+                    <rect
+                      x={x}
+                      y={mid - 1 - up}
+                      width={barW}
+                      /* Extended past the axis by the corner radius, which the mask and the axis line
+                         cover: a rounded outer end and a flat one on the centre. */
+                      height={up + barR}
+                      rx={barR}
+                      fill={BAR_INK}
+                    />
+                    <rect
+                      x={x}
+                      y={mid + 1 - barR}
+                      width={barW}
+                      height={down + barR}
+                      rx={barR}
+                      fill={BAR_INK}
+                    />
+                  </g>
                 );
               })}
             </g>
+
+            {/* The axis the two channels stand on, and the only line in the display that is not a
+                reading: it is where the reading is folded. */}
+            <line
+              className="spectrum-axis-line"
+              x1="0"
+              x2={dims.w}
+              y1={mid}
+              y2={mid}
+            />
             <rect x="0" y="0" width={dims.w} height={dims.h} fill={`url(#${dimId})`} pointerEvents="none" />
             {/* The memory: a rounded tick floating where each band last peaked — held, then
                 sinking (`analysis.peaks`). Its band's own hue, lifted toward white: brighter than
                 the bar it remembers, and drawn above the dimming wash so it stays the one bright
                 element over the reading. */}
             <g className="spectrum-peaks">
-              {analysis.peaks.map((peak, index) =>
-                peak > 0.02 ? (
-                  <rect
-                    key={index}
-                    x={(index + 0.5) * pitch - barW / 2}
-                    y={1 + (dims.h - 2) * (1 - peak) - 1}
-                    width={barW}
-                    height={2}
-                    rx={1}
-                  />
-                ) : null,
-              )}
+              {analysis.peaks.map((peak, index) => {
+                if (peak <= 0.02) {
+                  return null;
+                }
+                const reach = peak * (mid - 1);
+                const x = (index + 0.5) * pitch - barW / 2;
+                return (
+                  <g key={index}>
+                    <rect x={x} y={mid - 1 - reach * gainL - 1} width={barW} height={2} rx={1} />
+                    <rect x={x} y={mid + 1 + reach * gainR - 1} width={barW} height={2} rx={1} />
+                  </g>
+                );
+              })}
             </g>
           </svg>
         )}
@@ -404,62 +468,14 @@ export function AnalysisPanel({
         {showEq && <EqOverlay zoneId={zoneId} />}
       </div>
 
-      {/* Loudness, as hairlines under the spectrum rather than a bar above it. Two of them where
-          the stream reports the channels apart (`stereo`): a left and a right rail, each with its
-          own tiny nameplate — the stereo image as two lines breathing against each other. One
-          mono hairline against an older server, which is honest rather than a dead R channel. */}
-      {analysis.left !== null && analysis.right !== null ? (
-        /* The bridge speaks the display's own grammar: the level is silver (a reading), and the
-           held peak is the green tick (a statement) — the same hold-then-fall as the caps above. */
-        <div className="analysis-meter-stereo">
-          <span className="analysis-meter-ch">L</span>
-          <div
-            className="analysis-meter"
-            style={
-              {
-                '--level': `${Math.min(100, analysis.left / (spectrumGeometry().fullScale / 100))}%`,
-                '--held': `${Math.min(100, analysis.leftPeak / (spectrumGeometry().fullScale / 100))}%`,
-              } as React.CSSProperties
-            }
-          >
-            <span />
-            <i aria-hidden="true" />
-          </div>
-          {/*
-           * The scale, printed under the left rail and read by both.
-           *
-           * A bridge without one is a pair of growing lines: you can see that it is louder, never how
-           * loud. The notches are the same four values the spectrum rules use, mapped the same way —
-           * the stream is linear in dB between `floorDb` and 0 — so a peak sitting on the third notch
-           * means the same thing on both instruments. Unlabelled, because the display above has
-           * already said which line is which and a bridge with numbers on it is a ruler.
-           */}
-          <span />
-          <span className="analysis-meter-scale" aria-hidden="true">
-            {rules.map((rule) => (
-              <i key={rule.db} style={{ left: `${(rule.db - floorDb) / -floorDb * 100}%` }} />
-            ))}
-          </span>
-
-          <span className="analysis-meter-ch">R</span>
-          <div
-            className="analysis-meter"
-            style={
-              {
-                '--level': `${Math.min(100, analysis.right / (spectrumGeometry().fullScale / 100))}%`,
-                '--held': `${Math.min(100, analysis.rightPeak / (spectrumGeometry().fullScale / 100))}%`,
-              } as React.CSSProperties
-            }
-          >
-            <span />
-            <i aria-hidden="true" />
-          </div>
-        </div>
-      ) : (
-        <div className="analysis-meter" style={{ '--level': `${level}%` } as React.CSSProperties}>
-          <span />
-        </div>
-      )}
+      {/*
+       * No meter bridge.
+       *
+       * Two hairlines under the display carried the channels' levels; the display *is* the channels now
+       * — the top half draws at the left's gain, the bottom at the right's, so the balance is the shape
+       * of the reading rather than a separate pair of rules to compare it against. What the bridge said,
+       * the instrument now says by being asymmetric.
+       */}
 
       <div className="analysis-axis" aria-hidden="true">
         {ticks.map((tick) => (
