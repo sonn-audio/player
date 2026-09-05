@@ -20,6 +20,7 @@ import { zoneCoverCss } from '@/art/cover';
 import { horizontalDrag } from '@/art/drag';
 import { useVolumeControl } from '@/art/volume';
 import { Crossfade } from '@/art/Crossfade';
+import { artKeyOf } from '@/art/accent';
 import { Motion } from '@/art/Motion';
 import { useZoneFavorite } from '@/state/useZoneFavorite';
 import { useCoverAnchor } from '@/shell/coverMorph';
@@ -281,6 +282,41 @@ function VolumeRow({ cur, className }: { cur: Cur; className: string }) {
   );
 }
 
+/**
+ * How big the title is set, decided by how long it is.
+ *
+ * The size used to be a pure function of viewport height (`clamp(50px, 8.6vh, 112px)`), so a
+ * 1440px-tall monitor set every title at 112px — including `Suddenly (w/ Beatie Wolfe)`, which then
+ * ran out of its column and was clipped to `Suddenly (w/ Beatie…` while 900px of the page beside it
+ * stayed empty. A title is the subject of this screen; cutting it short with room to spare is the one
+ * thing it must never do.
+ *
+ * Stepped rather than measured, on purpose. A fit-to-width pass has to render, measure and re-render,
+ * which costs a frame on every track change and can disagree with itself between two renders of the
+ * same track — and the thing being avoided (a clipped title) is a *threshold*, so a threshold is the
+ * honest shape of the answer. Step 1 is the shortest title and the largest type; the boundaries sit
+ * where two lines of the step above stop fitting the column (see the ladder in `art.css`).
+ *
+ * Characters, not words: what fills a line is glyph count, and `Ænima` and `Untitled #3` cost the
+ * same either way.
+ */
+export function titleStep(title: string): 1 | 2 | 3 | 4 | 5 {
+  const length = title.trim().length;
+  if (length <= 12) {
+    return 1;
+  }
+  if (length <= 24) {
+    return 2;
+  }
+  if (length <= 40) {
+    return 3;
+  }
+  if (length <= 56) {
+    return 4;
+  }
+  return 5;
+}
+
 // --- desktop ----------------------------------------------------------------
 
 export function Stage({
@@ -288,6 +324,9 @@ export function Stage({
   onOpenRooms,
   onOpenQueue,
   onBrowse,
+  onCanvas,
+  onLeaveCanvas,
+  resting,
   nextUp,
   queueCount,
 }: {
@@ -295,6 +334,12 @@ export function Stage({
   onOpenRooms: () => void;
   onOpenQueue: () => void;
   onBrowse: () => void;
+  /** Ask for the resting picture now, rather than waiting out the timeout. */
+  onCanvas: () => void;
+  /** Leave it again — see the click handler below for what counts as leaving. */
+  onLeaveCanvas: () => void;
+  /** Whether the picture is what is on screen, however it was arrived at. */
+  resting: boolean;
   /** The following queue entry, or null when there is nothing after this. */
   nextUp: { title: string; artist: string } | null;
   /** How many entries the queue holds. */
@@ -303,6 +348,8 @@ export function Stage({
   const api = useApi();
   const leader = cur.leader;
   const coverAnchor = useCoverAnchor();
+  /* What "the artwork changed" means — the same handle the page's wash dissolves on. */
+  const artKey = artKeyOf(leader?.track);
 
   const toggle = (): void => {
     if (!leader || !cur.hasTrack) {
@@ -311,8 +358,22 @@ export function Stage({
     void (cur.isPlaying ? api.pause(leader.id) : api.play(leader.id));
   };
 
+  /*
+   * Leaving the picture by pressing the page it is on.
+   *
+   * Everything except the sleeve is hidden while resting, so "click anywhere that is not a control" is
+   * the whole of the page around it — and the sleeve keeps meaning what it means everywhere else, which
+   * is play and pause. Closing on the sleeve would be the one place in this player where pressing the
+   * artwork does something other than stop the music.
+   */
+  const leave = (event: React.MouseEvent): void => {
+    if (resting && !(event.target as HTMLElement).closest('button')) {
+      onLeaveCanvas();
+    }
+  };
+
   return (
-    <div className="cx-stage">
+    <div className="cx-stage" onClick={leave}>
       {/* The composition is one block, centred: cover and column together, capped, rather than a cover
           pinned left and a column stretching to whatever the window happens to be. A player on a
           2560px monitor should look composed, not spread. */}
@@ -347,23 +408,61 @@ export function Stage({
           )}
 
           {cur.hasTrack ? (
-            <button
-              type="button"
-              className="cx-cover"
-              style={{ backgroundImage: zoneCoverCss(api, leader) }}
-              data-paused={!cur.isPlaying || undefined}
-              aria-label={cur.isPlaying ? 'Pause' : 'Play'}
-              onClick={toggle}
-              {...coverAnchor}
-            >
-              {/* The sleeve, if this record has one that moves. A still underneath, always. */}
-              <Motion src={cur.motion} />
-              <span className="cx-cover-hover">
-                <span className="cx-cover-glyph">
-                  {cur.isPlaying ? <PauseGlyph size={19} /> : <PlayGlyph size={20} />}
+            <>
+              <button
+                type="button"
+                className="cx-cover"
+                data-paused={!cur.isPlaying || undefined}
+                aria-label={cur.isPlaying ? 'Pause' : 'Play'}
+                onClick={toggle}
+                {...coverAnchor}
+              >
+                {/*
+                 * One record dissolves into the next.
+                 *
+                 * The artwork was an inline `background-image` on this button, which cannot animate —
+                 * a url does not interpolate, so every track change cut. The wash behind the page has
+                 * dissolved for as long as it has existed and the *sleeve itself*, the one thing on
+                 * screen anybody is looking at, snapped. Same two-slot component, faster: 900ms is a
+                 * record being replaced, where the room's light takes 1.9s to follow it.
+                 */}
+                <Crossfade
+                  artKey={artKey}
+                  cover={zoneCoverCss(api, leader)}
+                  ms={900}
+                  render={(slot) => (
+                    <span className="cx-cover-art" style={{ backgroundImage: slot.cover }} />
+                  )}
+                />
+                {/* The sleeve, if this record has one that moves. A still underneath, always. */}
+                <Motion src={cur.motion} />
+                <span className="cx-cover-hover">
+                  <span className="cx-cover-glyph">
+                    {cur.isPlaying ? <PauseGlyph size={19} /> : <PlayGlyph size={20} />}
+                  </span>
                 </span>
+              </button>
+
+              {/*
+               * What the sleeve is standing on.
+               *
+               * A square of artwork on black is a picture *of* a record; the same square with a short,
+               * dim mirror under it is a record standing on a surface, and the difference is the whole
+               * distance between a web page and an object in a room. Short and fast-fading on purpose —
+               * a full-length reflection is a 2004 product shot. It carries the same dissolve as the
+               * sleeve, keyed identically, so the two never disagree about which record is playing.
+               */}
+              <span className="cx-reflect" aria-hidden="true">
+                <Crossfade
+                  artKey={artKey}
+                  cover={zoneCoverCss(api, leader)}
+                  ms={900}
+                  render={(slot) => (
+                    <span className="cx-reflect-art" style={{ backgroundImage: slot.cover }} />
+                  )}
+                />
               </span>
-            </button>
+            </>
           ) : (
             <div className="cx-cover cx-cover-empty">
               <EmptyArtGlyph size={52} />
@@ -394,14 +493,28 @@ export function Stage({
            * zone object, which is replaced every second — a rise per progress tick would turn a
            * gesture into a twitch.
            */}
-          <h1 className="disp cx-title cx-swap" key={`t:${cur.title}|${cur.artist}`}>
-            {cur.title}
-          </h1>
-
-          <div className="cx-artistrow cx-swap cx-swap-2" key={`a:${cur.title}|${cur.artist}`}>
+          {/*
+           * Who, then what — a gallery card's order, not a search result's.
+           *
+           * The artist used to sit under the title, which is how a listing is written: the thing you
+           * matched on first, then who it was by. A page with one record on it is not a listing, it is a
+           * label on a wall, and every label ever printed reads *Artist / Title / medium*. It also fixes
+           * what was under the title before: a 100px headline followed by two lines of grey, one of
+           * which was the same size as the other. Now the drop is deliberate — a tracked name, the work
+           * at full size, and the record it came from set small underneath.
+           */}
+          <div className="cx-artistrow cx-swap" key={`a:${cur.title}|${cur.artist}`}>
             {cur.artist && <span className="cx-artist">{cur.artist}</span>}
             {cur.hasTrack && <Favourite cur={cur} />}
           </div>
+
+          <h1
+            className="disp cx-title cx-swap cx-swap-2"
+            data-len={titleStep(cur.title)}
+            key={`t:${cur.title}|${cur.artist}`}
+          >
+            {cur.title}
+          </h1>
 
           {/* The album, under the artist rather than folded into it with a dash: it is a place the
               track came from, not part of its name. */}
@@ -459,6 +572,15 @@ export function Stage({
             >
               rooms{cur.grouped ? ` +${cur.groupExtra}` : ''}
             </button>
+            {/*
+              The door to the picture, next to the door to the house.
+              Only when there is something to hang: a canvas of "nothing playing" is a blank wall.
+            */}
+            {cur.hasTrack && (
+              <button type="button" className="mono cx-rooms-btn" onClick={onCanvas}>
+                canvas
+              </button>
+            )}
           </div>
 
           <NextUp next={nextUp} total={queueCount} reserve={!cur.isLive && cur.hasTrack} onOpen={onOpenQueue} />

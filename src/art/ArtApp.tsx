@@ -29,7 +29,7 @@ import { InstallHint } from '@/shell/InstallHint';
 import { Mark } from '@/components/Mark';
 import { Stage, MobileStage, greeting } from '@/art/Stage';
 import { RoomsSheet } from '@/art/Channels';
-import { Dock } from '@/art/Dock';
+import { Wall } from '@/art/Wall';
 import { Lane } from '@/art/Lane';
 import { useEdges, useEscape } from '@/art/useEdges';
 import { QueueSheet, QueueTabs, type QueueTab } from '@/art/Rail';
@@ -158,8 +158,49 @@ export function ArtApp() {
    * a wall of covers with no way to scroll them, and dimming a quiet house hides the only useful thing
    * on the screen. See `.cx-root[data-idle]`.
    */
-  const idle = useIdle(IDLE_AFTER_MS, cur.isPlaying && view.kind === 'home' && sheet === null);
+  /*
+   * The same picture, asked for.
+   *
+   * The resting state is the best thing this face does and the only way in was to *stop touching it for a
+   * minute*, which is a strange thing to ask of someone who came to look at a record. So it is a place
+   * now: `canvas` in the volume row opens it, and the timeout still arrives on its own for the panel on
+   * the wall that nobody is holding.
+   *
+   * Two ways in, one state — `data-idle` stays the single attribute everything downstream keys off, so
+   * there is no second look to keep in step with the first. What differs is only how you leave: the
+   * timeout's version lifts the moment a pointer moves, because that is someone arriving at the panel;
+   * the asked-for version does not, because a mouse resting on a desk would close a thing you opened on
+   * purpose. That one leaves on a key or on a click of the page around the sleeve.
+   */
+  const [asked, setAsked] = useState(false);
+  const timedOut = useIdle(IDLE_AFTER_MS, !asked && cur.isPlaying && view.kind === 'home' && sheet === null);
+  const idle = asked || timedOut;
   const clock = useClock(idle);
+
+  /* Leaving what was asked for. Any key at all, the way a screensaver has always ended. */
+  useEffect(() => {
+    if (!asked) {
+      return undefined;
+    }
+    const onKey = (): void => setAsked(false);
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [asked]);
+
+  /*
+   * And the moment there is nothing to look at, it closes itself rather than resting on an empty page.
+   *
+   * `hasTrack`, not `isPlaying`. The timeout above is right to insist on playing — dimming a screen
+   * nobody asked to dim, in a room that has stopped, hides the one useful thing on it. But a record that
+   * is paused is still a picture, and the door said so: `canvas` appears whenever there is a track, so
+   * guarding the *state* on playback meant pressing it on a paused room opened and shut the canvas in
+   * one frame. Two conditions for one thing is how a control ends up doing nothing.
+   */
+  useEffect(() => {
+    if (asked && !(cur.hasTrack && view.kind === 'home' && sheet === null)) {
+      setAsked(false);
+    }
+  }, [asked, cur.hasTrack, view.kind, sheet]);
 
   /*
    * The queue down the right edge and the house along the bottom, folded.
@@ -230,7 +271,14 @@ export function ArtApp() {
   const browsing = view.kind !== 'home';
 
   return (
-    <div className="cx-root" data-idle={idle || undefined} style={accent as React.CSSProperties}>
+    <div
+      className="cx-root"
+      data-idle={idle || undefined}
+      /* Which room the wash is lighting — see `.cx-bg-scrim`: a record's colour belongs to the page
+         that is showing that record, and nowhere near a wall of thirty other people's covers. */
+      data-view={view.kind}
+      style={accent as React.CSSProperties}
+    >
       {/*
        * The room, lit by what is playing in it.
        *
@@ -427,14 +475,26 @@ export function ArtApp() {
                   }))}
                 />
               ) : (
-                <Stage
-                  cur={cur}
-                  onOpenRooms={() => setSheet('rooms')}
-                  onOpenQueue={() => setSheet('queue')}
-                  onBrowse={() => openBrowse()}
-                  nextUp={nextUp}
-                  queueCount={queue.total}
-                />
+                /*
+                 * The room you are in, standing in the house rather than in front of it.
+                 *
+                 * `Wall` draws every room as a panel and gives this one the width; the others are
+                 * slivers of their own artwork at their own place in the row. It replaces the strip of
+                 * names along the bottom, which was the house rendered as a footnote.
+                 */
+                <Wall channels={channels} currentLeaderId={leaderOf(zone, zones)?.id ?? null} onSelect={select}>
+                  <Stage
+                    cur={cur}
+                    onCanvas={() => setAsked(true)}
+                    onLeaveCanvas={() => setAsked(false)}
+                    resting={idle}
+                    onOpenRooms={() => setSheet('rooms')}
+                    onOpenQueue={() => setSheet('queue')}
+                    onBrowse={() => openBrowse()}
+                    nextUp={nextUp}
+                    queueCount={queue.total}
+                  />
+                </Wall>
               )}
             </main>
 
@@ -460,27 +520,6 @@ export function ArtApp() {
           {!phone && browsing && leader && <MiniBar cur={cur} onOpen={goHome} />}
         </div>
       </div>
-
-      {/*
-       * The house, folded into one line along the bottom, opening into faders on intent.
-       *
-       * It was the full strip of faders, always, on every view — 150px of control surface under a screen
-       * whose argument is that the sleeve should be the biggest thing on it. And it is absent while
-       * browsing, where the mini bar carries the room: a listing needs its full height more than it
-       * needs eight volume controls it did not ask for.
-       */}
-      {!phone && !browsing && (
-        <Dock
-          channels={channels}
-          currentLeaderId={leaderOf(zone, zones)?.id ?? null}
-          onSelect={select}
-          open={edges.open === 'dock'}
-          onEnter={() => edges.enter('dock')}
-          onLeave={() => edges.leave('dock')}
-          onToggle={() => edges.toggle('dock')}
-          touch={edges.touch}
-        />
-      )}
 
       {/*
        * The phone's player, over everything, and the bar that opens it.

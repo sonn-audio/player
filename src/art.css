@@ -38,6 +38,21 @@
   initial-value: #dfe2e6;
 }
 
+/*
+ * The sleeve's size, registered so the desk can *grow into* the picture instead of cutting to it.
+ *
+ * A plain custom property does not interpolate, so `--cx-cover-size` jumping from the composition's
+ * 620px to the canvas's 78vh would be a hard swap of the biggest object on the screen while everything
+ * around it takes 1.4s to fade — the one frame that would make the whole state read as a page change
+ * rather than as a room settling. Registered as a `<length>`, `transition: --cx-cover-size` is legal,
+ * and the sleeve, its bloom and the far halo all glide together because all three read this one value.
+ */
+@property --cx-cover-size {
+  syntax: '<length>';
+  inherits: true;
+  initial-value: 0px;
+}
+
 /* The phone stage's ground — the record's own dark, damped (see `stageOf`). Registered for the
    same reason as the accent: the room should change temperature on a dissolve, not on a cut. */
 @property --cx-stage {
@@ -198,7 +213,14 @@
   pointer-events: none;
   background-position: center 30%;
   background-size: cover;
-  filter: grayscale(1) blur(110px) brightness(0.5);
+  /*
+   * Almost all of the colour still goes, and what is left is a trace.
+   *
+   * `grayscale(1)` was the note above taken at its word. Letting 38% of the chroma through was the
+   * over-correction: at 110px of blur a sleeve's colour stops being a picture and becomes a field, and
+   * a field is a cast. 15% is the amount you cannot name but can tell has gone when you remove it.
+   */
+  filter: grayscale(0.85) saturate(1.04) blur(110px) brightness(0.42);
 }
 
 /*
@@ -227,11 +249,75 @@
   }
 }
 
+/*
+ * The veil: near-black, always, and the record's temperature only where the record is.
+ *
+ * The first pass built the whole window out of `--cx-stage` (`colors.backgroundDark`, damped) at
+ * 60–97%, and it was mud. Two reasons, and the second is the one that matters:
+ *
+ *  - At that strength a temperature is a *cast*. The page stopped being near-black and became a
+ *    coloured room, which is the exact thing this face rejected once before.
+ *  - `backgroundDark` is not neutral even when the artwork is. Measured on Radiohead's *Staircase*:
+ *    `primary` comes back `[69,69,69]` — a perfectly grey sleeve — while `backgroundDark` is
+ *    `[57,34,34]`, brown-red. So a black record painted a brown room, which is not the record's own
+ *    light, it is a bias in the channel it was derived from.
+ *
+ * So the veil is the page's own near-black again, and the tint is a second, small layer over it: a
+ * quarter of the record's dark at the centre, gone by 70% of the way out, mixed *toward* the page
+ * colour rather than laid over it — so a warm sleeve warms the space around itself and a grey one
+ * leaves it alone. It still cross-dissolves for free, `--cx-stage` being a registered property.
+ */
 .cx-bg-scrim {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background: linear-gradient(180deg, rgb(10 10 12 / 55%), rgb(10 10 12 / 85%));
+  background:
+    /* The corners fall away, so the eye is delivered to the middle of the room rather than to the
+       edges of a browser window. Wide and shallow — a vignette you can point at is a filter. */
+    radial-gradient(122% 108% at 50% 44%, transparent 40%, rgb(0 0 0 / 42%) 100%),
+    linear-gradient(180deg, rgb(10 10 12 / 62%), rgb(10 10 12 / 88%));
+}
+
+/*
+ * And the tint belongs to the page that is showing the record.
+ *
+ * A listing is thirty covers, each with its own colour, standing on a ground; tinting that ground with
+ * the thirty-first is a dirty window. Home only — the browse pages and the inputs page get the plain
+ * near-black they had.
+ */
+.cx-root[data-view='home'] .cx-bg-scrim {
+  background:
+    radial-gradient(122% 108% at 50% 44%, transparent 40%, rgb(0 0 0 / 42%) 100%),
+    radial-gradient(
+      110% 86% at 28% 46%,
+      color-mix(in srgb, var(--cx-stage) 26%, transparent) 0%,
+      transparent 70%
+    ),
+    linear-gradient(180deg, rgb(10 10 12 / 62%), rgb(10 10 12 / 88%));
+}
+
+/*
+ * Grain, over everything.
+ *
+ * Near-black is the hardest colour a screen has to hold: a 1400px gradient across it bands into visible
+ * steps, and a flat field of it reads as an absence rather than as a surface. A fixed field of fine
+ * noise at 3.5% fixes both — it dithers the banding away and gives the page the tooth of something
+ * printed, which is the difference between a dark page and a dark *room*. Static, never animated: moving
+ * grain is a film effect and this is a wall.
+ *
+ * `overlay` so it works with what is under it rather than greying it: it lifts the blacks a hair and
+ * leaves the artwork alone. Above every layer including the sleeve, because a print grain that stops at
+ * the edge of the picture is a rectangle you can see.
+ */
+.cx-root::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  pointer-events: none;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)'/%3E%3C/svg%3E");
+  mix-blend-mode: overlay;
 }
 
 /* --- top bar (desktop) ---------------------------------------------------- */
@@ -472,6 +558,218 @@
   }
 }
 
+/* --- the wall: the house, one panel to a room ------------------------------ */
+
+/*
+ * Every room is a panel in one row, and the row is the window.
+ *
+ * The room you are listening in takes the width; the rest are slivers of their own artwork standing at
+ * their own place in the house's order — a record pulled halfway out of a shelf, with the others still
+ * on either side of the gap. Choosing another room is `flex-grow` moving from one panel to another,
+ * which is why the change reads as the wall *sliding* rather than as a page being replaced.
+ *
+ * This is what used to be a strip of 10px room names along the bottom edge. A multiroom server's subject
+ * is the house; the house was the least visible thing on the screen, and a name is not a picture.
+ */
+.cx-wall {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+}
+
+/* The hairline lives between panels, so neither outside edge draws one against the window. */
+.cx-wall > * + * {
+  box-shadow: inset 1px 0 0 var(--hair-soft);
+}
+
+.cx-wall-room {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.cx-sliver {
+  position: relative;
+  flex: 0 0 clamp(58px, 4.6vw, 92px);
+  min-width: 0;
+  overflow: hidden;
+  /* A panel, even with the lights off. Without this a silent room is indistinguishable from the page
+     behind it and the wall reads as two dark margins rather than as the house. */
+  background: rgb(255 255 255 / 1.6%);
+  transition:
+    flex-basis 0.55s var(--cx-ease),
+    background 0.4s var(--cx-ease);
+}
+
+.cx-sliver:hover {
+  background: rgb(255 255 255 / 3.4%);
+}
+
+/* Leaning out under the pointer — the record coming forward before you have pulled it. */
+.cx-sliver:hover {
+  flex-basis: clamp(88px, 6.4vw, 128px);
+}
+
+/*
+ * The artwork, edge-on.
+ *
+ * Cropped to a vertical band and held down hard: recognisable as *that* record from across the room and
+ * never in competition with the one that is playing here. A silent room keeps its picture but loses its
+ * colour and most of its light, which is what a room with the music off looks like from the doorway.
+ */
+.cx-sliver-art {
+  position: absolute;
+  inset: 0;
+  /*
+   * The sleeve itself, small, near the top — not a vertical slice through the middle of it.
+   *
+   * `cover` on a 79px-wide column of a square picture is a 79x1026 band cut out of its centre, which is
+   * a nose, or a prism, or an abstract smudge. It reads as texture rather than as *that record*, and the
+   * whole argument for this wall is that you can see what is on in the other rooms. Sized to the panel's
+   * width instead, the artwork lands as a square the width of the sliver and the panel below it stays
+   * dark for the name — a record standing on a shelf with its spine facing you.
+   */
+  background-repeat: no-repeat;
+  background-position: center 22%;
+  background-size: 100% auto;
+  filter: grayscale(0.4) brightness(0.52) saturate(0.95);
+  scale: 1.02;
+  transition:
+    filter 0.55s var(--cx-ease),
+    scale 0.7s var(--cx-ease);
+}
+
+.cx-sliver:hover .cx-sliver-art {
+  filter: grayscale(0) brightness(0.86) saturate(1);
+  scale: 1.03;
+}
+
+.cx-sliver[data-activity='silent'] .cx-sliver-art {
+  filter: grayscale(1) brightness(0.16);
+}
+
+/* Dark at both ends so the name has something to stand on and the top never fights the header. */
+.cx-sliver-veil {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    rgb(10 10 12 / 55%) 0%,
+    rgb(10 10 12 / 6%) 24%,
+    rgb(10 10 12 / 62%) 62%,
+    rgb(10 10 12 / 94%) 100%
+  );
+}
+
+.cx-sliver-hit {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 26px;
+}
+
+/* Read from the foot of the panel upward, the way a spine is read on a shelf. */
+.cx-sliver-name {
+  max-height: 64%;
+  font-size: 10.5px;
+  letter-spacing: 0.22em;
+  color: var(--t5);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  writing-mode: vertical-rl;
+  rotate: 180deg;
+  transition: color 0.3s;
+}
+
+.cx-sliver:hover .cx-sliver-name {
+  color: var(--t2);
+}
+
+.cx-sliver[data-activity='silent'] .cx-sliver-name {
+  color: var(--t6);
+}
+
+/* A room with music has a light at its foot. Nothing else marks it — a picture and a light is enough. */
+.cx-sliver-lit {
+  position: absolute;
+  right: 14px;
+  bottom: 0;
+  left: 14px;
+  height: 2px;
+  background: var(--g);
+  opacity: 0.75;
+}
+
+/*
+ * The level, on the inner edge, under the pointer only.
+ *
+ * The wall is also the mixing desk — but a drag and a click cannot share one element without becoming a
+ * lottery, so the fader is its own strip and the rest of the panel selects. Same split the dock made
+ * between a name you press and a fader you pull.
+ */
+.cx-sliver-fader {
+  position: absolute;
+  top: 16%;
+  right: 0;
+  bottom: 20%;
+  width: 16px;
+  opacity: 0;
+  cursor: ns-resize;
+  touch-action: none;
+  transition: opacity 0.3s var(--cx-ease);
+}
+
+.cx-sliver:hover .cx-sliver-fader {
+  opacity: 1;
+}
+
+.cx-sliver-fader::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 7px;
+  bottom: 0;
+  width: 2px;
+  background: rgb(255 255 255 / 13%);
+}
+
+.cx-sliver-fader-fill {
+  position: absolute;
+  right: 7px;
+  bottom: 0;
+  width: 2px;
+  background: var(--t3);
+}
+
+.cx-sliver-fader-ro {
+  position: absolute;
+  right: 15px;
+  bottom: -2px;
+  font-size: 9px;
+  color: var(--t3);
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.cx-sliver-fader-ro[data-show] {
+  opacity: 1;
+}
+
+/* At rest the house withdraws with everything else: the picture in the middle is the whole screen. */
+.cx-root[data-idle] .cx-sliver {
+  flex-basis: 0;
+  opacity: 0;
+  transition:
+    flex-basis 1.4s var(--cx-ease),
+    opacity 1.2s var(--cx-ease);
+}
+
 /* --- stage (desktop) ------------------------------------------------------ */
 
 /*
@@ -498,8 +796,29 @@
   display: flex;
   align-items: center;
   gap: clamp(38px, 4.4vw, 72px);
-  width: 100%;
-  max-width: 1240px;
+  /*
+   * As wide as what it holds, then centred. Not a fixed cap.
+   *
+   * It was `width: 100%; max-width: 1240px`, which is two failures with one number: at 2560 the block
+   * was 1240 in the middle of the window with 660px of nothing either side, and raising the cap to fit
+   * the larger sleeve made 1728 *spread* instead — cover against the left padding, column against the
+   * right, the composition gone. A cap can only be right at one width.
+   *
+   * `fit-content` makes the block measure its own contents (sleeve + gap + column), so the same rule
+   * composes at 1024 and at 2560: the two columns keep their relationship and the window's spare width
+   * becomes margin, which is what centring is for.
+   */
+  width: fit-content;
+  max-width: 100%;
+  /*
+   * A little of the height given back at the bottom, so the pair sits above the window's centre.
+   *
+   * The sleeve stands on a reflection, and a reflection needs floor. Centred exactly, the block leaves
+   * the same room below the sleeve as above it, and above it there is nothing to put there — so the
+   * mirror ran into the bottom edge of the stage and was cut off with a straight line. Padding on a
+   * `border-box` column takes the space out of the centring, which moves the pair up by half of it.
+   */
+  padding-bottom: 6vh;
   /*
    * Full height, so the two columns centre against the *window* rather than against each other.
    *
@@ -515,6 +834,22 @@
 .cx-stage-art {
   position: relative;
   flex: none;
+  /*
+   * One size, declared once.
+   *
+   * The sleeve, its bloom and the far halo are the same object drawn three times, and each carried its
+   * own copy of the same expression — which is how a 460px cover ends up inside a 420px glow the next
+   * time one of them is tuned.
+   *
+   * 54vh up to 620px, was 44vh up to 460px: on a 2560x1440 monitor the old cap drew a 460px sleeve in
+   * the middle of a 1440px-tall window, so the subject of the screen took up a fifth of it. Still
+   * capped by width (38vw) for a wide-but-short window, so it never crowds the title.
+   */
+  /* 720, was 620: the sleeve stands on a reflection now, which anchors it — a cap that was right for
+     a square floating on black is timid for an object with a surface under it. The ceiling only bites
+     on tall monitors; 54vh still decides everywhere else. */
+  --cx-cover-size: min(clamp(240px, 54vh, 720px), 38vw);
+  transition: --cx-cover-size 1.8s var(--cx-ease);
 }
 
 /*
@@ -534,7 +869,7 @@
   left: 50%;
   top: 0;
   z-index: 0;
-  width: min(clamp(220px, 44vh, 460px), 42vw);
+  width: var(--cx-cover-size);
   aspect-ratio: 1;
   border-radius: 50%;
   background-position: center;
@@ -571,6 +906,46 @@
   }
 }
 
+/*
+ * The far halo: the same picture, twice the size, a fifth of the strength.
+ *
+ * It has been in the markup since the bloom was rebuilt and never had a single rule, so it drew
+ * nothing at all. It earns its place now the sleeve is 620px: one glow the size of the cover is a
+ * light *behind* an object, two is an object *standing in* light — which is what a room looks like,
+ * and what stops a large sleeve reading as a sticker on black.
+ *
+ * No breathing of its own. The near bloom already moves; two cycles at two sizes is a pulse.
+ */
+.cx-bloom-far {
+  position: absolute;
+  left: 50%;
+  top: -16%;
+  z-index: 0;
+  width: calc(var(--cx-cover-size) * 1.5);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background-position: center;
+  background-size: cover;
+  pointer-events: none;
+  translate: -50% 0;
+  filter: blur(130px) saturate(1.15);
+  opacity: 0.2;
+  /*
+   * Faded to nothing well inside its own box, which is not decoration — it is what keeps the clip off
+   * the screen. `.cx-stage` is `overflow: hidden auto` (it has to be: a scrolling column must not grow
+   * a horizontal scrollbar), so anything reaching past the stage's bottom edge is cut with a straight
+   * line. A 1.9x halo did, and the plinth is exactly what made that cut visible — it moved the stage's
+   * bottom edge up into open page. With the light already at zero by 76% of the radius, the cut lands
+   * where there is nothing left to cut.
+   */
+  mask-image: radial-gradient(closest-side, #000 30%, transparent 62%);
+  transition: opacity 1.4s ease;
+}
+
+.cx-stage-art[data-quiet] .cx-bloom-far {
+  opacity: 0.1;
+}
+
 /* The artwork itself has to sit above its own glow. */
 .cx-stage-art .cx-cover {
   position: relative;
@@ -587,15 +962,9 @@
 .cx-cover {
   position: relative;
   display: block;
-  /*
-   * As large as the window can carry.
-   *
-   * Was `clamp(180px, 36vh, 340px)`, which on a 1000px-tall window drew a 340px sleeve with 400px of
-   * empty page beside it — the artwork was the subject of a screen it took up a fifth of. The rail and
-   * the fader strip that used to claim that space are gone (a line each now), so it can have it: 46vh
-   * up to 560px, and still capped by width on a wide-but-short window so it never crowds the title.
-   */
-  width: min(clamp(220px, 44vh, 460px), 42vw);
+  /* As large as the window can carry — the size itself lives on `.cx-stage-art`, which is also
+     where the argument for it is written, because the two glows have to agree with it. */
+  width: var(--cx-cover-size, min(clamp(220px, 44vh, 460px), 42vw));
   aspect-ratio: 1;
   overflow: hidden;
   border-radius: 4px;
@@ -603,7 +972,12 @@
   background-position: center;
   background-size: cover;
   box-shadow:
+    /* The long cast, for the room. */
     0 44px 90px -40px rgb(0 0 0 / 95%),
+    /* And a tight one directly beneath, which is what makes an object look like it is *touching* the
+       surface it stands on rather than hovering a centimetre above it. It is the shadow the reflection
+       needs to be believed. */
+    0 8px 18px -8px rgb(0 0 0 / 85%),
     inset 0 0 0 1px rgb(255 255 255 / 14%);
   transition:
     transform 0.6s var(--cx-ease),
@@ -635,6 +1009,70 @@
 
 .cx-cover-empty::after {
   content: none;
+}
+
+/*
+ * The artwork, as a layer rather than as the button's own background.
+ *
+ * Two of these live inside the sleeve at all times (see `Crossfade`), one showing and one waiting, so a
+ * track change is a dissolve. The button keeps `--cx-cover` as its fill, which is what shows through
+ * for the fraction of a second before a picture arrives — and what a record with no artwork keeps.
+ */
+.cx-cover-art {
+  position: absolute;
+  inset: 0;
+  background-position: center;
+  background-size: cover;
+}
+
+/*
+ * The surface under the sleeve.
+ *
+ * The container is a window 42% of the sleeve's height, and the artwork inside it is a full-height copy
+ * flipped about its own centre — so the top of the window shows the *bottom* edge of the sleeve, which
+ * is what a reflection is. `contain: paint` on the crossfade slot does the clipping for free.
+ *
+ * Short, dim, and slightly out of focus: a surface that reflects perfectly is glass, and a record does
+ * not stand on glass. Everything about the numbers here is chosen to be noticed only if it is removed.
+ */
+.cx-reflect {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 50%;
+  z-index: 0;
+  width: var(--cx-cover-size);
+  /*
+   * A third of the sleeve, or 12vh, whichever is less.
+   *
+   * Two caps because two things can run out: a big sleeve on a short window has no floor to reflect
+   * onto, and the mirror is the first thing that should give way — it is the least of what is on the
+   * screen. Together with the column's `padding-bottom` this is what keeps the fade from ever meeting
+   * the stage's clip.
+   */
+  height: min(calc(var(--cx-cover-size) * 0.34), 12vh);
+  overflow: hidden;
+  pointer-events: none;
+  opacity: 0.26;
+  translate: -50% 0;
+  mask-image: linear-gradient(to bottom, #000, transparent 55%);
+  transition: opacity 1s var(--cx-ease);
+}
+
+/* Paused, the room stops reflecting quite so brightly — the same withdrawal the bloom makes. */
+.cx-stage-art[data-quiet] .cx-reflect {
+  opacity: 0.14;
+}
+
+.cx-reflect-art {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: var(--cx-cover-size);
+  background-position: center;
+  background-size: cover;
+  filter: blur(1.5px) saturate(0.85);
+  transform: scaleY(-1);
 }
 
 /* Paused is stated by the artwork itself: 3% smaller and half the colour drained out of it, which is a
@@ -689,11 +1127,15 @@
 .cx-stage-meta {
   display: flex;
   flex-direction: column;
-  flex: 1;
+  /* A stated width, not a share of the leftover: the block around it is `fit-content`, so a column
+     that sized itself from what was left over would have nothing to take a share of. */
+  flex: none;
   min-width: 0;
   /* A column, not a field: the timeline and the volume fader stop at a length a hand can cross rather
-     than running the full width of a 2560px monitor because there was nothing to stop them. */
-  max-width: 620px;
+     than running the full width of a 2560px monitor because there was nothing to stop them. 760px is
+     still that length, and 140px of it is what a title needs to stop being cut short — the column was
+     the other half of the truncation `titleStep` fixes. `44vw` keeps it a column on a narrow window. */
+  width: min(760px, 44vw);
 }
 
 .cx-eyebrow {
@@ -730,10 +1172,11 @@
 }
 
 .cx-title {
-  margin-top: 18px;
-  /* Up to 94px, and never more than two lines: a title is the subject of this screen, and a third
-     line means it has become the paragraph. */
-  font-size: clamp(50px, 8.6vh, 112px);
+  /* The name above it owns the space now — see `.cx-artistrow`. */
+  margin-top: 0;
+  /* The size itself is on the ladder below, keyed to how long the title is. This is the value a
+     title gets if the step attribute never arrives. */
+  font-size: clamp(38px, min(6vh, 4.6vw), 76px);
   line-height: 1;
   color: var(--t1);
   display: -webkit-box;
@@ -750,19 +1193,74 @@
   /* Optical alignment: Hanken's 800 weight carries enough side bearing at this size that a left-aligned
      title reads as indented next to a 10px mono eyebrow above it. */
   margin-left: -0.035em;
+  /* A title that is one 60-character word (a mix, a bootleg, half of YouTube) may break inside it
+     rather than run out of the column. */
+  overflow-wrap: break-word;
 }
 
+/*
+ * The ladder: how big a title gets is decided by how long it is.
+ *
+ * It was `clamp(50px, 8.6vh, 112px)` — a pure function of viewport *height* — so every title on a
+ * 1440px-tall monitor was set at 112px, `Suddenly (w/ Beatie Wolfe)` included, which then ran out of
+ * its column and was cut to `Suddenly (w/ Beatie…` with 900px of empty page beside it. Truncating
+ * while there is room is the one thing the subject of this screen must never do.
+ *
+ * Five steps, chosen where two lines of the step above stop fitting the column; see `titleStep` in
+ * `art/Stage.tsx` for why it is stepped rather than measured. Each step is capped by *width* as well
+ * as height (`min(Xvh, Yvw)`), because a tall narrow window has a narrow column and the old rule read
+ * only the height — the exact blindness that produced the truncation.
+ *
+ * The longest step is the one place a third line is allowed: past ~90 characters a title has become a
+ * sentence, and two lines of it is not a choice between big and small, it is a choice between showing
+ * it and not.
+ */
+.cx-title[data-len='1'] {
+  font-size: clamp(56px, min(9.4vh, 7.2vw), 128px);
+}
+
+.cx-title[data-len='2'] {
+  font-size: clamp(48px, min(7.8vh, 6vw), 100px);
+}
+
+.cx-title[data-len='3'] {
+  font-size: clamp(38px, min(6vh, 4.6vw), 76px);
+}
+
+.cx-title[data-len='4'] {
+  font-size: clamp(30px, min(4.4vh, 3.4vw), 54px);
+  letter-spacing: -0.03em;
+}
+
+.cx-title[data-len='5'] {
+  font-size: clamp(26px, min(3.4vh, 2.6vw), 40px);
+  letter-spacing: -0.022em;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+}
+
+/*
+ * The name, above the work.
+ *
+ * It sat under the title and read as the second half of a search result. Above it, tracked and one
+ * step down in size, it is the top line of a label — and the eye gets *Radiohead → Staircase* in the
+ * order a person actually asks it.
+ */
 .cx-artistrow {
   display: flex;
   align-items: center;
   gap: 14px;
-  margin-top: 15px;
+  margin-top: 16px;
+  margin-bottom: 13px;
   min-width: 0;
 }
 
 .cx-artist {
-  font-size: 20px;
-  color: var(--t3);
+  font-size: 21px;
+  /* One step brighter than it was: as the line *under* a 100px title it could afford to recede, and
+     as the line above it, it is the first thing read. */
+  color: var(--t2);
+  letter-spacing: 0.005em;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -777,9 +1275,9 @@
  * title (a single, where the album is the track).
  */
 .cx-album {
-  margin-top: 4px;
-  font-size: 14px;
-  color: var(--t6);
+  margin-top: 14px;
+  font-size: 13px;
+  color: var(--t5);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1044,8 +1542,9 @@
   position: relative;
   display: block;
   width: 100%;
-  height: 3px;
-  background: rgb(255 255 255 / 10%);
+  /* 2px, not 3: the line is a measure, not a control — it grows under the pointer when it becomes one. */
+  height: 2px;
+  background: rgb(255 255 255 / 8%);
   transition: height 0.18s;
 }
 
@@ -1062,6 +1561,12 @@
   transition: width 0.92s linear;
 }
 
+/*
+ * The head of the line carries a light.
+ *
+ * A dot with a ring cut out of the background is a slider handle; a dot that *glows* the record's own
+ * colour into the page around it is the point the music has reached. Same 9px, one more shadow.
+ */
 .cx-bar-knob {
   position: absolute;
   top: 50%;
@@ -1070,7 +1575,9 @@
   margin-left: -4.5px;
   border-radius: 50%;
   background: var(--g);
-  box-shadow: 0 0 0 3px var(--cx-bg);
+  box-shadow:
+    0 0 0 3px var(--cx-bg),
+    0 0 22px 2px color-mix(in srgb, var(--g) 55%, transparent);
   translate: 0 -50%;
   transition: left 0.92s linear;
 }
@@ -1089,8 +1596,8 @@
 .cx-times {
   display: flex;
   justify-content: space-between;
-  margin-top: 8px;
-  font-size: 10.5px;
+  margin-top: 10px;
+  font-size: 11.5px;
   font-variant-numeric: tabular-nums;
   color: var(--t6);
 }
@@ -2245,77 +2752,6 @@
   color: var(--t1);
 }
 
-/* --- the house, along the bottom ------------------------------------------ */
-
-/*
- * Folded, this is the room names and nothing else.
- *
- * At 55% opacity with a pointer available, 62% without — the difference is that a phone has no hover to
- * promise, so its resting state has to be a touch more legible. The dock's own height is not animated:
- * the fader and the chip inside it grow from zero and take the row with them, which is what makes the
- * names look like they stayed still while their controls arrived.
- */
-.cx-dock {
-  position: relative;
-  z-index: 3;
-  flex: none;
-  border-top: 1px solid var(--hair);
-  opacity: 0.55;
-  transition:
-    opacity 0.5s ease,
-    border-color 0.5s ease;
-}
-
-@media (hover: none) {
-  .cx-dock {
-    opacity: 0.62;
-  }
-}
-
-.cx-dock[data-open] {
-  opacity: 1;
-  border-top-color: var(--line-strong);
-}
-
-.cx-dock-grip {
-  position: absolute;
-  left: 50%;
-  top: 0;
-  z-index: 3;
-  display: grid;
-  place-items: center;
-  width: 64px;
-  height: 22px;
-  translate: -50% -100%;
-  color: var(--t5);
-}
-
-.cx-dock-grip:active {
-  scale: 0.9;
-}
-
-.cx-dock-grip-bar {
-  position: relative;
-  display: grid;
-  place-items: center;
-  width: 30px;
-  height: 3px;
-  border-radius: 2px;
-  background: rgb(255 255 255 / 22%);
-}
-
-.cx-dock-grip-bar svg {
-  position: absolute;
-  color: var(--g);
-  translate: 0 -9px;
-  rotate: -90deg;
-  transition: rotate var(--cx-fold);
-}
-
-.cx-dock[data-open] .cx-dock-grip-bar svg {
-  rotate: 90deg;
-}
-
 /* --- channels strip (the dock, unfolded) ---------------------------------- */
 
 /*
@@ -2517,8 +2953,8 @@
   align-items: center;
   gap: 7px;
   max-width: 100%;
-  font-size: 9.5px;
-  letter-spacing: 0.12em;
+  font-size: 10.5px;
+  letter-spacing: 0.16em;
   color: var(--t7);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -4169,11 +4605,13 @@
   color: var(--t1);
 }
 
-/* A door with nothing to show says what is behind it instead. */
+/* A door with nothing to show says what is behind it instead — and now that a door goes two levels
+   looking for artwork, the ones that still say it are the ones that genuinely have no pictures at all
+   (a folder of alert sounds), which is worth being able to read: 8.5px at `--t7` was a grey smudge. */
 .cx-door-inside {
-  font-size: 8.5px;
-  letter-spacing: 0.18em;
-  color: var(--t7);
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  color: var(--t6);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -5815,7 +6253,6 @@
 .cx-root[data-idle] .cx-top,
 .cx-root[data-idle] .cx-mhead,
 .cx-root[data-idle] .cx-mroom,
-.cx-root[data-idle] .cx-dock,
 .cx-root[data-idle] .cx-lane,
 .cx-root[data-idle] .cx-bnav,
 .cx-root[data-idle] .cx-transport,
@@ -5853,7 +6290,6 @@
  */
 .cx-root[data-idle] .cx-top,
 .cx-root[data-idle] .cx-mhead,
-.cx-root[data-idle] .cx-dock,
 .cx-root[data-idle] .cx-bnav,
 .cx-root[data-idle] .cx-transport,
 .cx-root[data-idle] .cx-bar-wrap,
@@ -5902,6 +6338,133 @@
 .cx-root[data-idle] .cx-doek-art {
   scale: 1.06;
   transition: scale 1.8s var(--cx-ease);
+}
+
+/*
+ * The desk at rest: the record hung on the wall, with a label under it.
+ *
+ * The resting state was the composition with its chrome faded — the sleeve grew 6% and stayed in a
+ * two-column block beside a 100px title, which is the *player* with the controls taken away. What a
+ * screen with nothing else on it should be is the picture: 78vh of sleeve, centred, and everything the
+ * page still has to say folded into a caption under it at the size a gallery prints one.
+ *
+ * The type is the change that makes it a picture rather than a poster. A title set at 100px is the
+ * subject of the screen and correct while there are controls to out-rank; alone above a 1100px sleeve it
+ * is a headline arguing with a painting. At 30px it is a label — you read the picture, and then, if you
+ * want, you read what it is.
+ *
+ * Desk only. The phone's resting state is a different problem and already solved: there the sleeve is
+ * full-bleed by default and the title *is* what the room reads from four metres away.
+ */
+@media (min-width: 980px) {
+  /*
+   * How big the picture is, once, for the sleeve and for the label that has to be exactly as wide.
+   *
+   * `88vh minus the label` rather than a flat share of the height, because the label does not scale
+   * with the window: a title, an artist, an album and a room are about 150px of type whether the screen
+   * is 800px tall or 1440. A flat `74vh` therefore fits on the big screen it was tuned against and hangs
+   * 23px outside a 1280x800 laptop — and a canvas that scrolls is not a canvas. Subtracting the fixed
+   * part first is the whole difference: it makes the *picture* take the slack, which is what slack is
+   * for, and on a 1440px monitor it is 51px larger than the flat cap was rather than smaller.
+   *
+   * Still capped by width, so a wide-and-short window hangs the picture rather than cropping the page.
+   */
+  .cx-root[data-idle] .cx-stage-inner {
+    --cx-doek: min(calc(88vh - 150px), 62vw);
+  }
+
+  .cx-root[data-idle] .cx-stage-art {
+    --cx-cover-size: var(--cx-doek);
+  }
+
+  /*
+   * One column: the picture, then its label.
+   *
+   * `height: auto` is load-bearing — the row is 100% tall so its two columns centre against the
+   * window rather than against each other, and a *column* that is 100% tall stacks its children at the
+   * top of it instead of centring the pair.
+   */
+  .cx-root[data-idle] .cx-stage-inner {
+    /* The picture's label stands where the reflection would; no floor to leave, no padding to give. */
+    padding-bottom: 0;
+    flex-direction: column;
+    align-items: center;
+    gap: clamp(22px, 3vh, 44px);
+    height: auto;
+    transition:
+      gap 1.4s var(--cx-ease),
+      height 1.4s var(--cx-ease);
+  }
+
+  /* The label is as wide as what it labels, and centred under it. */
+  .cx-root[data-idle] .cx-stage-meta {
+    align-items: center;
+    width: var(--cx-doek);
+    text-align: center;
+  }
+
+  .cx-root[data-idle] .cx-title {
+    margin-top: 0;
+    margin-left: 0;
+    font-size: clamp(21px, 2.6vh, 34px);
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+    /*
+     * Two lines, against the third this state grants everywhere else.
+     *
+     * That third line is right for the poster — where the title is the subject and there is nothing
+     * under it — and wrong for a label, which has to stay a fixed block under a picture whose height is
+     * already spoken for. At 34px a third line is 37px, and 37px is the difference between a canvas
+     * that hangs in the window and one the window has to scroll.
+     */
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+  }
+
+  .cx-root[data-idle] .cx-artistrow {
+    justify-content: center;
+    margin-top: 7px;
+  }
+
+  .cx-root[data-idle] .cx-artist {
+    font-size: 15px;
+  }
+
+  .cx-root[data-idle] .cx-album {
+    font-size: 12.5px;
+  }
+
+  /* The room and where the sound came from: the label's first line, the way a gallery card names the
+     collection before it names the work. Already one step quieter in this state (see the `--t7` rule
+     above), so it holds its size rather than shrinking with everything else. */
+  .cx-root[data-idle] .cx-eyebrow {
+    justify-content: center;
+    font-size: 10px;
+    letter-spacing: 0.24em;
+  }
+
+  /* The 6% nudge was how the old resting state said "bigger". The layout says it now, and 6% on top of
+     78vh is how a picture ends up cropped by the window it is hanging in. */
+  .cx-root[data-idle] .cx-cover {
+    scale: 1;
+  }
+
+  /* And the picture does not stand on anything: it hangs. */
+  .cx-root[data-idle] .cx-reflect {
+    opacity: 0;
+  }
+
+  /*
+   * And the sleeve stops offering to be pressed.
+   *
+   * Everything else on this screen has withdrawn, and a play glyph fading up under the pointer is the
+   * one thing left behaving like a control — which happens by accident the moment you ask for the
+   * picture, because the layout reflows and the sleeve arrives *under* the cursor that just pressed
+   * `canvas`. It still takes the click; it simply stops advertising it, the way a picture does.
+   */
+  .cx-root[data-idle] .cx-cover-hover {
+    opacity: 0;
+  }
 }
 
 /* The wash comes up as the chrome goes down — the room gets darker and more coloured at once. */

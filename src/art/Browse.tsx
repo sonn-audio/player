@@ -202,12 +202,42 @@ function artOf(items: ContentItem[]): string[] {
 function Door({ item, index, onOpen }: { item: ContentItem; index: number; onOpen: () => void }) {
   const { content } = useServer();
   const [inside, setInside] = useState<Peek>(NOTHING);
+  /* Sleeves found a level further down, when the room behind this door is itself all doors. */
+  const [deeper, setDeeper] = useState<string[]>([]);
 
+  /*
+   * One level, and then one more only if the first had nothing to show.
+   *
+   * A library's door leads to *Albums · Artists · Tracks*, which are three more doors with no pictures
+   * of their own — so a peek that stops at the first level finds nothing and the whole library renders
+   * as three lines of type on an empty page, in a player holding a thousand sleeves. The music is one
+   * step further down, and this is the only place that can go and get it: the shelf composition upstairs
+   * decides from *this* door's peek, and a door with no art is exactly what it decides against.
+   *
+   * Bounded on purpose. One extra level, the first three doors behind this one, and it stops at the
+   * first one that has sleeves — so the cost is at most three requests for a door that had none, once
+   * per session (`peek` is a module-level cache), and zero for every door that already had artwork.
+   */
   useEffect(() => {
     let live = true;
-    void peek(content, item.id).then((found) => {
-      if (live) {
-        setInside(found);
+    void peek(content, item.id).then(async (found) => {
+      if (!live) {
+        return;
+      }
+      setInside(found);
+      if (artOf(found.items).length > 0) {
+        return;
+      }
+      for (const child of found.items.filter((entry) => entry.browsable).slice(0, 3)) {
+        const below = await peek(content, child.id);
+        if (!live) {
+          return;
+        }
+        const art = artOf(below.items);
+        if (art.length > 0) {
+          setDeeper(art);
+          return;
+        }
       }
     });
     return () => {
@@ -215,7 +245,8 @@ function Door({ item, index, onOpen }: { item: ContentItem; index: number; onOpe
     };
   }, [content, item.id]);
 
-  const art = artOf(inside.items).slice(0, 4);
+  const own = artOf(inside.items);
+  const art = (own.length > 0 ? own : deeper).slice(0, 4);
   // For a door with nothing to show: the names of the first few things behind it, which is what
   // a table of contents does when there is no illustration.
   const names = inside.items.map((entry) => entry.name).filter(Boolean).slice(0, 3);

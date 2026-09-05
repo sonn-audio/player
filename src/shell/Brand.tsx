@@ -71,8 +71,13 @@ export function Brand({
    * kind of place rather than a third way of listening. It is a real `<a href>` so the browser performs a
    * real navigation — which is what lets `@view-transition` animate across it (see `shell.css`).
    */
+  /*
+   * No `title` on it. The browser paints its tooltip at the pointer, which on the wordmark means over
+   * the top-left corner — so hovering the mark covered the mark with a grey box reading "Set the house
+   * up". The corner already says ADMIN in words, which is where that sentence belongs.
+   */
   return (
-    <a className="brand-shared" href="/admin/" title="Set the house up" data-vt={vt || undefined}>
+    <a className="brand-shared" href="/admin/" data-vt={vt || undefined}>
       {lockup}
     </a>
   );
