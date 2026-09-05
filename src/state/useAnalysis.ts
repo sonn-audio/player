@@ -28,16 +28,16 @@ import { useApi } from '@/state/ServerContext';
  * rather than in frames, so the behaviour does not change with the paint rate.
  */
 /*
- * Longer, and slower, now that the hold is drawn as the mark's roofline.
+ * Hardware analysers hang the marker still for a moment and then let it sink slowly, which is what
+ * makes a transient readable after the bar under it has dropped. Both numbers are in wall-clock time
+ * rather than in frames, so the behaviour does not change with the paint rate.
  *
- * At 700ms and 0.45 the line spent most of its time sitting *on* the bars, dipping between them as it
- * decayed to whatever the current frame said — which reads as an outline traced around a blob, not as a
- * roof over a waveform. Held for 1.2s and falling at 0.26 of full scale a second, it floats above the
- * columns with air under it: the shape the mark has, and a perfectly ordinary meter ballistic. A
- * transient stays legible for over a second, which is the point of a peak hold.
+ * Nothing draws the held peaks at present — the display shows the bars alone. The ballistics stay
+ * because they are the meter's, not one view's: the values below are the tuned ones, and a reading of
+ * them is one component away.
  */
-const PEAK_HOLD_MS = 1200;
-const PEAK_FALL_PER_SEC = 0.26;
+const PEAK_HOLD_MS = 700;
+const PEAK_FALL_PER_SEC = 0.45;
 
 /**
  * Meter ballistics: how the drawn level chases the measured one.
@@ -52,19 +52,11 @@ const PEAK_FALL_PER_SEC = 0.26;
  */
 const RISE_TAU_MS = 35;
 /*
- * 95, not 190 — and this is what puts the air under the roofline.
- *
- * The peak hold and the bars are the same measurement at two speeds, so the *gap* between them is
- * whatever the bars give back between transients. At 190ms they barely gave any: the columns sat at
- * their own peak and the held line traced their tops, which is why the display read as a blob with a
- * green outline drawn round it however long the hold was made. Fast bars under a slow hold is the
- * oldest arrangement in metering, and the reason for it is exactly this — the two have to move at
- * different rates or there is nothing to see between them.
- *
- * Still slow enough that a drumbeat leaves a wake rather than a blink: 95ms is about three frames at
- * 30fps, so the fall is visible as a fall and not as a flicker.
+ * Back to 190. The 95 existed to make the bars fall away from a roofline that is no longer drawn, and
+ * on its own a faster fall is just a twitchier reading: at 190 a drumbeat leaves a wake instead of a
+ * blink, which is what this number was tuned for in the first place.
  */
-const FALL_TAU_MS = 95;
+const FALL_TAU_MS = 190;
 
 /**
  * When a chasing value is allowed to arrive, as a fraction of full scale.

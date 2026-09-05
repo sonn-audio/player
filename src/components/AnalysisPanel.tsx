@@ -304,39 +304,18 @@ export function AnalysisPanel({
    * with a stereo meter has always used, drawn as one instrument instead of two.
    */
   /*
-   * The bars are the mark's bars, and the peak hold is the mark's roof.
+   * The bars are the mark's bars.
    *
-   * `Mark` is ten pill-ended rects with one thick rounded chevron over them — its own note calls it "a
-   * roofline over a waveform", and reads it as a level meter at rest. That is this display, drawn small.
-   * So the two are brought together: `rx` becomes half the bar's width, which is what makes a rect a
-   * pill, and the held peaks stop being forty-eight separate ticks and become one stroke across them,
-   * rounded at every joint. The logo is what the instrument draws when it is running.
+   * `Mark` is ten pill-ended rects — its own note calls it a roofline over a waveform, read as a level
+   * meter at rest. This display is that waveform, at forty-eight bands: `rx` is half the bar's width,
+   * which is what makes a rect a pill rather than a bar with softened corners, and the ink is the mark's
+   * one fill at a reading's opacity.
    *
-   * What is deliberately *not* borrowed is the mark's centre-out opacity ramp. There it says "loudest in
-   * the middle"; here the horizontal axis is frequency, so brightening the middle would be a statement
-   * about 1 kHz that nothing measured. The level-based wash keeps that job.
+   * The roof stays in the logo. It was drawn here for a while as the held peaks — and however it was
+   * shaped, weighted or timed it read as an outline around the columns rather than as a roof over them,
+   * because a roof over a waveform is an *architectural* relationship and a peak hold is the same
+   * measurement as the bars. The mark can say "rooms above, audio below"; a reading cannot.
    */
-  const roof = (gain: number, dir: 1 | -1): string => {
-    const peaks = analysis.peaks;
-    /*
-     * Smoothed across its neighbours before it is drawn.
-     *
-     * Forty-eight vertices straight off the bins is a saw, and a saw is a data trace — the mark's roof
-     * is two strokes and a joint. A three-tap average keeps every real move (a hold that jumps stays a
-     * jump) and takes out the per-band chatter that was making the line look like it was tracing the
-     * bars rather than standing over them.
-     */
-    return peaks
-      .map((peak, index) => {
-        const before = peaks[index - 1] ?? peak;
-        const after = peaks[index + 1] ?? peak;
-        const smooth = (before + peak * 2 + after) / 4;
-        const reach = Math.max(0, smooth) * (mid - 3) * gain;
-        return `${((index + 0.5) * pitch).toFixed(1)},${(mid + dir * (reach + 2)).toFixed(1)}`;
-      })
-      .join(' ');
-  };
-
   const loudest = Math.max(analysis.left ?? 0, analysis.right ?? 0);
   const gainL = loudest > 0 ? (analysis.left ?? 0) / loudest : 1;
   const gainR = loudest > 0 ? (analysis.right ?? 0) / loudest : 1;
@@ -487,18 +466,6 @@ export function AnalysisPanel({
               y2={mid}
             />
             <rect x="0" y="0" width={dims.w} height={dims.h} fill={`url(#${dimId})`} pointerEvents="none" />
-            {/* The memory: a rounded tick floating where each band last peaked — held, then
-                sinking (`analysis.peaks`). Its band's own hue, lifted toward white: brighter than
-                the bar it remembers, and drawn above the dimming wash so it stays the one bright
-                element over the reading. */}
-            <g className="spectrum-peaks">
-              {active && analysis.peaks.length > 0 && (
-                <>
-                  <polyline points={roof(gainL, -1)} />
-                  <polyline points={roof(gainR, 1)} />
-                </>
-              )}
-            </g>
           </svg>
         )}
         {probe && !showEq && active && (
