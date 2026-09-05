@@ -1559,7 +1559,20 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
    * window; with the display now taking the slack there is height to spend, and the one photograph on
    * the page was the smallest thing on a 2560px screen.
    */
-  grid-template-columns: clamp(150px, 24vw, 460px) minmax(0, 1fr);
+  /*
+   * Capped by the window's height as well as its width.
+   *
+   * The nameplate row sizes to its contents and takes its height before the display gets any, so on a
+   * short window a 415px sleeve left the analyser with nothing — and once the display could shrink
+   * (which is what stopped it painting through the tabs), "nothing" meant zero. The photograph is the
+   * part that can afford to give way: this face is a reading with a cover on it, not the other way
+   * round.
+   *
+   * 34vh rather than 40: measured on a 1706x981 window the sleeve was 392px and the nameplate beside it
+   * only 236, so the photograph alone was setting the row's height and the display was paying for it.
+   * Below roughly 780px of window the nameplate becomes the floor instead and this stops mattering.
+   */
+  grid-template-columns: min(clamp(150px, 24vw, 460px), 34vh) minmax(0, 1fr);
   /* The nameplate row sizes to its contents; the display takes everything after it. */
   grid-template-rows: auto minmax(0, 1fr);
   grid-template-areas:
@@ -2478,6 +2491,8 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
   display: flex;
   flex-direction: column;
   min-height: 0;
+  /* Nothing inside a panel gets to paint outside it. The row below this one is the tab strip. */
+  overflow: hidden;
   padding: 13px 0 9px;
   border: 0;
   border-top: 1px solid var(--line);
@@ -2658,8 +2673,20 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
   --spec-h: clamp(120px, 20vh, 236px);
 
   position: relative;
-  flex: 1;
-  min-height: var(--spec-h);
+  /*
+   * A *preferred* height, not a floor.
+   *
+   * `min-height: var(--spec-h)` was the wrong half of the idea: on a window with less height than the
+   * panel wanted, the display refused to shrink, the panel's contents outgrew the grid row it lives in,
+   * and the frequency axis and the meter bridge painted straight through the tabs underneath. A reading
+   * that overlaps the furniture is worse than a short one.
+   *
+   * As a flex *basis* it says the same thing where there is room — take 236 and grow into whatever the
+   * row has spare — and gives way when there is not. `min-height: 0` is what allows that: a flex item's
+   * automatic minimum is its content, which is exactly the floor being removed here.
+   */
+  flex: 1 1 var(--spec-h);
+  min-height: 0;
 }
 
 /*
