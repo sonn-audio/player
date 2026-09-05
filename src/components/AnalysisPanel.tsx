@@ -236,7 +236,8 @@ export function AnalysisPanel({
    */
   const pitch = bars.length > 0 ? dims.w / bars.length : 0;
   const barW = Math.max(2, Math.min(pitch * BAR_FRACTION, pitch - MIN_SEAM_PX));
-  const barR = Math.min(4, barW / 2);
+  /* Half the width: the radius that turns a rect into one of the mark's pills. */
+  const pillR = barW / 2;
   const dimId = `spectrum-dim-${zoneId}`;
 
   /*
@@ -289,6 +290,27 @@ export function AnalysisPanel({
    * the asymmetry you see is the balance the audio actually has. It is the convention a mono analyser
    * with a stereo meter has always used, drawn as one instrument instead of two.
    */
+  /*
+   * The bars are the mark's bars, and the peak hold is the mark's roof.
+   *
+   * `Mark` is ten pill-ended rects with one thick rounded chevron over them — its own note calls it "a
+   * roofline over a waveform", and reads it as a level meter at rest. That is this display, drawn small.
+   * So the two are brought together: `rx` becomes half the bar's width, which is what makes a rect a
+   * pill, and the held peaks stop being forty-eight separate ticks and become one stroke across them,
+   * rounded at every joint. The logo is what the instrument draws when it is running.
+   *
+   * What is deliberately *not* borrowed is the mark's centre-out opacity ramp. There it says "loudest in
+   * the middle"; here the horizontal axis is frequency, so brightening the middle would be a statement
+   * about 1 kHz that nothing measured. The level-based wash keeps that job.
+   */
+  const roof = (gain: number, dir: 1 | -1): string =>
+    analysis.peaks
+      .map((peak, index) => {
+        const reach = Math.max(0, peak) * (mid - 2) * gain;
+        return `${((index + 0.5) * pitch).toFixed(1)},${(mid + dir * (reach + 1)).toFixed(1)}`;
+      })
+      .join(' ');
+
   const loudest = Math.max(analysis.left ?? 0, analysis.right ?? 0);
   const gainL = loudest > 0 ? (analysis.left ?? 0) / loudest : 1;
   const gainR = loudest > 0 ? (analysis.right ?? 0) / loudest : 1;
@@ -403,18 +425,18 @@ export function AnalysisPanel({
                       x={x}
                       y={mid - 1 - up}
                       width={barW}
-                      /* Extended past the axis by the corner radius, which the mask and the axis line
-                         cover: a rounded outer end and a flat one on the centre. */
-                      height={up + barR}
-                      rx={barR}
+                      /* Extended past the axis by the radius, which the mask and the axis line cover:
+                         a rounded outer end and a flat one on the centre. */
+                      height={up + pillR}
+                      rx={pillR}
                       fill={BAR_INK}
                     />
                     <rect
                       x={x}
-                      y={mid + 1 - barR}
+                      y={mid + 1 - pillR}
                       width={barW}
-                      height={down + barR}
-                      rx={barR}
+                      height={down + pillR}
+                      rx={pillR}
                       fill={BAR_INK}
                     />
                   </g>
@@ -437,19 +459,12 @@ export function AnalysisPanel({
                 the bar it remembers, and drawn above the dimming wash so it stays the one bright
                 element over the reading. */}
             <g className="spectrum-peaks">
-              {analysis.peaks.map((peak, index) => {
-                if (peak <= 0.02) {
-                  return null;
-                }
-                const reach = peak * (mid - 1);
-                const x = (index + 0.5) * pitch - barW / 2;
-                return (
-                  <g key={index}>
-                    <rect x={x} y={mid - 1 - reach * gainL - 1} width={barW} height={2} rx={1} />
-                    <rect x={x} y={mid + 1 + reach * gainR - 1} width={barW} height={2} rx={1} />
-                  </g>
-                );
-              })}
+              {active && analysis.peaks.length > 0 && (
+                <>
+                  <polyline points={roof(gainL, -1)} />
+                  <polyline points={roof(gainR, 1)} />
+                </>
+              )}
             </g>
           </svg>
         )}

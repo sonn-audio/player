@@ -3628,9 +3628,20 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
 /* The held peaks: the one thing on the display that is *remembering* something, and — over a
    silver field — the one thing in the accent. The LOCK-lamp logic, drawn as light: the reading is
    quiet, the statement glows. Gone once the room settles. */
-.spectrum-peaks rect {
-  fill: var(--accent);
-  opacity: 0.9;
+/*
+ * The roofline — the mark's own stroke, drawn live.
+ *
+ * The held peaks were forty-eight separate ticks; as one polyline with rounded joints they are the
+ * chevron from the logo, twice, hinged on the axis. Width and cap match the mark's proportions at this
+ * size rather than its own 6-on-84 — a stroke that heavy across 48 bands would be a lid on the reading.
+ */
+.spectrum-peaks polyline {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.92;
 }
 
 .spectrum-peaks {
