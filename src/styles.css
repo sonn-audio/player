@@ -616,13 +616,26 @@ svg {
  * should be — so the weight moved into a 1.5px accent stroke and the fill became a whisper of it.
  * Inverting on hover is the same move the art face makes, so the two players feel like one product.
  */
+/*
+ * The play ring gives the accent back.
+ *
+ * Green on this face means the equipment is telling you something: `ALTERED`, `LOCKED`, a stage that
+ * is doing work, the peak that just happened. The biggest green object on the panel was a transport
+ * control — a thing that reports nothing and is in the same place on every player ever made — so the
+ * one colour that carries meaning here was being spent on the one control that has none, and the
+ * verdicts it competes with are two words in 9px type.
+ *
+ * Silver, then, with the ring a shade brighter than the glyph: a control surface is silver when it is
+ * not saying anything. It is still the largest, roundest thing in the row; it simply stops shouting
+ * over the reading.
+ */
 .icon-button.primary {
   width: 56px;
   height: 56px;
   border: 0;
-  box-shadow: inset 0 0 0 1.5px var(--accent);
-  background: rgb(74 222 128 / 7%);
-  color: var(--accent);
+  box-shadow: inset 0 0 0 1.5px rgb(255 255 255 / 40%);
+  background: rgb(255 255 255 / 4%);
+  color: var(--text);
   transition:
     background var(--dur) var(--ease),
     color var(--dur) var(--ease),
@@ -900,7 +913,9 @@ input[type='range']:not(.native-range)::-webkit-slider-runnable-track {
   border-radius: var(--r-pill);
   background: linear-gradient(
     to right,
-    var(--accent) 0 var(--fill, 0%),
+    /* A fader's fill is a position, and a position is silver here — the accent is kept for the
+       things this face has a verdict about. */
+    rgb(255 255 255 / 48%) 0 var(--fill, 0%),
     var(--line-strong) var(--fill, 0%) 100%
   );
 }
@@ -927,7 +942,9 @@ input[type='range']:not(.native-range)::-moz-range-track {
   border-radius: var(--r-pill);
   background: linear-gradient(
     to right,
-    var(--accent) 0 var(--fill, 0%),
+    /* A fader's fill is a position, and a position is silver here — the accent is kept for the
+       things this face has a verdict about. */
+    rgb(255 255 255 / 48%) 0 var(--fill, 0%),
     var(--line-strong) var(--fill, 0%) 100%
   );
 }
@@ -2134,10 +2151,11 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
   background: none;
 }
 
-/* Behind the playhead: the accent. Ahead of it: the same bars, unlit — which is what makes the
-   playhead visible without drawing one. */
+/* Behind the playhead: silver. Ahead of it: the same bars, unlit — which is what makes the playhead
+   visible without drawing one. It was the accent, and how far into a track you are is a *reading*: the
+   same grammar the meter bridge already speaks, where green is reserved for the statement. */
 .wave-bars i[data-played] {
-  background: var(--accent);
+  background: rgb(255 255 255 / 48%);
 }
 
 /* Played but unmeasured: nothing. `.wave-played` draws that stretch as one continuous accent line,
@@ -2153,7 +2171,8 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
   z-index: 1;
   height: 2px;
   border-radius: var(--r-pill);
-  background: color-mix(in oklab, var(--accent) 70%, transparent);
+  /* Silver, with the bars: how far in you are is a reading, not a verdict. */
+  background: rgb(255 255 255 / 42%);
   translate: 0 -50%;
   pointer-events: none;
 }
@@ -2390,8 +2409,8 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
 }
 
 .transport .icon-button.primary:hover:not(:disabled) {
-  background: var(--accent);
-  color: var(--accent-ink);
+  background: var(--text);
+  color: var(--bg);
   scale: 1;
 }
 
