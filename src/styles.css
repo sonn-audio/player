@@ -3638,10 +3638,16 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
 .spectrum-peaks polyline {
   fill: none;
   stroke: var(--accent);
-  stroke-width: 2;
+  /*
+   * The mark draws its roof at 6 on an 84-wide viewBox — 7% of the drawing. Two pixels across a 390px
+   * display is half a percent: a wire, not a roofline. 3.5 is what carries the same weight at this size
+   * without becoming the lid the earlier note warned about.
+   */
+  stroke-width: 3.5;
   stroke-linecap: round;
   stroke-linejoin: round;
-  opacity: 0.92;
+  /* The same light the mark has in the intro, at the strength a reading can afford. */
+  filter: drop-shadow(0 0 6px rgb(74 222 128 / 35%));
 }
 
 .spectrum-peaks {

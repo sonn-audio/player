@@ -312,13 +312,26 @@ export function AnalysisPanel({
    * the middle"; here the horizontal axis is frequency, so brightening the middle would be a statement
    * about 1 kHz that nothing measured. The level-based wash keeps that job.
    */
-  const roof = (gain: number, dir: 1 | -1): string =>
-    analysis.peaks
+  const roof = (gain: number, dir: 1 | -1): string => {
+    const peaks = analysis.peaks;
+    /*
+     * Smoothed across its neighbours before it is drawn.
+     *
+     * Forty-eight vertices straight off the bins is a saw, and a saw is a data trace — the mark's roof
+     * is two strokes and a joint. A three-tap average keeps every real move (a hold that jumps stays a
+     * jump) and takes out the per-band chatter that was making the line look like it was tracing the
+     * bars rather than standing over them.
+     */
+    return peaks
       .map((peak, index) => {
-        const reach = Math.max(0, peak) * (mid - 2) * gain;
-        return `${((index + 0.5) * pitch).toFixed(1)},${(mid + dir * (reach + 1)).toFixed(1)}`;
+        const before = peaks[index - 1] ?? peak;
+        const after = peaks[index + 1] ?? peak;
+        const smooth = (before + peak * 2 + after) / 4;
+        const reach = Math.max(0, smooth) * (mid - 3) * gain;
+        return `${((index + 0.5) * pitch).toFixed(1)},${(mid + dir * (reach + 2)).toFixed(1)}`;
       })
       .join(' ');
+  };
 
   const loudest = Math.max(analysis.left ?? 0, analysis.right ?? 0);
   const gainL = loudest > 0 ? (analysis.left ?? 0) / loudest : 1;

@@ -27,8 +27,17 @@ import { useApi } from '@/state/ServerContext';
  * makes a transient readable after the bar under it has dropped. Both numbers are in wall-clock time
  * rather than in frames, so the behaviour does not change with the paint rate.
  */
-const PEAK_HOLD_MS = 700;
-const PEAK_FALL_PER_SEC = 0.45;
+/*
+ * Longer, and slower, now that the hold is drawn as the mark's roofline.
+ *
+ * At 700ms and 0.45 the line spent most of its time sitting *on* the bars, dipping between them as it
+ * decayed to whatever the current frame said — which reads as an outline traced around a blob, not as a
+ * roof over a waveform. Held for 1.2s and falling at 0.26 of full scale a second, it floats above the
+ * columns with air under it: the shape the mark has, and a perfectly ordinary meter ballistic. A
+ * transient stays legible for over a second, which is the point of a peak hold.
+ */
+const PEAK_HOLD_MS = 1200;
+const PEAK_FALL_PER_SEC = 0.26;
 
 /**
  * Meter ballistics: how the drawn level chases the measured one.
