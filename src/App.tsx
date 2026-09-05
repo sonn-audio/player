@@ -187,9 +187,7 @@ export function App() {
           active={navTarget}
           onNavigate={navigate}
           onSearch={openSearch}
-          zones={zones}
-          selectedZoneId={zoneId}
-          onSelectZone={select}
+          hasZone={zoneId !== null}
         />
 
         <main className="main">

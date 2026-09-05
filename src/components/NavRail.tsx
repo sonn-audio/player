@@ -23,9 +23,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useApi } from '@/state/ServerContext';
 import { Icon, type IconName } from '@/components/Icon';
 import { ServiceBadge } from '@/components/ServiceBadge';
-import { ZoneMenu } from '@/components/ZonePicker';
 import type { ContentItem } from '@/api/content';
-import type { ApiZoneState } from '@/api/types';
 
 export type NavTarget =
   /** What the selected room is playing. The default, and where the now-bar sends you. */
@@ -98,24 +96,21 @@ export function NavRail({
   active,
   onNavigate,
   onSearch,
-  zones,
-  selectedZoneId,
-  onSelectZone,
   folded = false,
   onToggleFold,
+  hasZone,
 }: {
   active: NavTarget | null;
   onNavigate: (target: NavTarget) => void;
   onSearch: () => void;
-  zones: ApiZoneState[];
-  selectedZoneId: number | null;
-  onSelectZone: (zoneId: number) => void;
   /** Icons only, no labels — the instrument beside it takes the width. */
   folded?: boolean;
   onToggleFold: () => void;
+  /* Whether there is a room at all — the only thing the rail still needs to know about rooms, now
+     that choosing one happens in the column of them under `Now playing`. */
+  hasZone: boolean;
 }) {
   const api = useApi();
-  const hasZone = selectedZoneId !== null;
   const [roots, setRoots] = useState<Node[]>([]);
   const [open, setOpen] = useState<Set<string>>(readOpen);
   /** Children by node id, filled as nodes are fetched. */
@@ -317,10 +312,18 @@ export function NavRail({
         {/* No wordmark and no status badge: both moved to the bar above, which is where a product
             says its own name. What is left here is navigation, and only navigation. */}
 
-        {/* Which room everything on this page acts on. First, because it scopes what follows. */}
-        {zones.length > 0 && (
-          <ZoneMenu zones={zones} selectedId={selectedZoneId} onSelect={onSelectZone} />
-        )}
+        {/*
+         * No room picker.
+         *
+         * The rooms are the layout now: `Now playing` is a column of them, the one you are listening in
+         * is the tall row, and pressing another room's lane makes it the tall row. A dropdown at the top
+         * of the rail was a second way to do exactly that — and a worse one, since a lane also tells you
+         * what that room is playing, what it is doing to it and whether its clock is locked.
+         *
+         * The cost, stated: from a listing or a collection you go to `Now playing` to change room. Two
+         * presses instead of one, and the same trip the art face asks for, where the wall is also only
+         * on home.
+         */}
 
         {/* Above the scroll line so it stays put, and above the tree because it is the faster way
             in once a library is more than a few hundred albums. */}

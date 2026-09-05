@@ -1624,14 +1624,46 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
  * rows before it scrolls — a queue is read a few entries at a time, and the ones past that were only
  * ever reachable by scrolling anyway.
  */
+/*
+ * The house concept, in this face's medium.
+ *
+ * On the art face the rooms are panels in a row and the one you are listening in takes the width. Here
+ * they are lanes in a column and the one you are listening in takes the height. Same idea, same
+ * gesture, and it retires the picker in the rail — two ways to choose a room on one screen is the
+ * duplication this face has been removing everywhere else.
+ *
+ * The name column is what makes it one table with a tall row in it rather than a panel with a list
+ * stapled underneath: every room's name starts on the same edge, whether the row is 40px or 700.
+ */
+.np-room {
+  display: grid;
+  grid-template-columns: var(--room-name, clamp(108px, 11vw, 168px)) minmax(0, 1fr);
+  gap: clamp(10px, 1.4vw, 28px);
+  min-height: 0;
+}
+
+.np-room[data-current] {
+  min-height: 0;
+}
+
+.np-room-name {
+  padding-top: 4px;
+  font-size: 13.5px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--text);
+}
+
 .now-playing {
   position: relative;
   display: grid;
+  /* One column, stated: the rows are the rooms. */
+  grid-template-columns: minmax(0, 1fr);
   /* `auto` for the lists, not `minmax(0, 40vh)`: grid's maximise-tracks step grows a track with a
      definite maximum up to that maximum *before* an `fr` track gets anything, so a capped row and an
      elastic one meant the empty queue claimed 40vh and the display took what was left. The cap lives
      on `.tab-body` instead, where it limits the row through the item's own max-content contribution. */
-  grid-template-rows: minmax(0, 1fr) auto auto;
+  grid-template-rows: minmax(0, 1fr) auto;
   gap: 14px;
   height: 100%;
 }
@@ -1704,16 +1736,15 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
    * only 236, so the photograph alone was setting the row's height and the display was paying for it.
    * Below roughly 780px of window the nameplate becomes the floor instead and this stops mattering.
    */
-  grid-template-columns: min(clamp(150px, 24vw, 460px), 30vh) minmax(0, 1fr) auto;
+  grid-template-columns: min(clamp(150px, 24vw, 420px), 28vh) minmax(0, 1fr) auto;
   /* The nameplate, the control strip and the chain size to their contents; the display takes what is
      between them. */
-  grid-template-rows: auto auto minmax(0, 1fr) auto auto;
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
   grid-template-areas:
     'cover meta readout'
     'transport transport transport'
     'analysis analysis analysis'
-    'chain chain chain'
-    'house house house';
+    'chain chain chain';
   gap: 18px 22px;
   min-width: 0;
   min-height: 0;
@@ -3048,10 +3079,11 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
  * picture, a plate and a readings block; a lane's six are its own. So they are declared here, once, and
  * every lane obeys them.
  */
+/* No `grid-area`. It named a row on `.np-player`, and now that the lanes are a sibling of the whole
+   room rather than a section inside the panel, that name means nothing here — a named area nobody
+   declares is placed in an implicit track, which is what put the lanes *beside* the panel. */
 .house {
-  grid-area: house;
-  padding-top: 14px;
-  border-top: 1px solid var(--line);
+  min-width: 0;
 }
 
 .house-head {
@@ -3074,13 +3106,15 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
 
 .house-lane {
   display: grid;
+  /* The first column is the panel's name column, stated in the same variable, so every room's name —
+     the tall row's included — starts on one edge. */
   grid-template-columns:
-    minmax(120px, 1.4fr) auto minmax(150px, 1.2fr)
+    var(--room-name, clamp(108px, 11vw, 168px)) auto minmax(150px, 1.2fr)
     minmax(80px, 0.8fr) minmax(90px, 0.8fr) minmax(110px, 1fr);
   align-items: center;
-  gap: clamp(14px, 2vw, 40px);
+  gap: clamp(10px, 1.4vw, 28px);
   width: 100%;
-  padding: 9px 2px;
+  padding: 9px 0;
   border-bottom: 1px solid var(--hair, rgb(255 255 255 / 6%));
   text-align: left;
   transition: background 0.2s;
@@ -3092,6 +3126,7 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
 
 .house-name {
   overflow: hidden;
+  padding-left: 0;
   font-size: 13.5px;
   font-weight: 600;
   color: var(--text-dim);

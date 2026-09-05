@@ -40,23 +40,28 @@ function wire(zone: ApiZoneState): string {
 
 export function HouseLanes({
   zones,
-  currentId,
   onSelect,
 }: {
+  /** The rooms that are *not* the panel — the caller has already taken itself out. */
   zones: ApiZoneState[];
-  currentId: number;
   onSelect: (zoneId: number) => void;
 }) {
-  const others = zones.filter((zone) => zone.id !== currentId);
-  if (others.length === 0) {
+  if (zones.length === 0) {
     return null;
   }
 
+  /*
+   * No heading.
+   *
+   * `THE HOUSE` over a block of rows made this a section *about* the house, parked under the player —
+   * which is what it was, and why it read as an extra widget. Without it the rows are simply the other
+   * rooms of the same column the panel above is the first row of, and the name column running down the
+   * page says everything a label would have.
+   */
   return (
     <section className="house">
-      <h2 className="house-head">The house</h2>
       <ul className="house-lanes">
-        {others.map((zone) => {
+        {zones.map((zone) => {
           const stages = stagesOf(zone);
           const altered = stages.some((stage) => stage.state === 'on' && stage.label !== 'Source');
           const sync = zone.output?.sync;

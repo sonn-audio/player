@@ -69,6 +69,8 @@ export function NowPlayingView({
 
   const track = zone.track;
 
+  const others = zones.filter((candidate) => candidate.id !== zone.id);
+
   return (
     <div className="now-playing">
       {/*
@@ -95,7 +97,20 @@ export function NowPlayingView({
         No card around it — the artwork's colour is the page's background now, and a bordered box
         floating on its own wash reads as a panel that failed to fill.
       */}
-      <div className="np-player">
+      {/*
+       * This room's name, at the head of the column every other room's name runs down.
+       *
+       * The house concept from the art face, in this face's medium: there the rooms are panels in a row
+       * and the one you are listening in takes the width; here they are lanes in a column and the one
+       * you are listening in takes the height. Same idea, same gesture, and the name column is what
+       * makes it read as one table with a tall row in it rather than a panel with a list stapled under.
+       *
+       * It also retires the picker in the rail. Two ways to choose a room on one screen is the
+       * duplication this face has been removing everywhere else.
+       */}
+      <div className="np-room" data-current>
+        <span className="np-room-name">{zone.name}</span>
+        <div className="np-player">
         {/*
           The hero and the light it throws, lit the way the art player lights it.
           The bloom is the sleeve blurred behind the sleeve — see `.np-bloom`.
@@ -303,17 +318,17 @@ export function NowPlayingView({
           <SignalPath zone={zone} />
         </div>
 
-        {/*
-         * And the rest of the house, as lanes.
-         *
-         * This panel shows one room in full, which is what a player shows. But the thing behind it is a
-         * server feeding several rooms at once, each with its own source, processing, output and clock —
-         * and no other player can draw that because no other player knows it. One line a room, the same
-         * reading compressed to its stations and its verdict, so the state of the whole house is on one
-         * screen. Pressing a lane makes that room the panel.
-         */}
-        <HouseLanes zones={zones} currentId={zone.id} onSelect={onSelectZone} />
+        </div>
       </div>
+
+      {/*
+       * And the rest of the house, in the same column: one line a room.
+       *
+       * A server feeds several rooms at once, each with its own source, processing, output and clock,
+       * and no other player can draw that because no other player knows it. Pressing a lane makes that
+       * room the tall row.
+       */}
+      <HouseLanes zones={others} onSelect={onSelectZone} />
 
       {/*
        * No tab strip, and no lists under the instrument.
