@@ -17,6 +17,7 @@ import { Waveform } from '@/components/Waveform';
 import { SourceChip } from '@/components/StreamFormat';
 import { AnalysisPanel, Readout } from '@/components/AnalysisPanel';
 import { SignalPath } from '@/components/SignalPath';
+import { HouseLanes } from '@/components/HouseLanes';
 import { Icon } from '@/components/Icon';
 import { splitQualifier } from '@/lib/format';
 import { useZoneFavorite } from '@/state/useZoneFavorite';
@@ -53,7 +54,16 @@ function TrackHeart({ zone }: { zone: ApiZoneState }) {
 }
 
 
-export function NowPlayingView({ zone }: { zone: ApiZoneState }) {
+export function NowPlayingView({
+  zone,
+  zones,
+  onSelectZone,
+}: {
+  zone: ApiZoneState;
+  /** Every room, for the lanes under the panel. */
+  zones: ApiZoneState[];
+  onSelectZone: (zoneId: number) => void;
+}) {
   const api = useApi();
   const coverAnchor = useCoverAnchor();
 
@@ -292,6 +302,17 @@ export function NowPlayingView({ zone }: { zone: ApiZoneState }) {
         <div className="np-chain">
           <SignalPath zone={zone} />
         </div>
+
+        {/*
+         * And the rest of the house, as lanes.
+         *
+         * This panel shows one room in full, which is what a player shows. But the thing behind it is a
+         * server feeding several rooms at once, each with its own source, processing, output and clock —
+         * and no other player can draw that because no other player knows it. One line a room, the same
+         * reading compressed to its stations and its verdict, so the state of the whole house is on one
+         * screen. Pressing a lane makes that room the panel.
+         */}
+        <HouseLanes zones={zones} currentId={zone.id} onSelect={onSelectZone} />
       </div>
 
       {/*

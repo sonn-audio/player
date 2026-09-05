@@ -1707,12 +1707,13 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
   grid-template-columns: min(clamp(150px, 24vw, 460px), 30vh) minmax(0, 1fr) auto;
   /* The nameplate, the control strip and the chain size to their contents; the display takes what is
      between them. */
-  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  grid-template-rows: auto auto minmax(0, 1fr) auto auto;
   grid-template-areas:
     'cover meta readout'
     'transport transport transport'
     'analysis analysis analysis'
-    'chain chain chain';
+    'chain chain chain'
+    'house house house';
   gap: 18px 22px;
   min-width: 0;
   min-height: 0;
@@ -3033,6 +3034,144 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
 
 .np-transport .np-tail .volume input[type='range'] {
   width: clamp(120px, 13vw, 210px);
+}
+
+/*
+ * The house, as lanes.
+ *
+ * One row a room, and the columns are stated once so the readings line down the page: name, chain,
+ * what went in and what came out, where it goes, the verdict, the clock. A table rather than a list of
+ * cards — the whole point is that you can scan a column and see which room is altering its audio or
+ * whose clock has come loose, which a stack of boxes cannot give you.
+ *
+ * `subgrid` would be the honest way to share the panel's own columns, but the panel's three are for a
+ * picture, a plate and a readings block; a lane's six are its own. So they are declared here, once, and
+ * every lane obeys them.
+ */
+.house {
+  grid-area: house;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+
+.house-head {
+  margin: 0 0 10px;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  color: var(--text-mute);
+  text-transform: uppercase;
+}
+
+.house-lanes {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.house-lane {
+  display: grid;
+  grid-template-columns:
+    minmax(120px, 1.4fr) auto minmax(150px, 1.2fr)
+    minmax(80px, 0.8fr) minmax(90px, 0.8fr) minmax(110px, 1fr);
+  align-items: center;
+  gap: clamp(14px, 2vw, 40px);
+  width: 100%;
+  padding: 9px 2px;
+  border-bottom: 1px solid var(--hair, rgb(255 255 255 / 6%));
+  text-align: left;
+  transition: background 0.2s;
+}
+
+.house-lane:hover {
+  background: rgb(255 255 255 / 3%);
+}
+
+.house-name {
+  overflow: hidden;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text-dim);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: color 0.2s;
+}
+
+.house-lane[data-playing] .house-name {
+  color: var(--text);
+}
+
+/* The chain at a glance: one dot a station, in the three states the strip above uses. */
+.house-chain {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.house-chain i {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--text-mute);
+  opacity: 0.5;
+}
+
+.house-chain i[data-state='on'] {
+  background: var(--accent);
+  opacity: 1;
+}
+
+.house-chain i[data-state='idle'] {
+  background: none;
+  box-shadow: inset 0 0 0 1px var(--text-mute);
+}
+
+.house-chain i[data-state='off'] {
+  background: var(--warn);
+  opacity: 1;
+}
+
+/*
+ * A silent room is not a fault.
+ *
+ * `stagesOf` reports `off` for a stage with nothing flowing through it, which in the chain above means
+ * amber — right there, where the sentence beside it says "nothing playing". In a column you scan for
+ * trouble, four amber dots a room reads as four alarms, and a house at rest lit up like a fire panel.
+ * A room that is off says so in its own words; its stations go quiet.
+ */
+.house-lane:not([data-playing]) .house-chain i {
+  background: var(--text-mute);
+  box-shadow: none;
+  opacity: 0.26;
+}
+
+.house-wire,
+.house-out,
+.house-verdict,
+.house-clock {
+  overflow: hidden;
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  color: var(--text-faint, rgb(255 255 255 / 30%));
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.house-lane[data-playing] .house-wire,
+.house-lane[data-playing] .house-out {
+  color: var(--text-dim);
+}
+
+/* The verdict is the one word a lane says in colour, and only when it is a warning about the audio. */
+.house-verdict[data-altered] {
+  color: var(--warn);
+}
+
+.house-clock[data-locked] {
+  color: var(--accent);
 }
 
 /*

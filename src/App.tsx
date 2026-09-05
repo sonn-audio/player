@@ -212,7 +212,7 @@ export function App() {
               searchNonce={view.searchNonce}
             />
           ) : zone ? (
-            <NowPlayingView zone={zone} />
+            <NowPlayingView zone={zone} zones={zones} onSelectZone={select} />
           ) : (
             <div className="content-empty">
               <Icon name="speaker" className="content-empty-icon" />

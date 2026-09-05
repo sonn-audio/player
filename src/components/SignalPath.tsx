@@ -44,7 +44,7 @@ const leadTraces = new Map<number, number[]>();
 /** How many readings the trace keeps. */
 const TRACE_LENGTH = 120;
 
-type Stage = {
+export type Stage = {
   label: string;
   value: string;
   /**
@@ -249,7 +249,7 @@ function conversionStages(
   return stages;
 }
 
-function stagesOf(zone: ApiZoneState): Stage[] {
+export function stagesOf(zone: ApiZoneState): Stage[] {
   const format = zone.format;
   const source = format?.source ?? null;
   const output = format?.output ?? null;
