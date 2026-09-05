@@ -1812,16 +1812,19 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
  */
 .np-order {
   display: flex;
-  min-height: 0;
-  /* Fills the column so the list stands at its top rather than floating in the middle of it — but as
-     a list, not as a panel: the label and its rule are the whole frame this needs. */
-  flex: 1 1 auto;
+  /*
+   * A stated height, not whatever is left.
+   *
+   * Stretching it to the column made the list's size a side effect of the window's — a four-entry queue
+   * on a tall screen sat in six hundred pixels of its own panel, and the same list on a laptop was
+   * cramped. A fixed box is a decision: this much of the running order is on screen, and the rest is a
+   * scroll away.
+   */
+  flex: none;
   flex-direction: column;
   gap: 9px;
-  overflow: hidden;
 }
 
-/* A label with a rule running out of it: a top edge without a box, the same device the chain uses. */
 .np-order-head {
   display: flex;
   align-items: center;
@@ -1841,27 +1844,107 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
 }
 
 .np-order-list {
-  min-height: 0;
-  flex: 1 1 auto;
+  height: 320px;
   margin: 0;
   padding: 0;
-  overflow: hidden;
+  overflow-y: auto;
   list-style: none;
+  /* Contained, so reaching the end of the queue does not start scrolling the page behind it. */
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: rgb(255 255 255 / 14%) transparent;
 }
 
-/* The clip is stated as a fade, so a cut-off row reads as "there is more" rather than as a bug — and
-   only when there *is* more, which is what `data-clipped` measures. */
-.np-order-list[data-clipped] {
-  -webkit-mask: linear-gradient(180deg, #000 calc(100% - 52px), transparent);
-  mask: linear-gradient(180deg, #000 calc(100% - 52px), transparent);
+/* A scrollbar in the width one can be without becoming furniture. */
+.np-order-list::-webkit-scrollbar {
+  width: 5px;
+}
+
+.np-order-list::-webkit-scrollbar-thumb {
+  border-radius: 3px;
+  background: rgb(255 255 255 / 14%);
+}
+
+.np-order-list::-webkit-scrollbar-thumb:hover {
+  background: rgb(255 255 255 / 24%);
+}
+
+.np-order-list::-webkit-scrollbar-track {
+  background: none;
+}
+
+/*
+ * One entry: a grip, then the row.
+ *
+ * The grip sits in the 18px the two-digit index used to have — same left edge, same ladder for the
+ * eye, except this one moves the entry instead of counting it.
+ */
+.np-order-item {
+  position: relative;
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr);
+  align-items: center;
+}
+
+.np-order-grip {
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 26px;
+  color: var(--text-mute);
+  opacity: 0.3;
+  cursor: grab;
+  /* A finger on the grip moves the entry; without this it scrolls the list instead. */
+  touch-action: none;
+  transition: opacity 0.15s;
+}
+
+.np-order-grip svg {
+  width: 11px;
+  height: 11px;
+}
+
+.np-order-item:hover .np-order-grip {
+  opacity: 0.75;
+}
+
+.np-order-grip:active {
+  cursor: grabbing;
+  opacity: 1;
+}
+
+/* The entry being carried stays in the list, faded: a row that vanishes while you drag it leaves you
+   holding nothing, and the gap it would leave is what the insertion line is for. */
+.np-order-item[data-dragging] {
+  opacity: 0.4;
+}
+
+/* Where it would land: one accent hairline across the row it would go before — the same ink every
+   other decision on this face is drawn in. */
+.np-order-item[data-drop]::before,
+.np-order-tail[data-drop]::before {
+  content: '';
+  position: absolute;
+  top: -1px;
+  right: 0;
+  left: 18px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--accent);
+}
+
+/* The end of the list, as a target: eight pixels of nothing that can be dropped on. */
+.np-order-tail {
+  position: relative;
+  height: 8px;
 }
 
 .np-order-row {
   display: grid;
-  grid-template-columns: 20px minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: 10px;
   width: 100%;
-  padding: 6px 6px 6px 0;
+  padding: 6px 6px 6px 4px;
   border-radius: 5px;
   text-align: left;
   transition: background 0.15s;
@@ -1875,15 +1958,11 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
  * A row that is not a control does not answer the pointer, and a list of what is behind you sits a
  * shade further back than the one that is still to come.
  *
- * It also drops the index column: a running order is numbered because the numbers are the order it
- * will happen in, and an empty 20px gutter indented every past title away from the label above it.
+ * The past has no grips either — there is nothing to reorder about it — so its rows take the whole
+ * width and their titles start on the label's own edge.
  */
-.np-order[data-past] .np-order-row {
-  grid-template-columns: minmax(0, 1fr) auto;
-}
-
-.np-order[data-past] .np-order-index {
-  display: none;
+.np-order[data-past] .np-order-item {
+  grid-template-columns: minmax(0, 1fr);
 }
 
 .np-order-row[data-static] {
@@ -1896,14 +1975,6 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
 
 .np-order[data-past] .np-order-title {
   color: var(--text-mute);
-}
-
-/* The ladder for the eye: the position in the order, tabular so the column of digits is a column. */
-.np-order-index {
-  padding-top: 2px;
-  font-size: 10.5px;
-  color: var(--text-mute);
-  font-variant-numeric: tabular-nums;
 }
 
 .np-order-text {
