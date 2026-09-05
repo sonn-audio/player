@@ -13,15 +13,7 @@
  *    blur, and what analyser hardware has always done.
  */
 import { useLayoutEffect, useRef, useState } from 'react';
-import {
-  useAnalysis,
-  spectrumFrequency,
-  spectrumGeometry,
-  SPECTRUM_BARS,
-  spectrumPosition,
-  toDb,
-  toHeight,
-} from '@/state/useAnalysis';
+import { useAnalysis, spectrumFrequency, spectrumGeometry, SPECTRUM_BARS, spectrumPosition, toDb, toHeight } from '@/state/useAnalysis';
 import { EqOverlay } from '@/components/EqOverlay';
 import { Icon } from '@/components/Icon';
 import type { ApiOutputCapabilities } from '@/api/types';
@@ -128,7 +120,14 @@ export function Readout({
   return (
     <div className="np-readout">
       <div className="np-read">
-        <span className="np-read-label">Level</span>
+        {/* The lamp belongs to the number it is about.
+            Floating on its own above the block it read as debris on the panel — a dot with no
+            argument. Beside `LEVEL` it is what it is on the equipment this borrows from: the mark
+            that says the reading next to it is the one to react to. */}
+        <span className="np-read-label">
+          Level
+          <i className="np-read-lamp" data-lit={(active && level > 92) || undefined} title="Approaching full scale" />
+        </span>
         <span className="np-read-value">
           {active ? dbfs(analysis.loudness) : '—'}
           <i>dBFS</i>
@@ -138,9 +137,6 @@ export function Readout({
         <span className="np-read-label">Note</span>
         <span className="np-read-value">{(active && analysis.pitch) || '—'}</span>
       </div>
-      {/* The peak lamp, as on the equipment this borrows from: lit while the loudest bin is inside the
-          top of the scale, which is the only moment the number beside it is worth reacting to. */}
-      <span className="np-read-lamp" data-lit={(active && level > 92) || undefined} title="Approaching full scale" />
     </div>
   );
 }
@@ -232,7 +228,18 @@ export function AnalysisPanel({
    * cannot drift away from the bars it is measuring.
    */
   const floorDb = spectrumGeometry().floorDb;
-  const rules = DB_RULES.filter((db) => db > floorDb).map((db) => ({
+  /*
+   * A short field shows fewer rules.
+   *
+   * Mirrored, four rules and their eight labels need about 240px of display; in the 120px the floor
+   * leaves on a laptop they land on top of each other, and a scale you cannot read is worse than no
+   * scale — it is the same ink saying nothing. So a short field keeps the two that carry the shape of
+   * the reading, -12 and -36, and drops the rest.
+   */
+  const dense = dims.h > 0 && dims.h < 240;
+  const rules = DB_RULES.filter((db) => db > floorDb)
+    .filter((db) => !dense || db === -12 || db === -36)
+    .map((db) => ({
     db,
     /* Mirrored with the reading: the same value above and below the axis, so a peak on the third rule
        means the same thing whichever channel drew it. */
@@ -373,13 +380,7 @@ export function AnalysisPanel({
         </span>
 
         {dims.w > 0 && (
-          <svg
-            className="spectrum-curve"
-            viewBox={`0 0 ${dims.w} ${dims.h}`}
-            width={dims.w}
-            height={dims.h}
-            aria-hidden="true"
-          >
+          <svg className="spectrum-curve" viewBox={`0 0 ${dims.w} ${dims.h}`} width={dims.w} height={dims.h} aria-hidden="true">
             <defs>
               {/*
                 The absolute-level dimming, as one wash over the whole display: near the floor every
@@ -406,7 +407,18 @@ export function AnalysisPanel({
                 <g key={rule.db}>
                   <line x1="0" x2={dims.w} y1={rule.y} y2={rule.y} />
                   <line x1="0" x2={dims.w} y1={dims.h - rule.y} y2={dims.h - rule.y} />
+                  {/*
+                    The number twice, once per half.
+                    The rules were mirrored and their labels were not, so the field read as a scale on
+                    top and an unexplained void underneath — which is exactly how a meter looks when it
+                    is broken. Two labels cost nothing and make the emptiness beneath the axis *scale*
+                    rather than absence: the same peak means the same thing whichever channel drew it,
+                    and now the drawing says so on both sides.
+                  */}
                   <text x={dims.w - 4} y={rule.y - 4} textAnchor="end">
+                    {rule.db}
+                  </text>
+                  <text x={dims.w - 4} y={dims.h - rule.y + 11} textAnchor="end">
                     {rule.db}
                   </text>
                 </g>
@@ -443,14 +455,7 @@ export function AnalysisPanel({
                       rx={pillR}
                       fill={BAR_INK}
                     />
-                    <rect
-                      x={x}
-                      y={mid + 1 - pillR}
-                      width={barW}
-                      height={down + pillR}
-                      rx={pillR}
-                      fill={BAR_INK}
-                    />
+                    <rect x={x} y={mid + 1 - pillR} width={barW} height={down + pillR} rx={pillR} fill={BAR_INK} />
                   </g>
                 );
               })}
@@ -458,24 +463,14 @@ export function AnalysisPanel({
 
             {/* The axis the two channels stand on, and the only line in the display that is not a
                 reading: it is where the reading is folded. */}
-            <line
-              className="spectrum-axis-line"
-              x1="0"
-              x2={dims.w}
-              y1={mid}
-              y2={mid}
-            />
+            <line className="spectrum-axis-line" x1="0" x2={dims.w} y1={mid} y2={mid} />
             <rect x="0" y="0" width={dims.w} height={dims.h} fill={`url(#${dimId})`} pointerEvents="none" />
           </svg>
         )}
         {probe && !showEq && active && (
           <>
             <span className="spectrum-cursor" style={{ left: `${probe.at * 100}%` }} aria-hidden="true" />
-            <span
-              className="spectrum-readout"
-              style={{ left: `${Math.min(0.93, Math.max(0.07, probe.at)) * 100}%` }}
-              aria-hidden="true"
-            >
+            <span className="spectrum-readout" style={{ left: `${Math.min(0.93, Math.max(0.07, probe.at)) * 100}%` }} aria-hidden="true">
               {probeHz(probe.hz)} <i>{probe.db.toFixed(0)} dB</i>
             </span>
           </>

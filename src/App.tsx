@@ -210,7 +210,12 @@ export function App() {
               searchNonce={view.searchNonce}
             />
           ) : zone ? (
-            <NowPlayingView zone={zone} zones={zones} onSelectZone={select} />
+            <NowPlayingView
+              zone={zone}
+              zones={zones}
+              onSelectZone={select}
+              onOpenQueue={() => navigate({ kind: 'collection', id: 'queue' })}
+            />
           ) : (
             <div className="content-empty">
               <Icon name="speaker" className="content-empty-icon" />

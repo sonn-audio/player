@@ -1663,23 +1663,180 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
  * as a photograph behind glass.
  */
 /*
- * The plate is as tall as it is.
+ * The room's column: the record, its name, and the running order under them.
  *
- * Two ways to fill a 960px column with a square sleeve were tried and both were worse than not
- * filling it: cropping the record to a tall band threw its sides away and read as stretched, and
- * blurring the record down the column left a flat grey box with a picture at the top. So the plate
- * stops under the name (`align-self: start`) and what is beneath it is the page — which already
- * carries this record's light, from `.np-wash` across the whole view. An empty column of page is
- * quiet; an empty column of *box* is a mistake you can see.
+ * Three things that are all about *this room*, which is what makes the space under a square sleeve
+ * worth having. Filling it with more of the record was tried twice and both answers were worse than
+ * the hole: a tall crop threw the sleeve's sides away and read as stretched, and the same picture
+ * blurred top to bottom was a flat grey box with a photograph on it.
  */
+.np-side {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(14px, 1.6vh, 22px);
+  min-width: 0;
+  min-height: 0;
+}
+
 .np-plate {
   position: relative;
   display: flex;
-  align-self: start;
+  flex: none;
   flex-direction: column;
   min-width: 0;
   overflow: hidden;
   border-radius: var(--r-sm);
+}
+
+/*
+ * What follows this record, down the column.
+ *
+ * Type, not sleeves: the one picture on this face is the record above this, and a column of
+ * thumbnails would argue with it. The list clips and fades at the foot rather than scrolling —
+ * a list you scroll is a place you go, and this is something you glance at on the way past.
+ */
+.np-order {
+  display: flex;
+  min-height: 0;
+  flex-direction: column;
+  gap: 9px;
+  overflow: hidden;
+}
+
+/* A label with a rule running out of it: a top edge without a box, the same device the chain uses. */
+.np-order-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  color: var(--text-mute);
+  text-transform: uppercase;
+}
+
+.np-order-head i {
+  flex: 1;
+  height: 1px;
+  background: var(--hair, rgb(255 255 255 / 8%));
+}
+
+.np-order-list {
+  min-height: 0;
+  flex: 1 1 auto;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  list-style: none;
+}
+
+/* The clip is stated as a fade, so a cut-off row reads as "there is more" rather than as a bug — and
+   only when there *is* more, which is what `data-clipped` measures. */
+.np-order-list[data-clipped] {
+  -webkit-mask: linear-gradient(180deg, #000 calc(100% - 52px), transparent);
+  mask: linear-gradient(180deg, #000 calc(100% - 52px), transparent);
+}
+
+.np-order-row {
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr) auto;
+  gap: 10px;
+  width: 100%;
+  padding: 6px 6px 6px 0;
+  border-radius: 5px;
+  text-align: left;
+  transition: background 0.15s;
+}
+
+.np-order-row:hover {
+  background: rgb(255 255 255 / 5%);
+}
+
+/*
+ * A row that is not a control does not answer the pointer, and a list of what is behind you sits a
+ * shade further back than the one that is still to come.
+ *
+ * It also drops the index column: a running order is numbered because the numbers are the order it
+ * will happen in, and an empty 20px gutter indented every past title away from the label above it.
+ */
+.np-order[data-past] .np-order-row {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.np-order[data-past] .np-order-index {
+  display: none;
+}
+
+.np-order-row[data-static] {
+  cursor: default;
+}
+
+.np-order-row[data-static]:hover {
+  background: none;
+}
+
+.np-order[data-past] .np-order-title {
+  color: var(--text-mute);
+}
+
+/* The ladder for the eye: the position in the order, tabular so the column of digits is a column. */
+.np-order-index {
+  padding-top: 2px;
+  font-size: 10.5px;
+  color: var(--text-mute);
+  font-variant-numeric: tabular-nums;
+}
+
+.np-order-text {
+  display: grid;
+  min-width: 0;
+  gap: 1px;
+}
+
+.np-order-title,
+.np-order-artist {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.np-order-title {
+  font-size: 13px;
+  color: var(--text-dim);
+  transition: color 0.15s;
+}
+
+.np-order-artist {
+  font-size: 11px;
+  font-style: normal;
+  color: var(--text-mute);
+}
+
+.np-order-row:hover .np-order-title {
+  color: var(--text);
+}
+
+.np-order-time {
+  align-self: center;
+  font-size: 10.5px;
+  color: var(--text-mute);
+  font-variant-numeric: tabular-nums;
+}
+
+.np-order-more {
+  align-self: start;
+  padding: 2px 0;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  color: var(--text-mute);
+  text-transform: uppercase;
+  transition: color 0.15s;
+}
+
+.np-order-more:hover {
+  color: var(--accent);
 }
 
 /*
@@ -1906,6 +2063,9 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
 }
 
 .np-read-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   font-family: var(--font-mono);
   font-size: 9px;
   font-weight: 700;
@@ -1932,15 +2092,16 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
   color: var(--text-mute);
 }
 
-/* Unlit it is a hole in the panel, which is what an unlit lamp is. */
+/*
+ * Unlit it is a hole in the panel, which is what an unlit lamp is.
+ *
+ * In the label's own line now rather than floating above the block: a dot alone in the corner of a
+ * panel is debris, and what makes it a lamp is standing next to the reading it qualifies.
+ */
 .np-read-lamp {
-  position: absolute;
-  /* In the column's own gutter, not on top of the first label — `right: 0` put it through the E of
-     LEVEL, which is what a lamp does when it is given the same corner as a word. */
-  top: 7px;
-  left: 6px;
-  width: 6px;
-  height: 6px;
+  flex: none;
+  width: 5px;
+  height: 5px;
   border-radius: 50%;
   background: var(--line-strong);
   transition: background 0.2s;
@@ -3433,6 +3594,13 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
 
 .np-chain .signal-timing {
   grid-area: 1 / 2;
+  /* No rule of its own. The base rule gives the clock a hairline for the rail it used to live in, and
+     across a strip that line began in the middle of the panel and stopped at its edge — the same
+     mistake the verdict's rule made, one row up. The seam over the whole strip is the only rule this
+     needs. */
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
 }
 
 .np-chain .signal-stages {
@@ -3453,7 +3621,22 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
   flex-direction: column;
   gap: 8px;
   min-width: 0;
-  padding: 0 14px 0 0;
+  padding: 0 10px 0 0;
+}
+
+/*
+ * Every station keeps two lines, whether it needs them or not.
+ *
+ * Four of the eight readings fit on one line and four do not, so the strip's bottom edge came out
+ * ragged — a row of readings sitting at two different depths, which reads as a mistake rather than as
+ * a difference. Reserving the second line everywhere costs a few pixels of the display and buys a
+ * strip with one baseline top and bottom.
+ */
+.np-chain .signal-value {
+  display: block;
+  min-height: 2.7em;
+  font-size: 10.5px;
+  line-height: 1.35;
 }
 
 /*
@@ -3467,6 +3650,24 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
  */
 .np-chain .signal-detail {
   display: none;
+}
+
+/*
+ * A narrower window gives the clock's footnotes back to the verdict.
+ *
+ * `band 250-350` and `lowest lead` are the qualifications under two of the clock's numbers, and they
+ * set the width of the whole right-hand block — which at 1280px squeezed the verdict into a three-line
+ * paragraph in a column meant for one line. The numbers stay; what they are measured against is the
+ * part a narrow strip can do without.
+ */
+@media (max-width: 1520px) {
+  .np-chain .signal-metric-of {
+    display: none;
+  }
+
+  .np-chain .signal-path {
+    column-gap: clamp(18px, 2.4vw, 40px);
+  }
 }
 
 /* The connector runs *between* the dots rather than down the page. */

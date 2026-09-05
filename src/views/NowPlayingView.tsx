@@ -17,6 +17,7 @@ import { SourceChip } from '@/components/StreamFormat';
 import { AnalysisPanel, Readout } from '@/components/AnalysisPanel';
 import { SignalPath } from '@/components/SignalPath';
 import { HouseLanes } from '@/components/HouseLanes';
+import { RunningOrder } from '@/components/RunningOrder';
 import { Icon } from '@/components/Icon';
 import { splitQualifier } from '@/lib/format';
 import { useZoneFavorite } from '@/state/useZoneFavorite';
@@ -79,11 +80,14 @@ export function NowPlayingView({
   zone,
   zones,
   onSelectZone,
+  onOpenQueue,
 }: {
   zone: ApiZoneState;
   /** Every room, for the lanes under the panel. */
   zones: ApiZoneState[];
   onSelectZone: (zoneId: number) => void;
+  /** Where the whole queue lives — the rail's own Queue. See `RunningOrder`. */
+  onOpenQueue: () => void;
 }) {
   const api = useApi();
   const coverAnchor = useCoverAnchor();
@@ -151,39 +155,50 @@ export function NowPlayingView({
          * The sleeve keeps its flight to the art player: the anchor rides this element now, so pressing
          * `ART` still carries the record across instead of dissolving one screen into another.
          */}
+        {/*
+         * The room's column: the record, its name, and what follows it.
+         *
+         * One column holding three things that are all about *this room* — which is what makes the
+         * space under a square sleeve worth having rather than a hole to be filled. The panel beside
+         * it is about the audio; this is about the room the audio is in.
+         */}
+        <div className="np-side">
         <div
-          className="np-plate"
-          data-playing={zone.state === 'playing' || undefined}
-          {...(track
-            ? {
-                style: {
-                  /* The record goes in as a custom property, not as this element's own background: it
-                     is painted twice from here — once square and sharp as the sleeve, once blurred
-                     across the whole column as the room's light — and a single background could only
-                     be one of those. */
-                  '--rec': `url("${api.coverUrl(zone.id, { size: 640, cacheKey: track.coverUrl })}")`,
-                } as React.CSSProperties,
-              }
-            : {})}
-        >
-          {/*
-           * The sleeve, square.
-           *
-           * It was the column: one tall crop of a square photograph, which keeps a strip of the middle
-           * and throws the sides away — a record read as stretched because it *was* stretched across a
-           * shape a record does not have. So it is a square again, at the column's width, in the
-           * proportion the sleeve was made in.
-           *
-           * The column still fills, but with the record's own light rather than with more of the
-           * record: `::before` paints the same picture blurred from top to bottom, which is the same
-           * device the rest of this face uses and the reason the plate does not read as a label on a
-           * dark box.
-           *
-           * The anchor rides the sleeve, so pressing `ART` still flies this square across to the art
-           * player rather than dissolving one screen into another.
-           */}
-          <span className="np-plate-art" aria-hidden="true" {...coverAnchor} />
-          <span className="np-room-name">{zone.name}</span>
+            className="np-plate"
+            data-playing={zone.state === 'playing' || undefined}
+            {...(track
+              ? {
+                  style: {
+                    /* The record goes in as a custom property, not as this element's own background: it
+                       is painted twice from here — once square and sharp as the sleeve, once blurred
+                       across the whole column as the room's light — and a single background could only
+                       be one of those. */
+                    '--rec': `url("${api.coverUrl(zone.id, { size: 640, cacheKey: track.coverUrl })}")`,
+                  } as React.CSSProperties,
+                }
+              : {})}
+          >
+            {/*
+             * The sleeve, square.
+             *
+             * It was the column: one tall crop of a square photograph, which keeps a strip of the middle
+             * and throws the sides away — a record read as stretched because it *was* stretched across a
+             * shape a record does not have. So it is a square again, at the column's width, in the
+             * proportion the sleeve was made in.
+             *
+             * The column still fills, but with the record's own light rather than with more of the
+             * record: `::before` paints the same picture blurred from top to bottom, which is the same
+             * device the rest of this face uses and the reason the plate does not read as a label on a
+             * dark box.
+             *
+             * The anchor rides the sleeve, so pressing `ART` still flies this square across to the art
+             * player rather than dissolving one screen into another.
+             */}
+            <span className="np-plate-art" aria-hidden="true" {...coverAnchor} />
+            <span className="np-room-name">{zone.name}</span>
+          </div>
+
+          <RunningOrder zone={zone} onOpenQueue={onOpenQueue} />
         </div>
 
         <div className="np-player">

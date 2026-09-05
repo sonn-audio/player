@@ -60,6 +60,25 @@ export type Stage = {
   state: 'on' | 'idle' | 'off';
 };
 
+/**
+ * Keep a figure whole across a line break.
+ *
+ * Eight stations across a strip give each of them about 140px, and the default line breaker splits at
+ * every space and after every hyphen — so `96 kHz` came apart between the number and its unit and
+ * `24-bit` broke after the hyphen, a panel of numbers wearing its worst possible line breaks. Binding
+ * the space inside a measurement and the hyphen inside `24-bit` leaves the sentence's own spaces as
+ * the only places a line may end, which is where a person would have ended it.
+ *
+ * Done to the string rather than with markup: a `nowrap` span around each part makes the *whole*
+ * reading unbreakable when it contains no separator, and an unbreakable reading in a 140px column is
+ * a reading with an ellipsis in it.
+ */
+function figures(text: string): string {
+  return text
+    .replace(/(\d[\d.]*) (kHz|Hz|kbps|dB|ms|bit)/g, '$1\u00a0$2')
+    .replace(/(\d+)-bit/g, '$1\u2011bit');
+}
+
 /** `44100` → `44.1 kHz`. Local to this file: the chain compares rates, it does not describe formats. */
 function khz(hz: number): string {
   if (!Number.isFinite(hz) || hz <= 0) {
@@ -96,11 +115,7 @@ function describeEqualizer(bands: number[]): string {
  * order the filters actually run in (`buildFilterArgs` server-side), so reading down the list is
  * reading the signal.
  */
-function conversionStages(
-  chain: ApiProcessingChain,
-  source: ApiStreamFormat | null,
-  output: ApiStreamFormat | null,
-): Stage[] {
+function conversionStages(chain: ApiProcessingChain, source: ApiStreamFormat | null, output: ApiStreamFormat | null): Stage[] {
   const stages: Stage[] = [];
 
   // Only when there is one: a delay of zero is not a stage, it is the absence of one.
@@ -151,14 +166,9 @@ function conversionStages(
            * source rate is unknown (a stream that declares nothing): say *that*, rather than claiming
            * the rates matched — which we cannot know.
            */
-          value:
-            rateChanged && source && output
-              ? `${khz(source.sampleRate)} → ${khz(output.sampleRate)}`
-              : 'Ran at the same rate',
+          value: rateChanged && source && output ? `${khz(source.sampleRate)} → ${khz(output.sampleRate)}` : 'Ran at the same rate',
           detail: [
-            chain.resampler
-              ? `${chain.resampler.name} · precision ${chain.resampler.precision} · cutoff ${chain.resampler.cutoff}`
-              : null,
+            chain.resampler ? `${chain.resampler.name} · precision ${chain.resampler.precision} · cutoff ${chain.resampler.cutoff}` : null,
             rateChanged
               ? null
               : forcedByFilter
@@ -180,17 +190,13 @@ function conversionStages(
    * directions are not the same thing: 24 → 16 throws information away, 16 → 24 pads and loses nothing,
    * and a row that calls both "requantised" is the kind of alarm people learn to ignore.
    */
-  const depthChanged =
-    source?.bitDepth != null && output?.bitDepth != null && source.bitDepth !== output.bitDepth;
+  const depthChanged = source?.bitDepth != null && output?.bitDepth != null && source.bitDepth !== output.bitDepth;
   const reduced = depthChanged && (output?.bitDepth ?? 0) < (source?.bitDepth ?? 0);
   stages.push(
     depthChanged || chain.requantised
       ? {
           label: 'Depth',
-          value:
-            source?.bitDepth != null && output?.bitDepth != null
-              ? `${source.bitDepth}-bit → ${output.bitDepth}-bit`
-              : 'Changed',
+          value: source?.bitDepth != null && output?.bitDepth != null ? `${source.bitDepth}-bit → ${output.bitDepth}-bit` : 'Changed',
           detail: reduced ? 'reduced — information dropped' : 'padded — nothing lost',
           // Padding is not an alteration worth an accent: it is a wider container for the same audio.
           state: reduced ? 'on' : 'idle',
@@ -266,9 +272,7 @@ export function stagesOf(zone: ApiZoneState): Stage[] {
        * it as a fault put an orange dot on a healthy stream.
        */
       value: source ? describeFormat(source) : output ? 'Not reported' : 'Nothing playing',
-      ...(source
-        ? { detail: isLosslessCodec(source.codec) ? 'lossless' : 'lossy — encoded before it reached us' }
-        : {}),
+      ...(source ? { detail: isLosslessCodec(source.codec) ? 'lossless' : 'lossy — encoded before it reached us' } : {}),
       state: source ? 'on' : output ? 'idle' : 'off',
     },
   ];
@@ -285,11 +289,7 @@ export function stagesOf(zone: ApiZoneState): Stage[] {
      */
     stages.push({
       label: 'Processing',
-      value: format
-        ? format.dspApplied
-          ? 'Applied by this server'
-          : 'None — passed through'
-        : 'Nothing streaming',
+      value: format ? (format.dspApplied ? 'Applied by this server' : 'None — passed through') : 'Nothing streaming',
       // The claim about the server belongs only where it is true: a zone streaming nothing has no chain
       // to describe, which is not the same as a server that cannot describe one.
       ...(format ? { detail: 'this server does not report the individual stages' } : {}),
@@ -314,10 +314,7 @@ export function stagesOf(zone: ApiZoneState): Stage[] {
    * The measured throughput lands in `detail` — it moves every second and the main line should not.
    */
   const wireDetail = output
-    ? [
-        output.highRes ? 'high-res' : null,
-        output.bitrate === null ? null : `${Math.round(output.bitrate / 1000)} kbps`,
-      ]
+    ? [output.highRes ? 'high-res' : null, output.bitrate === null ? null : `${Math.round(output.bitrate / 1000)} kbps`]
         .filter(Boolean)
         .join(' · ')
     : '';
@@ -361,10 +358,7 @@ function roomsThatCannotPlay(
         return false;
       }
       return !formats.some(
-        (fmt) =>
-          fmt.sampleRate === target.sampleRate &&
-          fmt.bitDepth === target.bitDepth &&
-          fmt.channels === target.channels,
+        (fmt) => fmt.sampleRate === target.sampleRate && fmt.bitDepth === target.bitDepth && fmt.channels === target.channels,
       );
     });
 }
@@ -458,13 +452,7 @@ function Verdict({ zone }: { zone: ApiZoneState }) {
   })();
 
   const sourceLossless = source ? isLosslessCodec(source.codec) : null;
-  const verdict = format.bitPerfect
-    ? 'Bit-perfect'
-    : reason
-      ? 'Altered'
-      : sourceLossless === false
-        ? 'Untouched'
-        : 'Untouched';
+  const verdict = format.bitPerfect ? 'Bit-perfect' : reason ? 'Altered' : sourceLossless === false ? 'Untouched' : 'Untouched';
   const tone = format.bitPerfect ? 'perfect' : reason ? 'altered' : 'clean';
 
   const note = format.bitPerfect
@@ -595,14 +583,7 @@ function Timing({ zone }: { zone: ApiZoneState }) {
         </dl>
       )}
 
-      {streaming && (
-        <LeadTrace
-          samples={leadTraces.get(zone.id) ?? []}
-          lo={sync.targetLeadMs}
-          hi={sync.targetLeadMs + sync.leadMarginMs}
-        />
-      )}
-
+      {streaming && <LeadTrace samples={leadTraces.get(zone.id) ?? []} lo={sync.targetLeadMs} hi={sync.targetLeadMs + sync.leadMarginMs} />}
     </div>
   );
 }
@@ -641,9 +622,7 @@ function LeadTrace({ samples, lo, hi }: { samples: number[]; lo: number; hi: num
    * always this second.
    */
   const offset = 100 - (samples.length - 1) * step;
-  const points = samples
-    .map((value, index) => `${(offset + index * step).toFixed(2)},${y(value).toFixed(2)}`)
-    .join(' ');
+  const points = samples.map((value, index) => `${(offset + index * step).toFixed(2)},${y(value).toFixed(2)}`).join(' ');
 
   return (
     <div className="signal-trace" aria-hidden="true">
@@ -687,7 +666,10 @@ export function SignalPath({ zone }: { zone: ApiZoneState }) {
                   chain reacts at exactly the moment the equipment does. The detail line is not
                   keyed: it carries the measured bitrate, which moves every second and would turn
                   a moment into a flicker. */}
-              <span className="signal-value" key={stage.value}>{stage.value}</span>
+              {/* A figure is one word. See `figures`. */}
+              <span className="signal-value" key={stage.value}>
+                {figures(stage.value)}
+              </span>
               {stage.detail && <span className="signal-detail">{stage.detail}</span>}
             </span>
           </li>
