@@ -307,25 +307,6 @@ export function NavRail({
   return (
     <nav className="nav-rail">
       {/*
-       * The fold, as the rail's own edge.
-       *
-       * It was a 34px rounded square at the top — the one boxed thing in a column where the picker, the
-       * search and every destination are full-width rows, so it read as a control somebody had dropped
-       * in rather than as part of the rail. The edge is what actually moves when you fold it, so the
-       * edge is the thing to press: a strip down the border with the chevron appearing under the
-       * pointer. The same idea as the folded edges on the other face, where nothing is boxed either.
-       */}
-      <button
-        type="button"
-        className="nav-fold"
-        onClick={onToggleFold}
-        aria-label={folded ? 'Show the navigation labels' : 'Fold the navigation'}
-        aria-expanded={!folded}
-        title={folded ? 'Unfold' : 'Fold'}
-      >
-        <Icon name="chevron-right" />
-      </button>
-      {/*
         The head does not scroll — and it is not merely a preference.
         `overflow-y: auto` clips absolutely-positioned descendants, so the room picker's popover
         would be trapped inside the scroll box. Keeping the overflow on the tree below instead is
@@ -392,6 +373,29 @@ export function NavRail({
           </section>
         )}
       </div>
+      {/*
+       * The fold, at the foot of the column.
+       *
+       * Two wrong answers came before this one. A 34px rounded square at the top was the only boxed
+       * thing in a rail of full-width rows, so it read as a control dropped in from another design. A
+       * 14px strip down the whole border was worse: moving the pointer anywhere near the navigation lit
+       * a hairline the entire height of the window and floated a chevron in the middle of it — a
+       * gesture that announces itself across the screen is not a quiet one.
+       *
+       * What is left is a small mark where a column ends, always drawn and almost never noticed, in the
+       * `--t7`-ish grey this face keeps for things that are present rather than offered. It brightens
+       * under the pointer and turns when the rail folds. No fill, no line, no reveal.
+       */}
+      <button
+        type="button"
+        className="nav-fold"
+        onClick={onToggleFold}
+        aria-label={folded ? 'Show the navigation labels' : 'Fold the navigation'}
+        aria-expanded={!folded}
+        title={folded ? 'Unfold' : 'Fold'}
+      >
+        <Icon name="chevron-right" />
+      </button>
     </nav>
   );
 }

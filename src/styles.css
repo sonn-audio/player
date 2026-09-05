@@ -1172,53 +1172,26 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
  * would be two controls that happen to sit in the same place.
  */
 /*
- * A strip down the rail's own border, not a button parked in the corner.
+ * A small mark where the column ends.
  *
- * 14px wide, the full height, and nothing drawn in it until a pointer is near: the chevron fades up,
- * the border under it brightens, and pressing anywhere along that edge folds the column. What moves is
- * exactly what you pressed.
+ * Always drawn and almost never noticed: no fill, no border, no hairline that appears when a pointer
+ * comes near. It brightens under the pointer and turns when the rail folds, and that is the whole of
+ * it — the two louder versions of this control (a boxed button at the top, a full-height strip down the
+ * border) were both more visible than the thing they operate.
  */
 .nav-fold {
-  position: absolute;
-  top: 0;
-  right: 0;
-  z-index: 2;
   display: grid;
   place-items: center;
-  width: 14px;
-  height: 100%;
-  color: var(--text-mute);
-  opacity: 0;
-  transition:
-    opacity 0.25s var(--ease),
-    color 0.2s;
-}
-
-/* Present the moment the rail is: reaching for an edge you cannot see is a puzzle, not a gesture. */
-.nav-rail:hover .nav-fold,
-.nav-fold:focus-visible {
-  opacity: 1;
+  flex: none;
+  width: 28px;
+  height: 28px;
+  margin: 2px 8px 8px auto;
+  color: var(--text-faint, rgb(255 255 255 / 26%));
+  transition: color 0.2s;
 }
 
 .nav-fold:hover {
   color: var(--text);
-}
-
-/* The line the strip sits on brightens with it, so the edge itself reads as the control. */
-.nav-fold::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  width: 1px;
-  background: var(--line-strong);
-  opacity: 0;
-  transition: opacity 0.25s var(--ease);
-}
-
-.nav-fold:hover::before {
-  opacity: 1;
 }
 
 /* The mark turns rather than swapping: one control with two states. */
@@ -1227,12 +1200,13 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
   transition: rotate 0.42s var(--ease);
 }
 
-[data-rail='folded'] .nav-fold svg {
-  rotate: 0deg;
+[data-rail='folded'] .nav-fold {
+  margin-right: auto;
+  margin-left: auto;
 }
 
-.nav-rail {
-  position: relative;
+[data-rail='folded'] .nav-fold svg {
+  rotate: 0deg;
 }
 
 /*
