@@ -4578,12 +4578,33 @@
   }
 }
 
+/*
+ * The name and what is behind it travel together.
+ *
+ * `flex: 1` pushed the fan of sleeves to the far right edge, so on a 1450px panel a door was a word on
+ * the left, a canyon, and four thumbnails against the opposite wall — two halves of one row that had
+ * stopped looking like one row. Sized to its content instead, with the chevron taking the slack, the
+ * evidence sits beside the name it is evidence for.
+ */
 .cx-door-meta {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  flex: 1;
+  /*
+   * A column of a stated width, not one that shrink-wraps its word.
+   *
+   * Sized to content, every door's artwork started immediately after its own name — so `Radio`,
+   * `Spotify` and `YouTube Music` put their sleeves at three different left edges and the page had a
+   * ragged column of pictures down the middle. A shared column gives them one edge to stand on, which
+   * is the whole difference between a list of rows and a table.
+   */
+  flex: 0 0 clamp(190px, 22%, 340px);
   min-width: 0;
+}
+
+/* The chevron keeps the far edge; everything else stays left. */
+.cx-door-go {
+  margin-left: auto;
 }
 
 .cx-door-name {
@@ -4616,10 +4637,13 @@
  * position from the back of the stack, so the same rules hold for two sleeves or for four.
  */
 .cx-door-peek {
-  --sleeve: clamp(44px, 5vw, 66px);
+  /* Bigger, now that it stands beside the name rather than across the page from it: at the far edge a
+     66px sleeve was a thumbnail nobody could read, and next to a 38px word it is the picture. */
+  --sleeve: clamp(52px, 6vw, 86px);
 
   display: flex;
   flex: none;
+  margin-left: clamp(20px, 3vw, 48px);
   opacity: 0;
   transition: opacity 0.6s var(--cx-ease);
 }

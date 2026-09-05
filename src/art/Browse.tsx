@@ -958,7 +958,20 @@ export function Browse({
               {items.map((item, index) => {
                 const inside = peeks[item.id] ?? [];
                 const artful = inside.filter((entry) => entry.coverUrl);
-                return artful.length >= SHELF_MIN_ART ? (
+                /*
+                 * Not at the front of the catalogue.
+                 *
+                 * The mix is the right rhythm *inside* a service — Albums and Artists opened out into
+                 * shelves, Folders left as a line of type, because those are not peers and the page
+                 * should say so. At the root they are peers: five services, and whether one of them
+                 * happens to have four cover images at the top of its listing is not a fact about its
+                 * standing. Mixed there, the front page came out as two shelves, one line with a fan
+                 * pinned to the far edge and one line with nothing — four kinds of row in five, which
+                 * is not rhythm, it is noise.
+                 */
+                return stack.length === 1 && !here.id ? (
+                  <Door key={item.id} item={item} index={index} onOpen={() => open(item)} />
+                ) : artful.length >= SHELF_MIN_ART ? (
                   <section className="cx-shelf cx-doorshelf" key={item.id} style={{ '--i': index } as React.CSSProperties}>
                     <button type="button" className="cx-doorshelf-head" onClick={() => open(item)}>
                       <span className="cx-doorshelf-name disp">{item.name}</span>
