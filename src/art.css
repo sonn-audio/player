@@ -761,13 +761,116 @@
   opacity: 1;
 }
 
-/* At rest the house withdraws with everything else: the picture in the middle is the whole screen. */
-.cx-root[data-idle] .cx-sliver {
+/* Resting on the record, the house withdraws: the picture in the middle is the whole screen. */
+.cx-root[data-rest='record'] .cx-sliver {
   flex-basis: 0;
   opacity: 0;
   transition:
     flex-basis 1.4s var(--cx-ease),
     opacity 1.2s var(--cx-ease);
+}
+
+/*
+ * Resting on the house: every room the same width, each showing what is playing in it.
+ *
+ * The wall is already N panels with one of them wide, so this is the same object with the weighting
+ * taken out — which is why it needs no layout of its own, only equal `flex` and a sleeve that is
+ * allowed to be a picture rather than a spine. For a panel in a hallway this is the useful question:
+ * not *what is this* but *what is the house doing*.
+ */
+.cx-root[data-rest='house'] .cx-sliver,
+.cx-root[data-rest='house'] .cx-wall-room {
+  flex: 1 1 0;
+  transition: flex-grow 1.4s var(--cx-ease);
+}
+
+.cx-root[data-rest='house'] .cx-sliver {
+  background: none;
+}
+
+/*
+ * Centred as a pair with its caption, the same way the room's own panel centres its sleeve and label.
+ *
+ * The sleeve used to sit at 28% of whatever height was left over, which is a different line on every
+ * window and a different line again from the one the room panel lands on — so the gallery's captions
+ * came out at four different heights. Centring both and lifting by half the caption is what makes the
+ * row one set of pictures.
+ */
+.cx-root[data-rest='house'] .cx-sliver-art {
+  top: 50%;
+  bottom: auto;
+  height: min(72%, 320px);
+  margin-top: -28px;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+  filter: grayscale(0) brightness(0.82) saturate(1);
+  scale: 1;
+  translate: 0 -50%;
+}
+
+.cx-root[data-rest='house'] .cx-sliver-veil {
+  background: linear-gradient(180deg, rgb(10 10 12 / 30%), rgb(10 10 12 / 6%) 30%, rgb(10 10 12 / 72%));
+}
+
+/* Names come off their side and sit under the record, the way a caption does. */
+.cx-root[data-rest='house'] .cx-sliver-hit {
+  align-items: center;
+  padding-bottom: 0;
+  /* Vertically centred with the picture above it: the padding is what pushes the pair's midpoint down
+     by half a sleeve, so the caption lands just under the art at any panel height. */
+  padding-top: calc(min(72%, 320px) + 16px);
+}
+
+.cx-root[data-rest='house'] .cx-sliver-name {
+  max-height: none;
+  color: var(--t4);
+  writing-mode: horizontal-tb;
+  rotate: none;
+}
+
+/* The fader and the foot-light are controls, and the house at rest is not being operated. */
+.cx-root[data-rest='house'] .cx-sliver-fader,
+.cx-root[data-rest='house'] .cx-sliver-lit {
+  opacity: 0;
+}
+
+/*
+ * And the room you are in stops being the exception.
+ *
+ * Its panel keeps the canvas layout — sleeve centred, chrome gone — at the size the others are, and
+ * loses its label: with every room showing one record, a paragraph under one of them is the odd one
+ * out. What still marks it is the light it throws, which the others do not have.
+ */
+@media (min-width: 980px) {
+  /* Both carry `[data-idle]` as well, so they outrank the canvas rules further down the sheet that
+     set the same two properties for the *record* at rest. Source order cannot settle it: the two
+     states are siblings, not a base and an override. */
+  .cx-root[data-rest='house'][data-idle] .cx-stage-inner {
+    /* The same size the slivers give their sleeves, so the row reads as one set of pictures rather
+       than as one room that happens to be in the middle. */
+    --cx-doek: min(320px, 18vw);
+    gap: clamp(18px, 2.4vh, 34px);
+  }
+
+  /*
+   * And it keeps its name, for the same reason the others do.
+   *
+   * Hiding the label entirely made the room you are in the only picture on the wall without a caption,
+   * which is the asymmetry it was meant to avoid. What goes is everything *below* the name: a title, an
+   * artist and a record under one of five pictures is a paragraph in a gallery.
+   */
+  .cx-root[data-rest='house'][data-idle] .cx-stage-meta > *:not(.cx-eyebrow) {
+    display: none;
+  }
+
+  .cx-root[data-rest='house'][data-idle] .cx-eyebrow-src {
+    display: none;
+  }
+
+  .cx-root[data-rest='house'][data-idle] .cx-eyebrow {
+    color: var(--t4);
+  }
 }
 
 /* --- picking a room up ---------------------------------------------------- */
@@ -1541,6 +1644,106 @@
 
 .cx-cta button:hover {
   color: var(--t1);
+}
+
+/*
+ * The shelf: what is next, as records.
+ *
+ * Under the composition rather than beside it, because a running order belongs to a room and this is
+ * the room's panel. Four sleeves at 54px — small enough that the record above them is still the subject,
+ * large enough to be recognised, and the artist under each is what tells you it is a *list* and not a
+ * strip of decoration.
+ *
+ * The rows reveal themselves the way every other list in this face does: the picture is always there,
+ * the words come up under the pointer. A queue that shouts its contents competes with the thing playing.
+ */
+.cx-shelf {
+  display: flex;
+  gap: 14px;
+  margin-top: 26px;
+}
+
+.cx-shelf-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 54px;
+  min-width: 0;
+  text-align: left;
+}
+
+.cx-shelf-art {
+  width: 54px;
+  height: 54px;
+  border-radius: 3px;
+  background-color: var(--cx-cover);
+  background-position: center;
+  background-size: cover;
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 10%);
+  transition:
+    scale 0.35s var(--cx-ease),
+    box-shadow 0.35s var(--cx-ease);
+}
+
+.cx-shelf-item:hover .cx-shelf-art {
+  scale: 1.06;
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 22%);
+}
+
+.cx-shelf-txt {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  opacity: 0.55;
+  transition: opacity 0.3s var(--cx-ease);
+}
+
+.cx-shelf-item:hover .cx-shelf-txt {
+  opacity: 1;
+}
+
+.cx-shelf-title,
+.cx-shelf-artist {
+  overflow: hidden;
+  font-size: 10px;
+  color: var(--t5);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cx-shelf-artist {
+  font-size: 9.5px;
+  font-style: normal;
+  color: var(--t7);
+}
+
+/* How much more there is, and the way to all of it. */
+.cx-shelf-more {
+  margin-top: 18px;
+  font-size: 9.5px;
+  letter-spacing: 0.18em;
+  color: var(--t6);
+  transition: color 0.25s;
+}
+
+.cx-shelf-more:hover {
+  color: var(--t3);
+}
+
+/* At rest a running order is a plan, and the screen is not making plans. */
+.cx-root[data-idle] .cx-shelf,
+.cx-root[data-idle] .cx-shelf-more {
+  max-height: 0;
+  margin: 0;
+  overflow: hidden;
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity 1.4s var(--cx-ease),
+    visibility 1.4s step-end,
+    max-height 1.4s var(--cx-ease),
+    margin 1.4s var(--cx-ease);
 }
 
 /* --- live, timeline, transport, volume (shared by both stages) ------------ */
@@ -2532,344 +2735,6 @@
 .cx-root {
   --cx-fold: 0.9s cubic-bezier(0.22, 0.9, 0.24, 1);
   --cx-fade: 0.65s ease;
-}
-
-/* --- the queue, down the right edge --------------------------------------- */
-
-/*
- * 96px folded, up to 240px open.
- *
- * Folded it is a stack of bare sleeves and one word turned on its side; there are no titles to compete
- * with the 94px one beside it, so it needs no dimming to be tolerable — which is what lets it be
- * permanent. `flex-basis` is the animated property (not `width`) because it is a flex child of the
- * content row, and animating a width a flex algorithm is also computing produces a fight, not a fold.
- */
-.cx-lane {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  flex: 0 0 96px;
-  min-width: 0;
-  align-self: stretch;
-  overflow: hidden;
-  padding: 8px 18px 8px 30px;
-  opacity: 0.62;
-  transition:
-    flex-basis var(--cx-fold),
-    padding var(--cx-fold),
-    opacity 0.8s ease;
-}
-
-.cx-lane[data-open] {
-  flex: 0 0 clamp(196px, 17vw, 240px);
-  padding: 8px 0 8px clamp(24px, 2.4vw, 40px);
-  opacity: 1;
-}
-
-/* The hairline down the inside edge, only once there is a list to separate. */
-.cx-lane-edge {
-  position: absolute;
-  left: 0;
-  top: 9%;
-  bottom: 9%;
-  width: 1px;
-  opacity: 0;
-  background: linear-gradient(
-    180deg,
-    transparent,
-    rgb(255 255 255 / 9%) 28%,
-    rgb(255 255 255 / 9%) 72%,
-    transparent
-  );
-  transition: opacity 0.5s ease;
-}
-
-.cx-lane[data-open] .cx-lane-edge {
-  opacity: 1;
-}
-
-/*
- * The grip, for a screen with no hover.
- *
- * A 22×64px hit area holding a 3px pill, with the chevron sitting *outside* it — the pill is the handle
- * and the chevron is the direction, and putting the arrow on the pill would make it a button with a
- * picture on it. Rotates 180° when open, which is the only thing that says "again to close".
- */
-.cx-lane-grip {
-  position: absolute;
-  left: 0;
-  top: 50%;
-  z-index: 3;
-  display: grid;
-  place-items: center;
-  width: 22px;
-  height: 64px;
-  translate: 0 -50%;
-  color: var(--t5);
-}
-
-.cx-lane-grip:active {
-  scale: 0.9;
-}
-
-.cx-lane-grip-bar {
-  position: relative;
-  display: grid;
-  place-items: center;
-  width: 3px;
-  height: 30px;
-  border-radius: 2px;
-  background: rgb(255 255 255 / 22%);
-}
-
-.cx-lane-grip-bar svg {
-  position: absolute;
-  color: var(--g);
-  translate: -9px 0;
-  transition: rotate var(--cx-fold);
-}
-
-.cx-lane[data-open] .cx-lane-grip-bar svg {
-  rotate: 180deg;
-}
-
-.cx-lane-body {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-}
-
-/* The heading as a word, when open. */
-.cx-lane-head {
-  flex: none;
-  margin: 6px 0 8px;
-  font-size: 9px;
-  letter-spacing: 0.22em;
-  color: var(--t6);
-  opacity: 0;
-  transition: opacity var(--cx-fade);
-}
-
-.cx-lane[data-open] .cx-lane-head {
-  opacity: 1;
-}
-
-/*
- * The same heading turned on its side, when folded.
- *
- * `writing-mode: vertical-rl` plus a 180° rotation reads bottom-to-top, which is the direction a spine
- * label runs. It collapses to zero height rather than fading in place, so the sleeves below it move up
- * into the space instead of leaving a hole where a word used to be.
- */
-.cx-lane-head-vert {
-  display: flex;
-  align-items: center;
-  flex: none;
-  height: 52px;
-  overflow: hidden;
-  transition:
-    height var(--cx-fold),
-    opacity var(--cx-fade);
-}
-
-.cx-lane-head-vert span {
-  margin-left: 13px;
-  font-size: 7.5px;
-  font-weight: 800;
-  letter-spacing: 0.3em;
-  color: var(--t7);
-  writing-mode: vertical-rl;
-  rotate: 180deg;
-}
-
-.cx-lane[data-open] .cx-lane-head-vert {
-  height: 0;
-  opacity: 0;
-}
-
-.cx-lrow {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex: none;
-  width: calc(100% + 12px);
-  margin: 0 -6px;
-  padding: 5px 6px;
-  border-radius: 5px;
-  transition: background 0.15s;
-}
-
-.cx-lane[data-open] .cx-lrow:hover {
-  background: rgb(255 255 255 / 4%);
-}
-
-.cx-lrow-main {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex: 1;
-  min-width: 0;
-  text-align: left;
-}
-
-/*
- * The sleeve is the row when folded and a thumbnail when open.
- *
- * Bigger folded than open, which looks backwards written down and is right on screen: folded, the picture
- * is the only thing carrying the row, so it takes the width — 44px, 48px for what is playing, 38px for
- * what has been. Open, a title needs the room, so every one of them shrinks.
- */
-.cx-lrow-cov {
-  flex: none;
-  width: 44px;
-  height: 44px;
-  overflow: hidden;
-  border-radius: 3px;
-  background-color: var(--cx-cover);
-  background-position: center;
-  background-size: cover;
-  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 9%);
-  transition:
-    width var(--cx-fold),
-    height var(--cx-fold);
-}
-
-.cx-lrow[data-size='current'] .cx-lrow-cov {
-  width: 48px;
-  height: 48px;
-}
-
-.cx-lrow[data-size='past'] .cx-lrow-cov {
-  width: 38px;
-  height: 38px;
-}
-
-.cx-lane[data-open] .cx-lrow-cov {
-  width: 30px;
-  height: 30px;
-}
-
-.cx-lane[data-open] .cx-lrow[data-size='current'] .cx-lrow-cov {
-  width: 32px;
-  height: 32px;
-}
-
-.cx-lane[data-open] .cx-lrow[data-size='past'] .cx-lrow-cov {
-  width: 26px;
-  height: 26px;
-}
-
-/* Already played: dimmed, but not gone — it is still where you were a minute ago. */
-.cx-lrow[data-size='past'] {
-  opacity: 0.5;
-}
-
-.cx-lane[data-open] .cx-lrow[data-size='past']:hover {
-  opacity: 1;
-}
-
-.cx-lrow[data-size='current'] .cx-lrow-cov {
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--g) 55%, transparent);
-}
-
-/*
- * Everything that is words folds away to nothing.
- *
- * `width: 0` on the text column rather than `display: none`, so the sleeves stay laid out where they are
- * and the row does not re-flow when the titles arrive — the covers slide left, the text grows in beside
- * them, and nothing jumps.
- */
-.cx-lrow-meta,
-.cx-lrow-dur,
-.cx-lrow-rm {
-  overflow: hidden;
-  opacity: 0;
-  transition:
-    opacity var(--cx-fade),
-    width var(--cx-fold);
-}
-
-.cx-lrow-meta {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  flex: 1;
-  min-width: 0;
-  width: 0;
-  pointer-events: none;
-}
-
-.cx-lrow-dur,
-.cx-lrow-rm {
-  flex: none;
-  width: 0;
-}
-
-.cx-lane[data-open] .cx-lrow-meta {
-  opacity: 1;
-  width: auto;
-  pointer-events: auto;
-}
-
-.cx-lane[data-open] .cx-lrow-dur {
-  opacity: 1;
-  width: auto;
-}
-
-.cx-lane[data-open] .cx-lrow-rm {
-  width: 24px;
-}
-
-/* The remove button appears on the row you are pointing at, not on all thirty of them. */
-.cx-lane[data-open] .cx-lrow:hover .cx-lrow-rm,
-.cx-lane[data-open] .cx-lrow:focus-within .cx-lrow-rm {
-  opacity: 1;
-}
-
-.cx-lrow-title {
-  font-size: 12px;
-  color: var(--t3);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.cx-lrow[data-size='current'] .cx-lrow-title {
-  color: var(--t1);
-}
-
-.cx-lrow-sub {
-  font-size: 10.5px;
-  color: var(--t6);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.cx-lrow-dur {
-  font-size: 9px;
-  letter-spacing: 0.1em;
-  color: var(--t7);
-}
-
-.cx-lrow-rm {
-  display: grid;
-  place-items: center;
-  height: 24px;
-  border-radius: 4px;
-  color: var(--t6);
-  transition:
-    opacity var(--cx-fade),
-    width var(--cx-fold),
-    color 0.15s,
-    background 0.15s;
-}
-
-.cx-lrow-rm:hover {
-  background: rgb(255 255 255 / 8%);
-  color: var(--t1);
 }
 
 /* --- channels strip (the dock, unfolded) ---------------------------------- */
@@ -6373,7 +6238,6 @@
 .cx-root[data-idle] .cx-top,
 .cx-root[data-idle] .cx-mhead,
 .cx-root[data-idle] .cx-mroom,
-.cx-root[data-idle] .cx-lane,
 .cx-root[data-idle] .cx-bnav,
 .cx-root[data-idle] .cx-transport,
 .cx-root[data-idle] .cx-bar-wrap,
@@ -6424,12 +6288,6 @@
   overflow: hidden;
 }
 
-/* The lane is a flex child of the content row, so what it gives back is its basis, not its height. */
-.cx-root[data-idle] .cx-lane {
-  flex-basis: 0;
-  padding-left: 0;
-  padding-right: 0;
-}
 
 /*
  * A third line, since there is room for it.

@@ -326,11 +326,13 @@ export function Stage({
   onOpenQueue,
   onBrowse,
   onCanvas,
+  onHouse,
   onLeaveCanvas,
   resting,
   drag,
   nextUp,
   queueCount,
+  upNext,
 }: {
   cur: Cur;
   /** The room gestures — the sleeve is the thing you pick up. See `useRoomDrag`. */
@@ -340,6 +342,8 @@ export function Stage({
   onBrowse: () => void;
   /** Ask for the resting picture now, rather than waiting out the timeout. */
   onCanvas: () => void;
+  /** Ask for the other one: every room the same width, the house as a gallery. */
+  onHouse: () => void;
   /** Leave it again — see the click handler below for what counts as leaving. */
   onLeaveCanvas: () => void;
   /** Whether the picture is what is on screen, however it was arrived at. */
@@ -348,6 +352,8 @@ export function Stage({
   nextUp: { title: string; artist: string } | null;
   /** How many entries the queue holds. */
   queueCount: number;
+  /** What comes after this one, as sleeves — the room's own shelf. See `.cx-shelf`. */
+  upNext: { key: string; title: string; artist: string; cover: string | undefined; play: () => void }[];
 }) {
   const api = useApi();
   const leader = cur.leader;
@@ -606,9 +612,63 @@ export function Stage({
                 canvas
               </button>
             )}
+            {/* The other door: the same withdrawal, but the whole house rather than this one room. */}
+            <button type="button" className="mono cx-rooms-btn" onClick={onHouse}>
+              house
+            </button>
           </div>
 
-          <NextUp next={nextUp} total={queueCount} reserve={!cur.isLive && cur.hasTrack} onOpen={onOpenQueue} />
+          {/*
+           * What is next, as records rather than as a rail.
+           *
+           * The queue was a 96px column down the right edge of the window — outside the room, made of
+           * chrome, and holding the one thing this player has plenty of: pictures. A running order
+           * belongs to a room, so it sits under the room's own composition, and four sleeves say more
+           * about what is coming than four lines of grey text ever did.
+           *
+           * The line stays underneath for the count and the way into the full list: a shelf shows the
+           * next few, and "and 40 more" is a fact only type can carry.
+           */}
+          {upNext.length > 0 && (
+            <div className="cx-shelf">
+              {upNext.map((entry) => (
+                <button
+                  type="button"
+                  key={entry.key}
+                  className="cx-shelf-item"
+                  onClick={entry.play}
+                  title={`Play ${entry.title}${entry.artist ? ` — ${entry.artist}` : ''}`}
+                >
+                  <span
+                    className="cx-shelf-art"
+                    style={{ backgroundImage: entry.cover }}
+                    aria-hidden="true"
+                  />
+                  <span className="cx-shelf-txt">
+                    <span className="cx-shelf-title">{entry.title}</span>
+                    {entry.artist && <i className="cx-shelf-artist">{entry.artist}</i>}
+                  </span>
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/*
+           * The line and the shelf are the same sentence, so only one of them speaks.
+           *
+           * With sleeves above it, `NEXT — 03 Track 0002` was the first of them written out again in
+           * grey. What the shelf cannot say is how much more there is, so that is what is left: a count,
+           * and the way into the whole list.
+           */}
+          {upNext.length > 0 ? (
+            queueCount > upNext.length + 1 && (
+              <button type="button" className="mono cx-shelf-more" onClick={onOpenQueue}>
+                {queueCount - upNext.length - 1} more in the queue
+              </button>
+            )
+          ) : (
+            <NextUp next={nextUp} total={queueCount} reserve={!cur.isLive && cur.hasTrack} onOpen={onOpenQueue} />
+          )}
         </div>
       </div>
     </div>

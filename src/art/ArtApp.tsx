@@ -31,7 +31,6 @@ import { Stage, MobileStage, greeting } from '@/art/Stage';
 import { RoomsSheet } from '@/art/Channels';
 import { Wall } from '@/art/Wall';
 import { useRoomDrag } from '@/art/useRoomDrag';
-import { Lane } from '@/art/Lane';
 import { useEdges, useEscape } from '@/art/useEdges';
 import { QueueSheet, QueueTabs, type QueueTab } from '@/art/Rail';
 import { Crossfade } from '@/art/Crossfade';
@@ -173,9 +172,22 @@ export function ArtApp() {
    * the asked-for version does not, because a mouse resting on a desk would close a thing you opened on
    * purpose. That one leaves on a key or on a click of the page around the sleeve.
    */
-  const [asked, setAsked] = useState(false);
+  /*
+   * Two things worth looking at when nobody is touching it, and they are not the same thing.
+   *
+   *  - `record` is the picture: this room's sleeve, hung, with its label under it.
+   *  - `house` is the gallery: every room the same width, each showing what is playing in it. This is
+   *    the one for a panel in a hallway, where the useful question is not *what is this* but *what is
+   *    the house doing* — and it is the wall's own logic taken to its end, since the wall is already
+   *    N panels with one of them wide.
+   *
+   * The timeout still arrives on its own and always chooses the record: a screen that dims itself is
+   * answering "what is playing here", because here is where the person stopped touching it.
+   */
+  const [asked, setAsked] = useState<'record' | 'house' | null>(null);
   const timedOut = useIdle(IDLE_AFTER_MS, !asked && cur.isPlaying && view.kind === 'home' && sheet === null);
-  const idle = asked || timedOut;
+  const idle = asked !== null || timedOut;
+  const rest = asked ?? (timedOut ? 'record' : null);
   const clock = useClock(idle);
 
   /* Leaving what was asked for. Any key at all, the way a screensaver has always ended. */
@@ -183,7 +195,7 @@ export function ArtApp() {
     if (!asked) {
       return undefined;
     }
-    const onKey = (): void => setAsked(false);
+    const onKey = (): void => setAsked(null);
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [asked]);
@@ -198,8 +210,8 @@ export function ArtApp() {
    * one frame. Two conditions for one thing is how a control ends up doing nothing.
    */
   useEffect(() => {
-    if (asked && !(cur.hasTrack && view.kind === 'home' && sheet === null)) {
-      setAsked(false);
+    if (asked && !((cur.hasTrack || asked === 'house') && view.kind === 'home' && sheet === null)) {
+      setAsked(null);
     }
   }, [asked, cur.hasTrack, view.kind, sheet]);
 
@@ -256,6 +268,26 @@ export function ArtApp() {
    * house. One entry is a mirror, not a queue.
    */
   const hasQueue = !cur.isLive || queue.total > 1;
+
+  /**
+   * The next few entries as sleeves, for the room's shelf.
+   *
+   * Four, because the shelf sits under a composition rather than beside it: five starts competing with
+   * the record above them, and three is not a shelf. A live source has no running order, so it has no
+   * shelf either — which is honest, and is also why this is empty rather than absent.
+   */
+  const upNext = useMemo(() => {
+    if (queue.currentIndex === null || cur.isLive) {
+      return [];
+    }
+    return queue.items.slice(queue.currentIndex + 1, queue.currentIndex + 5).map((item) => ({
+      key: item.id,
+      title: item.title,
+      artist: item.artist,
+      cover: itemCoverCss(item.coverUrl),
+      play: () => leader && void api.queuePlay(leader.id, item.id),
+    }));
+  }, [queue, cur.isLive, api, leader]);
 
   /** The entry after the one playing, for the stage's "next" line. */
   const nextUp = useMemo(() => {
@@ -329,6 +361,7 @@ export function ArtApp() {
          that is showing that record, and nowhere near a wall of thirty other people's covers. */
       data-view={view.kind}
       data-dragging={drag.active?.kind}
+      data-rest={rest ?? undefined}
       style={accent as React.CSSProperties}
     >
       {/*
@@ -403,27 +436,38 @@ export function ArtApp() {
             <Brand placeholder />
           </span>
 
+          {/*
+           * Three things, where there were eight.
+           *
+           * The bar used to list every service — `LIBRARY RADIO SPOTIFY APPLE MUSIC YOUTUBE MUSIC` —
+           * which is a website menu, and it started saying the same thing twice the moment browsing
+           * moved into the room's panel: the panel already carries the service's name at poster size,
+           * and the bar was lighting up that same word in 10px. The root of the catalogue *is* the list
+           * of services, so the way in is one press and the naming happens where the looking happens.
+           *
+           * `home` appears only when you are somewhere else. A button that takes you where you already
+           * are is furniture pretending to be a control.
+           */}
           <nav className="cx-nav mono">
-            <button type="button" data-on={view.kind === 'home' || undefined} onClick={goHome}>
-              home
-            </button>
-            {services.map((service) => (
-              <button
-                type="button"
-                key={service.id}
-                data-on={
-                  (view.kind === 'browse' && view.node.id === service.rootId) || undefined
-                }
-                onClick={() => openBrowse({ id: service.rootId, label: service.name })}
-              >
-                {service.name}
+            {view.kind !== 'home' && (
+              <button type="button" onClick={goHome}>
+                home
               </button>
-            ))}
-            <button type="button" data-on={view.kind === 'inputs' || undefined} onClick={() => setView({ kind: 'inputs' })}>
-              inputs
-            </button>
-            <button type="button" onClick={() => openBrowse()}>
+            )}
+            <button
+              type="button"
+              data-on={view.kind === 'browse' || undefined}
+              onClick={() => openBrowse()}
+              aria-label="Browse and search"
+            >
               <SearchGlyph size={14} />
+            </button>
+            <button
+              type="button"
+              data-on={view.kind === 'inputs' || undefined}
+              onClick={() => setView({ kind: 'inputs' })}
+            >
+              inputs
             </button>
           </nav>
 
@@ -492,7 +536,7 @@ export function ArtApp() {
                * A quiet house has no wall to put anything in, so it keeps the old shape: the welcome
                * screen, or a listing at full width.
                */}
-              {!phone && !houseQuiet ? (
+              {!phone ? (
                 <Wall
                   channels={channels}
                   currentLeaderId={leaderOf(zone, zones)?.id ?? null}
@@ -510,18 +554,61 @@ export function ArtApp() {
                     />
                   ) : view.kind === 'inputs' ? (
                     <Sources zone={zone} onDone={goHome} />
+                  ) : houseQuiet ? (
+                    /*
+                     * A quiet house is still a house.
+                     *
+                     * With nothing playing anywhere the desk swapped in a different layout altogether —
+                     * a page of cards where the wall had been — so the one screen this product has
+                     * became two, depending on whether anybody happened to be listening. The rooms are
+                     * still there when they are silent; what changes is only what the panel between them
+                     * holds, which is now a place to start something rather than a picture of something
+                     * already started.
+                     *
+                     * `house={[]}` because the rooms are the panels on either side of this. Drawing them
+                     * again as cards inside one of them is the same list twice.
+                     */
+                    <Welcome
+                      greetingText={greeting()}
+                      rooms={zones.length}
+                      playing={zones.filter((candidate) => Boolean(candidate.track)).length}
+                      services={services}
+                      onBrowse={openBrowse}
+                      onInputs={() => setView({ kind: 'inputs' })}
+                      scenes={scenes.slice(0, 4).map((scene) => ({
+                        key: scene.id,
+                        title: scene.name,
+                        cover: scene.coverUrl,
+                        play: () => void recall(scene),
+                      }))}
+                      recents={recents.slice(0, 12).map((item) => ({
+                        key: item.source,
+                        title: item.title || item.album || item.source,
+                        cover: item.coverUrl,
+                        play: () => zone && void api.play(zone.id, item.source),
+                      }))}
+                      house={[]}
+                      favorites={favorites.slice(0, 12).map((item) => ({
+                        key: String(item.id),
+                        title: item.name,
+                        cover: item.coverUrl,
+                        play: () => zone && void api.play(zone.id, item.source),
+                      }))}
+                    />
                   ) : (
                     <Stage
                       cur={cur}
                       drag={drag}
-                      onCanvas={() => setAsked(true)}
-                      onLeaveCanvas={() => setAsked(false)}
+                      onCanvas={() => setAsked('record')}
+                      onHouse={() => setAsked('house')}
+                      onLeaveCanvas={() => setAsked(null)}
                       resting={idle}
                       onOpenRooms={() => setSheet('rooms')}
                       onOpenQueue={() => setSheet('queue')}
                       onBrowse={() => openBrowse()}
                       nextUp={nextUp}
                       queueCount={queue.total}
+                      upNext={upNext}
                     />
                   )}
                 </Wall>
@@ -596,23 +683,6 @@ export function ArtApp() {
               )}
             </main>
 
-            {/*
-              The queue belongs to the player, not to the browser: while browsing, the listing gets the
-              full width and the mini bar carries the playing room instead. And a live source has no queue
-              at all, so the stage gets that width too — both conditions are known on the first frame, which
-              is what keeps the composition from shifting once the queue lands.
-            */}
-            {!phone && !browsing && !houseQuiet && zone && hasQueue && cur.hasTrack && (
-              <Lane
-                zone={zone}
-                queue={queue}
-                open={edges.open === 'lane'}
-                onOpen={() => edges.enter('lane')}
-                onClose={() => edges.leave('lane')}
-                onToggle={() => edges.toggle('lane')}
-                touch={edges.touch}
-              />
-            )}
           </div>
 
           {!phone && browsing && leader && <MiniBar cur={cur} onOpen={goHome} />}
