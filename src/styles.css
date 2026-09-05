@@ -2066,8 +2066,8 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
 
 .np-title {
   font-family: var(--font-display);
-  /* 52 up from 46: the title is this face's one piece of theatre, and the chips beneath it got
-     quieter in the same pass — the page can afford the extra size where it could not before. */
+  /* The ladder below sets the size, keyed to the title's length; this is the value if the step never
+     arrives. See `titleStep`. */
   font-size: clamp(27px, 3.4vw, 52px);
   font-weight: 800;
   line-height: 1.02;
@@ -2120,6 +2120,31 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
  * At 600 beside an 800 title — both white — the two competed: the eye had to compare sizes to work out
  * which was which. 500 puts the difference in *weight* as well as size, which is what a subtitle is.
  */
+/*
+ * The ladder: the title takes the room it has.
+ *
+ * A fixed size is a compromise struck against the longest title anybody might play, and every shorter
+ * one pays for it — a seven-letter song at 52px left nine hundred pixels of empty plate beside it.
+ * Capped by width as well as height (`min(Xvw, Yvh)`), because a tall narrow panel has a narrow column
+ * and reading only one of the two is how a title ends up clipped.
+ */
+.np-title[data-len='1'] {
+  font-size: clamp(40px, min(6.4vw, 9vh), 96px);
+}
+
+.np-title[data-len='2'] {
+  font-size: clamp(34px, min(5vw, 7vh), 74px);
+}
+
+.np-title[data-len='3'] {
+  font-size: clamp(28px, min(3.8vw, 5.4vh), 56px);
+}
+
+.np-title[data-len='4'] {
+  font-size: clamp(24px, min(2.9vw, 4.2vh), 42px);
+  letter-spacing: -0.025em;
+}
+
 .np-artist {
   margin-top: 5px;
   color: var(--text);
@@ -3277,6 +3302,12 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
   background: var(--text-mute);
   box-shadow: none;
   opacity: 0.26;
+}
+
+/* A dash is a value, not a label: it sits in the faint grey the empty columns used to be. */
+.house-verdict,
+.house-clock {
+  font-variant-numeric: tabular-nums;
 }
 
 .house-wire,

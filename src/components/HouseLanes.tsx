@@ -105,16 +105,25 @@ export function HouseLanes({
                  * `UNTOUCHED` and `ALTERED` are the panel's own two answers; a lane has room for the
                  * word and not the sentence, which is the right amount for a row you are scanning.
                  */}
+                {/*
+                 * A dash, not a hole.
+                 *
+                 * An idle room left the verdict and the clock columns empty, so half the table was ghost
+                 * columns holding air — and a column you scan is only worth scanning if every row
+                 * answers. `—` is the answer: nothing is flowing, so there is nothing to have altered
+                 * and no frame to be early or late. The columns stay aligned and the eye keeps its
+                 * track.
+                 */}
                 <span className="house-verdict mono" data-altered={altered || undefined}>
-                  {playing ? (altered ? 'altered' : 'untouched') : ''}
+                  {playing ? (altered ? 'altered' : 'untouched') : '—'}
                 </span>
 
-                <span className="house-clock mono" data-locked={sync?.state === 'synchronized' || undefined}>
-                  {sync
-                    ? sync.state === 'synchronized'
+                <span className="house-clock mono" data-locked={(playing && sync?.state === 'synchronized') || undefined}>
+                  {!sync
+                    ? '—'
+                    : sync.state === 'synchronized'
                       ? `locked${typeof sync.leadMs === 'number' ? ` · ${sync.leadMs} ms` : ''}`
-                      : sync.state
-                    : ''}
+                      : sync.state}
                 </span>
               </button>
             </li>

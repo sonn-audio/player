@@ -53,6 +53,28 @@ function TrackHeart({ zone }: { zone: ApiZoneState }) {
 }
 
 
+/**
+ * How big the title is set, decided by how long it is — the same ladder the art face uses.
+ *
+ * A fixed `clamp(27px, 3.4vw, 52px)` is a compromise struck against the longest title anybody might
+ * play, and every shorter one pays for it: `Dragula` sat at 52px with nine hundred pixels of empty
+ * nameplate beside it. Stepped by character count, a short title takes the room it has and a long one
+ * still fits in two lines. Boundaries are where two lines of the step above stop fitting the column.
+ */
+function titleStep(title: string): 1 | 2 | 3 | 4 {
+  const length = title.trim().length;
+  if (length <= 16) {
+    return 1;
+  }
+  if (length <= 32) {
+    return 2;
+  }
+  if (length <= 56) {
+    return 3;
+  }
+  return 4;
+}
+
 export function NowPlayingView({
   zone,
   zones,
@@ -176,7 +198,7 @@ export function NowPlayingView({
               usually being the longer half of it. Same line, smaller and quieter; see
               `splitQualifier` for why only a trailing group is treated this way.
             */}
-            <h1 className="np-title">
+            <h1 className="np-title" data-len={titleStep(track?.title || 'Nothing playing')}>
               {(() => {
                 const { main, qualifier } = splitQualifier(track?.title || 'Nothing playing');
                 return (
