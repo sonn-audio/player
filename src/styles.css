@@ -1238,8 +1238,34 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
 [data-rail='folded'] .nav-search span,
 [data-rail='folded'] .nav-caret,
 [data-rail='folded'] .nav-caret-spacer,
-[data-rail='folded'] .nav-badge,
+[data-rail='folded'] .nav-badge .service-badge-name,
 [data-rail='folded'] .zone-menu-text {
+  display: none;
+}
+
+/*
+ * The services keep their marks when the rail folds.
+ *
+ * `.nav-badge` was in the list above, and that badge *is* a service's icon — so folding the rail left
+ * Library, Radio, Spotify, Apple Music and YouTube Music as five blank rows: the catalogue was not
+ * dimmed or shortened, it was gone. Every other row in the rail folds to its icon; these fold to their
+ * logo, which is the same rule.
+ */
+[data-rail='folded'] .nav-badge {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+}
+
+/*
+ * And a folded tree shows only its roots.
+ *
+ * A node below the first level has no icon of its own — it is a name — so folded it would be another
+ * blank row. There is nothing to walk with the words gone: pressing a service opens it in the browser,
+ * which is where a catalogue is read anyway.
+ */
+[data-rail='folded'] .nav-row:not([data-depth='0']) {
   display: none;
 }
 
