@@ -333,6 +333,7 @@ export function Stage({
   nextUp,
   queueCount,
   upNext,
+  lastCover,
 }: {
   cur: Cur;
   /** The room gestures — the sleeve is the thing you pick up. See `useRoomDrag`. */
@@ -354,6 +355,12 @@ export function Stage({
   queueCount: number;
   /** What comes after this one, as sleeves — the room's own shelf. See `.cx-upnext`. */
   upNext: { key: string; title: string; artist: string; cover: string | undefined; play: () => void }[];
+  /**
+   * The last record this room played, as `url("…")`.
+   *
+   * The only honest picture a silent room has. See the empty branch below for what it is for.
+   */
+  lastCover?: string | undefined;
 }) {
   const api = useApi();
   const leader = cur.leader;
@@ -495,9 +502,25 @@ export function Stage({
               </span>
             </>
           ) : (
-            <div className="cx-cover cx-cover-empty">
-              <EmptyArtGlyph size={52} />
-              <span className="mono cx-cover-empty-txt">nothing playing</span>
+            /*
+             * A silent room, drawn as what it is: the record that was on, in the dark.
+             *
+             * It was a dashed square with a glyph in it — a form field where the subject of the face
+             * should be, and the state most rooms are in most of the time. A room that has played
+             * something has one honest picture to show, and holding it far down says *silent* better
+             * than an outline of an absence does. Rooms that have never played anything keep a plain
+             * frame: a hairline, not a dashed one, because dashes mean "drop something here".
+             */
+            <div
+              className="cx-cover cx-cover-empty"
+              data-remembers={lastCover ? '' : undefined}
+              style={lastCover ? { backgroundImage: lastCover } : undefined}
+            >
+              {!lastCover && <EmptyArtGlyph size={52} />}
+              {/* No caption over the record: the column beside it says `Nothing playing` in 110px, and
+                  the same sentence twice is not two facts. The frame with no memory keeps its words,
+                  because a bare outline needs telling. */}
+              {!lastCover && <span className="mono cx-cover-empty-txt">nothing playing</span>}
             </div>
           )}
         </div>

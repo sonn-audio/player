@@ -1035,6 +1035,16 @@
    * composes at 1024 and at 2560: the two columns keep their relationship and the window's spare width
    * becomes margin, which is what centring is for.
    */
+  /*
+   * The sleeve's size lives here, not on the sleeve.
+   *
+   * Both columns measure against it now: the record *is* this size, and the column of type beside it is
+   * at least this tall — which is what puts the room's controls on the record's own bottom edge instead
+   * of halfway up the page. A poster has two columns of one height.
+   */
+  --cx-cover-size: min(clamp(240px, 68vh, 860px), 40vw);
+  transition: --cx-cover-size 1.8s var(--cx-ease);
+
   width: fit-content;
   max-width: 100%;
   /*
@@ -1045,7 +1055,9 @@
    * mirror ran into the bottom edge of the stage and was cut off with a straight line. Padding on a
    * `border-box` column takes the space out of the centring, which moves the pair up by half of it.
    */
-  padding-bottom: 6vh;
+  /* Less floor than before: the sleeve is a third taller, so 6vh of reserved reflection pushed the
+     pair up until the title's own column ran out of room. 3vh still keeps the mirror off the edge. */
+  padding-bottom: 3vh;
   /*
    * Full height, so the two columns centre against the *window* rather than against each other.
    *
@@ -1072,11 +1084,17 @@
    * the middle of a 1440px-tall window, so the subject of the screen took up a fifth of it. Still
    * capped by width (38vw) for a wide-but-short window, so it never crowds the title.
    */
-  /* 720, was 620: the sleeve stands on a reflection now, which anchors it — a cap that was right for
-     a square floating on black is timid for an object with a surface under it. The ceiling only bites
-     on tall monitors; 54vh still decides everywhere else. */
-  --cx-cover-size: min(clamp(240px, 54vh, 720px), 38vw);
-  transition: --cx-cover-size 1.8s var(--cx-ease);
+  /*
+   * The record owns the height.
+   *
+   * 54vh drew a 619px sleeve in a 1093px room: the subject of the face taking 57% of the page it is
+   * the subject of, with two hundred pixels of nothing above it and the reflection's floor below.
+   * This face exists to make the record the thing you look at, and an art player that keeps its
+   * artwork under two thirds of the height is a technical player with a big cover.
+   *
+   * 68vh, capped at 860 for a tall monitor and at 40vw so a wide-but-short window never lets the
+   * sleeve crowd the title beside it.
+   */
 }
 
 /*
@@ -1318,10 +1336,43 @@
   align-items: center;
   justify-content: center;
   gap: 14px;
-  border: 1px dashed rgb(255 255 255 / 16%);
+  /* A hairline, not a dashed one: dashes are what a drop target wears, and this is a room at rest. */
+  border: 1px solid rgb(255 255 255 / 9%);
   background: none;
   box-shadow: none;
   color: var(--t7);
+}
+
+/*
+ * The room remembers.
+ *
+ * The last record it played, held far enough down that it reads as memory rather than as playback —
+ * grayscale most of the way, a fifth of the brightness — with `nothing playing` engraved over it. It
+ * is the same picture the room would show if you pressed play, which is exactly why it is the right
+ * one to show while you have not.
+ */
+.cx-cover-empty[data-remembers] {
+  border: 0;
+  background-position: center;
+  background-size: cover;
+}
+
+.cx-cover-empty[data-remembers]::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: inherit;
+  background-position: center;
+  background-size: cover;
+  /* Far down: at a third of the brightness a light sleeve still read as *playing*, which contradicts
+     the words beside it. A fifth, and almost colourless — the record is in the room, the lights are
+     off. */
+  filter: grayscale(0.92) brightness(0.19);
+}
+
+/* Its own hairline, since the memory has no edge of its own once it is this dark. */
+.cx-cover-empty[data-remembers] {
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 7%);
 }
 
 .cx-cover-empty-txt {
@@ -1356,6 +1407,9 @@
 
 .cx-stage-meta {
   display: flex;
+  /* As tall as the record, at least: the auto margin on `.cx-volrow` needs room to push into, and this
+     is the room — the page's own composition rather than a number. */
+  min-height: var(--cx-cover-size);
   flex-direction: column;
   /* A stated width, not a share of the leftover: the block around it is `fit-content`, so a column
      that sized itself from what was left over would have nothing to take a share of. */
@@ -1445,12 +1499,14 @@
  * sentence, and two lines of it is not a choice between big and small, it is a choice between showing
  * it and not.
  */
+/* The ladder, one step louder at the top: a two-word title on a 2000px screen was 108px next to a
+   700px record, and a poster's name is the loudest thing on it after the picture. */
 .cx-title[data-len='1'] {
-  font-size: clamp(56px, min(9.4vh, 7.2vw), 128px);
+  font-size: clamp(56px, min(11vh, 8.4vw), 150px);
 }
 
 .cx-title[data-len='2'] {
-  font-size: clamp(48px, min(7.8vh, 6vw), 100px);
+  font-size: clamp(48px, min(9vh, 6.8vw), 118px);
 }
 
 .cx-title[data-len='3'] {
@@ -1669,24 +1725,33 @@
  * The rows reveal themselves the way every other list in this face does: the picture is always there,
  * the words come up under the pointer. A queue that shouts its contents competes with the thing playing.
  */
+/*
+ * A shelf, not a widget.
+ *
+ * Four 54px thumbnails with two lines of grey type under each was the weakest thing on a face about
+ * artwork — a browser's list dropped into a poster. Records are recognisable at 88px; the words come
+ * back on hover, where a name is worth having and costs nothing until then.
+ */
 .cx-upnext {
+  order: 1;
   display: flex;
-  gap: 14px;
-  margin-top: 26px;
+  gap: clamp(12px, 1.2vw, 20px);
+  margin-top: clamp(26px, 3.4vh, 44px);
 }
 
 .cx-upnext-item {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 8px;
-  width: 54px;
+  width: clamp(64px, 6vh, 88px);
   min-width: 0;
   text-align: left;
 }
 
 .cx-upnext-art {
-  width: 54px;
-  height: 54px;
+  width: clamp(64px, 6vh, 88px);
+  height: clamp(64px, 6vh, 88px);
   border-radius: 3px;
   background-color: var(--cx-cover);
   background-position: center;
@@ -1702,13 +1767,30 @@
   box-shadow: inset 0 0 0 1px rgb(255 255 255 / 22%);
 }
 
+/*
+ * The names arrive on hover.
+ *
+ * Under the sleeves they were eight lines of 55%-grey type competing with a 620px record; over them,
+ * on the sleeve you are pointing at, they are a caption on the thing they name. Absolutely positioned
+ * so they cost the shelf no height either way.
+ */
 .cx-upnext-txt {
+  position: absolute;
+  inset: auto 0 0;
   display: flex;
   flex-direction: column;
   gap: 2px;
   min-width: 0;
-  opacity: 0.55;
-  transition: opacity 0.3s var(--cx-ease);
+  padding: 14px 6px 6px;
+  background: linear-gradient(180deg, transparent, rgb(6 6 8 / 88%) 55%);
+  opacity: 0;
+  transition: opacity 0.25s var(--cx-ease);
+  pointer-events: none;
+}
+
+.cx-upnext-item:hover .cx-upnext-txt,
+.cx-upnext-item:focus-visible .cx-upnext-txt {
+  opacity: 1;
 }
 
 .cx-upnext-item:hover .cx-upnext-txt {
@@ -1732,6 +1814,7 @@
 
 /* How much more there is, and the way to all of it. */
 .cx-upnext-more {
+  order: 1;
   margin-top: 18px;
   font-size: 9.5px;
   letter-spacing: 0.18em;
@@ -2006,11 +2089,30 @@
   transform: scale(0.93);
 }
 
+/*
+ * The room's own controls, at the foot of the column.
+ *
+ * A fader, a divider and three mode words sat between the transport and the shelf of what is coming —
+ * the busiest line on a page whose subject is a record, right in the middle of it. Pushed to the foot
+ * (`margin-top: auto`) it stands where the record's own bottom edge is: the column then reads
+ * identity, progress, transport, what is next … and the room's settings last, which is the order you
+ * actually use them in.
+ */
 .cx-volrow {
   display: flex;
   align-items: center;
   gap: 34px;
-  margin-top: clamp(14px, 4.4vh, 40px);
+  /*
+   * Last in the column, whatever the column's height.
+   *
+   * `order` rather than a change to the markup: what is coming belongs directly under the transport
+   * (they are both about the music), and the room's own settings belong at the foot on the record's
+   * bottom edge. The auto margin then has the whole gap to push into, and it pushes only this row
+   * because nothing follows it.
+   */
+  order: 2;
+  margin-top: auto;
+  padding-top: clamp(18px, 4vh, 44px);
 }
 
 .cx-vol,

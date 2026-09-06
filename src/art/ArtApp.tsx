@@ -620,6 +620,9 @@ export function ArtApp() {
                       nextUp={nextUp}
                       queueCount={queue.total}
                       upNext={upNext}
+                      /* What this room played last, for the one thing an idle room can honestly show:
+                         the record that was on, in the dark. See `Stage`'s empty branch. */
+                      lastCover={recents[0]?.coverUrl ? `url("${recents[0].coverUrl}")` : undefined}
                     />
                   )}
                 </Wall>
