@@ -2822,8 +2822,10 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
  * and small, it does what a record label does above a title: it names whose record this is and then
  * gets out of the way, and the title lands twice as hard for it.
  */
+/* No lead-in: the record, the artist's name and the first reading in the rail all start on one line,
+   which is the only alignment on this screen you notice by its absence. */
 .np-artist {
-  margin-top: 2px;
+  margin-top: 0;
   overflow: hidden;
   font-family: var(--font-mono);
   font-size: 11.5px;
@@ -4651,9 +4653,11 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
 
 .spectrum-rules text {
   font-family: var(--font-mono);
-  font-size: 8.5px;
+  /* 9.5px at 38%, was 8.5 at 30. The display is twice the size it was when these numbers were
+     chosen, and a scale nobody can read is ink pretending to be information. */
+  font-size: 9.5px;
   letter-spacing: 0.08em;
-  fill: rgb(255 255 255 / 30%);
+  fill: rgb(255 255 255 / 38%);
 }
 
 /*

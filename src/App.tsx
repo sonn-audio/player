@@ -51,7 +51,14 @@ type View = { target: NavTarget; searchNonce: number };
  */
 function barViewOf(target: NavTarget, zone: ApiZoneState | null): BarView {
   if (target.kind === 'playing') {
-    return { label: zone ? `now playing · ${zone.name}` : 'now playing', icon: 'wave' };
+    /*
+     * No room name here.
+     *
+     * The player's own first line is the room, at 25px, forty pixels below this — so the bar was
+     * saying it in 10px directly above it. The other views keep the name because nothing in them
+     * carries it; this one is *made* of it.
+     */
+    return { label: 'now playing', icon: 'wave' };
   }
   if (target.kind === 'grouping') {
     return { label: zone ? `grouping · ${zone.name}` : 'grouping', icon: 'group' };
