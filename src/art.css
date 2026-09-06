@@ -658,6 +658,34 @@
 }
 
 /* Dark at both ends so the name has something to stand on and the top never fights the header. */
+/*
+ * The spine's own colour, down the whole panel.
+ *
+ * A sliver was a small square of artwork at the top, a rotated name at the foot, and seven hundred
+ * pixels of black between them on a tall window — a shelf slot with a record in it and nothing to say
+ * that the record is *there*. This is the same picture stretched down the panel and blurred past
+ * recognition: not a second copy of the artwork but the colour it throws, which is what you actually
+ * see of a record standing edge-on in a dark room. Each room gets its own hue, and a silent room with
+ * no artwork stays black — which is what an empty slot looks like.
+ */
+.cx-sliver-spine {
+  position: absolute;
+  inset: 0;
+  background-position: center;
+  background-size: 260% 130%;
+  filter: grayscale(0.35) saturate(1.1) blur(26px) brightness(0.42);
+  opacity: 0.55;
+  pointer-events: none;
+  transition:
+    opacity 0.5s var(--cx-ease),
+    filter 0.5s var(--cx-ease);
+}
+
+.cx-sliver:hover .cx-sliver-spine {
+  opacity: 0.72;
+  filter: grayscale(0.2) saturate(1.15) blur(26px) brightness(0.5);
+}
+
 .cx-sliver-veil {
   position: absolute;
   inset: 0;
@@ -671,13 +699,15 @@
   );
 }
 
+/* Centred, because that is where the label on a record's spine is — at the foot it read as a caption
+   under an empty panel. */
 .cx-sliver-hit {
   position: absolute;
   inset: 0;
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: center;
-  padding-bottom: 26px;
+  padding-bottom: 0;
 }
 
 /* Read from the foot of the panel upward, the way a spine is read on a shelf. */
@@ -1407,9 +1437,6 @@
 
 .cx-stage-meta {
   display: flex;
-  /* As tall as the record, at least: the auto margin on `.cx-volrow` needs room to push into, and this
-     is the room — the page's own composition rather than a number. */
-  min-height: var(--cx-cover-size);
   flex-direction: column;
   /* A stated width, not a share of the leftover: the block around it is `fit-content`, so a column
      that sized itself from what was left over would have nothing to take a share of. */
@@ -2087,6 +2114,18 @@
 
 .cx-tr-play:active {
   transform: scale(0.93);
+}
+
+/*
+ * As tall as the record — but only when the record is the record.
+ *
+ * The auto margin on `.cx-volrow` needs room to push into, and the sleeve's own height is that room.
+ * Scoped to the playing stage: the two rest states (`canvas`, `house`) lay the same markup out as a
+ * *column*, and there a 780px minimum on the text block shoved the picture to the top of the panel and
+ * left the caption stranded under it — which is exactly what it did to the gallery until I looked.
+ */
+.cx-root:not([data-rest]) .cx-stage-meta {
+  min-height: var(--cx-cover-size);
 }
 
 /*
@@ -4770,14 +4809,22 @@
   box-shadow:
     0 12px 26px -14px rgb(0 0 0 / 90%),
     inset 0 0 0 1px rgb(255 255 255 / 10%);
-  rotate: calc(3.6deg - var(--n) * 1.2deg);
+  /* A little more lean, and alternating rather than a fan: records in a crate do not agree. */
+  rotate: calc(4.4deg - var(--n) * 2.2deg);
   transition:
     margin-left 0.42s var(--cx-ease),
     rotate 0.42s var(--cx-ease);
 }
 
+/*
+ * Loose enough to be records.
+ *
+ * At a 34% overlap four sleeves showed as four vertical slivers with a word each — the eye reads that
+ * as a clipped row, not as a stack, which is the one thing the gesture is for. At 22% each record keeps
+ * its own face and the pile still leans; hover still spreads them to 14% and straightens them.
+ */
 .cx-door-sleeve + .cx-door-sleeve {
-  margin-left: calc(-0.34 * var(--sleeve));
+  margin-left: calc(-0.22 * var(--sleeve));
 }
 
 .cx-door:hover .cx-door-sleeve {

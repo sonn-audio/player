@@ -109,6 +109,9 @@ function Sliver({
       data-hot={drag.active?.kind === 'record' || undefined}
       data-over={drag.over === channel.leader.id || undefined}
     >
+      {/* Two layers of the same record: the sleeve itself near the top, and the colour it throws down
+          the whole panel — see `.cx-sliver-spine`. */}
+      {cover && <span className="cx-sliver-spine" style={{ backgroundImage: cover }} aria-hidden="true" />}
       {cover && <span className="cx-sliver-art" style={{ backgroundImage: cover }} aria-hidden="true" />}
       <span className="cx-sliver-veil" aria-hidden="true" />
 
