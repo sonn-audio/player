@@ -29,7 +29,7 @@
  * is the question a room actually gets asked. Recents are neither pressable nor draggable: they carry
  * no entry id, and there is nothing to reorder about the past.
  */
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useApi } from '@/state/ServerContext';
 import { useZoneCollection } from '@/state/useZoneCollection';
 import { Icon } from '@/components/Icon';
@@ -41,6 +41,33 @@ const PAGE = 40;
 
 /** How far a pointer travels on a grip before it is a drag rather than a slip. */
 const THRESHOLD_PX = 5;
+
+/**
+ * Whether this box is showing less than it holds.
+ *
+ * A scroll container that ends mid-row reads as a mistake unless it says it is cut — but a fade over a
+ * list that *fits* greys out its last row for no reason. CSS cannot ask "did this overflow", so it is
+ * measured: the window's height and the queue's length both move it, so it watches the element rather
+ * than deriving it from either.
+ */
+function useClipped(): [React.MutableRefObject<HTMLOListElement | null>, boolean] {
+  const ref = useRef<HTMLOListElement | null>(null);
+  const [clipped, setClipped] = useState(false);
+
+  useLayoutEffect(() => {
+    const node = ref.current;
+    if (!node) {
+      return undefined;
+    }
+    const read = (): void => setClipped(node.scrollHeight > node.clientHeight + 2);
+    read();
+    const observer = new ResizeObserver(read);
+    observer.observe(node);
+    return () => observer.disconnect();
+  });
+
+  return [ref, clipped];
+}
 
 /** Where a dragged entry would land: before this id, or at the end. */
 type Drop = { beforeId: string | null };
@@ -165,6 +192,7 @@ export function RunningOrder({
   onOpenQueue: () => void;
 }) {
   const api = useApi();
+  const [listRef, clipped] = useClipped();
   /*
    * The list moves with the player, not only with the queue.
    *
@@ -222,7 +250,7 @@ export function RunningOrder({
           <i aria-hidden="true" />
         </h3>
 
-        <ol className="np-order-list">
+        <ol className="np-order-list" ref={listRef} data-clipped={clipped || undefined}>
           {played.map((item, index) => {
             const previous = index === 0 ? zone.track?.artist : played[index - 1]?.artist;
             const shows = item.artist && item.artist !== previous;
@@ -252,7 +280,7 @@ export function RunningOrder({
         <i aria-hidden="true" />
       </h3>
 
-      <ol className="np-order-list">
+      <ol className="np-order-list" ref={listRef} data-clipped={clipped || undefined}>
         {order.rows.map((entry, index) => {
           /*
            * The artist, only when it changes.

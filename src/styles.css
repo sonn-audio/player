@@ -1968,6 +1968,13 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
   scrollbar-color: rgb(255 255 255 / 14%) transparent;
 }
 
+/* Cut, and saying so: the foot fades only when there is more under it, so a row sliced by the box's
+   edge reads as "scroll" rather than as a row that got clipped by accident. */
+.np-order-list[data-clipped] {
+  -webkit-mask: linear-gradient(180deg, #000 calc(100% - 26px), transparent);
+  mask: linear-gradient(180deg, #000 calc(100% - 26px), transparent);
+}
+
 /* A scrollbar in the width one can be without becoming furniture. */
 .np-order-list::-webkit-scrollbar {
   width: 5px;
@@ -2472,10 +2479,16 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
   grid-area: readings;
   display: flex;
   flex-direction: column;
-  /* Level and note at the head, the clock at the foot: the column is framed by its own readings
-     instead of trailing off into four hundred pixels of nothing. */
-  justify-content: space-between;
-  gap: clamp(18px, 2.4vh, 34px);
+  /*
+   * One stack, at the head.
+   *
+   * `space-between` framed the column by pushing the clock to the foot, and on a tall window that left
+   * five hundred pixels of gap between two clusters of small type — two islands rather than a rail.
+   * Read together, level, note and clock are one list of what the equipment measures; the empty part of
+   * the column below them is the rail, which is allowed to be empty.
+   */
+  justify-content: flex-start;
+  gap: clamp(20px, 2.8vh, 40px);
   align-self: stretch;
   padding-left: clamp(18px, 2vw, 36px);
   border-left: 1px solid var(--line);
