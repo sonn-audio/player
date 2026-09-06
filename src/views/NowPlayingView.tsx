@@ -16,7 +16,7 @@ import { Volume } from '@/components/Volume';
 import { Waveform } from '@/components/Waveform';
 import { SourceChip } from '@/components/StreamFormat';
 import { AnalysisPanel, Readout } from '@/components/AnalysisPanel';
-import { SignalPath } from '@/components/SignalPath';
+import { SignalClock, SignalPath } from '@/components/SignalPath';
 import { HouseLane } from '@/components/HouseLanes';
 import { RunningOrder } from '@/components/RunningOrder';
 import { useRoomDrag } from '@/art/useRoomDrag';
@@ -600,7 +600,19 @@ export function NowPlayingView({
                 {/* The reading, at a size worth the name of this face — see `Readout`. It fills the half of
             the nameplate row that was empty page, with the numbers that were living at 10px in the
             corner of the display below. */}
-                <Readout zoneId={zone.id} active={zone.state === 'playing'} capabilities={zone.output?.capabilities} />
+                <div className="np-readings">
+                  <Readout zoneId={zone.id} active={zone.state === 'playing'} capabilities={zone.output?.capabilities} />
+
+                  {/*
+                   * And the clock, under them.
+                   *
+                   * It used to sit in the chain, which was the wrong company: nothing passes *through*
+                   * a clock. It is a reading, like the level and the note, so it stands where the
+                   * readings stand — and the column it makes fills the panel's whole right edge, which
+                   * was a thousand pixels of empty page beside a title.
+                   */}
+                  <SignalClock zone={zone} />
+                </div>
 
                 {/*
                  * The chain, under the display it explains.

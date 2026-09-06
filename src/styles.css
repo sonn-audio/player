@@ -1804,6 +1804,9 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
    the right — the arrangement this face has settled on, now inside a tab. */
 .np-room-body {
   display: grid;
+  /* Nothing in the body reaches past the tab: the left column's list is the one thing here that has a
+     size of its own, and a list that outgrows its tab used to paint over the next room's line. */
+  overflow: hidden;
   min-height: 0;
   flex: 1 1 auto;
   grid-template-columns: var(--room-name) minmax(0, 1fr);
@@ -1925,7 +1928,11 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
    * cramped. A fixed box is a decision: this much of the running order is on screen, and the rest is a
    * scroll away.
    */
-  flex: none;
+  /* Room for 320px of running order and not a pixel more — but it gives way before it spills.
+     Fixed as a *ceiling*: on a short window the list shrinks instead of running out of the tab and
+     over the next room's line, which is what a hard height did at 1280x800. */
+  flex: 1 1 auto;
+  min-height: 0;
   flex-direction: column;
   gap: 9px;
 }
@@ -1949,7 +1956,8 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
 }
 
 .np-order-list {
-  height: 320px;
+  height: 100%;
+  max-height: 320px;
   margin: 0;
   padding: 0;
   overflow-y: auto;
@@ -2301,15 +2309,28 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
   z-index: 0;
 }
 
+/*
+ * The record's light on the room, and this time it is visible.
+ *
+ * It has been in the file for weeks at 40% behind a 110px blur, masked out 460px down — which is to
+ * say it was in the file and not on the screen. A player that never changes when the record changes is
+ * a page; the light is what makes it a room with something playing in it. Still grayscale, because on
+ * this face colour comes from one palette and never from the music: what varies is how much light
+ * there is and where it falls.
+ *
+ * Anchored to the left, where the sleeve is, and gone before the display: a reading standing in a
+ * wash is a reading with worse contrast, and the field's own darkness is what the bars are drawn on.
+ */
 .np-wash {
   position: absolute;
-  inset: -80px -60px 0;
-  background-position: center 22%;
-  background-size: cover;
-  filter: grayscale(1) blur(110px) brightness(0.45);
-  opacity: 0.4;
-  -webkit-mask: linear-gradient(180deg, #000, transparent 460px);
-  mask: linear-gradient(180deg, #000, transparent 460px);
+  inset: -90px -60px 0 -40px;
+  background-position: left 18%;
+  background-size: 70% auto;
+  background-repeat: no-repeat;
+  filter: grayscale(1) blur(90px) brightness(0.62);
+  opacity: 0.62;
+  -webkit-mask: radial-gradient(120% 90% at 18% 8%, #000 8%, transparent 70%);
+  mask: radial-gradient(120% 90% at 18% 8%, #000 8%, transparent 70%);
 }
 
 /* Everything real stands above the light. */
@@ -2383,11 +2404,20 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
    * stations the audio passed through, then what it looks like at the end of them. One object, read
    * downward, and the picture is finally the size of the thing it is a picture of.
    */
+  /*
+   * A column of readings down the right edge.
+   *
+   * The nameplate row was 1200px wide with a two-line readout floating at its far end, so a short
+   * title left a thousand pixels of empty page in the panel's best corner. Everything the equipment
+   * *measures* — the level, the note, the clock — stands in one column now, the full height of the
+   * panel, and the void becomes the instrument's right-hand rail. What is left of the panel is the
+   * record, the reading and the stations, which is the signal in order.
+   */
   grid-template-areas:
-    'meta readout'
-    'transport transport'
-    'chain chain'
-    'analysis analysis';
+    'meta readings'
+    'transport readings'
+    'chain readings'
+    'analysis readings';
   gap: 18px 22px;
   min-width: 0;
   min-height: 0;
@@ -2431,8 +2461,34 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
   background: var(--surface-2);
 }
 
+/*
+ * The right-hand rail: everything measured, in one column.
+ *
+ * Top-aligned with the nameplate and reaching the panel's foot, with a hairline down its left edge —
+ * the one rule in the panel, because this column is a different *kind* of thing from the record and
+ * the reading beside it. Its own contents keep the mono voice they always had.
+ */
+.np-readings {
+  grid-area: readings;
+  display: flex;
+  flex-direction: column;
+  /* Level and note at the head, the clock at the foot: the column is framed by its own readings
+     instead of trailing off into four hundred pixels of nothing. */
+  justify-content: space-between;
+  gap: clamp(18px, 2.4vh, 34px);
+  align-self: stretch;
+  padding-left: clamp(18px, 2vw, 36px);
+  border-left: 1px solid var(--line);
+}
+
+.np-readings .signal-timing {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
 .np-readout {
-  grid-area: readout;
+  grid-area: auto;
   position: relative;
   display: flex;
   flex-direction: column;

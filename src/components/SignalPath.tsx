@@ -74,9 +74,7 @@ export type Stage = {
  * a reading with an ellipsis in it.
  */
 function figures(text: string): string {
-  return text
-    .replace(/(\d[\d.]*) (kHz|Hz|kbps|dB|ms|bit)/g, '$1\u00a0$2')
-    .replace(/(\d+)-bit/g, '$1\u2011bit');
+  return text.replace(/(\d[\d.]*) (kHz|Hz|kbps|dB|ms|bit)/g, '$1\u00a0$2').replace(/(\d+)-bit/g, '$1\u2011bit');
 }
 
 /** `44100` → `44.1 kHz`. Local to this file: the chain compares rates, it does not describe formats. */
@@ -491,7 +489,7 @@ function Verdict({ zone }: { zone: ApiZoneState }) {
  * Nothing here is shown for outputs that have no clock to report on: `sync` is absent then, and an
  * empty timing block would read as "out of sync" rather than "not applicable".
  */
-function Timing({ zone }: { zone: ApiZoneState }) {
+export function SignalClock({ zone }: { zone: ApiZoneState }) {
   const sync = zone.output?.sync;
 
   /*
@@ -676,7 +674,10 @@ export function SignalPath({ zone }: { zone: ApiZoneState }) {
         ))}
       </ol>
 
-      <Timing zone={zone} />
+      {/* The clock is not here any more.
+          It is a *reading*, not a station: nothing passes through it. It stands with the level and the
+          note in the panel's right-hand column, where everything the equipment measures now lives —
+          see `SignalClock` and `.np-readout`. */}
     </div>
   );
 }
