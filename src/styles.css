@@ -1955,6 +1955,23 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
   background: var(--hair, rgb(255 255 255 / 8%));
 }
 
+/* What can be done to the whole list, at the end of its own label: quieter than the label until the
+   pointer arrives, because these two are rarely what you came for. */
+.np-order-act {
+  padding: 0 0 0 12px;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  letter-spacing: inherit;
+  color: var(--text-mute);
+  text-transform: inherit;
+  transition: color 0.15s;
+}
+
+.np-order-act:hover {
+  color: var(--text);
+}
+
 .np-order-list {
   height: 100%;
   max-height: 320px;
@@ -2002,8 +2019,41 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
 .np-order-item {
   position: relative;
   display: grid;
-  grid-template-columns: 18px minmax(0, 1fr);
+  grid-template-columns: 18px minmax(0, 1fr) 20px;
   align-items: center;
+}
+
+/*
+ * Taking one entry out.
+ *
+ * Invisible until the row is under the pointer — a column of crosses down a running order is a form,
+ * and the list's job is to be read. It keeps its 20px whether it shows or not, so nothing moves when
+ * it appears.
+ */
+.np-order-drop {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  color: var(--text-mute);
+  opacity: 0;
+  transition:
+    opacity 0.15s,
+    color 0.15s;
+}
+
+.np-order-drop svg {
+  width: 11px;
+  height: 11px;
+}
+
+.np-order-item:hover .np-order-drop {
+  opacity: 0.7;
+}
+
+.np-order-drop:hover {
+  color: var(--text);
+  opacity: 1;
 }
 
 .np-order-grip {
@@ -2530,6 +2580,17 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
   margin: 0;
   padding: 0;
   border: 0;
+}
+
+/* One sentence where four readings were. */
+.np-read-quiet {
+  margin: 0;
+  max-width: 15em;
+  font-size: 10.5px;
+  line-height: 1.5;
+  letter-spacing: 0.08em;
+  color: var(--text-mute);
+  text-transform: uppercase;
 }
 
 .np-readout {

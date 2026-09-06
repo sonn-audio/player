@@ -509,22 +509,39 @@ export function SignalWire({ zone }: { zone: ApiZoneState }) {
   const sync = zone.output?.sync;
   const streaming = zone.state === 'playing';
 
+  /*
+   * Absent rather than dashed while the room is quiet.
+   *
+   * Bitrate and channels are measurements of a stream in flight; with no stream they were three
+   * labels over three dashes. The device's delay is a *setting* and survives silence, so it is the one
+   * that stays — see below.
+   */
   const kbps = streaming && output?.bitrate ? Math.round(output.bitrate / 1000) : null;
   const channels = streaming && output?.channels ? output.channels : null;
 
+  /* Nothing to report at all: no block, no labels, no dashes. A room at rest says it once, in the line
+     above this — see `Readout`. */
+  if (kbps === null && channels === null && !sync) {
+    return null;
+  }
+
   return (
     <dl className="signal-metrics signal-wire">
-      <div>
-        <dt>Bitrate</dt>
-        <dd>
-          {kbps === null ? '—' : kbps} {kbps !== null && <span className="signal-metric-unit">kbps</span>}
-        </dd>
-      </div>
+      {kbps !== null && (
+        <div>
+          <dt>Bitrate</dt>
+          <dd>
+            {kbps} <span className="signal-metric-unit">kbps</span>
+          </dd>
+        </div>
+      )}
 
-      <div>
-        <dt>Channels</dt>
-        <dd>{channels === null ? '—' : channels === 2 ? 'stereo' : channels === 1 ? 'mono' : channels}</dd>
-      </div>
+      {channels !== null && (
+        <div>
+          <dt>Channels</dt>
+          <dd>{channels === 2 ? 'stereo' : channels === 1 ? 'mono' : channels}</dd>
+        </div>
+      )}
 
       <div>
         <dt>Device delay</dt>

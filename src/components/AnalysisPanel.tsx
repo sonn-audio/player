@@ -138,6 +138,21 @@ export function Readout({
     return `${Math.abs(db) < 0.05 ? '0.0' : Math.abs(db).toFixed(1)}${side}`;
   };
 
+  /*
+   * Nothing flowing, nothing measured.
+   *
+   * Paused, the four blocks read `— dBFS`, `— dBFS`, `—`, `— dB`: four labels and four dashes, which
+   * is the same noise the rooms' own lines were carrying until it was taken out of them. A meter with
+   * no signal has one thing to say and this says it once.
+   */
+  if (!active) {
+    return (
+      <div className="np-readout" data-quiet>
+        <p className="np-read-quiet mono">no signal — nothing is flowing to this room</p>
+      </div>
+    );
+  }
+
   return (
     <div className="np-readout">
       <div className="np-read">
@@ -146,11 +161,7 @@ export function Readout({
             react to. */}
         <span className="np-read-label">
           Level
-          <i
-            className="np-read-lamp"
-            data-lit={(active && level > 92) || undefined}
-            title="Approaching full scale"
-          />
+          <i className="np-read-lamp" data-lit={(active && level > 92) || undefined} title="Approaching full scale" />
         </span>
         <span className="np-read-value">
           {active ? dbfs(analysis.loudness) : '—'}
@@ -293,11 +304,11 @@ export function AnalysisPanel({
   const rules = DB_RULES.filter((db) => db > floorDb)
     .filter((db) => !dense || db === -12 || db === -36)
     .map((db) => ({
-    db,
-    /* Mirrored with the reading: the same value above and below the axis, so a peak on the third rule
+      db,
+      /* Mirrored with the reading: the same value above and below the axis, so a peak on the third rule
        means the same thing whichever channel drew it. */
-    y: dims.h / 2 - ((db - floorDb) / -floorDb) * (dims.h / 2 - 1),
-  }));
+      y: dims.h / 2 - ((db - floorDb) / -floorDb) * (dims.h / 2 - 1),
+    }));
 
   /*
    * The bars' shared geometry, in pixel space. The ballistics in `useAnalysis` drive every height

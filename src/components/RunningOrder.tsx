@@ -193,6 +193,31 @@ export function RunningOrder({
 }) {
   const api = useApi();
   const [listRef, clipped] = useClipped();
+
+  /*
+   * Whether there is something to take back.
+   *
+   * `Undo` is offered only after this view has thrown something away, and only for a while: a control
+   * that is always there invites a press that either does nothing or undoes something you have long
+   * forgotten. The server keeps the last removal either way; this is about not offering it in the
+   * abstract.
+   */
+  const [undoable, setUndoable] = useState(false);
+  useEffect(() => {
+    if (!undoable) {
+      return undefined;
+    }
+    const timer = window.setTimeout(() => setUndoable(false), 20000);
+    return () => window.clearTimeout(timer);
+  }, [undoable]);
+
+  const remove = useCallback(
+    (itemId: string) => {
+      void api.queueRemove(zone.id, itemId).then(() => setUndoable(true));
+    },
+    [api, zone.id],
+  );
+
   /*
    * The list moves with the player, not only with the queue.
    *
@@ -273,11 +298,25 @@ export function RunningOrder({
 
   return (
     <section className="np-order">
-      {/* A label and a rule: the label names the column, the rule gives it a top edge without a box.
-          Same device the chain uses under the display. */}
+      {/*
+       * A label, a rule, and what can be done to the whole list.
+       *
+       * `Clear` and `Undo` lived in a tab strip under the display and went with it when the tabs went —
+       * so a queue you could reorder had no way to be emptied, which is half a queue. `Clear` asks
+       * nothing because `Undo` is beside it: the pair *is* the confirmation, and a better one than a
+       * dialog, because it costs nothing when you meant it.
+       */}
       <h3 className="np-order-head mono">
         Up next
         <i aria-hidden="true" />
+        {undoable && (
+          <button type="button" className="np-order-act" onClick={() => void api.queueUndo(zone.id).then(() => setUndoable(false))}>
+            Undo
+          </button>
+        )}
+        <button type="button" className="np-order-act" onClick={() => void api.queueClear(zone.id).then(() => setUndoable(true))}>
+          Clear
+        </button>
       </h3>
 
       <ol className="np-order-list" ref={listRef} data-clipped={clipped || undefined}>
@@ -331,6 +370,13 @@ export function RunningOrder({
                 {/* The length, right-aligned and tabular — the one number a running order has always
                     carried, and what makes this read as the back of a sleeve rather than a menu. */}
                 <span className="np-order-time mono">{entry.duration > 0 ? formatTime(entry.duration) : ''}</span>
+              </button>
+
+              {/* One entry out of the list. On the row rather than behind a menu: taking a track out of
+                  a queue is the commonest edit there is, and it arrives under the pointer that is
+                  already there. */}
+              <button type="button" className="np-order-drop" onClick={() => remove(entry.id)} aria-label={`Remove ${entry.title}`}>
+                <Icon name="close" />
               </button>
             </li>
           );
