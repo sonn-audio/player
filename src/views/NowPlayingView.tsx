@@ -28,24 +28,22 @@ import { useCoverAnchor } from '@/shell/coverMorph';
 import type { ApiZoneState } from '@/api/types';
 
 /**
- * The album, as a person would write it.
+ * The album line, printed as the catalogue has it.
  *
- * Two things the catalogues do that a nameplate should not repeat:
+ * It briefly stripped a trailing ` - EP` / ` - Single`, on the theory that those are Apple's filing
+ * suffixes rather than part of a name. They are sometimes exactly part of the name — `Men Machine EP -
+ * EP` is what that record is called — and a player that edits the catalogue on a hunch is a player that
+ * quietly lies about what you are listening to. So nothing is rewritten.
  *
- *  - Apple files a one-track or short release as `Devotion - Single` and `Men Machine EP - EP`. The
- *    suffix is a *filing* fact, and printed under the title it reads as a typo — the second `EP` in
- *    particular. It goes; the album's own name survives, `EP` and all, when that is what it is called.
- *  - What is left is sometimes the title again. `Devotion` under `Devotion` is the same word twice in
- *    two sizes, so the line is dropped rather than deduplicated into silence.
- *
- * Returns null when there is nothing worth a line.
+ * The one thing left out is a straight duplicate: the album line is dropped when it *is* the title,
+ * because the same string twice in two sizes is not two facts.
  */
 function albumLine(album: string, title: string): string | null {
-  const tidy = album.replace(/\s+-\s+(Single|EP)$/i, '').trim();
-  if (!tidy || tidy.toLowerCase() === title.trim().toLowerCase()) {
+  const value = album.trim();
+  if (!value || value.toLowerCase() === title.trim().toLowerCase()) {
     return null;
   }
-  return tidy;
+  return value;
 }
 
 /**
