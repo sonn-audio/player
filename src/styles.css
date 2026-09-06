@@ -2233,8 +2233,9 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
   background-image: var(--rec);
   background-position: center;
   background-size: cover;
-  filter: grayscale(1) blur(46px) brightness(0.55);
-  opacity: 0.42;
+  /* The record's own light, tinted a shade further than the page's — it is the object throwing it. */
+  filter: grayscale(0.45) saturate(1.2) blur(46px) brightness(0.55);
+  opacity: 0.5;
   -webkit-mask: radial-gradient(closest-side, #000 34%, transparent 78%);
   mask: radial-gradient(closest-side, #000 34%, transparent 78%);
   pointer-events: none;
@@ -2334,8 +2335,21 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
   background-position: left 18%;
   background-size: 70% auto;
   background-repeat: no-repeat;
-  filter: grayscale(1) blur(90px) brightness(0.62);
-  opacity: 0.62;
+  /*
+   * And now it keeps some of the record's colour.
+   *
+   * The rule this face was built on said colour comes from one palette and never from the music, and
+   * that rule cost it the one thing the best-looking players have: a screen that changes when the
+   * record changes. So the *light* is allowed its hue and nothing else is — every reading, verdict,
+   * label and bar stays exactly as neutral as it was, because a number that changes colour with the
+   * album is a number you cannot trust.
+   *
+   * Mostly desaturated on purpose: `grayscale(0.55)` on a blurred sleeve leaves a tint you feel rather
+   * than a colour you look at, and it is self-correcting — a grey sleeve stays grey instead of being
+   * turned into somebody's idea of brown, which is how the art face got this wrong once.
+   */
+  filter: grayscale(0.55) saturate(1.15) blur(90px) brightness(0.6);
+  opacity: 0.6;
   -webkit-mask: radial-gradient(120% 90% at 18% 8%, #000 8%, transparent 70%);
   mask: radial-gradient(120% 90% at 18% 8%, #000 8%, transparent 70%);
 }
@@ -4213,7 +4227,9 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
   background-repeat: no-repeat;
   background-position: left center;
   background-size: auto 100%;
-  filter: grayscale(1) brightness(0.45);
+  /* A hint of each room's own record. Held further down than the panel's light, because twenty-four
+     rows of colour would be a paint chart rather than a house. */
+  filter: grayscale(0.72) saturate(1.1) brightness(0.45);
   opacity: 0.5;
   -webkit-mask: linear-gradient(90deg, #000, transparent 58%);
   mask: linear-gradient(90deg, #000, transparent 58%);
@@ -4223,7 +4239,7 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
 }
 
 .house-lane:hover .house-art {
-  filter: grayscale(0.7) brightness(0.55);
+  filter: grayscale(0.5) saturate(1.15) brightness(0.55);
   opacity: 0.64;
 }
 
