@@ -116,26 +116,79 @@ export function Readout({
 }) {
   const analysis = useAnalysis(zoneId, active, capabilities?.visualizer?.rateMax ?? 30);
   const level = Math.min(100, analysis.loudness / (spectrumGeometry().fullScale / 100));
+  /* The louder side's held peak, in the wire's own scale — see the note on the Peak row. */
+  const held = Math.max(analysis.leftPeak, analysis.rightPeak);
+
+  /*
+   * The balance, in dB, from the two levels the stream already sends.
+   *
+   * The display draws the channels as a mirrored field, so the *shape* of the reading says which side
+   * is louder — but a shape cannot be compared with yesterday and cannot be read at a glance. The
+   * number can: `0.0 dB` is centred, and the side it leans to is named rather than left to the eye.
+   * Null until the stream has sent a stereo event, which is also what an older server looks like.
+   */
+  const balance = (): string => {
+    const left = analysis.left;
+    const right = analysis.right;
+    if (!active || left === null || right === null || (left < 40 && right < 40)) {
+      return '—';
+    }
+    const db = 20 * Math.log10((Math.max(left, 1) + 1) / (Math.max(right, 1) + 1));
+    const side = db > 0.2 ? ' L' : db < -0.2 ? ' R' : '';
+    return `${Math.abs(db) < 0.05 ? '0.0' : Math.abs(db).toFixed(1)}${side}`;
+  };
 
   return (
     <div className="np-readout">
       <div className="np-read">
-        {/* The lamp belongs to the number it is about.
-            Floating on its own above the block it read as debris on the panel — a dot with no
-            argument. Beside `LEVEL` it is what it is on the equipment this borrows from: the mark
-            that says the reading next to it is the one to react to. */}
+        {/* The lamp belongs to the number it is about: beside `LEVEL` it is what it is on the
+            equipment this borrows from — the mark that says the reading next to it is the one to
+            react to. */}
         <span className="np-read-label">
           Level
-          <i className="np-read-lamp" data-lit={(active && level > 92) || undefined} title="Approaching full scale" />
+          <i
+            className="np-read-lamp"
+            data-lit={(active && level > 92) || undefined}
+            title="Approaching full scale"
+          />
         </span>
         <span className="np-read-value">
           {active ? dbfs(analysis.loudness) : '—'}
           <i>dBFS</i>
         </span>
       </div>
+
+      {/*
+       * The peak, under the level — the *held* one, per side, whichever is higher.
+       *
+       * Loudness is what the music is doing; the peak is how close it came to the ceiling, and on a
+       * panel whose subject is what happened to the audio that is the number that says whether
+       * anything is about to clip. It reads the same held peaks the meter's ticks use, so the two
+       * cannot disagree, and it hangs and falls rather than flickering.
+       *
+       * Not `analysis.peak`: that field is the stream's *onset* detector — an energy ratio scaled to
+       * 0-255, a transient marker rather than a level. Run through `dbfs` it produced -59 dBFS under a
+       * -11 dBFS reading, which is how a wrong label announces itself if you look at it.
+       */}
+      <div className="np-read">
+        <span className="np-read-label">Peak</span>
+        <span className="np-read-value" data-size="sm">
+          {active && held > 0 ? dbfs(held) : '—'}
+          <i>dBFS</i>
+        </span>
+      </div>
+
       <div className="np-read">
         <span className="np-read-label">Note</span>
         <span className="np-read-value">{(active && analysis.pitch) || '—'}</span>
+      </div>
+
+      <div className="np-read">
+        <span className="np-read-label">Balance</span>
+        <span className="np-read-value" data-size="sm">
+          {balance()}
+          <i>dB</i>
+        </span>
       </div>
     </div>
   );

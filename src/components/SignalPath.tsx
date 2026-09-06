@@ -489,6 +489,53 @@ function Verdict({ zone }: { zone: ApiZoneState }) {
  * Nothing here is shown for outputs that have no clock to report on: `sync` is absent then, and an
  * empty timing block would read as "out of sync" rather than "not applicable".
  */
+/**
+ * What the stream itself is doing, as numbers.
+ *
+ * The chain says what each station *did*; these are the live readings of the result, and none of them
+ * had anywhere to live before the rail existed:
+ *
+ *  - **Bitrate** is documented as a measurement rather than a property — null on a stream's first
+ *    event and moving every second after — so it belongs with the readings and not in the chain's
+ *    `Encode` station, where it would make a station's line twitch once a second.
+ *  - **Channels** is the one thing about the wire the chain never states, and a stereo pair collapsing
+ *    to mono is exactly the kind of thing this face exists to catch.
+ *  - **Device delay** is what the room's own equipment adds after our output — an amp, an active
+ *    speaker — and it is the reason two rooms can be locked to the same clock and still not agree.
+ *    `deviceDelayMs` trails what we asked for, so what is shown is what we asked for.
+ */
+export function SignalWire({ zone }: { zone: ApiZoneState }) {
+  const output = zone.format?.output;
+  const sync = zone.output?.sync;
+  const streaming = zone.state === 'playing';
+
+  const kbps = streaming && output?.bitrate ? Math.round(output.bitrate / 1000) : null;
+  const channels = streaming && output?.channels ? output.channels : null;
+
+  return (
+    <dl className="signal-metrics signal-wire">
+      <div>
+        <dt>Bitrate</dt>
+        <dd>
+          {kbps === null ? '—' : kbps} {kbps !== null && <span className="signal-metric-unit">kbps</span>}
+        </dd>
+      </div>
+
+      <div>
+        <dt>Channels</dt>
+        <dd>{channels === null ? '—' : channels === 2 ? 'stereo' : channels === 1 ? 'mono' : channels}</dd>
+      </div>
+
+      <div>
+        <dt>Device delay</dt>
+        <dd>
+          {sync ? sync.delayMs : '—'} {sync && <span className="signal-metric-unit">ms</span>}
+        </dd>
+      </div>
+    </dl>
+  );
+}
+
 export function SignalClock({ zone }: { zone: ApiZoneState }) {
   const sync = zone.output?.sync;
 

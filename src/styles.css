@@ -2494,6 +2494,24 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
   border-left: 1px solid var(--line);
 }
 
+/*
+ * The wire's own readings: label over figure, two columns, the same hand as the clock's.
+ *
+ * Stacked rather than in a row, because the rail is narrow and a label like `Device delay` does not
+ * fit beside a number in 200px — and because reading down a column of five figures is what a rail is
+ * for.
+ */
+.np-readings .signal-wire {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px clamp(12px, 1.4vw, 26px);
+  margin: 0;
+}
+
+.np-readings .signal-wire > div {
+  text-align: left;
+}
+
 .np-readings .signal-timing {
   margin: 0;
   padding: 0;
@@ -2527,6 +2545,10 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
   letter-spacing: 0.2em;
   color: var(--text-mute);
   text-transform: uppercase;
+}
+
+.np-read-value[data-size='sm'] {
+  font-size: clamp(15px, 1.7vh, 21px);
 }
 
 .np-read-value {

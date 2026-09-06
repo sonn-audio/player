@@ -16,7 +16,7 @@ import { Volume } from '@/components/Volume';
 import { Waveform } from '@/components/Waveform';
 import { SourceChip } from '@/components/StreamFormat';
 import { AnalysisPanel, Readout } from '@/components/AnalysisPanel';
-import { SignalClock, SignalPath } from '@/components/SignalPath';
+import { SignalClock, SignalPath, SignalWire } from '@/components/SignalPath';
 import { HouseLane } from '@/components/HouseLanes';
 import { RunningOrder } from '@/components/RunningOrder';
 import { useRoomDrag } from '@/art/useRoomDrag';
@@ -612,6 +612,9 @@ export function NowPlayingView({
                    * was a thousand pixels of empty page beside a title.
                    */}
                   <SignalClock zone={zone} />
+
+                  {/* And what the stream is doing right now — see `SignalWire`. */}
+                  <SignalWire zone={zone} />
                 </div>
 
                 {/*
