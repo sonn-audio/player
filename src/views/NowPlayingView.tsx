@@ -8,7 +8,7 @@
  * `source.kind` as the hint for *what* it is. Both are rendered as given: `kind` is an open
  * set, so this must not switch exhaustively on it.
  */
-import { useCallback, useLayoutEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Crossfade } from '@/art/Crossfade';
 import { zoneCoverCss } from '@/art/cover';
 import { Transport } from '@/components/Transport';
@@ -19,6 +19,7 @@ import { AnalysisPanel, Readout } from '@/components/AnalysisPanel';
 import { SignalPath } from '@/components/SignalPath';
 import { HouseLane } from '@/components/HouseLanes';
 import { RunningOrder } from '@/components/RunningOrder';
+import { useRoomDrag } from '@/art/useRoomDrag';
 import { Icon } from '@/components/Icon';
 import { splitQualifier } from '@/lib/format';
 import { useZoneFavorite } from '@/state/useZoneFavorite';
@@ -163,6 +164,53 @@ export function NowPlayingView({
 
   useHouseSlide(`${zone.id}|${zones.length}|${folded}`);
 
+  /*
+   * The two gestures the house invites, on this face as well.
+   *
+   * Drag the record onto another room and the music goes there; drag a room onto the one you are in and
+   * they play together. Both were already in the contract, both are already implemented on the art
+   * face's wall, and the same hook does it here — the rooms are rows instead of panels and nothing else
+   * about the gesture changes. It is what turns this column from a set of tabs into the house: the tabs
+   * are targets now, not just switches.
+   *
+   * A refusal is worth one sentence and then silence.
+   */
+  const [said, setSaid] = useState<string | null>(null);
+  const drag = useRoomDrag((payload, target) => {
+    if (payload.kind === 'record') {
+      void api
+        .handoff(payload.zoneId, target.zoneId)
+        /* The screen follows the music: whoever threw the record into the kitchen is thinking about the
+           kitchen, and staying on the room they just emptied would answer a gesture with a shrug. */
+        .then(() => onSelectZone(target.zoneId))
+        .catch(() => setSaid('that room would not take it'));
+      return;
+    }
+    const leaderId = zone.group?.leader ?? zone.id;
+    const members = zones.find((room) => room.id === leaderId)?.group?.members ?? [leaderId];
+    void api
+      .setGroup(leaderId, [...members, payload.zoneId])
+      .then((result) => {
+        const refused = result.rejected[0];
+        if (refused) {
+          setSaid(
+            refused.reason === 'protocol-mismatch'
+              ? `${payload.name} can’t stay in step with this room`
+              : `${payload.name} is not there any more`,
+          );
+        }
+      })
+      .catch(() => setSaid('that did not work'));
+  });
+
+  useEffect(() => {
+    if (!said) {
+      return undefined;
+    }
+    const timer = window.setTimeout(() => setSaid(null), 4000);
+    return () => window.clearTimeout(timer);
+  }, [said]);
+
   const track = zone.track;
 
   /*
@@ -177,7 +225,7 @@ export function NowPlayingView({
   const at = zones.findIndex((candidate) => candidate.id === zone.id);
   const above = at < 0 ? [] : zones.slice(0, at);
   const below = at < 0 ? zones.filter((candidate) => candidate.id !== zone.id) : zones.slice(at + 1);
-  const lane = (room: ApiZoneState) => <HouseLane key={room.id} zone={room} onSelect={onSelectZone} />;
+  const lane = (room: ApiZoneState) => <HouseLane key={room.id} zone={room} onSelect={onSelectZone} drag={drag} />;
 
   /* With the instrument open only the nearest rooms fit; folded, the whole house is on screen. */
   const nearAbove = above.slice(Math.max(0, above.length - NEIGHBOURS));
@@ -258,22 +306,31 @@ export function NowPlayingView({
            * column read as tabs rather than as a player with a table stapled beneath it: which room is
            * open is a fact of the drawing, not something to work out from what is on screen.
            */}
-          <section className="np-room" data-current key={zone.id}>
+          <section
+            className="np-room"
+            data-current
+            key={zone.id}
+            /* A room dragged onto this one joins it. `data-room-drop` is what the gesture hit-tests for. */
+            data-room-drop={zone.id}
+            data-room-drop-kind="wall"
+            data-hot={drag.active?.kind === 'room' || undefined}
+            data-over={drag.over === zone.id || undefined}
+          >
             <div className="np-room-head">
               <span className="np-room-lamp" data-lit={zone.state === 'playing' || undefined} aria-hidden="true" />
               {/*
-           * The name folds it too.
-           *
-           * A heading that is the label of the thing it opens should be the way you shut it — the
-           * chevron at the end of the line is the affordance, not the only target. The button lives
-           * *inside* the heading so the room keeps being a heading in the document; a heading inside a
-           * button is not phrasing content and browsers are entitled to make a mess of it.
-           */}
-          <h2 className="np-room-name">
-            <button type="button" onClick={() => setFold(true)} title={`Fold ${zone.name}`}>
-              {zone.name}
-            </button>
-          </h2>
+               * The name folds it too.
+               *
+               * A heading that is the label of the thing it opens should be the way you shut it — the
+               * chevron at the end of the line is the affordance, not the only target. The button lives
+               * *inside* the heading so the room keeps being a heading in the document; a heading inside a
+               * button is not phrasing content and browsers are entitled to make a mess of it.
+               */}
+              <h2 className="np-room-name">
+                <button type="button" onClick={() => setFold(true)} title={`Fold ${zone.name}`}>
+                  {zone.name}
+                </button>
+              </h2>
 
               {/*
                * Fold the instrument away.
@@ -356,7 +413,26 @@ export function NowPlayingView({
                    */}
                   {/* No name under the sleeve: the tab's own line names the room a few pixels above this,
                 and the same words twice is the duplication this face keeps removing. */}
-                  <span className="np-plate-art" aria-hidden="true" {...coverAnchor} />
+                  {/* The record is a thing you can pick up: drag it onto another room's line and the music
+                goes there. Pointer-down begins a *possible* drag — below the threshold in
+                `useRoomDrag` nothing has happened and the press stays a press. */}
+                  <span
+                    className="np-plate-art"
+                    aria-hidden="true"
+                    {...coverAnchor}
+                    onPointerDown={(event) =>
+                      track &&
+                      drag.begin(
+                        {
+                          kind: 'record',
+                          zoneId: zone.id,
+                          cover: `url("${api.coverUrl(zone.id, { size: 320, cacheKey: track.coverUrl })}")`,
+                          name: track.title,
+                        },
+                        event,
+                      )
+                    }
+                  />
                 </div>
 
                 <RunningOrder zone={zone} onOpenQueue={onOpenQueue} />
@@ -542,6 +618,28 @@ export function NowPlayingView({
           </section>
 
           {nearBelow.map(lane)}
+
+          {/*
+           * What is in the hand.
+           *
+           * Fixed to the pointer rather than parented to what it came from: a ghost inside the tab it was
+           * picked up from would be cut off at the first edge it met, and this one crosses the whole column.
+           */}
+          {drag.active && (
+            <span
+              className="np-hand"
+              style={{
+                left: `${drag.active.x}px`,
+                top: `${drag.active.y}px`,
+                backgroundImage: drag.active.cover,
+              }}
+              aria-hidden="true"
+            >
+              {!drag.active.cover && <i className="np-hand-name mono">{drag.active.name}</i>}
+            </span>
+          )}
+
+          {said && <span className="np-said mono">{said}</span>}
 
           {below.length > nearBelow.length && (
             <button type="button" className="np-more-rooms mono" onClick={() => setFold(true)}>

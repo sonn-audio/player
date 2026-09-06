@@ -2124,7 +2124,11 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
   box-shadow: inset 0 0 0 1px rgb(255 255 255 / 6%);
 }
 
+/* A record you can pick up: the pointer carries it rather than scrolling the page under it — and an
+   empty slot never starts a text selection either, which is what a press on a picture used to do. */
 .np-plate-art {
+  touch-action: none;
+  user-select: none;
   position: relative;
   z-index: 2;
   width: 100%;
@@ -3801,6 +3805,8 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
   background: none;
   text-align: left;
   overflow: hidden;
+  /* A room is a thing you can carry onto another room; a finger on it must not scroll instead. */
+  touch-action: none;
   transition:
     background 0.22s ease,
     box-shadow 0.22s ease,
@@ -3890,6 +3896,78 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
     transform: none;
     animation: none;
   }
+}
+
+/*
+ * What is in the hand, while a record or a room is being carried.
+ *
+ * Fixed to the pointer, tilted, with the record on it — the same object the art face's wall puts in
+ * your hand, at this face's size. A room being carried has no record of its own to show when it is
+ * silent, so it shows its name instead.
+ */
+.np-hand {
+  position: fixed;
+  z-index: 90;
+  width: 104px;
+  height: 104px;
+  margin: -52px 0 0 -52px;
+  border-radius: 5px;
+  background-color: var(--surface-3);
+  background-position: center;
+  background-size: cover;
+  box-shadow:
+    0 28px 60px -18px rgb(0 0 0 / 88%),
+    inset 0 0 0 1px rgb(255 255 255 / 16%);
+  rotate: -4deg;
+  pointer-events: none;
+  animation: np-hand-in 0.16s var(--ease);
+}
+
+@keyframes np-hand-in {
+  from {
+    opacity: 0;
+    scale: 0.92;
+  }
+}
+
+.np-hand-name {
+  display: grid;
+  place-items: center;
+  height: 100%;
+  padding: 0 8px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: var(--text-dim);
+  text-align: center;
+  text-transform: uppercase;
+}
+
+/* A room that can take what is in the hand says so; the one under the pointer says it louder. */
+.house-lane[data-hot] {
+  background: rgb(255 255 255 / 3%);
+}
+
+.house-lane[data-over],
+.np-room[data-over] {
+  background: color-mix(in srgb, var(--accent) 9%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 34%, transparent);
+}
+
+/* What the equipment says when it refuses: one sentence, bottom left, then silence. */
+.np-said {
+  position: absolute;
+  bottom: 16px;
+  left: var(--tab-pad, 16px);
+  z-index: 60;
+  padding: 7px 11px;
+  border-radius: 5px;
+  background: rgb(8 10 13 / 92%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 10%);
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  color: var(--warn);
+  animation: np-hand-in 0.2s var(--ease);
 }
 
 /* The lane's plate: the lamp's slot and the room's words, on the open tab's own columns — so every

@@ -22,6 +22,7 @@
 import { stagesOf } from '@/components/SignalPath';
 import { useApi } from '@/state/ServerContext';
 import { zoneCoverCss } from '@/art/cover';
+import type { RoomDrag } from '@/art/useRoomDrag';
 import type { ApiZoneState } from '@/api/types';
 
 /** How a stage's state maps to the lane's dot — the same three states the chain uses. */
@@ -53,10 +54,19 @@ function wire(zone: ApiZoneState): string {
 export function HouseLane({
   zone,
   onSelect,
+  drag,
   current,
 }: {
   zone: ApiZoneState;
   onSelect: (zoneId: number) => void;
+  /**
+   * The gesture in the air, when there is one.
+   *
+   * A shut room is both ends of the house's two gestures: a record dropped on it goes there, and the
+   * room itself can be carried onto the room you are in to play along with it. The same hook the art
+   * face's wall uses — see `useRoomDrag`.
+   */
+  drag?: RoomDrag;
   /**
    * This is the room you are in, drawn shut.
    *
@@ -81,7 +91,19 @@ export function HouseLane({
       data-lane-id={zone.id}
       data-playing={playing || undefined}
       data-current={current || undefined}
-      onClick={() => onSelect(zone.id)}
+      /* A record in the hand can land here; the row says so before the pointer arrives. */
+      data-room-drop={zone.id}
+      data-room-drop-kind="room"
+      data-hot={drag?.active?.kind === 'record' || undefined}
+      data-over={drag?.over === zone.id || undefined}
+      onPointerDown={(event) => drag?.begin({ kind: 'room', zoneId: zone.id, cover: art, name: zone.name }, event)}
+      onClick={() => {
+        /* A press that turned into a throw is not a press — see `useRoomDrag`. */
+        if (drag?.consumed()) {
+          return;
+        }
+        onSelect(zone.id);
+      }}
       title={current ? `Open ${zone.name}` : `Show ${zone.name}`}
     >
       {/*

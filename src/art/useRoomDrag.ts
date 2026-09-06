@@ -86,6 +86,15 @@ export function useRoomDrag(
       if (event.pointerType === 'mouse' && event.button !== 0) {
         return;
       }
+      /*
+       * A press that might become a drag must not also start a text selection.
+       *
+       * Without this the pointer dragged a blue selection across every word it passed on the way to the
+       * target — the panel read as a document being highlighted rather than a record being carried. It
+       * costs the source element its focus-on-click, which nothing here depends on: the click still
+       * fires, and keyboard users reach these controls by tabbing to them.
+       */
+      event.preventDefault();
       const from = { x: event.clientX, y: event.clientY };
       let dragging = false;
 
