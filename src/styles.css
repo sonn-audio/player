@@ -6863,21 +6863,39 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
  * Drawing the band it is measured against gives it a shape, and once there is a shape the line can be
  * quiet.
  */
+/*
+ * The lead over the last few seconds, drawn for the column it now lives in.
+ *
+ * It was sized for a 150px slot inside the chain; in the rail it stretched to 350px and read as a
+ * green bar parked under the clock. Shorter, and the band it is measured against goes back to being a
+ * ground rather than a colour — the line is the only thing here that should be accent, and it is one
+ * pixel of it.
+ */
 .signal-trace {
-  height: 30px;
-  margin-top: 10px;
-  overflow: hidden;
+  margin-top: 12px;
+}
+
+.signal-trace-head {
+  margin: 0 0 5px;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  color: var(--text-mute);
+  text-transform: uppercase;
 }
 
 .signal-trace svg {
   display: block;
+  /* Stated here rather than on the box: the chart is `preserveAspectRatio: none` on a 100x100 viewBox,
+     so `height: 100%` of an auto-height parent resolves to its intrinsic square — 300px of green in a
+     220px rail. */
   width: 100%;
-  height: 100%;
+  height: 22px;
 }
 
-/* The band it is supposed to stay inside: light enough to be a ground, present enough to be a fact. */
+/* The band it is supposed to stay inside: a ground, not a colour. */
 .signal-trace-band {
-  fill: rgb(74 222 128 / 9%);
+  fill: rgb(255 255 255 / 5%);
 }
 
 .signal-trace-line {

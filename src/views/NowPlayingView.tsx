@@ -327,7 +327,7 @@ export function NowPlayingView({
                * button is not phrasing content and browsers are entitled to make a mess of it.
                */}
               <h2 className="np-room-name">
-                <button type="button" onClick={() => setFold(true)} title={`Fold ${zone.name}`}>
+                <button type="button" onClick={() => setFold(true)} aria-label={`Fold ${zone.name}`}>
                   {zone.name}
                 </button>
               </h2>
@@ -381,8 +381,7 @@ export function NowPlayingView({
                 type="button"
                 className="np-room-fold"
                 onClick={() => setFold(true)}
-                title={`Fold ${zone.name} — show every room as a line`}
-                aria-label="Fold the instrument"
+                aria-label={`Fold ${zone.name} — show every room as a line`}
               >
                 <i aria-hidden="true" />
               </button>

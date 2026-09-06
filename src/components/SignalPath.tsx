@@ -671,6 +671,11 @@ function LeadTrace({ samples, lo, hi }: { samples: number[]; lo: number; hi: num
 
   return (
     <div className="signal-trace" aria-hidden="true">
+      {/* Named, like every other reading in the rail: an unlabelled chart in a column of labelled
+          figures reads as a stray bar. The label lives inside the component because the component
+          renders nothing at all until it has twenty samples — a caption over an empty box would be
+          worse than no caption. */}
+      <h5 className="signal-trace-head mono">Lead, last {TRACE_LENGTH} frames</h5>
       <svg viewBox="0 0 100 100" preserveAspectRatio="none">
         <rect className="signal-trace-band" x="0" y={y(hi)} width="100" height={Math.max(0, y(lo) - y(hi))} />
         <polyline className="signal-trace-line" points={points} />

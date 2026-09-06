@@ -104,7 +104,15 @@ export function HouseLane({
         }
         onSelect(zone.id);
       }}
-      title={current ? `Open ${zone.name}` : `Show ${zone.name}`}
+      /*
+       * No `title`.
+       *
+       * The row is a room's name, what it is playing, its chain and a chevron — it says what it is and
+       * what pressing it does, and the browser's own tooltip is a grey OS box that lands in the middle
+       * of the design a second after the pointer stops. `aria-label` carries the same sentence for
+       * anyone who needs it spoken.
+       */
+      aria-label={current ? `Open ${zone.name}` : `Show ${zone.name}`}
     >
       {/*
        * Name and record, in the plate column the tall row's own name and sleeve stand in.
