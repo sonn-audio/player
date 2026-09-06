@@ -3044,6 +3044,24 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
   pointer-events: none;
 }
 
+/*
+ * The seek readout, anchored.
+ *
+ * It floated five pixels above the strip with nothing joining it to the place it names — a bare number
+ * in mid-air, which on a panel where every other figure has a label or a line looked unfinished. The
+ * tick is the join: it comes down out of the number and meets the cursor's own hairline.
+ */
+.wave-cursor-time::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  width: 1px;
+  height: 5px;
+  background: var(--text-dim);
+  opacity: 0.55;
+}
+
 .wave-cursor-time {
   position: absolute;
   bottom: calc(100% + 5px);

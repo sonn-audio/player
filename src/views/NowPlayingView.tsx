@@ -28,6 +28,27 @@ import { useCoverAnchor } from '@/shell/coverMorph';
 import type { ApiZoneState } from '@/api/types';
 
 /**
+ * The album, as a person would write it.
+ *
+ * Two things the catalogues do that a nameplate should not repeat:
+ *
+ *  - Apple files a one-track or short release as `Devotion - Single` and `Men Machine EP - EP`. The
+ *    suffix is a *filing* fact, and printed under the title it reads as a typo — the second `EP` in
+ *    particular. It goes; the album's own name survives, `EP` and all, when that is what it is called.
+ *  - What is left is sometimes the title again. `Devotion` under `Devotion` is the same word twice in
+ *    two sizes, so the line is dropped rather than deduplicated into silence.
+ *
+ * Returns null when there is nothing worth a line.
+ */
+function albumLine(album: string, title: string): string | null {
+  const tidy = album.replace(/\s+-\s+(Single|EP)$/i, '').trim();
+  if (!tidy || tidy.toLowerCase() === title.trim().toLowerCase()) {
+    return null;
+  }
+  return tidy;
+}
+
+/**
  * The heart, for the room you are looking at.
  *
  * A toggle rather than the add-only star used in list rows: this one is about *the thing that is
@@ -522,10 +543,12 @@ export function NowPlayingView({
                     {/* Just the album. The provider moved down into the chip row, where "where did this come
                 from" sits with the rest of what this audio *is* — trailing the album title it read as
                 an afterthought, and it is the first thing people check. */}
-                    {track?.album && (
+                    {track?.album && albumLine(track.album, track.title) && (
                       <p className="np-album">
                         {(() => {
-                          const { main, qualifier } = splitQualifier(track.album);
+                          const { main, qualifier } = splitQualifier(
+                            albumLine(track.album, track.title) ?? track.album,
+                          );
                           return (
                             <>
                               {main}
