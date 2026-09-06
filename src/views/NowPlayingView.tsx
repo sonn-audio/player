@@ -333,6 +333,44 @@ export function NowPlayingView({
               </h2>
 
               {/*
+               * The room's own controls, on the room's own line.
+               *
+               * They were a 90px row inside the panel, above the reading — so the face's subject was the
+               * third thing on the page and got whatever height was left over. A room's transport belongs
+               * to the room, and this line *is* the room: lamp, name, controls, fold. The position stays
+               * down with the record, where "how far in are we" is part of what is playing rather than a
+               * control you reach for.
+               */}
+              {/*
+              Transport, the room's volume beside it, and the one per-track action opposite.
+
+              The volume is *here* rather than in a bar because that is where a hand already is: it was in
+              the top bar for a while and adjusting it meant crossing the window while looking at the
+              player. And it has to be here now — the bar along the bottom is absent in this view, so
+              there is nothing else in sight that carries it.
+              */}
+              <div className="np-controls">
+                <Transport zone={zone} />
+                {/*
+              The volume and the one per-track action, as a unit.
+
+              They were siblings of the transport, and `flex-wrap` treated them as strangers: at the
+              1440px column there is room for the transport and the volume but not the star, so the
+              star wrapped alone to a second row — one orphaned button hanging off the right edge.
+              Grouped, the pair wraps together into a full second row (fader left, star at the far
+              edge) or fits beside the transport whole. Both arrangements look decided.
+              */}
+                <div className="np-tail">
+                  <Volume zone={zone} compact percent />
+                  {/* One action beside the transport, not two: the "…" that used to sit here held things
+              that belong to the room rather than to the track. */}
+                  <div className="np-actions">
+                    <TrackHeart zone={zone} />
+                  </div>
+                </div>
+              </div>
+
+              {/*
                * Fold the instrument away.
                *
                * At the end of the tab's own line, quieter than the line it operates — the lesson the rail's
@@ -557,48 +595,12 @@ export function NowPlayingView({
                   {/* The envelope of what has played, the position, and the seek gesture — one element. A slim
               bar under it drew the position a second time; see `Waveform`. */}
                   <Waveform zone={zone} />
-
-                  {/*
-            Transport, the room's volume beside it, and the one per-track action opposite.
-
-            The volume is *here* rather than in a bar because that is where a hand already is: it was in
-            the top bar for a while and adjusting it meant crossing the window while looking at the
-            player. And it has to be here now — the bar along the bottom is absent in this view, so
-            there is nothing else in sight that carries it.
-          */}
-                  <div className="np-controls">
-                    <Transport zone={zone} />
-                    {/*
-              The volume and the one per-track action, as a unit.
-
-              They were siblings of the transport, and `flex-wrap` treated them as strangers: at the
-              1440px column there is room for the transport and the volume but not the star, so the
-              star wrapped alone to a second row — one orphaned button hanging off the right edge.
-              Grouped, the pair wraps together into a full second row (fader left, star at the far
-              edge) or fits beside the transport whole. Both arrangements look decided.
-            */}
-                    <div className="np-tail">
-                      <Volume zone={zone} compact percent />
-                      {/* One action beside the transport, not two: the "…" that used to sit here held things
-                  that belong to the room rather than to the track. */}
-                      <div className="np-actions">
-                        <TrackHeart zone={zone} />
-                      </div>
-                    </div>
-                  </div>
                 </div>
 
                 {/* The reading, at a size worth the name of this face — see `Readout`. It fills the half of
             the nameplate row that was empty page, with the numbers that were living at 10px in the
             corner of the display below. */}
                 <Readout zoneId={zone.id} active={zone.state === 'playing'} capabilities={zone.output?.capabilities} />
-
-                {/*
-          The spectrum runs the full width, under the artwork as well as the controls.
-          It is the one element with no natural width — it is a reading of the audio, not a piece
-          of metadata — so it takes the space beneath the cover that nothing else was using.
-        */}
-                <AnalysisPanel zoneId={zone.id} active={zone.state === 'playing'} capabilities={zone.output?.capabilities} />
 
                 {/*
                  * The chain, under the display it explains.
@@ -613,6 +615,13 @@ export function NowPlayingView({
                 <div className="np-chain">
                   <SignalPath zone={zone} />
                 </div>
+
+                {/*
+          The spectrum runs the full width, under the artwork as well as the controls.
+          It is the one element with no natural width — it is a reading of the audio, not a piece
+          of metadata — so it takes the space beneath the cover that nothing else was using.
+        */}
+                <AnalysisPanel zoneId={zone.id} active={zone.state === 'playing'} capabilities={zone.output?.capabilities} />
               </div>
             </div>
           </section>

@@ -1707,9 +1707,16 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
  * every room's name — open or shut — begins on one edge. A tab strip whose labels do not line up is
  * a set of boxes.
  */
+/*
+ * The room's line, which is also its front panel.
+ *
+ * Lamp, name, the room's controls, the fold — the four things that are about *the room* rather than
+ * about the record. The panel below it is then two things only: what is playing, and what the audio
+ * looks like coming out the far end, which is what this face is for.
+ */
 .np-room-head {
   display: grid;
-  grid-template-columns: 36px minmax(0, 1fr) auto;
+  grid-template-columns: 36px minmax(0, 1fr) auto auto;
   align-items: center;
   gap: 12px;
   padding: 6px 0 10px;
@@ -1788,7 +1795,7 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
  */
 @media (max-height: 900px) {
   .np-player {
-    gap: 10px 22px;
+    gap: 8px 22px;
   }
 
   .np-room {
@@ -1801,7 +1808,24 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
     margin-bottom: 8px;
   }
 
-  .np-chain .signal-trace {
+  /* The lead over the last few seconds is the one luxury in the clock block; on a short window its
+     forty pixels belong to the display. */
+  /* Stated through one more ancestor than the rules it has to beat: a media query adds no
+     specificity, and both of these are overridden further down the file otherwise. */
+  .np-chain .signal-timing .signal-trace {
+    display: none;
+  }
+
+  /*
+   * And then the stations go, before the reading does.
+   *
+   * With the chain above the display, the chain's rows are laid out first and the display takes what is
+   * left — so on a short window the *reading* was the thing being clipped, which is backwards on a face
+   * whose subject is the reading. Eight stations wrapping to two lines cost 170px at 1280x800; the
+   * verdict and the clock say what the chain is for in one line, and `Source` and `On the wire` are in
+   * the nameplate's chips either way.
+   */
+  .np-chain .signal-path .signal-stages {
     display: none;
   }
 }
@@ -2324,12 +2348,20 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
    * now includes the display's, the panel passes it to the tab, and the tab hands the overflow to the
    * column, which scrolls. Nothing is ever drawn on top of anything.
    */
-  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  grid-template-rows: auto auto auto minmax(0, 1fr);
+  /*
+   * Three blocks, not four — and the reading is the last of them, so it takes the slack.
+   *
+   * The chain used to be a strip under the display, which made the display the third of four rows and
+   * left the face's own subject with a third of the panel. It is the display's *header* now: the
+   * stations the audio passed through, then what it looks like at the end of them. One object, read
+   * downward, and the picture is finally the size of the thing it is a picture of.
+   */
   grid-template-areas:
     'meta readout'
     'transport transport'
-    'analysis analysis'
-    'chain chain';
+    'chain chain'
+    'analysis analysis';
   gap: 18px 22px;
   min-width: 0;
   min-height: 0;
@@ -3104,29 +3136,34 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
  * The shape is the grouping: round means "moves the music", square means "does something to this
  * track". Cheaper than a divider and it survives at 14px.
  */
+/*
+ * The one action on the track: a mark, not a plate.
+ *
+ * It was a filled recess with a filled accent state, which on the room's own line read as a green tile
+ * parked beside the transport — the last plate in the player, and the loudest thing on a line of quiet
+ * type. The star says it by being lit or not.
+ */
 .np-action {
   display: grid;
   place-items: center;
-  width: 40px;
-  height: 40px;
+  width: 34px;
+  height: 34px;
   border: 0;
   border-radius: var(--r-sm);
-  /* A recess, not an outline — the same move the chips made: the shape still says "acts on this
-     track", and it stops being one more drawn rectangle beside the transport. */
-  background: var(--well);
-  color: var(--text-dim);
+  background: none;
+  color: var(--text-mute);
   transition:
     color var(--dur) var(--ease),
     background var(--dur) var(--ease);
 }
 
 .np-action:hover {
-  background: var(--well-hover);
+  background: rgb(255 255 255 / 5%);
   color: var(--text);
 }
 
 .np-action[data-on] {
-  background: var(--accent-soft);
+  background: none;
   color: var(--accent);
 }
 
@@ -3429,11 +3466,11 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
   min-height: 0;
   /* Nothing inside a panel gets to paint outside it. The row below this one is the tab strip. */
   overflow: hidden;
-  padding: 13px 0 9px;
+  padding: 4px 0 9px;
   border: 0;
-  border-top: 1px solid var(--line);
-  /* No rule at the foot: the chain below has its own, and two hairlines 28px apart is one hairline
-     drawn twice. */
+  /* No rules at all: the chain above this *is* the header, and the frequency scale is the foot. A
+     hairline between a header and the thing it heads is a seam in one object. */
+  border-top: 0;
   border-bottom: 0;
   border-radius: 0;
   background: none;
@@ -3678,7 +3715,48 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  padding-top: 4px;
+  padding-top: 2px;
+}
+
+.np-room-head .np-controls {
+  display: flex;
+  align-items: center;
+  gap: clamp(14px, 1.8vw, 34px);
+  margin: 0;
+  max-width: none;
+}
+
+.np-room-head .np-tail {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex: none;
+}
+
+/* On the room's line the transport is a set of controls, not a strip: 34px again, and the play button
+   is a filled circle rather than a 60px ring — a ring that size on a 50px line is a hole in it. */
+.np-room-head .transport {
+  gap: clamp(12px, 1.4vw, 22px);
+}
+
+.np-room-head .transport .icon-button {
+  width: 34px;
+  height: 34px;
+}
+
+.np-room-head .transport .icon-button svg {
+  width: 21px;
+  height: 21px;
+}
+
+.np-room-head .icon-button.primary {
+  width: 38px;
+  height: 38px;
+}
+
+.np-room-head .icon-button.primary svg {
+  width: 15px;
+  height: 15px;
 }
 
 .np-transport .np-controls {
@@ -4170,6 +4248,8 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
   grid-area: chain;
   padding-top: 13px;
   border-top: 1px solid var(--line);
+  /* Its own foot, so the stations sit on the display rather than in it. */
+  padding-bottom: 4px;
 }
 
 /*
