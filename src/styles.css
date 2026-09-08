@@ -2404,56 +2404,6 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
   mask: radial-gradient(120% 90% at 18% 8%, #000 8%, transparent 70%);
 }
 
-/*
- * The field, spanning the panel's own area — behind the type, behind the readings.
- *
- * Placed explicitly across the first three rows of both columns, which is what lets a grid overlap:
- * the overlay's cells are the same tracks at a higher layer. The chain keeps a row of its own at the
- * foot, because a station's label over a moving bar is a label you cannot read.
- */
-.np-player > .analysis-panel {
-  z-index: 0;
-}
-
-.np-player > .np-heading,
-.np-player > .np-readings,
-.np-player > .np-transport,
-.np-player > .np-chain,
-.np-player > .format-chips,
-.np-player > .notice {
-  position: relative;
-  z-index: 1;
-}
-
-/*
- * Where type stands, the glass darkens.
- *
- * The field's headroom is *usually* empty, and a loud low end reaches into it — which puts bars behind
- * a 98px title and, worse, behind `band 250-350` at 8.5px in the rail. So each block of type carries
- * its own veil: a soft gradient that belongs to the glass rather than a plate laid on it, dark where
- * the words are and gone before it reaches the reading. It is the same device a subtitle uses, and the
- * reason a subtitle is legible over anything.
- */
-.np-player > .np-heading::before,
-
-/*
- * The word `SPECTRUM` goes.
- *
- * A label naming the thing it is drawn on, in the corner where the record's name now starts: the field
- * is self-evident and the corner is worth more to the title. The EQ control stays — that is a door, not
- * a caption — and drops to the field's own foot.
- */
-.np-player > .analysis-panel .analysis-heading {
-  position: absolute;
-  inset: auto 2px 2px auto;
-  z-index: 2;
-  margin: 0;
-}
-
-.np-player > .analysis-panel .analysis-heading > span {
-  display: none;
-}
-
 /* Everything real stands above the light. */
 .np-player,
 .now-playing > .tabs,
@@ -2516,8 +2466,7 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
    * now includes the display's, the panel passes it to the tab, and the tab hands the overflow to the
    * column, which scrolls. Nothing is ever drawn on top of anything.
    */
-  position: relative;
-  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  grid-template-rows: auto auto auto minmax(0, 1fr);
   /*
    * Three blocks, not four — and the reading is the last of them, so it takes the slack.
    *
@@ -2535,26 +2484,11 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
    * panel, and the void becomes the instrument's right-hand rail. What is left of the panel is the
    * record, the reading and the stations, which is the signal in order.
    */
-  /*
-   * The reading is the ground, not a row.
-   *
-   * Every layout before this one gave the display a *band*: fourth row, then third, then last and
-   * biggest — and at its best that still came out 1170x390, a three-to-one letterbox in the lower half
-   * of the panel. A letterbox reads as a widget. But this face has something no other player has: a
-   * live picture of the audio, and a picture that size is a *surface*. So the field fills the panel and
-   * everything else is written on the glass: the nameplate in its upper left, the readings down its
-   * right edge, the position across it, the chain along its foot.
-   *
-   * It costs nothing in legibility, because of what the display's own geometry guarantees: the bars
-   * grow outward from the centre line, so the top of the field is headroom — empty at every level music
-   * actually reaches. The type lives in that headroom, and the reading is finally the size of the thing
-   * it is a reading of.
-   */
   grid-template-areas:
     'meta readings'
     'transport readings'
-    '. readings'
-    'chain chain';
+    'chain readings'
+    'analysis readings';
   gap: 18px 22px;
   min-width: 0;
   min-height: 0;
@@ -2740,23 +2674,9 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
 }
 
 .np-player > .analysis-panel {
-  /* The field is placed by line, not by name — it spans the panel's own area (see the note on
-     `grid-template-areas`). A leftover `grid-area: analysis` here named an area nobody declares any
-     more, which grid answers by inventing an implicit column at the end and putting a zero-width
-     field in it. */
-  /*
-   * The glass is the panel's first column, not the whole panel.
-   *
-   * For one build it spanned both, with the readings rail lying on top of it behind a veil — and a
-   * veil over a reading is a reading you have taken away: it covered the display's own dB scale, and
-   * moving that scale to the left edge simply put it under the title instead. The rail stands beside
-   * the glass now. Its hairline is then the glass's own edge, which is what a rail on an instrument
-   * actually is.
-   */
-  grid-area: 1 / 1 / 4 / 2;
+  grid-area: analysis;
   /* A grid item's default `min-height: auto` would let its contents set a floor and defeat the row. */
   min-height: 0;
-  padding: 0;
 }
 
 /*
