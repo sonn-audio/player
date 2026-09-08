@@ -479,6 +479,13 @@ export function AnalysisPanel({
                     rather than absence: the same peak means the same thing whichever channel drew it,
                     and now the drawing says so on both sides.
                   */}
+                  {/*
+                    At the field's right edge, both halves.
+                    It went to the left for one build, because the rail of readings had moved onto the
+                    glass and was covering it — and the left edge is where the record's name starts, so
+                    the scale landed in the title. The rail stands *beside* the glass now (see
+                    `.np-player`), which gives this edge back.
+                  */}
                   <text x={dims.w - 4} y={rule.y - 4} textAnchor="end">
                     {rule.db}
                   </text>
