@@ -3048,15 +3048,16 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
  * visualiser — so it should occupy a line rather than reserve a hole for a picture that may never
  * arrive.
  */
+/*
+ * A slim strip, always.
+ *
+ * It grew to 40px for a scanned track, to hold the envelope; the envelope is gone (see `Waveform`) and
+ * with it the reason for two heights. 18px is a groove with a hand's worth of hit area around it.
+ */
 .wave-body {
   position: relative;
-  height: 14px;
+  height: 18px;
   cursor: default;
-  transition: height 240ms var(--ease);
-}
-
-.wave[data-measured] .wave-body {
-  height: 40px;
 }
 
 .wave[data-seekable] .wave-body {
@@ -3133,65 +3134,6 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
   color: var(--text-dim);
   white-space: nowrap;
   pointer-events: none;
-}
-
-.wave-bars {
-  position: relative;
-  /* Above the baseline drawn by `.wave-body::after`. */
-  z-index: 1;
-  /*
-   * And out of the way of the pointer. The scrubber is an invisible `input[type=range]` stretched
-   * across the body, and this layer sits on top of it — so without this the drawing swallowed every
-   * press and the timeline could not be scrubbed at all. Every other layer over that input already
-   * says the same thing (the cursor, its readout, the played line, the playhead); the bars were the
-   * one that did not, and they are the one that covers the whole control.
-   */
-  pointer-events: none;
-  display: flex;
-  align-items: center;
-  gap: 1px;
-  height: 100%;
-}
-
-/*
- * One bar per bucket, mirrored around the centre line.
- *
- * `--h` is the measured loudness; the minimum of 6% is what keeps a quiet passage a *line* rather
- * than a gap, so the track reads as continuous. Unmeasured buckets (`data-void`) collapse to a
- * hairline — silence is a real reading and has to look different from "nothing recorded here".
- */
-/*
- * `min-width: 0`, not 1px. A floor here is a floor on the *strip*: with the 1px gap it made the
- * minimum width two pixels per bar, which flex cannot shrink past, so a strip narrower than that
- * overflowed its grid track and stopped lining up with the playhead. The bar count is measured
- * against the track now (`BAR_PITCH_PX`), so nothing needs a floor to stay visible.
- */
-.wave-bars i {
-  flex: 1;
-  min-width: 0;
-  height: var(--h, 10%);
-  border-radius: 1px;
-  background: var(--line-strong);
-  transition: height 120ms linear;
-}
-
-/* Nothing recorded here: draw nothing, and let the baseline through. */
-.wave-bars i[data-void] {
-  height: 2px;
-  background: none;
-}
-
-/* Behind the playhead: silver. Ahead of it: the same bars, unlit — which is what makes the playhead
-   visible without drawing one. It was the accent, and how far into a track you are is a *reading*: the
-   same grammar the meter bridge already speaks, where green is reserved for the statement. */
-.wave-bars i[data-played] {
-  background: rgb(255 255 255 / 48%);
-}
-
-/* Played but unmeasured: nothing. `.wave-played` draws that stretch as one continuous accent line,
-   which is a gap in the *recording* stated once instead of two hundred times. */
-.wave-bars i[data-played][data-void] {
-  background: none;
 }
 
 .wave-played {
