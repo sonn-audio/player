@@ -10236,3 +10236,149 @@
     min-height: 176px;
   }
 }
+
+/* ==========================================================================================
+ * The hall, again: one service or eight, and the sleeves whole.
+ * ========================================================================================== */
+
+/* Panels of a fixed range of widths that wrap: one service is one poster, eight are two rows. */
+.cx-hall {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  height: auto;
+  min-height: 0;
+}
+
+.cx-portal {
+  flex: 1 1 260px;
+  max-width: 440px;
+  height: clamp(340px, calc(100vh - 470px), 600px);
+  padding: 24px;
+}
+
+.cx-portal-wall {
+  position: absolute;
+  inset: -20%;
+  display: block;
+  background-position: center;
+  background-size: cover;
+  filter: blur(70px) saturate(1.2) brightness(0.55);
+  opacity: 0.7;
+  transform: none;
+  transition: opacity 0.5s var(--cx-ease);
+}
+
+.cx-portal:hover .cx-portal-wall {
+  opacity: 0.9;
+  filter: blur(70px) saturate(1.2) brightness(0.55);
+  transform: none;
+}
+
+.cx-portal-scrim {
+  background: linear-gradient(to top, rgb(10 10 12 / 90%) 0%, rgb(10 10 12 / 40%) 34%, rgb(10 10 12 / 0%) 60%);
+}
+
+.cx-portal-stack {
+  position: absolute;
+  left: 50%;
+  top: 14%;
+  width: 56%;
+  aspect-ratio: 1;
+  translate: -50% 0;
+}
+
+.cx-portal-stack i {
+  position: absolute;
+  inset: 0;
+  border-radius: 3px;
+  background-color: var(--cx-cover);
+  background-position: center;
+  background-size: cover;
+  box-shadow:
+    0 30px 60px -24px rgb(0 0 0 / 90%),
+    inset 0 0 0 1px rgb(255 255 255 / 10%);
+  transition: translate 0.45s var(--cx-ease);
+}
+
+/* The first in front, the others stepped back and to the sides, each a little dimmer. */
+.cx-portal-stack i[data-n='0'] {
+  z-index: 3;
+  translate: 0 8%;
+}
+
+.cx-portal-stack i[data-n='1'] {
+  z-index: 2;
+  translate: -18% -4%;
+  scale: 0.88;
+  filter: brightness(0.7);
+}
+
+.cx-portal-stack i[data-n='2'] {
+  z-index: 1;
+  translate: 18% -12%;
+  scale: 0.8;
+  filter: brightness(0.5);
+}
+
+.cx-portal:hover .cx-portal-stack i[data-n='1'] {
+  translate: -24% -6%;
+}
+
+.cx-portal:hover .cx-portal-stack i[data-n='2'] {
+  translate: 24% -16%;
+}
+
+.cx-portal[data-art='0'] {
+  background: rgb(255 255 255 / 3%);
+}
+
+@media (max-width: 979px) {
+  .cx-hall {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .cx-portal {
+    flex: none;
+    max-width: none;
+    height: 200px;
+    padding: 16px;
+  }
+
+  .cx-portal-stack {
+    top: 8%;
+    width: 50%;
+  }
+}
+
+/* Five panels fit a 1440 window; on a wider one they grow to 440 and stop. */
+.cx-portal {
+  flex: 1 1 200px;
+}
+
+.cx-portal-words {
+  position: absolute;
+  left: 24px;
+  right: 24px;
+  top: 18%;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.cx-portal-words i {
+  overflow: hidden;
+  font-size: clamp(18px, 1.4vw, 24px);
+  font-style: normal;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  color: var(--t7);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cx-portal-words i:first-child {
+  color: var(--t6);
+}

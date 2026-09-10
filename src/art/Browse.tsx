@@ -283,17 +283,34 @@ function Door({
         style={{ '--i': index } as React.CSSProperties}
         title={item.name}
       >
-        {/* The covers as the wall of the room, dark, so the name reads on them; brighter under the hand. */}
-        <span className="cx-portal-wall" aria-hidden="true">
-          {art.slice(0, 4).map((url, n) => (
-            <i key={url} style={{ backgroundImage: itemCoverCss(url) }} data-n={n} />
-          ))}
-        </span>
+        {/* The first sleeve, blurred past recognition, is the colour of the room. */}
+        {art[0] && <span className="cx-portal-wall" style={{ backgroundImage: itemCoverCss(art[0]) }} aria-hidden="true" />}
         <span className="cx-portal-scrim" aria-hidden="true" />
+        {/* The sleeves themselves, whole — a record is never cropped — standing in a short stack, the
+            first in front. */}
+        {art.length > 0 && (
+          <span className="cx-portal-stack" aria-hidden="true">
+            {art.slice(0, 3).map((url, n) => (
+              <i key={url} style={{ backgroundImage: itemCoverCss(url) }} data-n={n} />
+            ))}
+          </span>
+        )}
+        {/* No sleeves to show: what is inside, as words, standing where the sleeves would. */}
+        {art.length === 0 && names.length > 0 && (
+          <span className="cx-portal-words disp" aria-hidden="true">
+            {names.map((name) => (
+              <i key={name}>{name}</i>
+            ))}
+          </span>
+        )}
         <span className="cx-portal-txt">
           <span className="cx-portal-name disp">{item.name}</span>
           <span className="cx-portal-line">
-            {names.length > 0 ? names.join(' · ') : count > 0 ? `${count} inside` : ''}
+            {art.length > 0 && names.length > 0
+              ? names.join(' · ')
+              : count > 0
+                ? `${count} ${count === 1 ? 'folder' : 'folders'}`
+                : ''}
           </span>
         </span>
         <span className="cx-portal-go" aria-hidden="true">
