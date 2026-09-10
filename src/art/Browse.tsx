@@ -1035,7 +1035,38 @@ export function Browse({
           layout has exactly three children to place — back, the hero, and this — instead of five
           auto-flowing blocks landing wherever the grid's cursor happens to be.
         */}
-        <div className="cx-browse-body">
+        <div className="cx-browse-body" data-toc={(doors && !atRoot) || undefined}>
+          {/*
+           * Inside a service, the categories are a table of contents in the margin.
+           *
+           * They were rows between the shelves — Albums opened out into a shelf, Songs a line of type,
+           * Artists a shelf again — which made the page's rhythm depend on which categories happened to
+           * have pictures. As a column beside the shelves they are what they are: the way the service
+           * is organised, read top to bottom, while the shelves show what is in it. A magazine's
+           * contents page and its spreads, not a list with pictures in some of the rows.
+           */}
+          {doors && !atRoot && (
+            <nav className="cx-toc" aria-label="Contents">
+              <span className="cx-toc-lbl mono">contents</span>
+              {items.map((item) => {
+                const inside = peeks[item.id] ?? [];
+                return (
+                  <button type="button" className="cx-toc-item" key={item.id} onClick={() => open(item)}>
+                    <span className="cx-toc-name disp">{item.name}</span>
+                    {inside.length > 0 && (
+                      <span className="cx-toc-sub">
+                        {inside
+                          .map((entry) => entry.name)
+                          .filter(Boolean)
+                          .slice(0, 2)
+                          .join(' · ')}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </nav>
+          )}
 
           {/* The window dressing, above everything the page lists — see `Billboard`. */}
           {spotlight && (
@@ -1149,9 +1180,7 @@ export function Browse({
                       ))}
                     </div>
                   </section>
-                ) : (
-                  <Door key={item.id} item={item} index={index} onOpen={() => open(item)} />
-                );
+                ) : null;
               })}
             </div>
           ) : trackish ? (

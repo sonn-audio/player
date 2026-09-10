@@ -10382,3 +10382,232 @@
 .cx-portal-words i:first-child {
   color: var(--t6);
 }
+
+/* ==========================================================================================
+ * A service's pages: the contents in the margin, the shelves beside it, a lead on every shelf.
+ * ========================================================================================== */
+
+@media (min-width: 1180px) {
+  .cx-browse-body[data-toc] {
+    display: grid;
+    grid-template-columns: minmax(200px, 250px) minmax(0, 1fr);
+    column-gap: clamp(40px, 4vw, 72px);
+    align-items: start;
+  }
+
+  .cx-browse-body[data-toc] > * {
+    grid-column: 2;
+    min-width: 0;
+  }
+
+  .cx-browse-body[data-toc] > .cx-bill,
+  .cx-browse-body[data-toc] > .cx-about {
+    grid-column: 1 / -1;
+  }
+
+  .cx-browse-body[data-toc] > .cx-toc {
+    grid-column: 1;
+    grid-row: 2 / span 40;
+    position: sticky;
+    top: 12px;
+  }
+
+  /* The bleed on the right stays; the rows now start at the column, not the page. */
+  .cx-browse-body[data-toc] .cx-shelf-row {
+    padding-left: 0;
+  }
+}
+
+.cx-toc {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-top: 6px;
+}
+
+.cx-toc-lbl {
+  margin-bottom: 14px;
+  font-size: 10px;
+  letter-spacing: 0.26em;
+  color: var(--t6);
+}
+
+.cx-toc-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--hair-soft);
+  text-align: left;
+  transition: padding-left 0.3s var(--cx-ease);
+}
+
+.cx-toc-item:last-child {
+  border-bottom: 0;
+}
+
+.cx-toc-item:hover {
+  padding-left: 6px;
+}
+
+.cx-toc-name {
+  font-size: clamp(18px, 1.3vw, 22px);
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  color: var(--t4);
+  transition: color 0.2s;
+}
+
+.cx-toc-item:hover .cx-toc-name {
+  color: var(--t1);
+}
+
+.cx-toc-sub {
+  overflow: hidden;
+  font-size: 11.5px;
+  color: var(--t7);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Every shelf opens with a lead: the first record twice the size, its caption in the display face. */
+.cx-browse-body[data-toc] .cx-shelf-row {
+  --tile: clamp(140px, 11vw, 176px);
+  --tgap: clamp(18px, 1.8vw, 28px);
+  align-items: flex-end;
+  gap: var(--tgap);
+}
+
+.cx-browse-body[data-toc] .cx-shelf-row .cx-tile {
+  width: var(--tile);
+}
+
+.cx-browse-body[data-toc] .cx-shelf-row .cx-tile:first-child {
+  width: calc(2 * var(--tile) + var(--tgap));
+}
+
+.cx-browse-body[data-toc] .cx-shelf-row .cx-tile:first-child .cx-tile-title {
+  margin-top: 14px;
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  color: var(--t1);
+}
+
+.cx-browse-body[data-toc] .cx-shelf-row .cx-tile:first-child .cx-tile-sub {
+  font-size: 13px;
+}
+
+/* The shelf heads inside a service: the same voice as the sections, not a second size of title. */
+.cx-browse-body[data-toc] .cx-doorshelf-name {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--t5);
+}
+
+.cx-browse-body[data-toc] .cx-doorshelf-head {
+  align-items: center;
+  gap: 16px;
+  padding-bottom: 18px;
+}
+
+.cx-browse-body[data-toc] .cx-doorshelf-head::after {
+  content: '';
+  order: 1;
+  flex: 1;
+  height: 1px;
+  background: var(--hair);
+}
+
+.cx-browse-body[data-toc] .cx-doorshelf-go {
+  order: 2;
+  margin-left: 0;
+}
+
+.cx-browse-body[data-toc] .cx-doors .cx-doorshelf {
+  margin: 0 0 clamp(38px, 5vh, 54px);
+}
+
+/* On a phone the contents is a row of words to scroll through above the shelves. */
+@media (max-width: 1179px) {
+  .cx-toc {
+    flex-direction: row;
+    gap: 22px;
+    padding: 4px 0 22px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    mask-image: linear-gradient(to right, #000 88%, transparent);
+  }
+
+  .cx-toc::-webkit-scrollbar {
+    display: none;
+  }
+
+  .cx-toc-lbl {
+    display: none;
+  }
+
+  .cx-toc-item {
+    flex: none;
+    padding: 0;
+    border: 0;
+  }
+
+  .cx-toc-item:hover {
+    padding-left: 0;
+  }
+
+  .cx-toc-name {
+    font-size: 17px;
+  }
+
+  .cx-toc-sub {
+    display: none;
+  }
+}
+
+/* The shelf with a lead is a grid: the lead 2×2, the rest in columns of two beside it, scrolling
+   sideways. No void above the small sleeves; the lead's height is the shelf's. */
+@media (min-width: 1180px) {
+  .cx-browse-body[data-toc] .cx-shelf-row {
+    display: grid;
+    grid-auto-flow: column;
+    grid-template-rows: auto auto;
+    grid-auto-columns: var(--tile);
+    align-items: start;
+  }
+
+  .cx-browse-body[data-toc] .cx-shelf-row .cx-tile {
+    width: auto;
+  }
+
+  .cx-browse-body[data-toc] .cx-shelf-row .cx-tile:first-child {
+    grid-row: 1 / span 2;
+    grid-column: span 2;
+    width: auto;
+  }
+}
+
+/* Below that width there is no lead: equal tiles, as everywhere else. */
+@media (max-width: 1179px) {
+  .cx-browse-body[data-toc] .cx-shelf-row .cx-tile:first-child {
+    width: var(--tile);
+  }
+
+  .cx-browse-body[data-toc] .cx-shelf-row .cx-tile:first-child .cx-tile-title {
+    margin-top: 12px;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0;
+    color: var(--t2);
+  }
+
+  .cx-browse-body[data-toc] .cx-shelf-row .cx-tile:first-child .cx-tile-sub {
+    font-size: 12px;
+  }
+}
