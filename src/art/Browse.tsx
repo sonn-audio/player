@@ -199,7 +199,18 @@ function artOf(items: ContentItem[]): string[] {
  * record where there is no record. A listing of containers is a table of contents, and a table of
  * contents should be set as type, with the artwork as the evidence rather than the subject.
  */
-function Door({ item, index, onOpen }: { item: ContentItem; index: number; onOpen: () => void }) {
+function Door({
+  item,
+  index,
+  hall = false,
+  onOpen,
+}: {
+  item: ContentItem;
+  index: number;
+  /** At the front of the catalogue: a tall panel with the covers as a mosaic, not a row with a fan. */
+  hall?: boolean;
+  onOpen: () => void;
+}) {
   const { content } = useServer();
   const [inside, setInside] = useState<Peek>(NOTHING);
   /* Sleeves found a level further down, when the room behind this door is itself all doors. */
@@ -260,6 +271,37 @@ function Door({ item, index, onOpen }: { item: ContentItem; index: number; onOpe
    * fan out of its box.
    */
   const stack = [...art].reverse();
+
+  if (hall) {
+    const count = inside.items.length;
+    return (
+      <button
+        type="button"
+        className="cx-portal"
+        data-art={art.length > 0 ? Math.min(art.length, 4) : 0}
+        onClick={onOpen}
+        style={{ '--i': index } as React.CSSProperties}
+        title={item.name}
+      >
+        {/* The covers as the wall of the room, dark, so the name reads on them; brighter under the hand. */}
+        <span className="cx-portal-wall" aria-hidden="true">
+          {art.slice(0, 4).map((url, n) => (
+            <i key={url} style={{ backgroundImage: itemCoverCss(url) }} data-n={n} />
+          ))}
+        </span>
+        <span className="cx-portal-scrim" aria-hidden="true" />
+        <span className="cx-portal-txt">
+          <span className="cx-portal-name disp">{item.name}</span>
+          <span className="cx-portal-line">
+            {names.length > 0 ? names.join(' · ') : count > 0 ? `${count} inside` : ''}
+          </span>
+        </span>
+        <span className="cx-portal-go" aria-hidden="true">
+          <ForwardGlyph size={16} />
+        </span>
+      </button>
+    );
+  }
 
   return (
     <button
@@ -817,6 +859,9 @@ export function Browse({
    * day so the window changes tomorrow and holds still today. Sections win over peeks because they
    * are the service's own idea of "put this forward", which is closer to an editor than a folder is.
    */
+  /** The front of the catalogue: the services themselves, as peers. */
+  const atRoot = stack.length === 1 && !here.id;
+
   const spotlight = ((): { item: ContentItem; from: string } | null => {
     if (query || hero || trackish || loading) {
       return null;
@@ -868,6 +913,8 @@ export function Browse({
         className="cx-browse-inner"
         data-detail={hero ? '' : undefined}
         data-search={query ? '' : undefined}
+        data-root={(atRoot && !query) || undefined}
+        data-spotlight={(spotlight && !query) || undefined}
       >
         <button type="button" className="mono cx-browse-back" onClick={back}>
           <BackGlyph size={13} />
@@ -1005,7 +1052,7 @@ export function Browse({
              * shelves, Folders as a line of type — and it was decided before paint (see the browse
              * effect), so nothing here morphs.
              */
-            <div className="cx-doors">
+            <div className={atRoot ? 'cx-hall' : 'cx-doors'}>
               {items.map((item, index) => {
                 const inside = peeks[item.id] ?? [];
                 const artful = inside.filter((entry) => entry.coverUrl);
@@ -1020,8 +1067,8 @@ export function Browse({
                  * pinned to the far edge and one line with nothing — four kinds of row in five, which
                  * is not rhythm, it is noise.
                  */
-                return stack.length === 1 && !here.id ? (
-                  <Door key={item.id} item={item} index={index} onOpen={() => open(item)} />
+                return atRoot ? (
+                  <Door key={item.id} item={item} index={index} hall onOpen={() => open(item)} />
                 ) : artful.length >= SHELF_MIN_ART ? (
                   <section className="cx-shelf cx-doorshelf" key={item.id} style={{ '--i': index } as React.CSSProperties}>
                     <button type="button" className="cx-doorshelf-head" onClick={() => open(item)}>

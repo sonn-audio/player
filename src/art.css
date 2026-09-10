@@ -9983,3 +9983,256 @@
     gap: 22px 14px;
   }
 }
+
+/* ==========================================================================================
+ * Browse, again: the front is a hall of doors, a service's front is its record.
+ * ========================================================================================== */
+
+/* --- the hall: every service a tall panel, the covers its wall --- */
+
+.cx-hall {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+  /* The panels take the height that is left under the billboard: a hall, not a list. */
+  min-height: clamp(360px, 52vh, 620px);
+}
+
+.cx-portal {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  min-height: 300px;
+  padding: 26px 24px 24px;
+  overflow: hidden;
+  border-radius: 6px;
+  background: rgb(255 255 255 / 3%);
+  text-align: left;
+  animation: cx-door-in 0.6s var(--cx-ease) backwards;
+  animation-delay: calc(var(--i, 0) * 80ms);
+  transition:
+    transform 0.4s var(--cx-ease),
+    box-shadow 0.4s var(--cx-ease);
+}
+
+.cx-portal:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 40px 80px -40px rgb(0 0 0 / 90%);
+}
+
+.cx-portal-wall {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-rows: repeat(2, minmax(0, 1fr));
+  filter: saturate(0.85) brightness(0.62);
+  transition:
+    filter 0.5s var(--cx-ease),
+    transform 0.8s var(--cx-ease);
+}
+
+.cx-portal:hover .cx-portal-wall {
+  filter: saturate(1) brightness(0.8);
+  transform: scale(1.03);
+}
+
+.cx-portal-wall i {
+  display: block;
+  background-position: center;
+  background-size: cover;
+}
+
+/* One, two or three covers still fill the wall: the first takes what the missing ones leave. */
+.cx-portal[data-art='1'] .cx-portal-wall i {
+  grid-area: 1 / 1 / 3 / 3;
+}
+
+.cx-portal[data-art='2'] .cx-portal-wall i {
+  grid-row: 1 / 3;
+}
+
+.cx-portal[data-art='3'] .cx-portal-wall i[data-n='0'] {
+  grid-row: 1 / 3;
+}
+
+.cx-portal-scrim {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgb(10 10 12 / 96%) 0%, rgb(10 10 12 / 55%) 38%, rgb(10 10 12 / 10%) 70%, rgb(10 10 12 / 25%) 100%);
+}
+
+.cx-portal[data-art='0'] .cx-portal-scrim {
+  background: none;
+}
+
+.cx-portal-txt {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+.cx-portal-name {
+  font-size: clamp(28px, 2.2vw, 40px);
+  line-height: 1;
+  letter-spacing: -0.035em;
+  color: var(--t1);
+}
+
+.cx-portal-line {
+  overflow: hidden;
+  font-size: 12.5px;
+  color: var(--t5);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cx-portal-go {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  color: rgb(255 255 255 / 55%);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.cx-portal:hover .cx-portal-go {
+  opacity: 1;
+}
+
+/* At the front there is no page title: the word MUSIC is lit in the bar. The search stays. */
+.cx-browse-inner[data-root] .cx-browse-title {
+  display: none;
+}
+
+.cx-browse-inner[data-root] .cx-browse-title-row {
+  justify-content: flex-end;
+}
+
+.cx-browse-inner[data-root] .cx-browse-head {
+  margin-bottom: 8px;
+}
+
+/* --- a service's front: the record is the head, the service's name its eyebrow --- */
+
+.cx-browse-inner[data-spotlight]:not([data-root]) .cx-browse-title {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.26em;
+  line-height: 1;
+  text-transform: uppercase;
+  color: var(--t5);
+}
+
+.cx-browse-inner[data-spotlight]:not([data-root]) .cx-browse-title-row {
+  align-items: center;
+}
+
+.cx-browse-inner[data-spotlight]:not([data-root]) .cx-browse-head {
+  margin-bottom: 6px;
+}
+
+.cx-browse-inner[data-spotlight]:not([data-root]) .cx-browse-back {
+  margin-bottom: 18px;
+}
+
+/* The billboard, as a head: taller sleeve, the record's colour clearly the room's. */
+.cx-browse-inner[data-spotlight] .cx-bill {
+  padding-top: clamp(22px, 3.6vh, 44px);
+  padding-bottom: clamp(30px, 5vh, 60px);
+}
+
+.cx-browse-inner[data-spotlight] .cx-bill-cover {
+  width: clamp(160px, 24vh, 260px);
+}
+
+.cx-browse-inner[data-spotlight] .cx-bill-wall {
+  opacity: 0.85;
+  filter: blur(120px) brightness(0.62) saturate(1.45);
+  mask-image: radial-gradient(70% 100% at 24% 50%, #000 15%, transparent 85%);
+}
+
+.cx-browse-inner[data-spotlight] .cx-bill-title {
+  font-size: clamp(34px, 4.8vw, 68px);
+}
+
+@media (max-width: 979px) {
+  .cx-hall {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    min-height: 0;
+  }
+
+  .cx-portal {
+    min-height: 176px;
+    padding: 16px;
+  }
+
+  .cx-portal-name {
+    font-size: 22px;
+  }
+
+  .cx-portal-line {
+    font-size: 11px;
+  }
+}
+
+/* The front's billboard is a band, not a page: the hall under it is the picture. */
+.cx-browse-inner[data-root] .cx-bill {
+  padding-top: clamp(14px, 2vh, 24px);
+  padding-bottom: clamp(18px, 2.6vh, 30px);
+  margin-bottom: 22px;
+}
+
+.cx-browse-inner[data-root] .cx-bill-cover {
+  width: clamp(110px, 15vh, 150px);
+}
+
+.cx-browse-inner[data-root] .cx-bill-title {
+  font-size: clamp(26px, 3vw, 40px);
+}
+
+.cx-browse-inner[data-root] .cx-bill-actions {
+  margin-top: 2px;
+}
+
+.cx-browse-inner[data-root] .cx-browse-back {
+  display: none;
+}
+
+.cx-browse-inner[data-root] {
+  padding-top: 14px;
+}
+
+/* The hall fits under the band: on a 900px window that is ~420px of door, on a 1150px one ~600. */
+.cx-hall {
+  min-height: 0;
+  height: clamp(320px, calc(100vh - 470px), 620px);
+}
+
+.cx-portal {
+  min-height: 0;
+}
+
+/* A service's front: the way back, the service's name and the search share one line. */
+.cx-browse-inner[data-spotlight]:not([data-root]) {
+  padding-top: 18px;
+}
+
+.cx-browse-inner[data-spotlight]:not([data-root]) .cx-browse-back {
+  margin-bottom: 12px;
+}
+
+@media (max-width: 979px) {
+  .cx-hall {
+    height: auto;
+  }
+
+  .cx-portal {
+    min-height: 176px;
+  }
+}
