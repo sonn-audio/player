@@ -413,6 +413,80 @@ export function ArtApp() {
   useEscape(view.kind === 'signal', leaveSignal);
 
   /*
+   * The keys a player on a desk is expected to answer.
+   *
+   * Space plays and pauses, the arrows seek and set the level, `n` and `p` skip, `/` puts the cursor
+   * in the search field. Never while typing — an input, a textarea, anything editable — and never with a
+   * modifier held, so the browser's own shortcuts stay its own. Nothing is drawn for these: a player
+   * that labels its space bar is a player that does not trust it.
+   */
+  useEffect(() => {
+    if (phone) {
+      return undefined;
+    }
+    const onKey = (event: KeyboardEvent): void => {
+      if (event.metaKey || event.ctrlKey || event.altKey || event.defaultPrevented) {
+        return;
+      }
+      const target = event.target as HTMLElement | null;
+      if (target && (target.closest('input, textarea, select, [contenteditable="true"]') !== null)) {
+        return;
+      }
+      const room = leader;
+      switch (event.key) {
+        case ' ':
+          if (room && cur.hasTrack) {
+            event.preventDefault();
+            void (cur.isPlaying ? api.pause(room.id) : api.play(room.id));
+          }
+          break;
+        case 'ArrowRight':
+        case 'ArrowLeft':
+          if (room && cur.showBar && cur.durationSec > 0) {
+            event.preventDefault();
+            const step = event.shiftKey ? 30 : 10;
+            const next = cur.elapsedSec + (event.key === 'ArrowRight' ? step : -step);
+            void api.seek(room.id, Math.max(0, Math.min(cur.durationSec, Math.round(next))));
+          }
+          break;
+        case 'ArrowUp':
+        case 'ArrowDown':
+          if (zone) {
+            event.preventDefault();
+            const max = zone.volumeLimits.max ?? 100;
+            const step = event.shiftKey ? 5 : 2;
+            const next = zone.volume + (event.key === 'ArrowUp' ? step : -step);
+            void api.setVolume(zone.id, Math.max(0, Math.min(max, next)));
+          }
+          break;
+        case 'n':
+          if (room && cur.hasTrack) {
+            void api.next(room.id);
+          }
+          break;
+        case 'p':
+          if (room && cur.hasTrack) {
+            void api.previous(room.id);
+          }
+          break;
+        case '/':
+          event.preventDefault();
+          if (view.kind !== 'browse') {
+            openBrowse();
+          }
+          window.requestAnimationFrame(() => {
+            document.querySelector<HTMLInputElement>('.cx-search input')?.focus();
+          });
+          break;
+        default:
+          break;
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [phone, leader, zone, cur, api, view.kind]);
+
+  /*
    * And the moment there is nothing to read, it closes itself.
    *
    * The same rule the canvas has, for the same reason and deliberately not a different one: two
@@ -642,6 +716,7 @@ export function ArtApp() {
                       zone={zone}
                       root={view.node}
                       onExit={goHome}
+                      onOpenRooms={() => setSheet('rooms')}
                       // Remount on a different root so the internal path stack starts fresh rather than
                       // keeping the last service's trail.
                       key={view.node.id ?? 'root'}
@@ -713,6 +788,7 @@ export function ArtApp() {
                   zone={zone}
                   root={view.node}
                   onExit={goHome}
+                  onOpenRooms={() => setSheet('rooms')}
                   key={view.node.id ?? 'root'}
                 />
               ) : view.kind === 'inputs' ? (

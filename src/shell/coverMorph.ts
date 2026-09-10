@@ -39,7 +39,7 @@ type Capture = {
  * has to fetch a stylesheet — but bounded, because a capture that never expires means a face reached by
  * a *later* reload would animate a sleeve in from wherever the pointer once was.
  */
-const FRESH_MS = 1000;
+const FRESH_MS = 1600;
 
 /**
  * How long the flight takes.
@@ -67,7 +67,6 @@ export function captureCover(): boolean {
   const candidates = Array.from(document.querySelectorAll<HTMLElement>('[data-morph="cover"]'));
   let best: HTMLElement | null = null;
   let bestArea = 0;
-
   for (const element of candidates) {
     const rect = element.getBoundingClientRect();
     const area = rect.width * rect.height;
@@ -77,12 +76,20 @@ export function captureCover(): boolean {
       bestArea = area;
     }
   }
-
   if (!best) {
     pending = null;
     return false;
   }
+  return captureCoverFrom(best);
+}
 
+/**
+ * The same capture, of a chosen element.
+ *
+ * `captureCover` finds the one sleeve on screen; a listing has forty. The tile that was pressed is the
+ * one that should fly, so the tile hands itself over here before the page changes under it.
+ */
+export function captureCoverFrom(best: HTMLElement): boolean {
   const style = getComputedStyle(best);
   /*
    * Four ways a cover carries its picture, because the surfaces draw them differently and each is right
@@ -138,21 +145,6 @@ export function captureCover(): boolean {
   };
   return true;
 }
-
-/**
- * Flies the pending capture to where `element` now is.
- *
- * **The arriving face must not be mid-transform when this runs.** `getBoundingClientRect()` reports the
- * *rendered* box, so a face still holding the first frame of its `scale: 0.985` entrance measured 453px
- * where the sleeve was really 460px — the flight then landed 1.5% short and settled with a visible
- * seven-pixel jump. `Root` suppresses the scale for a switch that carries a sleeve (`data-morph` on
- * `.face`, see `shell.css`); the flight *is* the transition in that case, and a whole page zooming
- * behind a shared element was two motions arguing anyway.
- *
- * Call it from a layout effect on the arriving cover. Returns silently when there is nothing pending,
- * which is the common case: a reload, a deep link, or a switch made from a screen that had no artwork
- * on it all end up here and get the plain crossfade, correctly — there was no shared object to carry.
- */
 export function flyTo(element: HTMLElement): void {
   const from = pending;
   pending = null;

@@ -38,6 +38,7 @@ import {
   ShuffleGlyph,
   SpeakerGlyph,
 } from '@/art/glyphs';
+import { formatTime } from '@/lib/format';
 import type { Cur } from '@/art/useCur';
 
 /** Greeting by hour — the welcome screen's line, reused as the stage's eyebrow. */
@@ -162,11 +163,27 @@ export function Timeline({ cur, bare = false }: { cur: Cur; bare?: boolean }) {
 }
 
 /** Elapsed and remaining, tabular so nothing twitches while it counts. */
+/**
+ * Elapsed on the left; on the right what is left — or, pressed, how long the whole thing is. The
+ * choice is remembered for the session: someone who wants to know the length wants it every time.
+ */
+let showTotal = false;
 function Times({ cur }: { cur: Cur }) {
+  const [total, setTotal] = useState(showTotal);
   return (
     <div className="cx-times mono">
       <span className="cx-time-el">{cur.elapsed}</span>
-      <span>{cur.remain}</span>
+      <button
+        type="button"
+        className="cx-time-tot mono"
+        title={total ? 'Show time remaining' : 'Show the length'}
+        onClick={() => {
+          showTotal = !total;
+          setTotal(!total);
+        }}
+      >
+        {total && cur.durationSec > 0 ? formatTime(cur.durationSec) : cur.remain}
+      </button>
     </div>
   );
 }

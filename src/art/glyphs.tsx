@@ -115,6 +115,16 @@ export function SpeakerGlyph({ size = 16, waves = false, className }: GlyphProps
   );
 }
 
+export function GripGlyph({ size = 16, className }: GlyphProps) {
+  return (
+    <Svg size={size} className={className}>
+      <path {...stroke} d="M8 8h8" />
+      <path {...stroke} d="M8 12h8" />
+      <path {...stroke} d="M8 16h8" />
+    </Svg>
+  );
+}
+
 export function PlusGlyph({ size = 16, className }: GlyphProps) {
   return (
     <Svg size={size} className={className}>

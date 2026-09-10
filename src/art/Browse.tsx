@@ -22,11 +22,14 @@
  * Playing anything hands `item.id` straight to `POST /zones/{id}/play`. The id is opaque and the
  * server resolves it — that is what lets this file contain no knowledge of providers at all.
  */
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useApi, useServer } from '@/state/ServerContext';
+import { useFavorites, useRecents } from '@/art/useCollections';
+import { captureCoverFrom, useCoverAnchor } from '@/shell/coverMorph';
 import { itemCoverCss, zoneCoverCss } from '@/art/cover';
 import { useVolumeControl } from '@/art/volume';
 import { Motion } from '@/art/Motion';
+import { titleStep } from '@/art/Stage';
 import {
   BackGlyph,
   Bars,
@@ -34,6 +37,7 @@ import {
   ForwardGlyph,
   PauseGlyph,
   PlayGlyph,
+  PlusGlyph,
   QueueGlyph,
   SearchGlyph,
   SpeakerGlyph,
@@ -65,7 +69,18 @@ const PLURAL: Record<string, string> = {
   folder: 'folders',
 };
 
-export type BrowseNode = { id?: string; label?: string };
+export type BrowseNode = {
+  id?: string;
+  label?: string;
+  /**
+   * What the tile that opened this already knew about it.
+   *
+   * A record's page can open on its sleeve, name and artist the instant it is pressed and let the tracks
+   * arrive after; without this it opened on a skeleton and the sleeve had nothing to fly to for as long as
+   * the service took to answer. Absent for a page reached any other way.
+   */
+  seed?: ContentItem;
+};
 
 /**
  * Container rows with no picture of their own, few enough to be a table of contents.
@@ -219,12 +234,19 @@ function Door({
   item,
   index,
   hall = false,
+  preferred = [],
   onOpen,
 }: {
   item: ContentItem;
   index: number;
-  /** At the front of the catalogue: a tall panel with the covers as a mosaic, not a row with a fan. */
+  /** At the front of the catalogue: a tall panel with the sleeves whole in a stack, not a row with a fan. */
   hall?: boolean;
+  /**
+   * Sleeves that are *yours* — this room's favourites and what it played lately, from this service.
+   * They stand in front of anything the service puts forward: the hall is a portrait of the house,
+   * not the services' shop windows.
+   */
+  preferred?: string[];
   onOpen: () => void;
 }) {
   const { content } = useServer();
@@ -299,7 +321,8 @@ function Door({
   /* Records first — the door's own, then those found behind it — and only failing both, any art at all. */
   const own = artOf(inside.items);
   const albums = [...albumArtOf(inside.items), ...deeper];
-  const art = (albums.length > 0 ? albums : own).slice(0, 4);
+  const behind = albums.length > 0 ? albums : own;
+  const art = [...preferred, ...behind.filter((url) => !preferred.includes(url))].slice(0, 4);
   // For a door with nothing to show: the names of the first few things behind it, which is what
   // a table of contents does when there is no illustration.
   const names = inside.items.map((entry) => entry.name).filter(Boolean).slice(0, 3);
@@ -490,6 +513,7 @@ function Tile({
   item,
   index = 0,
   under,
+  anchor = false,
   onOpen,
   onPlay,
 }: {
@@ -497,10 +521,13 @@ function Tile({
   index?: number;
   /** The shelf this tile stands on, so its name need not repeat it. */
   under?: string | undefined;
+  /** This is the record we just came back from: its sleeve lands here. See `coverMorph`. */
+  anchor?: boolean;
   onOpen: () => void;
   onPlay: () => void;
 }) {
   const [hovered, setHovered] = useState(false);
+  const landing = useCoverAnchor();
 
   return (
     <div
@@ -518,8 +545,18 @@ function Tile({
         type="button"
         className="cx-tile-cov"
         style={{ backgroundImage: itemCoverCss(item.coverUrl) }}
-        onClick={item.browsable ? onOpen : onPlay}
+        /* Opening a record: the sleeve is measured here, before the page changes, and lands on the
+           detail page's cover — one object moving, not two pages swapping. */
+        onClick={(event) => {
+          if (item.browsable) {
+            captureCoverFrom(event.currentTarget);
+            onOpen();
+          } else {
+            onPlay();
+          }
+        }}
         aria-label={item.name}
+        {...(anchor ? landing : {})}
       >
         {!item.coverUrl && <EmptyArtGlyph size={26} className="cx-tile-empty" />}
         {/* Only the tile being pointed at, so a shelf of thirty does not open thirty streams. */}
@@ -638,10 +675,15 @@ function Actions({
   container,
   zone,
   onPlay,
+  onQueue,
+  onOpenRooms,
 }: {
   container: ContentItem;
   zone: ApiZoneState | null;
   onPlay: (item: ContentItem) => void;
+  /** Add the whole record after what is playing. */
+  onQueue?: ((item: ContentItem) => void) | undefined;
+  onOpenRooms?: (() => void) | undefined;
 }) {
   const api = useApi();
   return (
@@ -662,6 +704,22 @@ function Actions({
           shuffle
         </button>
       )}
+      {zone && onQueue && (
+        <button type="button" className="mono cx-shuffle-btn" onClick={() => onQueue(container)} title="Add to the queue">
+          <PlusGlyph size={13} /> queue
+        </button>
+      )}
+      {/* Where this will play, said out loud. A browser that does not name the room is a browser you
+          press play in and then go looking for the music. */}
+      {zone && onOpenRooms && (
+        <span className="cx-browse-room mono">
+          play in
+          <button type="button" className="cx-wire mono" onClick={onOpenRooms}>
+            {zone.name}
+            <ForwardGlyph size={11} />
+          </button>
+        </span>
+      )}
     </div>
   );
 }
@@ -670,15 +728,49 @@ export function Browse({
   zone,
   root,
   onExit,
+  onOpenRooms,
 }: {
   zone: ApiZoneState | null;
   /** Where to start: a service root, or nothing for the catalogue's own root. */
   root: BrowseNode;
   /** Called when the back link is pressed at the top of the stack. */
   onExit: () => void;
+  /** The way to the desk, from the head of a record: "play in · this room" is a door, not a label. */
+  onOpenRooms?: (() => void) | undefined;
 }) {
   const api = useApi();
   const { content } = useServer();
+  /*
+   * The house's own records, by service, for the hall's stacks.
+   *
+   * Favourites first (a choice), then what this room played lately (a trace), one sleeve per record.
+   * The service is read off the entry's own `service` where it says one and off the source's prefix
+   * where it does not — a favourite says `spotify:track:…`, which is enough.
+   */
+  const recents = useRecents(zone?.id ?? null);
+  const favorites = useFavorites(zone?.id ?? null);
+  const mine = useMemo(() => {
+    const byService: Record<string, string[]> = {};
+    const add = (service: string | undefined, url: string | undefined): void => {
+      if (!service || !url) {
+        return;
+      }
+      const list = (byService[service] ??= []);
+      if (!list.includes(url) && list.length < 3) {
+        list.push(url);
+      }
+    };
+    for (const item of favorites) {
+      add(item.source.includes(':') ? item.source.split(':')[0] : undefined, item.coverUrl);
+    }
+    for (const item of recents) {
+      add(item.service ?? (item.source.includes(':') ? item.source.split(':')[0] : undefined), item.coverUrl);
+    }
+    return byService;
+  }, [favorites, recents]);
+  /* The record we are going back from lands on its tile — see `Tile`'s `anchor`. */
+  const [returning, setReturning] = useState<string | null>(null);
+  const detailLanding = useCoverAnchor();
   /** The path, so back is a pop rather than a re-browse from the top. */
   const [stack, setStack] = useState<BrowseNode[]>([root]);
   const [listing, setListing] = useState<ContentListing | null>(null);
@@ -795,7 +887,7 @@ export function Browse({
 
   const open = useCallback((item: ContentItem) => {
     setQuery('');
-    setStack((prev) => [...prev, { id: item.id, label: item.name }]);
+    setStack((prev) => [...prev, { id: item.id, label: item.name, ...(item.coverUrl ? { seed: item } : {}) }]);
   }, []);
 
   const back = useCallback(() => {
@@ -804,11 +896,17 @@ export function Browse({
       return;
     }
     if (stack.length > 1) {
+      /* Going back from a record: its sleeve is measured here and lands on the tile it came from. */
+      const sleeve = document.querySelector<HTMLElement>('.cx-detail-cover');
+      const id = listing?.container?.id;
+      if (sleeve && id && captureCoverFrom(sleeve)) {
+        setReturning(id);
+      }
       setStack((prev) => prev.slice(0, -1));
       return;
     }
     onExit();
-  }, [query, stack.length, onExit]);
+  }, [query, stack.length, onExit, listing]);
 
   const play = useCallback(
     (item: ContentItem) => {
@@ -906,7 +1004,8 @@ export function Browse({
    * be inventing one. `detail` narrows the heroes to the track-listed kind (an album, a running
    * order), which is what decides the run line and the numbered rows below.
    */
-  const hero = !query && container?.coverUrl ? container : null;
+  /* The record itself, or — while it loads — what the tile that opened it already knew. */
+  const hero = !query ? (container?.coverUrl ? container : (here.seed ?? null)) : null;
   const detail = hero && trackish ? hero : null;
 
   /*
@@ -993,16 +1092,22 @@ export function Browse({
           <header className="cx-detail" data-portrait={portrait || undefined}>
             <span className="cx-detail-art">
               <span className="cx-detail-bloom" style={{ backgroundImage: itemCoverCss(hero.coverUrl) }} />
-              <span className="cx-detail-cover" style={{ backgroundImage: itemCoverCss(hero.coverUrl) }}>
+              <span
+                className="cx-detail-cover"
+                style={{ backgroundImage: itemCoverCss(hero.coverUrl) }}
+                {...detailLanding}
+              >
                 <Motion src={hero.animatedCoverUrl} />
               </span>
             </span>
 
             {runLine && <span className="mono cx-detail-kind">{runLine}</span>}
-            <h1 className="disp cx-detail-title">{title}</h1>
+            <h1 className="disp cx-detail-title" data-len={titleStep(title)}>
+              {title}
+            </h1>
             {hero.artist && <span className="cx-detail-sub">{hero.artist}</span>}
 
-            {hero.playable && <Actions container={hero} zone={zone} onPlay={play} />}
+            {hero.playable && <Actions container={hero} zone={zone} onPlay={play} onQueue={queue} onOpenRooms={onOpenRooms} />}
           </header>
         ) : (
           <div className="cx-browse-head">
@@ -1025,7 +1130,7 @@ export function Browse({
             {/* Only for a thing that is itself a record — an album, a playlist. "Play New Releases" is a
                 button on a category, and a category is a place, not a thing you press play on. */}
             {!query && container?.playable && container.coverUrl && (
-              <Actions container={container} zone={zone} onPlay={play} />
+              <Actions container={container} zone={zone} onPlay={play} onQueue={queue} onOpenRooms={onOpenRooms} />
             )}
           </div>
         )}
@@ -1091,7 +1196,11 @@ export function Browse({
           )}
 
           {sections.map((section) => (
-            <section className="cx-shelf" key={section.id}>
+            <section
+              className="cx-shelf"
+              key={section.id}
+              data-lead={(section.items.length >= 3 && !section.items.every((item) => item.kind === 'track')) || undefined}
+            >
               <div className="cx-sec-head">
                 <span className="cx-sec-lbl mono">{section.name}</span>
                 <span className="cx-sec-rule" />
@@ -1122,6 +1231,7 @@ export function Browse({
                       key={item.id}
                       item={item}
                       index={index}
+                      anchor={item.id === returning}
                       onOpen={() => open(item)}
                       onPlay={() => play(item)}
                     />
@@ -1158,9 +1268,16 @@ export function Browse({
                  * is not rhythm, it is noise.
                  */
                 return atRoot ? (
-                  <Door key={item.id} item={item} index={index} hall onOpen={() => open(item)} />
+                  <Door
+                    key={item.id}
+                    item={item}
+                    index={index}
+                    hall
+                    preferred={mine[item.service] ?? []}
+                    onOpen={() => open(item)}
+                  />
                 ) : artful.length >= SHELF_MIN_ART ? (
-                  <section className="cx-shelf cx-doorshelf" key={item.id} style={{ '--i': index } as React.CSSProperties}>
+                  <section className="cx-shelf cx-doorshelf" key={item.id} data-lead style={{ '--i': index } as React.CSSProperties}>
                     <button type="button" className="cx-doorshelf-head" onClick={() => open(item)}>
                       <span className="cx-doorshelf-name disp">{item.name}</span>
                       <span className="cx-doorshelf-go mono">
@@ -1174,6 +1291,7 @@ export function Browse({
                           item={entry}
                           index={at}
                           under={item.name}
+                          anchor={entry.id === returning}
                           onOpen={() => open(entry)}
                           onPlay={() => play(entry)}
                         />
@@ -1206,6 +1324,7 @@ export function Browse({
                     key={item.id}
                     item={item}
                     index={index}
+                    anchor={item.id === returning}
                     onOpen={() => open(item)}
                     onPlay={() => play(item)}
                   />

@@ -11,9 +11,10 @@
  * Rows do the two things worth doing to a queue entry — play it, remove it — and nothing else.
  * Reordering by drag is a technical-player affordance and it is in the other face.
  */
+import { useRef, useState } from 'react';
 import { useApi } from '@/state/ServerContext';
 import { itemCoverCss } from '@/art/cover';
-import { Bars, CloseGlyph, PauseGlyph, PlayGlyph, PlusGlyph } from '@/art/glyphs';
+import { Bars, CloseGlyph, GripGlyph, PauseGlyph, PlayGlyph, PlusGlyph } from '@/art/glyphs';
 import { Timeline } from '@/art/Stage';
 import { zoneCoverCss } from '@/art/cover';
 import type { Cur } from '@/art/useCur';
@@ -38,6 +39,10 @@ function Row({
   past,
   onPlay,
   onRemove,
+  qid,
+  onGrip,
+  dragging = false,
+  over = false,
 }: {
   cover: string | undefined;
   /** Position in the running order, 1-based, for a queue that is one record. */
@@ -50,6 +55,12 @@ function Row({
   past?: boolean;
   onPlay: () => void;
   onRemove?: () => void;
+  /** The entry's id, for a row that can be picked up and put down somewhere else. */
+  qid?: string | undefined;
+  onGrip?: ((event: React.PointerEvent) => void) | undefined;
+  dragging?: boolean;
+  /** Another row is being held over this one: it will land here. */
+  over?: boolean;
 }) {
   return (
     <div
@@ -57,6 +68,9 @@ function Row({
       data-current={current || undefined}
       data-past={past || undefined}
       data-numbered={numbered || undefined}
+      data-qid={qid}
+      data-dragging={dragging || undefined}
+      data-over={over || undefined}
     >
       <button type="button" className="cx-qmain" onClick={onPlay}>
         <span className="cx-qmark">
@@ -78,6 +92,11 @@ function Row({
         <button type="button" className="cx-qrm" onClick={onRemove} aria-label="Remove from queue">
           <CloseGlyph size={13} />
         </button>
+      )}
+      {onGrip && (
+        <span className="cx-qgrip" onPointerDown={onGrip} role="presentation" title="Drag to reorder">
+          <GripGlyph size={16} />
+        </span>
       )}
     </div>
   );
@@ -148,6 +167,64 @@ export function QueueSheet({
     void (cur.isPlaying ? api.pause(zone.id) : api.play(zone.id));
   };
 
+  /*
+   * Pick a row up, carry it, put it down.
+   *
+   * The row follows the pointer by a translate; the row under the pointer is marked as where it
+   * will land; on release the server is asked to move the entry before that row (or after it, when
+   * the drag went down). `queueMove` is the contract's own verb — nothing here reorders locally, the
+   * next queue event does, which is why the row snaps back and then moves rather than moving twice.
+   */
+  const [dragId, setDragId] = useState<string | null>(null);
+  const [overId, setOverId] = useState<string | null>(null);
+  const aheadRef = useRef(ahead);
+  aheadRef.current = ahead;
+  const grip = (id: string) => (event: React.PointerEvent): void => {
+    if (event.pointerType === 'mouse' && event.button !== 0) {
+      return;
+    }
+    event.preventDefault();
+    const row = (event.currentTarget as HTMLElement).closest<HTMLElement>('[data-qid]');
+    if (!row) {
+      return;
+    }
+    const startY = event.clientY;
+    setDragId(id);
+    const under = (x: number, y: number): string | null => {
+      const hit = document.elementFromPoint(x, y)?.closest<HTMLElement>('[data-qid]');
+      const target = hit?.dataset.qid ?? null;
+      return target && target !== id ? target : null;
+    };
+    const move = (moved: PointerEvent): void => {
+      row.style.translate = `0 ${moved.clientY - startY}px`;
+      setOverId(under(moved.clientX, moved.clientY));
+    };
+    const up = (upEvent: PointerEvent): void => {
+      document.removeEventListener('pointermove', move);
+      document.removeEventListener('pointerup', up);
+      document.removeEventListener('pointercancel', up);
+      row.style.translate = '';
+      const target = under(upEvent.clientX, upEvent.clientY);
+      setDragId(null);
+      setOverId(null);
+      if (!target) {
+        return;
+      }
+      const list = aheadRef.current;
+      const from = list.findIndex((item) => item.id === id);
+      const to = list.findIndex((item) => item.id === target);
+      if (from < 0 || to < 0) {
+        return;
+      }
+      // Dragged down: land *after* the row under the pointer, i.e. before the one below it.
+      const before = to > from ? list[to + 1]?.id : target;
+      void api.queueMove(zone.id, id, before);
+    };
+    document.addEventListener('pointermove', move);
+    document.addEventListener('pointerup', up);
+    document.addEventListener('pointercancel', up);
+  };
+
   return (
     <div className="cx-qsheet">
       {cur.hasTrack && (
@@ -203,6 +280,10 @@ export function QueueSheet({
               {...(item.duration > 0 ? { meta: formatTime(item.duration) } : {})}
               onPlay={() => void api.queuePlay(zone.id, item.id)}
               onRemove={() => void api.queueRemove(zone.id, item.id)}
+              qid={item.id}
+              onGrip={ahead.length > 1 ? grip(item.id) : undefined}
+              dragging={dragId === item.id}
+              over={overId === item.id}
             />
           ))}
         </div>

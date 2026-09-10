@@ -10632,3 +10632,156 @@
     order: 2;
   }
 }
+
+/* ==========================================================================================
+ * The ultimate pass: leads everywhere, the room named on a record, a queue you can rearrange.
+ * ========================================================================================== */
+
+/* A shelf of records opens with a lead wherever it stands — search results and provider sections too. */
+@media (min-width: 1180px) {
+  .cx-shelf[data-lead] .cx-shelf-row {
+    --tile: clamp(140px, 11vw, 176px);
+    --tgap: clamp(18px, 1.8vw, 28px);
+    display: grid;
+    grid-auto-flow: column;
+    grid-template-rows: auto auto;
+    grid-auto-columns: var(--tile);
+    gap: var(--tgap);
+    align-items: start;
+  }
+
+  .cx-shelf[data-lead] .cx-shelf-row .cx-tile {
+    width: auto;
+  }
+
+  .cx-shelf[data-lead] .cx-shelf-row .cx-tile:first-child {
+    grid-row: 1 / span 2;
+    grid-column: span 2;
+  }
+
+  .cx-shelf[data-lead] .cx-shelf-row .cx-tile:first-child .cx-tile-title {
+    margin-top: 14px;
+    font-family: var(--font-display);
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: -0.025em;
+    color: var(--t1);
+  }
+
+  .cx-shelf[data-lead] .cx-shelf-row .cx-tile:first-child .cx-tile-sub {
+    font-size: 13px;
+  }
+}
+
+/* The room a record will play in, at the end of its actions. */
+.cx-browse-actions {
+  flex-wrap: wrap;
+  row-gap: 14px;
+}
+
+.cx-browse-room {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  flex-basis: 100%;
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  color: var(--t6);
+}
+
+.cx-browse-room .cx-wire {
+  margin-left: 0;
+}
+
+/* The time on the right is a button; it looks like the number it is. */
+.cx-time-tot {
+  font-size: inherit;
+  letter-spacing: inherit;
+  color: inherit;
+  transition: color 0.18s;
+}
+
+.cx-time-tot:hover {
+  color: var(--t2);
+}
+
+/* --- the queue: pick a row up --- */
+
+.cx-qrow {
+  position: relative;
+}
+
+.cx-qgrip {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 28px;
+  height: 28px;
+  color: var(--t8);
+  cursor: grab;
+  opacity: 0;
+  touch-action: none;
+  transition:
+    opacity 0.15s,
+    color 0.15s;
+}
+
+.cx-qrow:hover .cx-qgrip {
+  opacity: 1;
+}
+
+.cx-qgrip:hover {
+  color: var(--t4);
+}
+
+.cx-qrow[data-dragging] {
+  z-index: 5;
+  background: rgb(22 22 26 / 96%);
+  box-shadow:
+    0 20px 50px -20px rgb(0 0 0 / 90%),
+    inset 0 0 0 1px rgb(255 255 255 / 10%);
+  cursor: grabbing;
+}
+
+.cx-qrow[data-dragging] .cx-qgrip {
+  opacity: 1;
+  cursor: grabbing;
+}
+
+.cx-qrow[data-over]::before {
+  content: '';
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  top: -1px;
+  height: 2px;
+  border-radius: 1px;
+  background: var(--g);
+}
+
+@media (max-width: 979px) {
+  .cx-qgrip {
+    opacity: 0.6;
+  }
+}
+
+/* A held row lets the pointer through, so the row under it is the one that answers "where". */
+.cx-qrow[data-dragging] {
+  pointer-events: none;
+}
+
+/* A record's title steps down with its length, the way the stage's does. */
+.cx-detail-title[data-len='3'] {
+  font-size: clamp(26px, 2.6vw, 40px);
+}
+
+.cx-detail-title[data-len='4'] {
+  font-size: clamp(22px, 2.1vw, 32px);
+  letter-spacing: -0.03em;
+}
+
+.cx-detail-title[data-len='5'] {
+  font-size: clamp(20px, 1.8vw, 27px);
+  letter-spacing: -0.025em;
+  line-height: 1.12;
+}
