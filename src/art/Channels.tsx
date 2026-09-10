@@ -1,210 +1,35 @@
 /**
- * The house, as faders — and the sheet where you group it.
+ * The desk: every room as a channel strip, the groups as blocks of strips.
  *
- * `ChannelsStrip` is the desktop's one concession to being a multiroom player: every group in the
- * house as a vertical fader with the artwork it is playing, along the bottom, always. Its point is
- * that changing the kitchen's volume must not cost you the room you are looking at — the strip is a
- * control surface, not a status board, which is why every cell is draggable rather than clickable
- * only.
+ * The rooms sheet used to be a list — a row per room with a hairline fader under it, `JOIN` at the end of
+ * the rows that were not in your group, a heading over the ones that were. It said everything and showed
+ * nothing: a house with three rooms and a group in it looked exactly like a settings page.
  *
- * Cells scale with activity (playing rooms get a taller track and a bigger chip, silent ones
- * recede), because a strip where eight rooms all shout equally is a strip nobody reads. A group is
- * drawn as one run of cells under a bracket, so "these three are one thing" is visible without a
- * label saying so.
+ * A mixing desk is the picture this is actually of. Each room is a strip: its sleeve, its name, what it
+ * is doing, a vertical fader with the level above it, and one word at the foot for the one decision the
+ * strip offers (`join`, `leave`, `turn on`). Rooms that play together stand in one block, drawn with the
+ * record's own colour, with a master strip at the end of it — the group's transport and a fader that
+ * moves every member by the same amount, so a balance you set between two rooms survives turning the
+ * evening down. Drag a strip onto another and they play together.
  *
- * `RoomsSheet` is where grouping actually happens. Grouping is the one operation in this player that
- * can be *refused* — the server matches output protocols unless mixed groups are enabled — so the
- * sheet reports what was rejected instead of silently dropping a room.
+ * On a phone the same strips lie down: a row each, the fader running under the name, the block the same.
+ * One component, two orientations; `phone` picks the drag axis and the stylesheet does the rest.
  */
-import { useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useApi } from '@/state/ServerContext';
 import { DELAY_MAX_MS, DELAY_NUDGE_MS, useOutputDelay } from '@/state/useOutputDelay';
 import { sceneable, useScenes } from '@/state/useScenes';
 import { itemCoverCss, zoneCoverCss } from '@/art/cover';
+import { clamp, horizontalDrag, verticalDrag } from '@/art/drag';
 import { useVolumeControl } from '@/art/volume';
-import { Bars, EmptyArtGlyph, SpeakerGlyph } from '@/art/glyphs';
+import { EmptyArtGlyph, PauseGlyph, PlayGlyph, PowerGlyph, SpeakerGlyph } from '@/art/glyphs';
 import type { Channel } from '@/art/useCur';
+import type { RoomDrag } from '@/art/useRoomDrag';
 import type { ApiZoneState } from '@/api/types';
 
-// --- the strip --------------------------------------------------------------
+/** How long a written level stays on screen before the server's own reading takes over again. */
+const SETTLE_MS = 700;
 
-/** One fader plus its chip: a group, or a single room. */
-function Cell({
-  zone,
-  channel,
-  current,
-  onSelect,
-}: {
-  zone: ApiZoneState;
-  channel: Channel;
-  current: boolean;
-  onSelect: () => void;
-}) {
-  const api = useApi();
-  const control = useVolumeControl(zone);
-  const playing = channel.playing && channel.hasTrack;
-  /** Playing → paused → silent, which is what the cell's size is keyed off. */
-  const activity = playing ? 'playing' : channel.hasTrack ? 'paused' : 'silent';
-
-  const leaderIsThis = channel.leader.id === zone.id;
-  const cover = zoneCoverCss(api, channel.leader, 160);
-  const progress =
-    channel.leader.duration > 0 ? Math.min(1, channel.leader.position / channel.leader.duration) : 0;
-
-  return (
-    <div className="cx-ch" data-current={current || undefined} data-activity={activity}>
-      <span className="cx-fader" onPointerDown={control.onPointerDownV}>
-        <span className="cx-fader-ro mono" data-show={control.active || undefined}>
-          {control.value}
-        </span>
-        <span className="cx-fader-track">
-          <span className="cx-fader-fill" style={{ height: control.pct }}>
-            {/* The shimmer at the top of a playing fader's fill — a VU flicker, not a spinner. It
-                exists only while audio is actually flowing, so a still strip means a quiet house. */}
-            {playing && <span className="cx-fader-vu" />}
-            <span className="cx-fader-cap" />
-          </span>
-        </span>
-      </span>
-
-      {/* Only the leader carries the artwork chip: a follower is playing the same thing, and three
-          copies of one cover reads as three different rooms playing three different tracks. */}
-      <button type="button" className="cx-ch-chip-btn" onClick={onSelect} title={zone.name}>
-        {leaderIsThis && cover ? (
-          <span className="cx-ch-chip" style={{ backgroundImage: cover }}>
-            {progress > 0 && (
-              <span className="cx-ch-prog">
-                <i style={{ width: `${progress * 100}%` }} />
-              </span>
-            )}
-          </span>
-        ) : (
-          <span className="cx-ch-chip cx-ch-chip-empty">
-            {leaderIsThis ? <EmptyArtGlyph size={16} /> : <SpeakerGlyph size={14} />}
-          </span>
-        )}
-        <span className="cx-ch-name mono">{zone.name}</span>
-      </button>
-    </div>
-  );
-}
-
-export function ChannelsStrip({
-  channels,
-  currentLeaderId,
-  onSelect,
-}: {
-  channels: Channel[];
-  currentLeaderId: number | null;
-  onSelect: (zoneId: number) => void;
-}) {
-  if (channels.length === 0) {
-    return null;
-  }
-  return (
-    <div className="cx-strip">
-      {channels.map((channel) => (
-        <div
-          className={channel.members.length > 1 ? 'cx-ch-group' : 'cx-ch-solo'}
-          key={channel.leader.id}
-        >
-          {channel.members.map((member) => (
-            <Cell
-              key={member.id}
-              zone={member}
-              channel={channel}
-              current={channel.leader.id === currentLeaderId}
-              onSelect={() => onSelect(member.id)}
-            />
-          ))}
-        </div>
-      ))}
-    </div>
-  );
-}
-
-// --- the rooms sheet --------------------------------------------------------
-
-/**
- * One room in the sheet — and the idea the whole sheet is built on: **the volume is the rule under the
- * room's name.**
- *
- * This was a rounded, filled panel with an accent bar down its left edge and a separate slider widget
- * inside it, in a face whose first rule is that nothing is boxed. Every room was a card and the sheet was
- * a stack of cards. What a room actually needs is its name, what it is doing, and how loud — and the
- * third of those can *be* the line that separates it from the next room, which removes a widget and a
- * divider at once. Drag anywhere along the 20px strip at the bottom of the row.
- *
- * The fill stays neutral on purpose (see this file's own note): a fader is furniture. What marks the room
- * you are in is that its name is the brightest text in the sheet and it carries the accent dot — the same
- * way every other selection in this face is expressed.
- *
- * The slider must stop the row's click, or adjusting the kitchen's volume also moves you into the
- * kitchen, which is a different room than the one you were adjusting from.
- */
-function RoomRow({
-  zone,
-  selected,
-  playingLabel,
-  live,
-  onSelect,
-  action,
-}: {
-  zone: ApiZoneState;
-  selected: boolean;
-  playingLabel: string;
-  /** Audio is actually flowing here — the bars move rather than the row being merely marked. */
-  live: boolean;
-  onSelect: () => void;
-  action?: React.ReactNode;
-}) {
-  const api = useApi();
-  const control = useVolumeControl(zone);
-  const cover = zoneCoverCss(api, zone, 120);
-
-  return (
-    <div className="cx-room" data-selected={selected || undefined}>
-      {/*
-       * The whole row selects the room — as one flat button underneath it rather than a wrapper around
-       * the text, because the text is laid out by the row's own grid and a wrapper would have to be
-       * `display: contents` to stay out of it, which browsers treat inconsistently on form controls.
-       * The labels are `pointer-events: none` so a click on the name lands here; the volume strip and
-       * the join link sit above it and keep their own.
-       */}
-      <button type="button" className="cx-room-hit" onClick={onSelect} aria-label={zone.name} />
-
-      <span className="cx-room-art" style={{ backgroundImage: cover }} data-empty={!cover || undefined}>
-        {!cover && <SpeakerGlyph size={15} />}
-      </span>
-      <span className="cx-room-name">
-        {live && <Bars className="cx-bars cx-room-bars" />}
-        {zone.name}
-      </span>
-      <span className="cx-room-state">{playingLabel}</span>
-
-      <span className="cx-room-num mono" data-active={control.active || undefined}>
-        {control.value}
-      </span>
-      <span className="cx-room-act">{action}</span>
-
-      <span
-        className="cx-room-vol"
-        data-active={control.active || undefined}
-        onPointerDown={(event) => {
-          event.stopPropagation();
-          control.onPointerDownH(event);
-        }}
-      >
-        <span className="cx-room-rail">
-          <span className="cx-room-fill" style={{ width: control.pct }} />
-          <span className="cx-room-knob" style={{ left: control.pct }} />
-        </span>
-      </span>
-    </div>
-  );
-}
-
-/** What a room is doing, in the words someone standing in it would use. */
 function stateLabel(zone: ApiZoneState): string {
   if (zone.track) {
     const parts = [zone.track.title, zone.track.artist].filter(Boolean);
@@ -216,25 +41,220 @@ function stateLabel(zone: ApiZoneState): string {
   return 'quiet';
 }
 
+// --- one strip ----------------------------------------------------------------
+
 /**
- * One room's place in time, on the axis it shares with the others.
- *
- * A group of speakers is one instrument, and a room that lands 20 ms early is not heard as late — it
- * is heard as a smear. So the moment a second room joins, the interesting control stops being *who
- * plays* and becomes *line them up*, and comparing offsets only works if every room's knob is on the
- * same scale, one under the other. That is the whole reason this is a row in a list rather than a
- * setting on a room.
- *
- * It lived on the technical player's grouping screen, which was the right place while that face was a
- * shell with screens in it. It is not somewhere else now — it is here, where the rooms are joined,
- * which is where the question comes up.
- *
- * You raise it on the room that arrives **late**: the number is the delay that room's own amplifier
- * adds after us, and we compensate by sending it that much earlier. See `useOutputDelay`.
+ * A fader, either way up. The value sits above a vertical one and at the end of a horizontal one; the
+ * pointer maths comes from `drag.ts`, which is what the stage's own faders use.
  */
+function Fader({
+  pct,
+  value,
+  active,
+  onPointerDown,
+  lit,
+  muted,
+}: {
+  pct: string;
+  value: number | string;
+  active: boolean;
+  onPointerDown: (event: React.PointerEvent) => void;
+  /** Filled in the record's colour rather than silver: the strip is playing. */
+  lit: boolean;
+  /** The room is off or silent — the fader is drawn, but faintly. */
+  muted: boolean;
+}) {
+  return (
+    <span className="cx-desk-fader" data-lit={lit || undefined} data-muted={muted || undefined} data-active={active || undefined}>
+      <span className="cx-desk-fader-val mono">{value}</span>
+      <span className="cx-desk-fader-rail" onPointerDown={onPointerDown} role="presentation">
+        <span className="cx-desk-fader-fill" style={{ '--pct': pct } as React.CSSProperties} />
+        <span className="cx-desk-fader-knob" style={{ '--pct': pct } as React.CSSProperties} />
+      </span>
+      <SpeakerGlyph size={14} />
+    </span>
+  );
+}
+
+function Strip({
+  zone,
+  channel,
+  role,
+  current,
+  phone,
+  onSelect,
+  drag,
+  action,
+}: {
+  zone: ApiZoneState;
+  channel: Channel;
+  role: 'solo' | 'leader' | 'follower';
+  current: boolean;
+  phone: boolean;
+  onSelect: () => void;
+  drag: RoomDrag;
+  /** The one word at the foot, or nothing. */
+  action?: { label: string; run: () => void; glyph?: React.ReactNode } | undefined;
+}) {
+  const api = useApi();
+  const control = useVolumeControl(zone);
+  const playing = channel.playing && channel.hasTrack;
+  const off = zone.powerState.power === 'off';
+  const cover = zoneCoverCss(api, channel.leader, 160);
+  const line = role === 'follower' ? `following ${channel.leader.name}` : stateLabel(zone);
+
+  return (
+    <div
+      className="cx-desk-strip"
+      data-role={role}
+      data-current={current || undefined}
+      data-on={playing || undefined}
+      data-quiet={!channel.hasTrack || undefined}
+      data-room-drop={zone.id}
+      data-room-drop-kind="desk"
+      data-hot={(drag.active?.kind === 'room' && drag.active.zoneId !== zone.id) || undefined}
+      data-over={drag.over === zone.id || undefined}
+    >
+      {/* The sleeve and the name are the handle: press to stand in the room, pull to move it. */}
+      <button
+        type="button"
+        className="cx-desk-hit"
+        onPointerDown={(event) => drag.begin({ kind: 'room', zoneId: zone.id, cover, name: zone.name }, event)}
+        onClick={() => {
+          if (!drag.consumed()) {
+            onSelect();
+          }
+        }}
+        title={zone.name}
+      >
+        <span className="cx-desk-cov" style={cover ? { backgroundImage: cover } : undefined} data-empty={!cover || undefined}>
+          {!cover && (off ? <PowerGlyph size={16} /> : <SpeakerGlyph size={16} />)}
+        </span>
+        <span className="cx-desk-txt">
+          <span className="cx-desk-name mono">{zone.name}</span>
+          <span className="cx-desk-line">{line}</span>
+        </span>
+      </button>
+
+      <Fader
+        pct={control.pct}
+        value={control.value}
+        active={control.active}
+        onPointerDown={phone ? control.onPointerDownH : control.onPointerDownV}
+        lit={playing}
+        muted={off}
+      />
+
+      <span className="cx-desk-foot">
+        {action ? (
+          <button type="button" className="cx-desk-word mono" onClick={action.run}>
+            {action.glyph}
+            {action.label}
+          </button>
+        ) : (
+          <span className="cx-desk-word mono" data-quiet>
+            {current ? 'this room' : ''}
+          </span>
+        )}
+      </span>
+    </div>
+  );
+}
+
+// --- the master --------------------------------------------------------------
+
+/**
+ * The group's own strip: its transport and a fader that moves every member by the same amount.
+ *
+ * There is no group volume in the contract, so this is the client's arithmetic: the fader shows the
+ * members' mean, and a drag applies the *change* in that mean to each member, clamped to its own limit.
+ * Setting every room to one number would be simpler and wrong — the whole point of two faders beside
+ * each other is that they are not at the same height.
+ */
+function Master({
+  channel,
+  phone,
+  onUngroup,
+}: {
+  channel: Channel;
+  phone: boolean;
+  onUngroup: () => void;
+}) {
+  const api = useApi();
+  const leader = channel.leader;
+  const playing = channel.playing && channel.hasTrack;
+  const max = leader.volumeLimits.max ?? 100;
+  const mean = channel.members.reduce((sum, member) => sum + member.volume, 0) / channel.members.length;
+
+  const [dragging, setDragging] = useState<number | null>(null);
+  const [active, setActive] = useState(false);
+  const start = useRef<{ mean: number; volumes: Map<number, { volume: number; max: number }> } | null>(null);
+  const settle = useRef<ReturnType<typeof setTimeout>>();
+
+  const value = dragging ?? Math.round(mean);
+  const pct = `${max > 0 ? (value / max) * 100 : 0}%`;
+
+  const begin = (): void => {
+    setActive(true);
+    start.current = {
+      mean,
+      volumes: new Map(channel.members.map((member) => [member.id, { volume: member.volume, max: member.volumeLimits.max ?? 100 }])),
+    };
+  };
+  const write = (fraction: number): void => {
+    const from = start.current;
+    if (!from) {
+      return;
+    }
+    const target = fraction * max;
+    const delta = target - from.mean;
+    setDragging(Math.round(target));
+    for (const [id, was] of from.volumes) {
+      void api.setVolume(id, Math.round(clamp(was.volume + delta, 0, was.max)));
+    }
+  };
+  const end = (): void => {
+    setActive(false);
+    clearTimeout(settle.current);
+    settle.current = setTimeout(() => setDragging(null), SETTLE_MS);
+  };
+  const onPointerDown = useMemo(
+    () => (phone ? horizontalDrag(write, begin, end) : verticalDrag(write, begin, end)),
+    // The handlers close over the latest members through `channel`; rebuilt when it changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [phone, channel],
+  );
+
+  return (
+    <div className="cx-desk-strip cx-desk-master" data-on={playing || undefined}>
+      <button
+        type="button"
+        className="cx-desk-ring"
+        aria-label={playing ? 'Pause the group' : 'Play the group'}
+        onClick={() => void (playing ? api.pause(leader.id) : api.play(leader.id))}
+      >
+        {playing ? <PauseGlyph size={22} /> : <PlayGlyph size={22} />}
+      </button>
+      <span className="cx-desk-txt">
+        <span className="cx-desk-name mono">group volume</span>
+        <span className="cx-desk-line">
+          moves {channel.members.length === 2 ? 'both' : `all ${channel.members.length}`} rooms
+        </span>
+      </span>
+      <Fader pct={pct} value={value} active={active} onPointerDown={onPointerDown} lit={false} muted={false} />
+      <span className="cx-desk-foot">
+        <button type="button" className="cx-desk-word mono" onClick={onUngroup}>
+          ungroup
+        </button>
+      </span>
+    </div>
+  );
+}
+
+// --- alignment ------------------------------------------------------------------
+
 function AlignRow({ zone, leader }: { zone: ApiZoneState; leader: boolean }) {
   const { delayMs, settable, failed, drag, commit } = useOutputDelay(zone);
-
   return (
     <li className="cx-align-row">
       <span className="cx-align-name">
@@ -281,93 +301,70 @@ function AlignRow({ zone, leader }: { zone: ApiZoneState; leader: boolean }) {
   );
 }
 
+// --- the sheet ------------------------------------------------------------------
+
 export function RoomsSheet({
   zones,
+  channels,
   selectedId,
+  phone,
   onSelect,
+  drag,
 }: {
   zones: ApiZoneState[];
+  /** The house as groups — see `channelsOf`. The desk draws one block per channel. */
+  channels: Channel[];
   selectedId: number | null;
+  phone: boolean;
   onSelect: (zoneId: number) => void;
+  /** The same gesture the wall has: a strip dragged onto another joins its group. */
+  drag: RoomDrag;
 }) {
   const api = useApi();
   const selected = zones.find((zone) => zone.id === selectedId) ?? null;
   const [rejected, setRejected] = useState<string[]>([]);
   const { scenes, save, recall, forget } = useScenes();
 
-  const group = selected?.group ?? null;
-  const members = group
-    ? group.members.map((id) => zones.find((zone) => zone.id === id)).filter((zone): zone is ApiZoneState => Boolean(zone))
-    : selected
-      ? [selected]
-      : [];
-  const others = zones.filter((zone) => !members.some((member) => member.id === zone.id));
+  const mine = channels.find((channel) => channel.members.some((member) => member.id === selectedId)) ?? null;
+  const [alignOpen, setAlignOpen] = useState(false);
 
-  /**
-   * Adds a room to the selected room's group.
-   *
-   * The leader is always the room you are looking at: `PUT /zones/{id}/group` puts that id at the
-   * head, so grouping *from* the kitchen means the kitchen's music continues and the others join it
-   * — which is what someone pressing "+" in the kitchen means, every time.
-   */
-  const add = (zone: ApiZoneState): void => {
-    if (!selected) {
+  const said = (result: { rejected: Array<{ id: number; reason: string }> }): void => {
+    setRejected(
+      result.rejected.map(
+        (entry) =>
+          `${zones.find((candidate) => candidate.id === entry.id)?.name ?? entry.id}: ${
+            entry.reason === 'protocol-mismatch'
+              ? 'these speakers can’t stay in step with this room — play it there on its own'
+              : 'not there any more'
+          }`,
+      ),
+    );
+  };
+  const failed = (): void => setRejected(['That did not work — the room may have gone.']);
+
+  /** Put `zone` into the selected room's group. */
+  const join = (zone: ApiZoneState): void => {
+    if (!mine) {
       return;
     }
-    const next = [...members.map((member) => member.id), zone.id];
     void api
-      .setGroup(selected.id, next)
-      .then((result) => {
-        setRejected(
-          result.rejected.map(
-            (entry) =>
-              /*
-               * In the words someone standing in the room would use.
-               *
-               * This said `different output type — cannot play in sync`, which names a fact about the
-               * equipment rather than about the music, and "output type" is the other face's vocabulary.
-               * What actually happened is that these two rooms cannot be kept in step, and the useful
-               * half of that is: play it there on its own instead.
-               */
-              `${zones.find((candidate) => candidate.id === entry.id)?.name ?? entry.id}: ${
-                entry.reason === 'protocol-mismatch'
-                  ? 'these speakers can’t stay in step with this room — play it there on its own'
-                  : 'not there any more'
-              }`,
-          ),
-        );
-      })
-      .catch(() => setRejected(['That did not work — the room may have gone.']));
+      .setGroup(mine.leader.id, [...mine.members.map((member) => member.id), zone.id])
+      .then(said)
+      .catch(failed);
+  };
+  /** Take a follower out of its group. */
+  const leave = (channel: Channel, zone: ApiZoneState): void => {
+    const next = channel.members.filter((member) => member.id !== zone.id).map((member) => member.id);
+    void api
+      .setGroup(channel.leader.id, next.length > 1 ? next : [])
+      .then(said)
+      .catch(failed);
+  };
+  const ungroup = (channel: Channel): void => {
+    void api.ungroup(channel.leader.id).then(said).catch(failed);
   };
 
-  const remove = (zone: ApiZoneState): void => {
-    if (!selected) {
-      return;
-    }
-    // Removing the leader is ungrouping the whole thing; there is no "promote a follower" in the
-    // contract and inventing one here would be a client-side group the server does not have.
-    if (zone.id === selected.id) {
-      void api.ungroup(selected.id);
-      return;
-    }
-    const next = members.filter((member) => member.id !== zone.id).map((member) => member.id);
-    void api.setGroup(selected.id, next.length > 1 ? next : []);
-  };
-
-  const grouped = members.length > 1;
-
-  /*
-   * Where playback actually lives for the selected room — the group's leader. A scene is
-   * captured off the leader because that is whose `source.id` and whose track the group is
-   * playing; a follower's own fields can be stale (the same rule `useCur` renders by).
-   */
-  const leader = group ? (zones.find((zone) => zone.id === group.leader) ?? selected) : selected;
-
-  /**
-   * Saves this moment: these rooms, this music, these volumes. The name is the one thing the
-   * house cannot know — same `window.prompt` the favourites rename uses, for the same reason:
-   * a text field with focus management inside a sheet is a lot of machinery for one string.
-   */
+  const leader = mine?.leader ?? selected;
   const saveScene = (): void => {
     if (!leader) {
       return;
@@ -380,196 +377,149 @@ export function RoomsSheet({
     save(leader, zones, name.trim());
   };
 
+  /** What one strip offers, given where it stands. */
+  const actionFor = (channel: Channel, zone: ApiZoneState, role: 'solo' | 'leader' | 'follower') => {
+    if (zone.powerState.power === 'off') {
+      return { label: 'turn on', glyph: <PowerGlyph size={12} />, run: () => void api.setPower(zone.id, 'on') };
+    }
+    if (role === 'follower') {
+      return { label: 'leave', run: () => leave(channel, zone) };
+    }
+    if (role === 'solo' && mine && channel.leader.id !== mine.leader.id) {
+      return { label: 'join', run: () => join(zone) };
+    }
+    return undefined;
+  };
+
   return (
-    <div className="cx-rooms">
-      {/*
-       * Grouped rooms are drawn as one object: a bracket down their left edge, in the accent.
-       *
-       * The old sheet said so with a heading — `playing together` over a run of identical cards — which
-       * is a caption for a relationship the eye could have been shown directly. The bracket is the same
-       * device the desktop strip uses for a group of faders, so "these three are one thing" means the
-       * same thing in both places.
-       *
-       * The heading only survives *because* of the group: it is where `ungroup` lives, and there is
-       * nowhere better for it. Ungrouped, the room you are in is simply the first row and is marked as
-       * such, so it gets no heading at all — a two-room house had three labels for two rooms.
-       */}
-      {selected && grouped && (
-        <div className="cx-sec-head cx-rooms-head">
-          <span className="cx-sec-lbl mono">playing together</span>
-          <span className="cx-sec-rule" />
-          <button type="button" className="mono cx-disband" onClick={() => void api.ungroup(selected.id)}>
-            ungroup
-          </button>
-        </div>
-      )}
-
-      {selected && (
-        <div className="cx-room-set" data-grouped={grouped || undefined}>
-          {members.map((member) => {
-            /*
-             * Inside a group, only the leader says what is playing.
-             *
-             * The others are playing the same thing by definition — that is what the bracket down the
-             * left edge means — so repeating the title once per room turns a group of three into the
-             * same sentence written three times. `in step` is the house's own word for it, the one the
-             * refusal message uses when two rooms *cannot* be.
-             */
-            const follower = grouped && member.id !== (group?.leader ?? selected.id);
-            return (
-              <RoomRow
-                key={member.id}
-                zone={member}
-                selected={member.id === selected.id}
-                playingLabel={follower ? 'in step' : stateLabel(member)}
-                live={member.state === 'playing' && Boolean(member.track)}
-                onSelect={() => onSelect(member.id)}
-                action={
-                  // Only a follower can leave; the leader leaving *is* ungrouping, which the head owns.
-                  follower ? (
-                    <button type="button" className="cx-room-link mono" onClick={() => remove(member)}>
-                      release
-                    </button>
-                  ) : undefined
-                }
-              />
-            );
-          })}
-        </div>
-      )}
-
-      {/*
-       * Alignment, and only once there is something to align.
-       *
-       * One room cannot be out of step with itself, so before a group exists this section would be a
-       * control for a problem nobody has. It appears with the second room, which is also the moment
-       * the problem does.
-       */}
-      {selected && grouped && (
-        <>
-          <div className="cx-sec-head cx-rooms-head">
-            <span className="cx-sec-lbl mono">line them up</span>
-            <span className="cx-sec-rule" />
-          </div>
-          <ul className="cx-align">
-            {members.map((member) => (
-              <AlignRow
-                key={member.id}
-                zone={member}
-                leader={member.id === (group?.leader ?? selected.id)}
-              />
-            ))}
-          </ul>
-          {/*
-           * Where to stand, because no server can measure it.
-           *
-           * Sound crosses a metre in about 3 ms, so a speaker at arm's length and one five metres off
-           * are ~15 ms apart at your ear whatever any of this reports — that difference is in the air,
-           * not in the audio. Tuning from a spot that is not equidistant corrects your own position
-           * instead of the system's, and the result is only right from that one chair.
-           */}
-          <p className="cx-align-note">
-            Stand where the rooms are equally far away, then raise the one that sounds late.
-          </p>
-        </>
-      )}
-
-      {others.length > 0 && (
-        <>
-          <div className="cx-sec-head cx-rooms-head">
-            <span className="cx-sec-lbl mono">elsewhere</span>
-            <span className="cx-sec-rule" />
-          </div>
-
-          {others.map((zone) => (
-            <RoomRow
-              key={zone.id}
-              zone={zone}
-              selected={false}
-              playingLabel={stateLabel(zone)}
-              live={zone.state === 'playing' && Boolean(zone.track)}
-              onSelect={() => onSelect(zone.id)}
-              action={
-                selected ? (
-                  /*
-                   * A word, not a circled play triangle.
-                   *
-                   * The triangle meant "play what this room is playing, there too", which is not what a
-                   * triangle means anywhere else in this player — everywhere else it starts the thing it
-                   * is drawn on. `join` says the actual operation, and it is the only word in the sheet
-                   * that carries the accent because it is the only one with a consequence.
-                   */
-                  <button
-                    type="button"
-                    className="cx-room-link mono"
-                    data-accent
-                    onClick={() => add(zone)}
-                    title={`Play ${selected.name} here too`}
-                  >
-                    join
-                  </button>
-                ) : undefined
-              }
+    <div className="cx-desk" data-phone={phone || undefined}>
+      <div className="cx-desk-row">
+        {channels.map((channel) =>
+          channel.members.length > 1 ? (
+            <div
+              className="cx-desk-group"
+              key={channel.leader.id}
+              data-current={channel.leader.id === mine?.leader.id || undefined}
+            >
+              <span className="cx-desk-group-lbl mono">
+                group
+                <i>playing together</i>
+              </span>
+              <div className="cx-desk-group-row">
+                {channel.members.map((member) => {
+                  const role = member.id === channel.leader.id ? 'leader' : 'follower';
+                  return (
+                    <Strip
+                      key={member.id}
+                      zone={member}
+                      channel={channel}
+                      role={role}
+                      current={member.id === selectedId}
+                      phone={phone}
+                      onSelect={() => onSelect(member.id)}
+                      drag={drag}
+                      action={actionFor(channel, member, role)}
+                    />
+                  );
+                })}
+                <Master channel={channel} phone={phone} onUngroup={() => ungroup(channel)} />
+              </div>
+            </div>
+          ) : (
+            <Strip
+              key={channel.leader.id}
+              zone={channel.leader}
+              channel={channel}
+              role="solo"
+              current={channel.leader.id === selectedId}
+              phone={phone}
+              onSelect={() => onSelect(channel.leader.id)}
+              drag={drag}
+              action={actionFor(channel, channel.leader, 'solo')}
             />
-          ))}
+          ),
+        )}
+
+        {/* Said once, where the empty desk space is, and only while there is something to drag. */}
+        {channels.length > 1 && !phone && (
+          <div className="cx-desk-hint mono">drag a room onto another to group them</div>
+        )}
+      </div>
+
+      {/*
+       * Alignment, for a group: one row per member with the output delay. Behind a word, because it
+       * is the one thing here you set once and then leave alone, and open it is a row of sliders under
+       * the faders.
+       */}
+      {mine && mine.members.length > 1 && (
+        <>
+          <div className="cx-hsec-head cx-desk-head">
+            <span className="cx-hsec-lbl mono">line them up</span>
+            <span className="cx-hsec-rule" />
+            <button type="button" className="cx-hsec-right mono cx-desk-toggle" onClick={() => setAlignOpen((open) => !open)}>
+              {alignOpen ? 'hide' : 'show'}
+            </button>
+          </div>
+          {alignOpen && (
+            <>
+              <ul className="cx-align">
+                {mine.members.map((member) => (
+                  <AlignRow key={member.id} zone={member} leader={member.id === mine.leader.id} />
+                ))}
+              </ul>
+              <p className="cx-align-note">
+                Stand where the rooms are equally far away, then raise the one that sounds late.
+              </p>
+            </>
+          )}
         </>
       )}
 
-      {/*
-       * Scenes, in the sheet that is about the house — because a scene *is* a house decision:
-       * these rooms, this music, these volumes, saved as one word and recalled as one press.
-       *
-       * `save this moment` sits in the head the way `ungroup` does above: it acts on what the
-       * sheet already shows rather than opening a builder. There is nothing to configure — the
-       * moment is the configuration — which is what keeps a scene honest: if it can be heard,
-       * it can be saved. Absent entirely when there is nothing replayable and nothing saved.
-       */}
       {(scenes.length > 0 || sceneable(leader)) && (
         <>
-          <div className="cx-sec-head cx-rooms-head">
-            <span className="cx-sec-lbl mono">scenes</span>
-            <span className="cx-sec-rule" />
+          <div className="cx-hsec-head cx-desk-head">
+            <span className="cx-hsec-lbl mono">scenes</span>
+            <span className="cx-hsec-rule" />
             {sceneable(leader) && (
-              <button type="button" className="mono cx-disband" onClick={saveScene}>
+              <button type="button" className="cx-hsec-right mono cx-desk-toggle" onClick={saveScene}>
                 save this moment
               </button>
             )}
           </div>
-
-          {scenes.map((scene) => {
-            const cover = itemCoverCss(scene.coverUrl);
-            return (
-              <div className="cx-scene" key={scene.id}>
-                <span className="cx-scene-art" style={{ backgroundImage: cover }} data-empty={!cover || undefined}>
-                  {!cover && <EmptyArtGlyph size={15} />}
-                </span>
-                <span className="cx-scene-name">{scene.name}</span>
-                <span className="cx-scene-sub mono">
-                  {[scene.what, scene.rooms.map((room) => room.name).join(' + ')]
-                    .filter(Boolean)
-                    .join(' · ')}
-                </span>
-                <span className="cx-scene-act">
-                  {/* The one word with a consequence carries the accent, as everywhere in this sheet. */}
-                  <button
-                    type="button"
-                    className="cx-room-link mono"
-                    data-accent
-                    onClick={() =>
-                      void recall(scene).catch(() =>
-                        setRejected(['That scene did not start — a room in it may have gone.']),
-                      )
-                    }
-                  >
-                    play
-                  </button>
-                  <button type="button" className="cx-room-link mono" onClick={() => forget(scene.id)}>
-                    forget
-                  </button>
-                </span>
-              </div>
-            );
-          })}
+          {scenes.length > 0 && (
+            <div className="cx-desk-scenes">
+              {scenes.map((scene) => {
+                const cover = itemCoverCss(scene.coverUrl);
+                return (
+                  <div className="cx-desk-scene" key={scene.id}>
+                    <button
+                      type="button"
+                      className="cx-desk-scene-hit"
+                      onClick={() =>
+                        void recall(scene).catch(() =>
+                          setRejected(['That scene did not start — a room in it may have gone.']),
+                        )
+                      }
+                      title={`Play ${scene.name}`}
+                    >
+                      <span className="cx-desk-scene-art" style={{ backgroundImage: cover }} data-empty={!cover || undefined}>
+                        {!cover && <EmptyArtGlyph size={13} />}
+                      </span>
+                      <span className="cx-desk-scene-txt">
+                        <span className="cx-desk-scene-name mono">{scene.name}</span>
+                        <span className="cx-desk-scene-sub">
+                          {[scene.what, scene.rooms.map((room) => room.name).join(' + ')].filter(Boolean).join(' · ')}
+                        </span>
+                      </span>
+                    </button>
+                    <button type="button" className="cx-desk-word mono" onClick={() => forget(scene.id)}>
+                      forget
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </>
       )}
 

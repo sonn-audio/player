@@ -42,7 +42,7 @@ export type DragPayload = {
 };
 
 /** Where a drag can land: the wall's big panel, or one of its slivers. */
-export type DropKind = 'room' | 'wall';
+export type DropKind = 'room' | 'wall' | 'desk';
 
 export type RoomDrag = {
   /** What is in the hand right now, with the pointer's position — null when nothing is. */
@@ -61,7 +61,8 @@ function targetAt(x: number, y: number): { zoneId: number; kind: DropKind } | nu
     return null;
   }
   const zoneId = Number(element.dataset.roomDrop);
-  const kind = element.dataset.roomDropKind === 'wall' ? 'wall' : 'room';
+  const raw = element.dataset.roomDropKind;
+  const kind: DropKind = raw === 'wall' ? 'wall' : raw === 'desk' ? 'desk' : 'room';
   return Number.isFinite(zoneId) ? { zoneId, kind } : null;
 }
 
@@ -70,7 +71,9 @@ function legal(payload: DragPayload, target: { zoneId: number; kind: DropKind })
   if (target.zoneId === payload.zoneId) {
     return false;
   }
-  return payload.kind === 'record' ? target.kind === 'room' : target.kind === 'wall';
+  // A record lands on a room; a room lands on the stage (joins the room you are in) or on another
+  // strip of the desk (joins that strip's group).
+  return payload.kind === 'record' ? target.kind === 'room' : target.kind === 'wall' || target.kind === 'desk';
 }
 
 export function useRoomDrag(

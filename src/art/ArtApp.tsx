@@ -36,7 +36,7 @@ import { useEdges, useEscape } from '@/art/useEdges';
 import { QueueSheet, QueueTabs, type QueueTab } from '@/art/Rail';
 import { Crossfade } from '@/art/Crossfade';
 import { Browse, MiniBar, Sources, type BrowseNode } from '@/art/Browse';
-import { channelsOf, leaderOf, useCur } from '@/art/useCur';
+import { channelsOf, leaderOf, useCur, type Channel } from '@/art/useCur';
 import { useFavorites, useQueue, useRecents } from '@/art/useCollections';
 import { accentOf, artKeyOf } from '@/art/accent';
 import { useClock, useIdle } from '@/art/useIdle';
@@ -331,12 +331,18 @@ export function ArtApp() {
         .catch(() => setDropSaid('that room would not take it'));
       return;
     }
-    const leader = leaderOf(zone, zones);
-    if (!leader) {
+    /* On the desk a strip dropped on a strip joins *that* strip's group; on the stage a room dropped on
+       the wall joins the room you are in. Either way the head of the list is the room whose music
+       continues, which is what dragging *into* it means. */
+    const host =
+      target.kind === 'desk'
+        ? (zones.find((candidate) => candidate.id === target.zoneId) ?? null)
+        : zone;
+    const leader = leaderOf(host, zones);
+    if (!leader || leader.id === leaderOf(zones.find((c) => c.id === payload.zoneId) ?? null, zones)?.id) {
       return;
     }
-    /* `members` already leads with the leader — see `ApiGroup`. The room you are in stays at the head,
-       so its music is the one that continues, which is what dragging *into* it means. */
+    /* `members` already leads with the leader — see `ApiGroup`. */
     const members = leader.group?.members ?? [leader.id];
     void api
       .setGroup(leader.id, [...members, payload.zoneId])
@@ -842,8 +848,15 @@ export function ArtApp() {
       )}
 
       {/* --- sheets --- */}
-      <Sheet open={sheet === 'rooms'} title="Rooms" onClose={() => setSheet(null)} wide>
-        <RoomsSheet zones={zones} selectedId={zoneId} onSelect={select} />
+      <Sheet
+        open={sheet === 'rooms'}
+        title="Rooms"
+        onClose={() => setSheet(null)}
+        wide
+        desk
+        aside={<span className="cx-sheet-tab-static mono">{houseCount(channels)}</span>}
+      >
+        <RoomsSheet zones={zones} channels={channels} selectedId={zoneId} phone={phone} onSelect={select} drag={drag} />
       </Sheet>
 
       {/*
@@ -958,6 +971,13 @@ export function ArtApp() {
   );
 }
 
+/** `3 rooms · 1 group` — the desk's one fact, for the sheet's head. */
+function houseCount(channels: Channel[]): string {
+  const rooms = channels.reduce((sum, channel) => sum + channel.members.length, 0);
+  const groups = channels.filter((channel) => channel.members.length > 1).length;
+  return `${rooms} room${rooms === 1 ? '' : 's'}${groups ? ` · ${groups} group${groups === 1 ? '' : 's'}` : ''}`;
+}
+
 function NavTab({
   label,
   on,
@@ -994,6 +1014,7 @@ function Sheet({
   title,
   onClose,
   wide = false,
+  desk = false,
   aside,
   children,
 }: {
@@ -1001,6 +1022,8 @@ function Sheet({
   title: string;
   onClose: () => void;
   wide?: boolean;
+  /** The desk needs the width of a row of strips — see `.cx-sheet[data-desk]`. */
+  desk?: boolean;
   aside?: React.ReactNode;
   children: React.ReactNode;
 }) {
@@ -1024,6 +1047,7 @@ function Sheet({
         className="cx-sheet"
         data-open={open || undefined}
         data-wide={wide || undefined}
+        data-desk={desk || undefined}
         role="dialog"
         aria-label={title}
         aria-hidden={!open}

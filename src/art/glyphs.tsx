@@ -115,6 +115,15 @@ export function SpeakerGlyph({ size = 16, waves = false, className }: GlyphProps
   );
 }
 
+export function PowerGlyph({ size = 16, className }: GlyphProps) {
+  return (
+    <Svg size={size} className={className}>
+      <path {...stroke} d="M12 3v8" />
+      <path {...stroke} d="M6.3 6.3a8 8 0 1 0 11.4 0" />
+    </Svg>
+  );
+}
+
 export function ChevronGlyph({ size = 16, className }: GlyphProps) {
   return (
     <Svg size={size} className={className}>

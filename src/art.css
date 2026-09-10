@@ -1025,7 +1025,7 @@
  */
 .cx-hand {
   position: fixed;
-  z-index: 90;
+  z-index: 200;
   width: 132px;
   height: 132px;
   margin: -66px 0 0 -66px;
@@ -8696,4 +8696,505 @@
   .cx-np-foot {
     padding-top: 10px;
   }
+}
+
+/* ==========================================================================================
+ * The desk: rooms as channel strips, groups as blocks. See `Channels.tsx`.
+ * ========================================================================================== */
+
+@media (min-width: 980px) {
+  .cx-sheet[data-desk] {
+    width: min(1080px, calc(100% - 48px));
+  }
+}
+
+.cx-desk {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.cx-desk-head {
+  margin-top: 10px;
+}
+
+.cx-desk-head:first-child {
+  margin-top: 0;
+}
+
+.cx-desk-toggle {
+  color: var(--t5);
+  transition: color 0.18s;
+}
+
+.cx-desk-toggle:hover {
+  color: var(--t1);
+}
+
+.cx-desk-row {
+  display: flex;
+  align-items: stretch;
+  gap: 24px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding-bottom: 4px;
+}
+
+.cx-desk-row::-webkit-scrollbar {
+  display: none;
+}
+
+/* --- a strip --------------------------------------------------------------------------------- */
+
+.cx-desk-strip {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  flex: none;
+  width: 176px;
+  padding: 22px 12px 16px;
+  border-radius: 6px;
+  transition:
+    background 0.25s var(--cx-ease),
+    box-shadow 0.25s var(--cx-ease);
+}
+
+.cx-desk-strip[data-current] {
+  background: rgb(255 255 255 / 3%);
+}
+
+.cx-desk-strip[data-hot] {
+  box-shadow: inset 0 0 0 1px var(--hair);
+}
+
+.cx-desk-strip[data-over] {
+  background: rgb(255 255 255 / 8%);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--g) 60%, transparent);
+}
+
+.cx-desk-hit {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  min-width: 0;
+  cursor: grab;
+  text-align: center;
+}
+
+.cx-desk-cov {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 72px;
+  height: 72px;
+  border-radius: 3px;
+  background-color: rgb(255 255 255 / 4%);
+  background-position: center;
+  background-size: cover;
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 10%);
+  color: var(--t7);
+  transition:
+    opacity 0.3s var(--cx-ease),
+    filter 0.3s var(--cx-ease),
+    box-shadow 0.3s var(--cx-ease);
+}
+
+.cx-desk-strip[data-on] .cx-desk-cov {
+  box-shadow:
+    inset 0 0 0 1px rgb(255 255 255 / 10%),
+    0 16px 40px -14px color-mix(in srgb, var(--g) 55%, transparent);
+}
+
+.cx-desk-strip[data-quiet] .cx-desk-cov:not([data-empty]),
+.cx-desk-strip[data-role='follower'] .cx-desk-cov {
+  opacity: 0.45;
+  filter: saturate(0.6);
+}
+
+.cx-desk-txt {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  width: 100%;
+  min-width: 0;
+}
+
+.cx-desk-name {
+  max-width: 100%;
+  overflow: hidden;
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  color: var(--t5);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cx-desk-strip[data-on] .cx-desk-name,
+.cx-desk-strip[data-current] .cx-desk-name {
+  color: var(--t2);
+}
+
+.cx-desk-line {
+  max-width: 100%;
+  overflow: hidden;
+  font-size: 12px;
+  color: var(--t6);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cx-desk-strip[data-quiet] .cx-desk-line {
+  color: var(--t7);
+}
+
+/* --- the fader ------------------------------------------------------------------------------- */
+
+.cx-desk-fader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  color: var(--t6);
+}
+
+.cx-desk-fader-val {
+  min-width: 2ch;
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  color: var(--t2);
+  text-align: center;
+  transition: color 0.2s;
+}
+
+.cx-desk-fader[data-muted] .cx-desk-fader-val {
+  color: var(--t7);
+}
+
+.cx-desk-fader-rail {
+  position: relative;
+  width: 2px;
+  height: 160px;
+  border-radius: 2px;
+  background: var(--track);
+  cursor: pointer;
+  touch-action: none;
+}
+
+/* A wider hit area than a 2px line: the rail's box is what the pointer is measured against. */
+.cx-desk-fader-rail::before {
+  content: '';
+  position: absolute;
+  inset: -8px -18px;
+}
+
+.cx-desk-fader-fill {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: var(--pct);
+  border-radius: 2px;
+  background: var(--t3);
+  transition: background 0.3s;
+}
+
+.cx-desk-fader[data-lit] .cx-desk-fader-fill {
+  background: var(--g);
+}
+
+.cx-desk-fader[data-muted] .cx-desk-fader-fill {
+  background: var(--t7);
+}
+
+.cx-desk-fader-knob {
+  position: absolute;
+  left: 50%;
+  bottom: var(--pct);
+  width: 14px;
+  height: 14px;
+  margin: 0 0 -7px -7px;
+  border-radius: 50%;
+  background: var(--t1);
+  box-shadow: 0 0 0 3px var(--cx-surface);
+  transition: scale 0.18s var(--cx-ease);
+}
+
+.cx-desk-fader[data-active] .cx-desk-fader-knob {
+  scale: 1.25;
+}
+
+.cx-desk-fader[data-muted] .cx-desk-fader-knob {
+  background: var(--t6);
+}
+
+.cx-desk-foot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 18px;
+}
+
+.cx-desk-word {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 9.5px;
+  letter-spacing: 0.2em;
+  color: var(--t6);
+  transition: color 0.18s;
+}
+
+.cx-desk-word:hover {
+  color: var(--t1);
+}
+
+.cx-desk-word[data-quiet] {
+  color: var(--t8);
+}
+
+/* --- a group ----------------------------------------------------------------------------------- */
+
+.cx-desk-group {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  flex: none;
+  padding: 14px 8px 0;
+  border-radius: 8px;
+  border: 1px solid color-mix(in srgb, var(--g) 32%, transparent);
+  background: color-mix(in srgb, var(--g) 5%, transparent);
+}
+
+.cx-desk-group-lbl {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 14px;
+  font-size: 9.5px;
+  letter-spacing: 0.24em;
+  color: var(--g);
+}
+
+.cx-desk-group-lbl i {
+  font-style: normal;
+  color: var(--t6);
+}
+
+.cx-desk-group-row {
+  display: flex;
+  align-items: stretch;
+}
+
+.cx-desk-group-row > .cx-desk-strip + .cx-desk-strip {
+  box-shadow: inset 1px 0 0 var(--hair);
+  border-radius: 0;
+}
+
+.cx-desk-master {
+  width: 160px;
+}
+
+.cx-desk-ring {
+  display: grid;
+  place-items: center;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1.5px rgb(223 226 230 / 90%);
+  color: var(--t1);
+  transition: transform 0.15s var(--cx-ease);
+}
+
+.cx-desk-ring:active {
+  transform: scale(0.94);
+}
+
+.cx-desk-hint {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1 1 180px;
+  min-width: 160px;
+  padding: 0 20px;
+  border: 1px dashed var(--hair-strong, rgb(255 255 255 / 14%));
+  border-radius: 6px;
+  font-size: 9.5px;
+  letter-spacing: 0.2em;
+  color: var(--t7);
+  text-align: center;
+}
+
+/* --- scenes ------------------------------------------------------------------------------------ */
+
+.cx-desk-scenes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.cx-desk-scene {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  height: 44px;
+  padding: 0 14px 0 6px;
+  border-radius: 22px;
+  border: 1px solid rgb(255 255 255 / 14%);
+}
+
+.cx-desk-scene-hit {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  text-align: left;
+}
+
+.cx-desk-scene-art {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: rgb(255 255 255 / 5%);
+  background-position: center;
+  background-size: cover;
+  color: var(--t7);
+}
+
+.cx-desk-scene-txt {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.cx-desk-scene-name {
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  color: var(--t3);
+  white-space: nowrap;
+}
+
+.cx-desk-scene-sub {
+  max-width: 260px;
+  overflow: hidden;
+  font-size: 11px;
+  color: var(--t6);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* --- lying down: the phone ------------------------------------------------------------------- */
+
+.cx-desk[data-phone] .cx-desk-row {
+  flex-direction: column;
+  gap: 4px;
+  overflow: visible;
+}
+
+.cx-desk[data-phone] .cx-desk-strip {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-areas:
+    'hit hit foot'
+    'fader fader fader';
+  align-items: center;
+  gap: 10px 14px;
+  width: auto;
+  padding: 12px 8px;
+}
+
+.cx-desk[data-phone] .cx-desk-hit {
+  grid-area: hit;
+  flex-direction: row;
+  gap: 14px;
+  text-align: left;
+}
+
+.cx-desk[data-phone] .cx-desk-cov {
+  width: 48px;
+  height: 48px;
+}
+
+.cx-desk[data-phone] .cx-desk-txt {
+  align-items: flex-start;
+}
+
+.cx-desk[data-phone] .cx-desk-foot {
+  grid-area: foot;
+  justify-content: flex-end;
+}
+
+.cx-desk[data-phone] .cx-desk-fader {
+  grid-area: fader;
+  flex-direction: row-reverse;
+  gap: 14px;
+  width: 100%;
+}
+
+.cx-desk[data-phone] .cx-desk-fader-rail {
+  flex: 1;
+  width: auto;
+  height: 2px;
+}
+
+.cx-desk[data-phone] .cx-desk-fader-rail::before {
+  inset: -14px 0;
+}
+
+.cx-desk[data-phone] .cx-desk-fader-fill {
+  inset: 0 auto 0 0;
+  width: var(--pct);
+  height: auto;
+}
+
+.cx-desk[data-phone] .cx-desk-fader-knob {
+  top: 50%;
+  bottom: auto;
+  left: var(--pct);
+  margin: -7px 0 0 -7px;
+}
+
+.cx-desk[data-phone] .cx-desk-fader-val {
+  text-align: right;
+}
+
+.cx-desk[data-phone] .cx-desk-group {
+  padding: 10px 8px 4px;
+}
+
+.cx-desk[data-phone] .cx-desk-group-row {
+  flex-direction: column;
+}
+
+.cx-desk[data-phone] .cx-desk-group-row > .cx-desk-strip + .cx-desk-strip {
+  box-shadow: inset 0 1px 0 var(--hair);
+}
+
+.cx-desk[data-phone] .cx-desk-master {
+  width: auto;
+  grid-template-areas:
+    'ring hit foot'
+    'fader fader fader';
+}
+
+.cx-desk[data-phone] .cx-desk-master .cx-desk-ring {
+  grid-area: ring;
+  width: 44px;
+  height: 44px;
+}
+
+.cx-desk[data-phone] .cx-desk-master .cx-desk-txt {
+  grid-area: hit;
+}
+
+.cx-desk[data-phone] .cx-desk-scene-sub {
+  max-width: 180px;
 }
