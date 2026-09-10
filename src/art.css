@@ -10611,3 +10611,24 @@
     font-size: 12px;
   }
 }
+
+/* Below the wide layout the contents row follows the record, not precedes it. */
+@media (max-width: 1179px) {
+  .cx-browse-body[data-toc] {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .cx-browse-body[data-toc] > .cx-toc {
+    order: 1;
+    margin-top: -6px;
+  }
+
+  .cx-browse-body[data-toc] > .cx-bill {
+    order: 0;
+  }
+
+  .cx-browse-body[data-toc] > *:not(.cx-toc):not(.cx-bill) {
+    order: 2;
+  }
+}
