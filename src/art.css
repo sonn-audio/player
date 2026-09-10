@@ -9441,3 +9441,314 @@
     display: none;
   }
 }
+
+/* ==========================================================================================
+ * Third pass: the level meter in segments, the queue in sections, the billboard unboxed.
+ * ========================================================================================== */
+
+/* --- the level meter: one column of 4px segments per channel, the held peak a lit segment --- */
+
+.cx-meter {
+  --cell: repeating-linear-gradient(to top, #000 0 4px, transparent 4px 7px);
+}
+
+.cx-meter-bars {
+  gap: 14px;
+}
+
+.cx-meter-column {
+  max-width: 96px;
+}
+
+.cx-meter-side {
+  display: none;
+}
+
+.cx-meter-bar::before {
+  background: rgb(255 255 255 / 5%);
+}
+
+.cx-meter-fill {
+  background: rgb(74 222 128 / 55%);
+  clip-path: inset(calc(100% - var(--lvl, 0%)) 0 0 0);
+}
+
+.cx-meter-held {
+  top: auto;
+  bottom: var(--held, 0%);
+  height: 4px;
+  background: var(--accent);
+  box-shadow: none;
+}
+
+.cx-meter-held[data-tone='warm'] {
+  background: #e7b75a;
+}
+
+.cx-meter-held[data-tone='hot'] {
+  background: #e4584f;
+}
+
+/* Lying down, on a phone: L and R as two rows, the segments running to the right. */
+@media (max-width: 979px) {
+  .cx-meter {
+    --cell: repeating-linear-gradient(to right, #000 0 8px, transparent 8px 11px);
+    flex-direction: column;
+    min-height: 0;
+    padding-top: 0;
+  }
+
+  .cx-meter-scale {
+    display: none;
+  }
+
+  .cx-meter-bars {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .cx-meter-column {
+    flex: none;
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
+    max-width: none;
+  }
+
+  .cx-meter-side {
+    display: block;
+    width: 10px;
+    font-size: 9px;
+    color: var(--t6);
+  }
+
+  .cx-meter-bar {
+    flex: 1;
+    height: 12px;
+  }
+
+  .cx-meter-fill {
+    clip-path: inset(0 calc(100% - var(--lvl, 0%)) 0 0);
+  }
+
+  .cx-meter-held {
+    top: 0;
+    bottom: 0;
+    left: var(--held, 0%);
+    right: auto;
+    width: 4px;
+    height: auto;
+  }
+
+  .cx-meter-read {
+    width: 42px;
+    text-align: right;
+  }
+}
+
+/* --- the queue in sections --- */
+
+.cx-qsheet {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.cx-qnow {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-areas:
+    'cov txt ring'
+    'bar bar bar';
+  align-items: center;
+  gap: 8px 16px;
+  padding-bottom: 6px;
+}
+
+.cx-qnow-cov {
+  grid-area: cov;
+  width: 72px;
+  height: 72px;
+  border-radius: 3px;
+  background-color: var(--cx-cover);
+  background-position: center;
+  background-size: cover;
+  box-shadow:
+    0 16px 40px -16px rgb(0 0 0 / 85%),
+    inset 0 0 0 1px rgb(255 255 255 / 10%);
+}
+
+.cx-qnow-txt {
+  grid-area: txt;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+.cx-qnow-lbl {
+  font-size: 9.5px;
+  letter-spacing: 0.22em;
+  color: var(--g);
+}
+
+.cx-qnow-title {
+  overflow: hidden;
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--t1);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cx-qnow-sub {
+  overflow: hidden;
+  font-size: 13px;
+  color: var(--t5);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cx-qnow-ring {
+  grid-area: ring;
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1.5px rgb(223 226 230 / 90%);
+  color: var(--t1);
+  transition: transform 0.15s var(--cx-ease);
+}
+
+.cx-qnow-ring:active {
+  transform: scale(0.94);
+}
+
+.cx-qnow-bar {
+  grid-area: bar;
+  display: block;
+}
+
+.cx-qnow-bar .cx-times {
+  margin-top: 8px;
+  font-size: 10.5px;
+}
+
+.cx-qsec {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-top: 8px;
+}
+
+.cx-qsec-lbl {
+  flex: none;
+  font-size: 10px;
+  letter-spacing: 0.26em;
+  color: var(--t6);
+}
+
+.cx-qsec-rule {
+  flex: 1;
+  height: 1px;
+  background: var(--hair);
+}
+
+.cx-qsec-act {
+  flex: none;
+  font-size: 9.5px;
+  letter-spacing: 0.2em;
+  color: var(--t6);
+  transition: color 0.18s;
+}
+
+.cx-qsec-act:hover,
+.cx-qsec-act[data-on] {
+  color: var(--t2);
+}
+
+.cx-qadd {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  height: 56px;
+  border: 1px dashed rgb(255 255 255 / 14%);
+  border-radius: 6px;
+  font-size: 9.5px;
+  letter-spacing: 0.2em;
+  color: var(--t6);
+  transition:
+    color 0.18s,
+    border-color 0.18s;
+}
+
+.cx-qadd:hover {
+  color: var(--t2);
+  border-color: rgb(255 255 255 / 28%);
+}
+
+.cx-qplayed > summary {
+  cursor: pointer;
+  list-style: none;
+}
+
+.cx-qplayed > summary::-webkit-details-marker {
+  display: none;
+}
+
+.cx-qplayed[open] > summary .cx-qsec-act {
+  color: var(--t3);
+}
+
+.cx-qearlier {
+  opacity: 0.7;
+}
+
+/* --- the billboard: the record's colour, not a grey band --- */
+
+.cx-bill {
+  padding-top: clamp(18px, 3vh, 36px);
+  border-bottom: 1px solid var(--hair);
+}
+
+.cx-bill-wall {
+  inset: -30% -10%;
+  filter: blur(110px) brightness(0.55) saturate(1.3);
+  opacity: 0.55;
+  mask-image: radial-gradient(60% 90% at 22% 50%, #000 20%, transparent 80%);
+}
+
+.cx-bill-scrim {
+  background: linear-gradient(180deg, rgb(10 10 12 / 20%), rgb(10 10 12 / 10%) 40%, var(--cx-bg));
+}
+
+.cx-bill-cover {
+  box-shadow:
+    0 30px 70px -30px rgb(0 0 0 / 95%),
+    inset 0 0 0 1px rgb(255 255 255 / 10%);
+}
+
+.cx-bill-actions {
+  gap: 12px;
+  align-items: center;
+}
+
+.cx-bill-open {
+  display: inline-flex;
+  align-items: center;
+  height: 40px;
+  padding: 0 18px;
+  border: 1px solid rgb(255 255 255 / 14%);
+  border-radius: 20px;
+  letter-spacing: 0.22em;
+  color: var(--t3);
+}
+
+.cx-bill-open:hover {
+  border-color: rgb(255 255 255 / 28%);
+  color: var(--t1);
+}

@@ -13,7 +13,10 @@
  */
 import { useApi } from '@/state/ServerContext';
 import { itemCoverCss } from '@/art/cover';
-import { Bars, CloseGlyph } from '@/art/glyphs';
+import { Bars, CloseGlyph, PauseGlyph, PlayGlyph, PlusGlyph } from '@/art/glyphs';
+import { Timeline } from '@/art/Stage';
+import { zoneCoverCss } from '@/art/cover';
+import type { Cur } from '@/art/useCur';
 import { entryTitleOf, formatTime } from '@/lib/format';
 import type { ApiQueue, ApiRecentItem, ApiZoneState } from '@/api/types';
 
@@ -101,130 +104,157 @@ function oneRecord(items: ApiQueue['items']): boolean {
   return first !== '' && items.every((item) => key(item) === first);
 }
 
-export function QueueList({ zone, queue }: { zone: ApiZoneState; queue: ApiQueue }) {
-  const api = useApi();
-
-  if (queue.items.length === 0) {
-    return <p className="cx-rail-empty">Nothing queued. Play an album and it shows up here.</p>;
-  }
-
-  const numbered = oneRecord(queue.items);
-
+/** A section's head inside the sheet: the label, the hairline, and the words on the right. */
+function Sec({ label, children }: { label: string; children?: React.ReactNode }) {
   return (
-    <div className="cx-rail-sec">
-      {/* One line naming the record, since the rows no longer repeat it fourteen times. */}
-      {numbered && (queue.items[0]!.album || queue.items[0]!.artist) && (
-        <p className="cx-qrun mono">
-          {[queue.items[0]!.album, queue.items[0]!.artist].filter(Boolean).join(' · ')}
-        </p>
-      )}
-
-      {queue.items.map((item, index) => (
-        <Row
-          key={item.id}
-          cover={item.coverUrl}
-          index={index + 1}
-          numbered={numbered}
-          title={entryTitleOf(item)}
-          // On a single record the artist and album are the heading above the list, so repeating them
-          // under every title is the same duplication the thumbnails were.
-          sub={numbered ? '' : [item.artist, item.album].filter(Boolean).join(' — ')}
-          {...(item.duration > 0 ? { meta: formatTime(item.duration) } : {})}
-          current={queue.currentIndex === index}
-          past={queue.currentIndex !== null && index < queue.currentIndex}
-          onPlay={() => void api.queuePlay(zone.id, item.id)}
-          onRemove={() => void api.queueRemove(zone.id, item.id)}
-        />
-      ))}
-    </div>
-  );
-}
-
-export function RecentsList({ zone, recents }: { zone: ApiZoneState; recents: ApiRecentItem[] }) {
-  const api = useApi();
-
-  if (recents.length === 0) {
-    return <p className="cx-rail-empty">Nothing played here yet.</p>;
-  }
-
-  return (
-    <div className="cx-rail-sec">
-      {recents.map((item, index) => (
-        <Row
-          // `source` is the opaque id and the only stable handle a recent has; the index breaks the
-          // tie for the rare duplicate.
-          key={`${item.source}-${index}`}
-          cover={item.coverUrl}
-          title={item.title || item.album || item.source}
-          sub={[item.artist, item.album].filter(Boolean).join(' — ')}
-          onPlay={() => void api.play(zone.id, item.source)}
-        />
-      ))}
-    </div>
-  );
-}
-
-export type QueueTab = 'queue' | 'recents';
-
-/**
- * The two tabs, for the sheet's head to carry.
- *
- * They used to be a second header row under the first, which put two bands of chrome above a list of
- * twelve things. Now they sit on the far side of the head's rule, and the head's own title is the room
- * the queue belongs to — which is the fact the old two-row arrangement never actually stated.
- *
- * The queue tab is absent for a source that has no queue — a station, a line-in — because a queue
- * reading "1 of 1" for a stream that has been playing for six hours is worse than no tab. Recents is
- * always there, since a room that has played anything has recents.
- */
-export function QueueTabs({
-  hasQueue,
-  active,
-  total,
-  onPick,
-}: {
-  hasQueue: boolean;
-  active: QueueTab;
-  total: number;
-  onPick: (tab: QueueTab) => void;
-}) {
-  if (!hasQueue) {
-    return <span className="cx-sheet-tabs mono cx-sheet-tab-static">recent</span>;
-  }
-  return (
-    <div className="cx-sheet-tabs mono">
-      <button type="button" data-on={active === 'queue' || undefined} onClick={() => onPick('queue')}>
-        next{total > 0 ? ` ${total}` : ''}
-      </button>
-      <button type="button" data-on={active === 'recents' || undefined} onClick={() => onPick('recents')}>
-        recent
-      </button>
+    <div className="cx-qsec">
+      <span className="cx-qsec-lbl mono">{label}</span>
+      <span className="cx-qsec-rule" aria-hidden="true" />
+      {children}
     </div>
   );
 }
 
 /**
- * The sheet's body: what is coming, or what has been.
+ * The queue, as the concept has it: what is on, then what is next, then what was.
  *
- * One list shape, two sources. This stayed a component rather than two calls at the sheet's site because
- * dropping the permanent rail nearly took recents with it — the rail's second tab was the only way to
- * them on a desk, outside the quiet-house welcome screen — and keeping the pair together is what keeps
- * that capability from being lost again.
+ * It was two tabs — `next` and `recent` — under a head that named the room, and the record playing was
+ * the first row of the first tab, marked with bars. Three things wrong with that at once: the record you
+ * are listening to is not an item in a list, the past is not an alternative to the future, and a tab is a
+ * choice you make before you can see what you are choosing between. So: the record at the top with its
+ * own transport and timeline, `up next` as a section with the two things you do to a queue at its head
+ * (shuffle, clear), the tracks already played folded away, and `earlier` — what this room played
+ * before this queue — as the last section. Nothing to choose; it reads top to bottom.
  */
 export function QueueSheet({
   zone,
+  cur,
   queue,
   recents,
-  tab,
+  onBrowse,
 }: {
   zone: ApiZoneState;
+  cur: Cur;
   queue: ApiQueue;
   recents: ApiRecentItem[];
-  tab: QueueTab;
+  /** The way to the catalogue, from an empty queue. */
+  onBrowse: () => void;
 }) {
-  return tab === 'queue' ? (
-    <QueueList zone={zone} queue={queue} />
-  ) : (
-    <RecentsList zone={zone} recents={recents} />
+  const api = useApi();
+  const at = queue.currentIndex ?? -1;
+  const ahead = at >= 0 ? queue.items.slice(at + 1) : queue.items;
+  const numbered = oneRecord(queue.items);
+  const toggle = (): void => {
+    void (cur.isPlaying ? api.pause(zone.id) : api.play(zone.id));
+  };
+
+  return (
+    <div className="cx-qsheet">
+      {cur.hasTrack && (
+        <div className="cx-qnow">
+          <span className="cx-qnow-cov" style={{ backgroundImage: zoneCoverCss(api, cur.leader, 160) }} />
+          <span className="cx-qnow-txt">
+            <span className="cx-qnow-lbl mono">now playing</span>
+            <span className="cx-qnow-title">{cur.title}</span>
+            {cur.artist && <span className="cx-qnow-sub">{cur.artist}</span>}
+          </span>
+          <button type="button" className="cx-qnow-ring" aria-label={cur.isPlaying ? 'Pause' : 'Play'} onClick={toggle}>
+            {cur.isPlaying ? <PauseGlyph size={18} /> : <PlayGlyph size={19} />}
+          </button>
+          {cur.showBar && (
+            <span className="cx-qnow-bar">
+              <Timeline cur={cur} />
+            </span>
+          )}
+        </div>
+      )}
+
+      <Sec label={ahead.length > 0 ? `up next · ${ahead.length}` : 'up next'}>
+        {ahead.length > 0 && (
+          <>
+            <button
+              type="button"
+              className="cx-qsec-act mono"
+              data-on={cur.shuffle || undefined}
+              onClick={() => void api.setShuffle(zone.id, !cur.shuffle)}
+            >
+              shuffle
+            </button>
+            <button type="button" className="cx-qsec-act mono" onClick={() => void api.queueClear(zone.id)}>
+              clear
+            </button>
+          </>
+        )}
+      </Sec>
+
+      {ahead.length > 0 ? (
+        <div className="cx-rail-sec">
+          {numbered && (queue.items[0]!.album || queue.items[0]!.artist) && (
+            <p className="cx-qrun mono">{[queue.items[0]!.album, queue.items[0]!.artist].filter(Boolean).join(' · ')}</p>
+          )}
+          {ahead.map((item, offset) => (
+            <Row
+              key={item.id}
+              cover={item.coverUrl}
+              index={at + offset + 2}
+              numbered={numbered}
+              title={entryTitleOf(item)}
+              sub={numbered ? '' : [item.artist, item.album].filter(Boolean).join(' — ')}
+              {...(item.duration > 0 ? { meta: formatTime(item.duration) } : {})}
+              onPlay={() => void api.queuePlay(zone.id, item.id)}
+              onRemove={() => void api.queueRemove(zone.id, item.id)}
+            />
+          ))}
+        </div>
+      ) : (
+        <button type="button" className="cx-qadd mono" onClick={onBrowse}>
+          <PlusGlyph size={14} />
+          {queue.items.length > 0 ? 'nothing after this one — add from music' : 'add from music'}
+        </button>
+      )}
+
+      {at > 0 && (
+        <details className="cx-qplayed">
+          <summary className="cx-qsec cx-qsec-toggle">
+            <span className="cx-qsec-lbl mono">played · {at}</span>
+            <span className="cx-qsec-rule" aria-hidden="true" />
+            <span className="cx-qsec-act mono">show</span>
+          </summary>
+          <div className="cx-rail-sec">
+            {queue.items.slice(0, at).map((item, index) => (
+              <Row
+                key={item.id}
+                cover={item.coverUrl}
+                index={index + 1}
+                numbered={numbered}
+                title={entryTitleOf(item)}
+                sub={numbered ? '' : [item.artist, item.album].filter(Boolean).join(' — ')}
+                {...(item.duration > 0 ? { meta: formatTime(item.duration) } : {})}
+                past
+                onPlay={() => void api.queuePlay(zone.id, item.id)}
+                onRemove={() => void api.queueRemove(zone.id, item.id)}
+              />
+            ))}
+          </div>
+        </details>
+      )}
+
+      {recents.length > 0 && (
+        <>
+          <Sec label="earlier" />
+          <div className="cx-rail-sec cx-qearlier">
+            {recents.slice(0, 8).map((item, index) => (
+              <Row
+                key={`${item.source}-${index}`}
+                cover={item.coverUrl}
+                title={item.title || item.album || item.source}
+                sub={[item.artist, item.album].filter(Boolean).join(' — ')}
+                onPlay={() => void api.play(zone.id, item.source)}
+              />
+            ))}
+          </div>
+        </>
+      )}
+    </div>
   );
 }

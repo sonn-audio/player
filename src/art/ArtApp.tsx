@@ -33,7 +33,7 @@ import { RoomsSheet } from '@/art/Channels';
 import { Wall } from '@/art/Wall';
 import { useRoomDrag } from '@/art/useRoomDrag';
 import { useEdges, useEscape } from '@/art/useEdges';
-import { QueueSheet, QueueTabs, type QueueTab } from '@/art/Rail';
+import { QueueSheet } from '@/art/Rail';
 import { Crossfade } from '@/art/Crossfade';
 import { Browse, MiniBar, Sources, type BrowseNode } from '@/art/Browse';
 import { channelsOf, leaderOf, useCur, type Channel } from '@/art/useCur';
@@ -127,7 +127,6 @@ export function ArtApp() {
    */
   const [playerOpen, setPlayerOpen] = useState(false);
   const [sheet, setSheet] = useState<Sheet>(null);
-  const [queueTab, setQueueTab] = useState<QueueTab>('queue');
   const [services, setServices] = useState<ContentService[]>([]);
 
   const cur = useCur(zone, zones);
@@ -863,21 +862,28 @@ export function ArtApp() {
         <RoomsSheet zones={zones} channels={channels} selectedId={zoneId} phone={phone} onSelect={select} drag={drag} />
       </Sheet>
 
-      {/*
-       * The queue's head names the *room*, and the two lists are tabs beside it.
-       *
-       * The tab state lives here rather than in the sheet's body because the tabs are now in the head,
-       * and the head is the shell's — see `QueueTabs`.
-       */}
+      {/* The queue's head names the *room*; the sheet reads top to bottom — see `QueueSheet`. */}
       <Sheet
         open={sheet === 'queue'}
         title={cur.name || 'This room'}
         onClose={() => setSheet(null)}
         aside={
-          <QueueTabs hasQueue={hasQueue} active={queueTab} total={queue.total} onPick={setQueueTab} />
+          upNextTotal > 0 ? <span className="cx-sheet-tab-static mono">{upNextTotal} to come</span> : undefined
         }
       >
-        {zone && <QueueSheet zone={zone} queue={queue} recents={recents} tab={queueTab} />}
+        {zone && (
+          <QueueSheet
+            zone={zone}
+            cur={cur}
+            queue={queue}
+            recents={recents}
+            onBrowse={() => {
+              setSheet(null);
+              setPlayerOpen(false);
+              openBrowse();
+            }}
+          />
+        )}
       </Sheet>
 
       <Sheet open={sheet === 'more'} title="Player" onClose={() => setSheet(null)}>

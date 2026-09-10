@@ -328,30 +328,27 @@ export function Meter({ zoneId, active, rate }: { zoneId: number; active: boolea
       <div className="cx-meter-bars">
         {sides.map((side) => (
           <span key={side.key} className="cx-meter-column">
-            <span className="cx-meter-bar">
-            {/* The rules belong to the track, not to the fill: a scale that moved with the level
-                would be a scale measuring itself. */}
-              {/*
-               * No rules inside the column.
-               *
-               * They were drawn across the whole track and showed through the fill, which turned a
-               * block of light into a stack of slabs — and the scale beside it is already saying
-               * where every level is. The bar is one quantity and should look like one thing.
-               */}
-              <i
-                className="cx-meter-fill"
-                style={{ clipPath: `inset(${100 - height(side.level)}% 0 0 0)` }}
-              />
-            {side.held > 0 && (
-                <b
-                  className="cx-meter-held"
-                  data-tone={tone(side.held)}
-                  style={{ bottom: `${height(side.held)}%` }}
-                />
-              )}
+            {/* The side letter is drawn only where the bars lie down (the phone); standing up, the two
+                numbers under the columns name them. */}
+            <i className="cx-meter-side mono" aria-hidden="true">
+              {side.key}
+            </i>
+            <span
+              className="cx-meter-bar"
+              style={
+                {
+                  '--lvl': `${height(side.level)}%`,
+                  '--held': `${height(side.held)}%`,
+                } as React.CSSProperties
+              }
+              data-held={side.held > 0 || undefined}
+            >
+              {/* The level and the held peak are two custom properties on the bar; whether they run
+                  up or along is the stylesheet's decision, which is what lets the same meter lie down
+                  on a phone. */}
+              <i className="cx-meter-fill" />
+              {side.held > 0 && <b className="cx-meter-held" data-tone={tone(side.held)} />}
             </span>
-            {/* The figure under its own column — which side is louder is half of what a pair says,
-                and the two numbers name the columns better than a pair of letters would. */}
             <em className="cx-meter-read">{read(side.level)}</em>
           </span>
         ))}

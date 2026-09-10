@@ -115,6 +115,15 @@ export function SpeakerGlyph({ size = 16, waves = false, className }: GlyphProps
   );
 }
 
+export function PlusGlyph({ size = 16, className }: GlyphProps) {
+  return (
+    <Svg size={size} className={className}>
+      <path {...stroke} d="M12 5v14" />
+      <path {...stroke} d="M5 12h14" />
+    </Svg>
+  );
+}
+
 export function PowerGlyph({ size = 16, className }: GlyphProps) {
   return (
     <Svg size={size} className={className}>
