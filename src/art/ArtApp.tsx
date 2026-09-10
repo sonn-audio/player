@@ -50,7 +50,6 @@ import {
   MoreGlyph,
   QueueGlyph,
   RoomsGlyph,
-  SearchGlyph,
 } from '@/art/glyphs';
 import type { ContentService } from '@/api/content';
 
@@ -301,14 +300,18 @@ export function ArtApp() {
     }));
   }, [queue, cur.isLive, api, leader]);
 
-  /** The entry after the one playing, for the stage's "next" line. */
+  /** The entry after the one playing, for the canvas's one line about the future. */
   const nextUp = useMemo(() => {
     if (queue.currentIndex === null) {
       return null;
     }
     const next = queue.items[queue.currentIndex + 1];
-    return next ? { title: next.title, artist: next.artist } : null;
+    return next ? { title: next.title, artist: next.artist, cover: itemCoverCss(next.coverUrl) } : null;
   }, [queue]);
+
+  /** How many entries follow the one playing — the number the shelf's label carries. */
+  const upNextTotal =
+    queue.currentIndex === null || cur.isLive ? 0 : Math.max(0, queue.total - queue.currentIndex - 1);
 
   /*
    * The two gestures the wall invites.
@@ -478,6 +481,16 @@ export function ArtApp() {
         <span className="cx-idle-progress" style={{ width: cur.pct }} aria-hidden="true" />
       )}
 
+      {/* And the one thing about the future a glance from across the room might want: what is next.
+          Bottom-left, in the greys the clock uses, so the record stays the only bright thing. */}
+      {idle && rest === 'record' && nextUp && (
+        <span className="cx-idle-next" aria-hidden="true">
+          {nextUp.cover && <i className="cx-idle-next-cov" style={{ backgroundImage: nextUp.cover }} />}
+          <i className="cx-idle-next-lbl mono">up next</i>
+          <i className="cx-idle-next-txt">{nextUp.title}</i>
+        </span>
+      )}
+
       {/* --- desktop chrome --- */}
       {!phone && (
         <header className="cx-top">
@@ -498,29 +511,27 @@ export function ArtApp() {
            * `home` appears only when you are somewhere else. A button that takes you where you already
            * are is furniture pretending to be a control.
            */}
-          <nav className="cx-nav mono">
-            {view.kind !== 'home' && (
-              <button type="button" onClick={goHome}>
-                home
-              </button>
+          {/*
+           * Four words, at the right, where the eye ends a line.
+           *
+           * `stage` is where the record is; `music` is the catalogue; `inputs` is what is wired in;
+           * `rooms` is the desk. The one that is on screen is lit, so the bar is also the answer to
+           * "where am I". Words, not glyphs: a 10px magnifier is a door that does not say where it
+           * goes. And nothing under the bar — the hairline that ran here drew a frame around a
+           * poster, and a poster is not framed.
+           */}
+          <div className="cx-status">
+            {/* Only when the stream is down, and only ever a dot: the numbers on this screen may be stale
+                and that is worth saying; *why* is the reading's business. */}
+            {status !== 'open' && (
+              <span className="cx-stale" title="Not in touch with the house right now" />
             )}
-            {/*
-             * A word, not only a glyph.
-             *
-             * Trading eight service names for one unlabelled magnifier moved the whole catalogue behind
-             * an icon: the sources were still one press away and the bar had stopped saying so, which is
-             * the same unread-corner failure `useFace` describes for the face switch. The argument for
-             * dropping the list holds — the root *is* the list of services, and naming them twice was
-             * the problem — but a door has to be a door. So the glyph keeps its meaning and takes the
-             * word with it.
-             */}
-            <button
-              type="button"
-              className="cx-nav-browse"
-              data-on={view.kind === 'browse' || undefined}
-              onClick={() => openBrowse()}
-            >
-              <SearchGlyph size={13} />
+          </div>
+          <nav className="cx-nav mono">
+            <button type="button" data-on={(view.kind === 'home' && !idle) || undefined} onClick={goHome}>
+              stage
+            </button>
+            <button type="button" data-on={view.kind === 'browse' || undefined} onClick={() => openBrowse()}>
               music
             </button>
             <button
@@ -530,28 +541,10 @@ export function ArtApp() {
             >
               inputs
             </button>
+            <button type="button" data-on={sheet === 'rooms' || undefined} onClick={() => setSheet('rooms')}>
+              rooms{cur.grouped ? ` +${cur.groupExtra}` : ''}
+            </button>
           </nav>
-
-          {/*
-           * One control in this corner, and it is the way to the other player.
-           *
-           * It held three things: a `N PLAYING` count, the room name as a button, and a `…` for a sheet.
-           * All three were answered better somewhere else on the same screen — the dock along the bottom
-           * says which rooms are playing *and* which one you are in, the stage carries the door to
-           * grouping beside the master volume, and the sheet's one unique item was this switch. Three
-           * controls collapsing into the one that had nowhere else to be.
-           *
-           * The switch itself is not drawn here either — it belongs to the frame now (`shell/FaceSwitch`),
-           * so it cannot blink or change shape underneath the cursor that just pressed it. What is left in
-           * this corner is the one thing that is genuinely this face's own: whether its numbers are stale.
-           */}
-          <div className="cx-status">
-            {/* Only when the stream is down, and only ever a dot. The numbers on this screen may be stale
-                and that is worth saying; *why* they are stale is the other face's business. */}
-            {status !== 'open' && (
-              <span className="cx-stale" title="Not in touch with the house right now" />
-            )}
-          </div>
         </header>
       )}
 
@@ -614,6 +607,10 @@ export function ArtApp() {
                   currentLeaderId={leaderOf(zone, zones)?.id ?? null}
                   onSelect={select}
                   drag={drag}
+                  onCanvas={() => setAsked('record')}
+                  onHouse={() => setAsked('house')}
+                  canCanvas={cur.hasTrack}
+                  foot={view.kind === 'home'}
                 >
                   {view.kind === 'browse' ? (
                     <Browse
@@ -671,17 +668,14 @@ export function ArtApp() {
                     <Stage
                       cur={cur}
                       drag={drag}
-                      onCanvas={() => setAsked('record')}
-                      onHouse={() => setAsked('house')}
                       onSignal={openSignal}
                       onLeaveCanvas={() => setAsked(null)}
                       resting={idle}
                       onOpenRooms={() => setSheet('rooms')}
                       onOpenQueue={() => setSheet('queue')}
                       onBrowse={() => openBrowse()}
-                      nextUp={nextUp}
-                      queueCount={queue.total}
                       upNext={upNext}
+                      upNextTotal={upNextTotal}
                       /* What this room played last, for the one thing an idle room can honestly show:
                          the record that was on, in the dark. See `Stage`'s empty branch. */
                       lastCover={recents[0]?.coverUrl ? `url("${recents[0].coverUrl}")` : undefined}

@@ -28,6 +28,7 @@ import { useCoverAnchor } from '@/shell/coverMorph';
 import {
   ChevronGlyph,
   EmptyArtGlyph,
+  ForwardGlyph,
   HeartGlyph,
   NextGlyph,
   PauseGlyph,
@@ -207,68 +208,6 @@ function Favourite({ cur, round = false }: { cur: Cur; round?: boolean }) {
   );
 }
 
-/**
- * What is coming, as one line.
- *
- * This is all that is left of the queue on this screen, and it replaces a 240px column that held the
- * whole of it at 62% opacity, permanently, beside a 90px title. One line answers the question anyone
- * actually has of a queue while listening — *what is after this* — and pressing it opens the rest. The
- * column answered a question nobody was asking and charged the artwork a fifth of the window for it.
- */
-function NextUp({
-  next,
-  total,
-  reserve,
-  onOpen,
-}: {
-  next: { title: string; artist: string } | null;
-  /** How many entries the queue holds, so the last track still has a way into it. */
-  total: number;
-  /**
-   * Hold the line's height even with nothing to say.
-   *
-   * The queue arrives a couple of hundred milliseconds after this screen does, so without a reserved
-   * slot the whole composition re-centres the moment it lands — the sleeve visibly settles every time
-   * you open the player. True whenever the source *could* have a queue, which is known on the first
-   * frame (`!isLive`), so the reservation never appears or disappears later.
-   */
-  reserve: boolean;
-  onOpen: () => void;
-}) {
-  /*
-   * Named when there is a next track, counted when there is not.
-   *
-   * Without the second case the queue becomes unreachable on the last track of an album — which is
-   * exactly when someone wants to look at it and add something.
-   */
-  const empty = !next && total < 2;
-  if (empty && !reserve) {
-    return null;
-  }
-  return (
-    <button
-      type="button"
-      className="cx-next"
-      data-empty={empty || undefined}
-      aria-hidden={empty}
-      tabIndex={empty ? -1 : undefined}
-      onClick={onOpen}
-    >
-      <span className="cx-next-lbl mono">{next ? 'next' : 'queue'}</span>
-      <span className="cx-next-txt">
-        {next ? (
-          <>
-            {next.title}
-            {next.artist ? <i className="cx-next-artist"> {next.artist}</i> : null}
-          </>
-        ) : (
-          <i className="cx-next-artist">{total} tracks · nothing after this one</i>
-        )}
-      </span>
-    </button>
-  );
-}
-
 /** A room's volume, as a horizontal fader with a readout that appears while dragging. */
 export function VolumeRow({ cur, className }: { cur: Cur; className: string }) {
   const control = useVolumeControl(cur.zone);
@@ -324,6 +263,25 @@ export function titleStep(title: string): 1 | 2 | 3 | 4 | 5 {
   return 5;
 }
 
+/**
+ * What is on the wire, as three or four characters' worth of mono: `24 / 44.1 → sendspin`.
+ *
+ * Depth first when the format has one (a lossy codec does not), the rate in kHz with the trailing
+ * zero dropped, then the protocol carrying it. When the zone has not reported a format yet the chip
+ * still says where it goes — `signal` — so the door does not blink in and out while a stream starts.
+ */
+export function wireLabel(cur: Cur): string {
+  /* `format.output` is what is on the wire — the reading's own "handed off" column, not the source. */
+  const format = cur.leader?.format?.output;
+  const protocol = cur.leader?.output?.protocol;
+  if (!format) {
+    return 'signal';
+  }
+  const rate = (format.sampleRate / 1000).toString().replace(/\.0$/, '');
+  const depth = format.bitDepth ? `${format.bitDepth} / ` : '';
+  return `${depth}${rate}${protocol ? ` → ${protocol}` : ''}`;
+}
+
 // --- desktop ----------------------------------------------------------------
 
 export function Stage({
@@ -331,15 +289,12 @@ export function Stage({
   onOpenRooms,
   onOpenQueue,
   onBrowse,
-  onCanvas,
-  onHouse,
   onSignal,
   onLeaveCanvas,
   resting,
   drag,
-  nextUp,
-  queueCount,
   upNext,
+  upNextTotal,
   lastCover,
 }: {
   cur: Cur;
@@ -348,22 +303,16 @@ export function Stage({
   onOpenRooms: () => void;
   onOpenQueue: () => void;
   onBrowse: () => void;
-  /** Ask for the resting picture now, rather than waiting out the timeout. */
-  onCanvas: () => void;
-  /** Ask for the other one: every room the same width, the house as a gallery. */
-  onHouse: () => void;
-  /** The third way of looking: what the audio is doing, in this same window. */
+  /** The third way of looking: what the audio is doing, in this same window. Opened from the format chip. */
   onSignal: () => void;
   /** Leave it again — see the click handler below for what counts as leaving. */
   onLeaveCanvas: () => void;
   /** Whether the picture is what is on screen, however it was arrived at. */
   resting: boolean;
-  /** The following queue entry, or null when there is nothing after this. */
-  nextUp: { title: string; artist: string } | null;
-  /** How many entries the queue holds. */
-  queueCount: number;
   /** What comes after this one, as sleeves — the room's own shelf. See `.cx-upnext`. */
   upNext: { key: string; title: string; artist: string; cover: string | undefined; play: () => void }[];
+  /** How many entries follow the one playing — the shelf shows two, the count says the rest. */
+  upNextTotal: number;
   /**
    * The last record this room played, as `url("…")`.
    *
@@ -490,25 +439,6 @@ export function Stage({
                 </span>
               </button>
 
-              {/*
-               * What the sleeve is standing on.
-               *
-               * A square of artwork on black is a picture *of* a record; the same square with a short,
-               * dim mirror under it is a record standing on a surface, and the difference is the whole
-               * distance between a web page and an object in a room. Short and fast-fading on purpose —
-               * a full-length reflection is a 2004 product shot. It carries the same dissolve as the
-               * sleeve, keyed identically, so the two never disagree about which record is playing.
-               */}
-              <span className="cx-reflect" aria-hidden="true">
-                <Crossfade
-                  artKey={artKey}
-                  cover={zoneCoverCss(api, leader)}
-                  ms={900}
-                  render={(slot) => (
-                    <span className="cx-reflect-art" style={{ backgroundImage: slot.cover }} />
-                  )}
-                />
-              </span>
             </>
           ) : (
             /*
@@ -545,6 +475,21 @@ export function Stage({
           <span className="mono cx-eyebrow">
             {cur.name || greeting()}
             {cur.hasTrack && cur.source && <i className="cx-eyebrow-src">{cur.source}</i>}
+            {/*
+             * The one measurement this face carries, and it is a door.
+             *
+             * What is on the wire to the room — `24 / 44.1 → sendspin` — in a small boxed chip at the far
+             * end of the eyebrow: the only boxed thing on the screen, because it is the only thing on the
+             * screen that is *about the technology*. Pressing it opens the reading (`Signal`), which is
+             * where every other number lives. A hidden word (`signal`) used to do this from the volume row;
+             * a chip that says what it is about is a door that says where it goes.
+             */}
+            {cur.hasTrack && (
+              <button type="button" className="cx-wire mono" onClick={onSignal} title="What is happening to the audio">
+                {wireLabel(cur)}
+                <ForwardGlyph size={11} />
+              </button>
+            )}
           </span>
 
           {/*
@@ -617,102 +562,51 @@ export function Stage({
           <Transport cur={cur} size="desk" />
 
           {/*
-           * Master, and the door to the house.
+           * The foot of the column: what is next on the left, the level on the right.
            *
-           * `ROOMS +2` was here, then moved out when the top bar grew a room button, and is back now that
-           * the corner has become the switch to the other face. It is the only way to grouping on this
-           * screen and it belongs beside the level it is about to become the master of — the dock along
-           * the bottom selects rooms, but joining them is a decision, not a selection.
+           * The row that stood here held the fader and four words — `rooms canvas house signal` — and
+           * every one of the four has a better home now: rooms is in the top bar, canvas and house
+           * are at the end of the house strip, signal is the format chip in the eyebrow. What is left
+           * is the two things that are genuinely *this room's*: its running order and its volume.
+           *
+           * Two sleeves and the first title, not four sleeves with hover captions. Two is enough to
+           * read as a shelf, the title says what the shelf's first record is without a hover, and the
+           * count in the label carries the rest. The label and the text open the queue; a sleeve plays
+           * the record it shows.
            */}
-          <div className="cx-volrow">
-            <VolumeRow cur={cur} className="cx-vol" />
-            <span className="cx-volrow-div" />
-            <button
-              type="button"
-              className="mono cx-rooms-btn"
-              onClick={onOpenRooms}
-              data-on={cur.grouped || undefined}
-            >
-              rooms{cur.grouped ? ` +${cur.groupExtra}` : ''}
-            </button>
-            {/*
-              The door to the picture, next to the door to the house.
-              Only when there is something to hang: a canvas of "nothing playing" is a blank wall.
-            */}
-            {cur.hasTrack && (
-              <button type="button" className="mono cx-rooms-btn" onClick={onCanvas}>
-                canvas
-              </button>
-            )}
-            {/* The other door: the same withdrawal, but the whole house rather than this one room. */}
-            <button type="button" className="mono cx-rooms-btn" onClick={onHouse}>
-              house
-            </button>
-            {/*
-              The third way of looking, and the one that is awake.
-              `canvas` and `house` are withdrawals; this is the opposite — the same room with the
-              technology *in* sight. It stands in this row rather than in the corner because it is a
-              view of this window and not another player, and it is present on the same condition the
-              canvas is: no record, nothing to read.
-            */}
-            {cur.hasTrack && (
-              <button type="button" className="mono cx-rooms-btn" onClick={onSignal}>
-                signal
-              </button>
-            )}
-          </div>
-
-          {/*
-           * What is next, as records rather than as a rail.
-           *
-           * The queue was a 96px column down the right edge of the window — outside the room, made of
-           * chrome, and holding the one thing this player has plenty of: pictures. A running order
-           * belongs to a room, so it sits under the room's own composition, and four sleeves say more
-           * about what is coming than four lines of grey text ever did.
-           *
-           * The line stays underneath for the count and the way into the full list: a shelf shows the
-           * next few, and "and 40 more" is a fact only type can carry.
-           */}
-          {upNext.length > 0 && (
-            <div className="cx-upnext">
-              {upNext.map((entry) => (
-                <button
-                  type="button"
-                  key={entry.key}
-                  className="cx-upnext-item"
-                  onClick={entry.play}
-                  title={`Play ${entry.title}${entry.artist ? ` — ${entry.artist}` : ''}`}
-                >
-                  <span
-                    className="cx-upnext-art"
-                    style={{ backgroundImage: entry.cover }}
-                    aria-hidden="true"
-                  />
-                  <span className="cx-upnext-txt">
-                    <span className="cx-upnext-title">{entry.title}</span>
-                    {entry.artist && <i className="cx-upnext-artist">{entry.artist}</i>}
-                  </span>
+          <div className="cx-stage-foot">
+            {cur.hasTrack && !cur.isLive && (
+              <div className="cx-upnext">
+                <button type="button" className="cx-upnext-lbl mono" onClick={onOpenQueue}>
+                  up next{upNextTotal > 0 ? ` · ${upNextTotal}` : ''}
                 </button>
-              ))}
-            </div>
-          )}
-
-          {/*
-           * The line and the shelf are the same sentence, so only one of them speaks.
-           *
-           * With sleeves above it, `NEXT — 03 Track 0002` was the first of them written out again in
-           * grey. What the shelf cannot say is how much more there is, so that is what is left: a count,
-           * and the way into the whole list.
-           */}
-          {upNext.length > 0 ? (
-            queueCount > upNext.length + 1 && (
-              <button type="button" className="mono cx-upnext-more" onClick={onOpenQueue}>
-                {queueCount - upNext.length - 1} more in the queue
-              </button>
-            )
-          ) : (
-            <NextUp next={nextUp} total={queueCount} reserve={!cur.isLive && cur.hasTrack} onOpen={onOpenQueue} />
-          )}
+                <div className="cx-upnext-row">
+                  {upNext.slice(0, 2).map((entry) => (
+                    <button
+                      type="button"
+                      key={entry.key}
+                      className="cx-upnext-art"
+                      style={{ backgroundImage: entry.cover }}
+                      onClick={entry.play}
+                      title={`Play ${entry.title}${entry.artist ? ` — ${entry.artist}` : ''}`}
+                      aria-label={`Play ${entry.title}`}
+                    />
+                  ))}
+                  <button type="button" className="cx-upnext-txt" onClick={onOpenQueue}>
+                    {upNext[0] ? (
+                      <>
+                        <span className="cx-upnext-title">{upNext[0].title}</span>
+                        {upNext[0].artist && <i className="cx-upnext-artist">{upNext[0].artist}</i>}
+                      </>
+                    ) : (
+                      <i className="cx-upnext-artist">nothing after this one</i>
+                    )}
+                  </button>
+                </div>
+              </div>
+            )}
+            <VolumeRow cur={cur} className="cx-vol" />
+          </div>
         </div>
       </div>
     </div>

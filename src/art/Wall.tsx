@@ -1,31 +1,25 @@
 /**
- * The house, as a wall of records.
+ * The wall: the room you are in, with the rest of the house along the foot of it.
  *
- * This is the shell of the desk player, and it replaces both the thing it grew out of and the strip
- * along the bottom that used to stand for the house.
+ * The house used to stand *either side* of the room — one narrow panel per other room, each with its
+ * sleeve, its name written up the spine and a fader you could find by hovering. It was a good idea
+ * about a gallery and a poor one about a screen: a 1440px window gave the record 40% of its width and
+ * spent 150px on two vertical words nobody read, and the resting state ("house") already *is* that
+ * gallery, done properly, one press away.
  *
- * **What was wrong with what it replaces.** The old home was a sleeve on the left, a column of type on
- * the right, and the other rooms reduced to a line of 10px words at the bottom edge — which is the
- * skeleton Spotify, Apple Music and every web player share. You can refine that until it is the most
- * tasteful version of it, and it will still be a version of it. And it says the wrong thing about this
- * product: a multiroom server's subject is *the house*, and the house was the least visible object on
- * the screen.
+ * So the house is a strip now. Every room in one row along the bottom — a small sleeve, the name, what
+ * is on — with the room you are in marked and the others one press away. It keeps the two gestures the
+ * slivers carried (drag the record onto a room to send it there; drag a room onto the stage to group)
+ * because those are about the *rooms*, not about where they were drawn. What it drops is the fader,
+ * which belongs to the desk (`Channels`) and to the stage's own row, and was the one thing on a sliver
+ * that needed a hover to be found.
  *
- * **What this is instead.** Every room is a panel in one row, in the house's own order. The room you are
- * listening in is the whole width of the window; every other room is a sliver of its own artwork, 76px
- * wide, standing at its own place in the row like a record pulled halfway out of a shelf. Choosing
- * another room widens it and narrows this one — the wall slides, and the artwork you were looking at
- * becomes one of the spines.
- *
- * So the house is never a menu you open. It is on screen, made of the pictures of what is playing in it,
- * and it costs 76px per room rather than a page called Grouping.
- *
- * A house with one room is this component drawing one panel, which is the old screen exactly. Nothing
- * special-cases it.
+ * The strip is drawn under the stage and under the quiet-house screen — the two states where the room's
+ * panel has no bar of its own. A listing already ends in the mini bar (the record and its transport),
+ * and a strip under that would be a footer with a footer; see `foot`.
  */
 import { useApi } from '@/state/ServerContext';
 import { zoneCoverCss } from '@/art/cover';
-import { useVolumeControl } from '@/art/volume';
 import type { Channel } from '@/art/useCur';
 import type { RoomDrag } from '@/art/useRoomDrag';
 
@@ -34,129 +28,133 @@ export function Wall({
   currentLeaderId,
   onSelect,
   drag,
+  onCanvas,
+  onHouse,
+  canCanvas,
+  foot,
   children,
 }: {
   channels: Channel[];
-  /** The room whose panel is the wall. */
   currentLeaderId: number | null;
   onSelect: (zoneId: number) => void;
-  /** The gesture in the air, if there is one — see `useRoomDrag`. */
   drag: RoomDrag;
-  /** What the current room's panel holds — the stage. */
+  /** The two ways of withdrawing — the record alone, or the whole house. */
+  onCanvas: () => void;
+  onHouse: () => void;
+  /** Whether there is a record to hang: a canvas of nothing is a blank wall. */
+  canCanvas: boolean;
+  /**
+   * Whether the strip is drawn at all. On the stage, yes. Under a listing the mini bar already runs
+   * along the bottom with the record and its transport, and two bars stacked is a footer with a footer.
+   */
+  foot: boolean;
   children: React.ReactNode;
 }) {
   return (
     <div className="cx-wall">
-      {channels.map((channel) =>
-        channel.leader.id === currentLeaderId ? (
-          /*
-           * The room you are in is also a target: a room dragged onto it joins it. `data-room-drop` is
-           * what the drag hit-tests for, so the panel does not have to publish a rectangle that a
-           * `flex-grow` animation would immediately make stale.
-           */
-          <div
-            className="cx-wall-room"
-            key={channel.leader.id}
-            data-room-drop={channel.leader.id}
-            data-room-drop-kind="wall"
-            data-hot={drag.active?.kind === 'room' || undefined}
-            data-over={drag.over === channel.leader.id || undefined}
-          >
-            {children}
-          </div>
-        ) : (
-          <Sliver key={channel.leader.id} channel={channel} onSelect={onSelect} drag={drag} />
-        ),
+      <div
+        className="cx-wall-room"
+        data-room-drop={currentLeaderId ?? undefined}
+        data-room-drop-kind="wall"
+        data-hot={drag.active?.kind === 'room' || undefined}
+        data-over={(currentLeaderId !== null && drag.over === currentLeaderId) || undefined}
+      >
+        {children}
+      </div>
+
+      {foot && channels.length > 0 && (
+        <footer className="cx-house">
+          {channels.map((channel) => (
+            <Room
+              key={channel.leader.id}
+              channel={channel}
+              current={channel.leader.id === currentLeaderId}
+              onSelect={onSelect}
+              drag={drag}
+            />
+          ))}
+
+          {/*
+           * The two withdrawals, at the far end of the row of rooms — which is where they belong,
+           * because both are ways of looking at the house rather than at this room's controls.
+           */}
+          <span className="cx-house-ways mono">
+            {canCanvas && (
+              <button type="button" onClick={onCanvas}>
+                canvas
+              </button>
+            )}
+            <button type="button" onClick={onHouse}>
+              house
+            </button>
+          </span>
+        </footer>
       )}
     </div>
   );
 }
 
 /**
- * One room, seen edge-on.
+ * One room in the strip.
  *
- * The artwork is cropped to a vertical band and dimmed hard — recognisable as *that* record from across
- * the room without ever competing with the one being played. A room with nothing on is a dark panel with
- * its name in it, which is what a closed door looks like and is the honest drawing of a silent room.
- *
- * Two targets, not one. The button is the whole panel and it selects; the fader is a rail on the inner
- * edge that appears under the pointer and takes its own pointer events. Overlapping a drag and a click on
- * one element is how a mixing desk becomes a lottery, so they are separate elements — the same split the
- * dock made between a name you press and a fader you pull.
+ * Three states, told by the line under the name and nothing else: what is playing, `quiet` for a room
+ * that is on with nothing loaded, `off` for one that is off. A playing room also carries the record's
+ * light beside its name, so a glance along the strip says where the music is without reading it.
  */
-function Sliver({
+function Room({
   channel,
+  current,
   onSelect,
   drag,
 }: {
   channel: Channel;
+  current: boolean;
   onSelect: (zoneId: number) => void;
   drag: RoomDrag;
 }) {
   const api = useApi();
-  const control = useVolumeControl(channel.leader);
+  const leader = channel.leader;
+  const cover = zoneCoverCss(api, leader, 120);
   const playing = channel.playing && channel.hasTrack;
-  const activity = playing ? 'playing' : channel.hasTrack ? 'paused' : 'silent';
-  const cover = zoneCoverCss(api, channel.leader, 320);
+  const off = leader.powerState?.power === 'off';
+  const line = channel.hasTrack
+    ? [leader.track?.title, leader.track?.artist].filter(Boolean).join(' · ')
+    : off
+      ? 'off'
+      : 'quiet';
 
   return (
-    <div
-      className="cx-sliver"
-      data-activity={activity}
-      data-room-drop={channel.leader.id}
-      data-room-drop-kind="room"
-      /* A record in the hand can land here; the panel says so before the pointer arrives. */
-      data-hot={drag.active?.kind === 'record' || undefined}
-      data-over={drag.over === channel.leader.id || undefined}
+    <button
+      type="button"
+      className="cx-house-room"
+      data-current={current || undefined}
+      data-quiet={!channel.hasTrack || undefined}
+      data-room-drop={current ? undefined : leader.id}
+      data-room-drop-kind={current ? undefined : 'room'}
+      data-hot={(!current && drag.active?.kind === 'record') || undefined}
+      data-over={(!current && drag.over === leader.id) || undefined}
+      /* The same threshold `useRoomDrag` gives the slivers: a press is a select, a pull is a drag, and
+         `consumed` keeps the click that ends a drag from also switching rooms. */
+      onPointerDown={(event) =>
+        !current && drag.begin({ kind: 'room', zoneId: leader.id, cover, name: leader.name }, event)
+      }
+      onClick={() => {
+        if (drag.consumed() || current) {
+          return;
+        }
+        onSelect(leader.id);
+      }}
+      title={channel.hasTrack ? `${leader.name} — ${leader.track?.title ?? ''}` : leader.name}
     >
-      {/* Two layers of the same record: the sleeve itself near the top, and the colour it throws down
-          the whole panel — see `.cx-sliver-spine`. */}
-      {cover && <span className="cx-sliver-spine" style={{ backgroundImage: cover }} aria-hidden="true" />}
-      {cover && <span className="cx-sliver-art" style={{ backgroundImage: cover }} aria-hidden="true" />}
-      <span className="cx-sliver-veil" aria-hidden="true" />
-
-      <button
-        type="button"
-        className="cx-sliver-hit"
-        /* Press it and it selects; pull it and it is a room being carried to the one you are in. The
-           threshold in `useRoomDrag` is what keeps those two apart, and `consumed` is what stops the
-           click that follows a drag from also switching rooms. */
-        onPointerDown={(event) =>
-          drag.begin(
-            { kind: 'room', zoneId: channel.leader.id, cover, name: channel.leader.name },
-            event,
-          )
-        }
-        onClick={() => {
-          if (drag.consumed()) {
-            return;
-          }
-          onSelect(channel.leader.id);
-        }}
-        title={
-          channel.hasTrack
-            ? `${channel.leader.name} — ${channel.leader.track?.title ?? ''}`
-            : channel.leader.name
-        }
-      >
-        <span className="cx-sliver-name mono">{channel.leader.name}</span>
-      </button>
-
-      {/* Playing rooms carry a light at the foot of the panel. Nothing else marks them: a room with a
-          picture in it and a light under it is already saying it. */}
-      {playing && <span className="cx-sliver-lit" aria-hidden="true" />}
-
-      <span
-        className="cx-sliver-fader"
-        onPointerDown={control.onPointerDownV}
-        role="presentation"
-        aria-hidden="true"
-      >
-        <span className="cx-sliver-fader-fill" style={{ height: control.pct }} />
-        <span className="cx-sliver-fader-ro mono" data-show={control.active || undefined}>
-          {control.value}
+      <span className="cx-house-cov" style={cover ? { backgroundImage: cover } : undefined} aria-hidden="true" />
+      <span className="cx-house-txt">
+        <span className="cx-house-name mono">
+          {playing && <i className="cx-house-lit" aria-hidden="true" />}
+          {leader.name}
+          {channel.members.length > 1 && <i className="cx-house-plus"> +{channel.members.length - 1}</i>}
         </span>
+        <span className="cx-house-line">{line}</span>
       </span>
-    </div>
+    </button>
   );
 }

@@ -39,10 +39,11 @@ export function Brand({
    */
   vt?: boolean;
 }) {
+  /* The mark alone. The word beside it was the one piece of chrome the poster could not absorb:
+     the record's name is the title on this screen, and the product's does not need to be. */
   const lockup = (
-    <span className="brand">
+    <span className="brand" aria-label="Sonn">
       <Mark className="brand-mark" />
-      sonn <span className="brand-light">player</span>
     </span>
   );
 

@@ -338,8 +338,8 @@
   gap: clamp(20px, 3vw, 40px);
   flex: none;
   height: 54px;
-  padding: 0 30px 0 12px;
-  border-bottom: 1px solid var(--hair);
+  /* 96px on the right: the shell's `admin` word is fixed at right 16px, and the four words end before it. */
+  padding: 0 96px 0 12px;
 }
 
 .cx-brand {
@@ -549,21 +549,156 @@
  */
 .cx-wall {
   display: flex;
+  flex-direction: column;
   flex: 1;
   min-width: 0;
   height: 100%;
 }
 
 /* The hairline lives between panels, so neither outside edge draws one against the window. */
-.cx-wall > * + * {
-  box-shadow: inset 1px 0 0 var(--hair-soft);
-}
 
 .cx-wall-room {
   display: flex;
   flex-direction: column;
   flex: 1 1 0;
   min-width: 0;
+  min-height: 0;
+}
+
+/*
+ * The house, along the foot of the wall.
+ *
+ * One row: every room as a small sleeve, its name and what is on. A hairline above it and nothing else
+ * — no fill, no frame — so it reads as the floor the room stands on rather than as a bar.
+ */
+.cx-house {
+  display: flex;
+  align-items: center;
+  gap: clamp(28px, 3.6vw, 56px);
+  flex: none;
+  height: 72px;
+  padding: 0 40px;
+  border-top: 1px solid var(--hair);
+  overflow: hidden;
+}
+
+.cx-house-room {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+  padding: 6px 8px;
+  margin: 0 -8px;
+  border-radius: 4px;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background 0.25s var(--cx-ease),
+    box-shadow 0.25s var(--cx-ease);
+}
+
+.cx-house-room[data-current] {
+  cursor: default;
+}
+
+.cx-house-room:not([data-current]):hover {
+  background: rgb(255 255 255 / 3%);
+}
+
+.cx-house-cov {
+  flex: none;
+  width: 34px;
+  height: 34px;
+  border-radius: 2px;
+  background-color: rgb(255 255 255 / 4%);
+  background-position: center;
+  background-size: cover;
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 8%);
+}
+
+.cx-house-room[data-quiet] .cx-house-cov {
+  background-image: none !important;
+}
+
+.cx-house-txt {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+.cx-house-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  color: var(--t6);
+  white-space: nowrap;
+  transition: color 0.2s;
+}
+
+.cx-house-room[data-current] .cx-house-name,
+.cx-house-room:hover .cx-house-name {
+  color: var(--t3);
+}
+
+.cx-house-plus {
+  font-style: normal;
+  color: var(--t7);
+}
+
+.cx-house-lit {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--g);
+}
+
+.cx-house-line {
+  max-width: clamp(140px, 14vw, 240px);
+  overflow: hidden;
+  font-size: 12px;
+  color: var(--t6);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cx-house-room[data-quiet] .cx-house-line {
+  color: var(--t8);
+}
+
+/* A record in the hand: every other room lights up as somewhere it could land. */
+.cx-house-room[data-hot] {
+  box-shadow: inset 0 0 0 1px var(--hair);
+}
+
+.cx-house-room[data-over] {
+  background: rgb(255 255 255 / 9%);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--g) 60%, transparent);
+}
+
+.cx-house-room[data-over] .cx-house-name {
+  color: var(--t1);
+}
+
+.cx-house-ways {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  margin-left: auto;
+  flex: none;
+}
+
+.cx-house-ways button {
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  color: var(--t7);
+  transition: color 0.18s;
+}
+
+.cx-house-ways button:hover {
+  color: var(--t3);
 }
 
 .cx-sliver {
@@ -1225,7 +1360,7 @@
        surface it stands on rather than hovering a centimetre above it. It is the shadow the reflection
        needs to be believed. */
     0 8px 18px -8px rgb(0 0 0 / 85%),
-    inset 0 0 0 1px rgb(255 255 255 / 14%);
+    inset 0 0 0 1px rgb(255 255 255 / 10%);
   transition:
     transform 0.6s var(--cx-ease),
     filter 0.6s;
@@ -1282,45 +1417,9 @@
  * Short, dim, and slightly out of focus: a surface that reflects perfectly is glass, and a record does
  * not stand on glass. Everything about the numbers here is chosen to be noticed only if it is removed.
  */
-.cx-reflect {
-  position: absolute;
-  top: calc(100% + 8px);
-  left: 50%;
-  z-index: 0;
-  width: var(--cx-cover-size);
-  /*
-   * A third of the sleeve, or 12vh, whichever is less.
-   *
-   * Two caps because two things can run out: a big sleeve on a short window has no floor to reflect
-   * onto, and the mirror is the first thing that should give way — it is the least of what is on the
-   * screen. Together with the column's `padding-bottom` this is what keeps the fade from ever meeting
-   * the stage's clip.
-   */
-  height: min(calc(var(--cx-cover-size) * 0.34), 12vh);
-  overflow: hidden;
-  pointer-events: none;
-  opacity: 0.26;
-  translate: -50% 0;
-  mask-image: linear-gradient(to bottom, #000, transparent 55%);
-  transition: opacity 1s var(--cx-ease);
-}
 
 /* Paused, the room stops reflecting quite so brightly — the same withdrawal the bloom makes. */
-.cx-stage-art[data-quiet] .cx-reflect {
-  opacity: 0.14;
-}
 
-.cx-reflect-art {
-  position: absolute;
-  top: 0;
-  right: 0;
-  left: 0;
-  height: var(--cx-cover-size);
-  background-position: center;
-  background-size: cover;
-  filter: blur(1.5px) saturate(0.85);
-  transform: scaleY(-1);
-}
 
 /* Paused is stated by the artwork itself: 3% smaller and half the colour drained out of it, which is a
    quieter way to say "not playing" than a badge. */
@@ -1449,6 +1548,32 @@
   height: 3px;
   border-radius: 50%;
   background: var(--t8);
+}
+
+/*
+ * The format chip — the one boxed thing on the poster, because it is the one thing on the poster that
+ * is about the technology. Pushed to the far end of the eyebrow; opens the reading.
+ */
+.cx-wire {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+  padding: 5px 9px 5px 10px;
+  border: 1px solid rgb(255 255 255 / 14%);
+  border-radius: 3px;
+  font-size: 9.5px;
+  letter-spacing: 0.18em;
+  color: var(--t4);
+  white-space: nowrap;
+  transition:
+    color 0.18s,
+    border-color 0.18s;
+}
+
+.cx-wire:hover {
+  color: var(--t1);
+  border-color: rgb(255 255 255 / 28%);
 }
 
 .cx-title {
@@ -1728,103 +1853,106 @@
  * artwork — a browser's list dropped into a poster. Records are recognisable at 88px; the words come
  * back on hover, where a name is worth having and costs nothing until then.
  */
-.cx-upnext {
-  order: 1;
+/*
+ * The foot of the column: the shelf on the left, the level on the right.
+ *
+ * `margin-top: auto` puts it at the bottom of whatever height the column has, which is what turns the
+ * dead quarter under the transport into the place the room's own two facts live.
+ */
+.cx-stage-foot {
   display: flex;
-  gap: clamp(12px, 1.2vw, 20px);
-  margin-top: clamp(26px, 3.4vh, 44px);
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 30px;
+  order: 2;
+  margin-top: auto;
+  padding-top: clamp(18px, 4vh, 44px);
 }
 
-.cx-upnext-item {
-  position: relative;
+.cx-upnext {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  width: clamp(64px, 6vh, 88px);
+  gap: 14px;
   min-width: 0;
-  text-align: left;
+}
+
+.cx-upnext-lbl {
+  align-self: flex-start;
+  font-size: 10px;
+  letter-spacing: 0.24em;
+  color: var(--t6);
+  transition: color 0.18s;
+}
+
+.cx-upnext-lbl:hover {
+  color: var(--t3);
+}
+
+.cx-upnext-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
 }
 
 .cx-upnext-art {
-  width: clamp(64px, 6vh, 88px);
-  height: clamp(64px, 6vh, 88px);
-  border-radius: 3px;
+  flex: none;
+  width: 48px;
+  height: 48px;
+  border-radius: 2px;
   background-color: var(--cx-cover);
   background-position: center;
   background-size: cover;
   box-shadow: inset 0 0 0 1px rgb(255 255 255 / 10%);
   transition:
     scale 0.35s var(--cx-ease),
-    box-shadow 0.35s var(--cx-ease);
+    opacity 0.35s var(--cx-ease);
 }
 
-.cx-upnext-item:hover .cx-upnext-art {
+/* The second sleeve stands a step back, so the shelf reads as a queue and not as two equal offers. */
+.cx-upnext-art + .cx-upnext-art {
+  opacity: 0.7;
+}
+
+.cx-upnext-art:hover {
   scale: 1.06;
-  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 22%);
+  opacity: 1;
 }
 
-/*
- * The names arrive on hover.
- *
- * Under the sleeves they were eight lines of 55%-grey type competing with a 620px record; over them,
- * on the sleeve you are pointing at, they are a caption on the thing they name. Absolutely positioned
- * so they cost the shelf no height either way.
- */
 .cx-upnext-txt {
-  position: absolute;
-  inset: auto 0 0;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  align-items: flex-start;
+  gap: 5px;
   min-width: 0;
-  padding: 14px 6px 6px;
-  background: linear-gradient(180deg, transparent, rgb(6 6 8 / 88%) 55%);
-  opacity: 0;
-  transition: opacity 0.25s var(--cx-ease);
-  pointer-events: none;
-}
-
-.cx-upnext-item:hover .cx-upnext-txt,
-.cx-upnext-item:focus-visible .cx-upnext-txt {
-  opacity: 1;
-}
-
-.cx-upnext-item:hover .cx-upnext-txt {
-  opacity: 1;
+  width: clamp(150px, 14vw, 220px);
+  margin-left: 6px;
+  text-align: left;
 }
 
 .cx-upnext-title,
 .cx-upnext-artist {
+  max-width: 100%;
   overflow: hidden;
-  font-size: 10px;
-  color: var(--t5);
+  font-size: 13px;
+  color: var(--t2);
   text-overflow: ellipsis;
   white-space: nowrap;
+  transition: color 0.18s;
 }
 
 .cx-upnext-artist {
-  font-size: 9.5px;
+  font-size: 12px;
   font-style: normal;
-  color: var(--t7);
-}
-
-/* How much more there is, and the way to all of it. */
-.cx-upnext-more {
-  order: 1;
-  margin-top: 18px;
-  font-size: 9.5px;
-  letter-spacing: 0.18em;
   color: var(--t6);
-  transition: color 0.25s;
 }
 
-.cx-upnext-more:hover {
-  color: var(--t3);
+.cx-upnext-txt:hover .cx-upnext-title {
+  color: var(--t1);
 }
 
 /* At rest a running order is a plan, and the screen is not making plans. */
-.cx-root[data-idle] .cx-upnext,
-.cx-root[data-idle] .cx-upnext-more {
+.cx-root[data-idle] .cx-upnext {
   max-height: 0;
   margin: 0;
   overflow: hidden;
@@ -7670,7 +7798,9 @@
 .cx-root[data-idle] .cx-doek .cx-bar,
 .cx-root[data-idle] .cx-doek .cx-wave,
 .cx-root[data-idle] .cx-times,
-.cx-root[data-idle] .cx-volrow,
+.cx-root[data-idle] .cx-stage-foot,
+.cx-root[data-idle] .cx-house,
+.cx-root[data-idle] .cx-wire,
 .cx-root[data-idle] .cx-mvol,
 .cx-root[data-idle] .cx-chips,
 .cx-root[data-idle] .cx-next,
@@ -7704,7 +7834,8 @@
 .cx-root[data-idle] .cx-transport,
 .cx-root[data-idle] .cx-bar-wrap,
 .cx-root[data-idle] .cx-times,
-.cx-root[data-idle] .cx-volrow,
+.cx-root[data-idle] .cx-stage-foot,
+.cx-root[data-idle] .cx-house,
 .cx-root[data-idle] .cx-mvol,
 .cx-root[data-idle] .cx-chips,
 .cx-root[data-idle] .cx-next {
@@ -7853,11 +7984,6 @@
     scale: 1;
   }
 
-  /* And the picture does not stand on anything: it hangs. */
-  .cx-root[data-idle] .cx-reflect {
-    opacity: 0;
-  }
-
   /*
    * And the sleeve stops offering to be pressed.
    *
@@ -7919,6 +8045,47 @@
   font-style: normal;
   letter-spacing: 0.32em;
   color: var(--t7);
+}
+
+.cx-idle-next {
+  position: absolute;
+  left: clamp(24px, 3vw, 48px);
+  bottom: clamp(20px, 3vh, 36px);
+  z-index: 4;
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  max-width: 40vw;
+  pointer-events: none;
+  animation: cx-clock-in 1.6s var(--cx-ease) both;
+}
+
+.cx-idle-next-cov {
+  flex: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 2px;
+  background-position: center;
+  background-size: cover;
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 8%);
+  opacity: 0.8;
+}
+
+.cx-idle-next-lbl {
+  flex: none;
+  font-size: 9.5px;
+  letter-spacing: 0.22em;
+  font-style: normal;
+  color: var(--t8);
+}
+
+.cx-idle-next-txt {
+  overflow: hidden;
+  font-size: 12px;
+  font-style: normal;
+  color: var(--t7);
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /*
