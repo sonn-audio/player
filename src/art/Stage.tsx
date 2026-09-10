@@ -34,12 +34,10 @@ import {
   PauseGlyph,
   PlayGlyph,
   PrevGlyph,
-  QueueGlyph,
   RepeatGlyph,
   ShuffleGlyph,
   SpeakerGlyph,
 } from '@/art/glyphs';
-import { formatTime } from '@/lib/format';
 import type { Cur } from '@/art/useCur';
 
 /** Greeting by hour — the welcome screen's line, reused as the stage's eyebrow. */
@@ -246,6 +244,26 @@ export function VolumeRow({ cur, className }: { cur: Cur; className: string }) {
  * Characters, not words: what fills a line is glyph count, and `Ænima` and `Untitled #3` cost the
  * same either way.
  */
+/**
+ * The phone's fader: speaker, a short rail, the number. The number is always there rather than in a
+ * bubble while dragging, because on a phone the thumb covers the rail and the number is the readout.
+ */
+function PhoneVolume({ cur }: { cur: Cur }) {
+  const control = useVolumeControl(cur.zone);
+  return (
+    <span className="cx-np-vol">
+      <SpeakerGlyph size={16} />
+      <span className="cx-vol-slider" onPointerDown={control.onPointerDownH}>
+        <span className="cx-vol-rail">
+          <span className="cx-vol-fill" style={{ width: control.pct }} />
+          <span className="cx-vol-knob" style={{ left: control.pct }} />
+        </span>
+      </span>
+      <span className="cx-np-vol-num mono">{control.value}</span>
+    </span>
+  );
+}
+
 export function titleStep(title: string): 1 | 2 | 3 | 4 | 5 {
   const length = title.trim().length;
   if (length <= 12) {
@@ -649,8 +667,9 @@ export function MobileStage({
   onOpenRooms,
   onOpenQueue,
   onBrowse,
+  onSignal,
   onDismiss,
-  queueCount = 0,
+  upNextTotal = 0,
 }: {
   cur: Cur;
   artKey: string;
@@ -659,8 +678,10 @@ export function MobileStage({
   /** Raised by swiping up on the canvas, and by the row along the bottom. */
   onOpenQueue: () => void;
   onBrowse: () => void;
-  /** How many entries are lined up, shown beside the queue's own way in. */
-  queueCount?: number;
+  /** The reading, from the format chip — the same door the desk's eyebrow carries. */
+  onSignal: () => void;
+  /** How many entries follow the one playing; the foot's `up next` carries the number. */
+  upNextTotal?: number;
   /**
    * Put the player away — it is a layer over the app now, not the app's home screen.
    *
@@ -774,6 +795,14 @@ export function MobileStage({
         </button>
       )}
 
+      {/* Which room this is, over the sleeve's top edge, and the way to the others. It stood in the
+          foot beside the queue; up here it is the header a full-screen player has anyway. */}
+      <button type="button" className="cx-np-roompill mono" onClick={onOpenRooms}>
+        {cur.name || 'rooms'}
+        {cur.grouped && <i className="cx-np-plus">+{cur.groupExtra}</i>}
+        <ChevronGlyph size={12} />
+      </button>
+
       {/*
        * The sleeve as a square, inset, with corners.
        *
@@ -816,11 +845,26 @@ export function MobileStage({
       </div>
 
       <div className="cx-np-meta">
+        {/*
+         * Provenance and the one measurement, on a line of their own above the title — the same
+         * eyebrow the desk has. The chip is the door to the reading; on a phone it is the only one.
+         */}
+        {cur.hasTrack && (
+          <div className="cx-np-eyebrow mono">
+            {cur.source && <span>{cur.source}</span>}
+            <button type="button" className="cx-wire mono" onClick={onSignal} title="What is happening to the audio">
+              {wireLabel(cur)}
+              <ForwardGlyph size={11} />
+            </button>
+          </div>
+        )}
+
         {/* Keyed on the room *and* the track, so the block crossfades when either changes. */}
         <div className="cx-np-head" key={`${currentLeaderId ?? 'none'}:${cur.title}`}>
           <span className="cx-np-titles">
             <span className="disp cx-np-title">{cur.title}</span>
             {cur.artist && <span className="cx-np-artist">{cur.artist}</span>}
+            {cur.album && cur.album !== cur.title && <span className="cx-np-album">{cur.album}</span>}
           </span>
           {cur.hasTrack && <Favourite cur={cur} round />}
         </div>
@@ -847,7 +891,7 @@ export function MobileStage({
             <Timeline cur={cur} bare />
             <div className="cx-np-times mono">
               <span>{cur.elapsed}</span>
-              <span>{formatTime(cur.durationSec)}</span>
+              <span>{cur.remain}</span>
             </div>
           </div>
         )}
@@ -864,16 +908,14 @@ export function MobileStage({
          * player screen never had.
          */}
         <div className="cx-np-foot">
-          <button type="button" className="cx-np-room" onClick={onOpenRooms}>
-            <SpeakerGlyph size={17} />
-            {cur.name || 'rooms'}
-            {cur.grouped && <i className="cx-np-plus">+{cur.groupExtra}</i>}
-          </button>
-          <button type="button" className="cx-np-queue" onClick={onOpenQueue}>
-            queue
-            {queueCount > 0 && <b>{queueCount}</b>}
-            <QueueGlyph size={19} />
-          </button>
+          <PhoneVolume cur={cur} />
+          {!cur.isLive && cur.hasTrack && (
+            <button type="button" className="cx-np-queue mono" onClick={onOpenQueue}>
+              up next
+              {upNextTotal > 0 && <b>{upNextTotal}</b>}
+              <ChevronGlyph size={14} className="cx-np-queue-up" />
+            </button>
+          )}
         </div>
       </div>
     </div>

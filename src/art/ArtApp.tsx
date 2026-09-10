@@ -48,7 +48,6 @@ import {
   GridGlyph,
   HomeGlyph,
   MoreGlyph,
-  QueueGlyph,
   RoomsGlyph,
 } from '@/art/glyphs';
 import type { ContentService } from '@/api/content';
@@ -735,9 +734,14 @@ export function ArtApp() {
                     key: String(channel.leader.id),
                     name: channel.leader.name,
                     title: channel.leader.track?.title ?? '',
-                    cover: zoneCoverCss(api, channel.leader, 240),
+                    cover: zoneCoverCss(api, channel.leader, 480),
                     playing: channel.playing && channel.hasTrack,
                     current: channel.leader.id === leaderOf(zone, zones)?.id,
+                    pct:
+                      channel.hasTrack && channel.leader.duration > 0
+                        ? Math.min(100, (channel.leader.position / channel.leader.duration) * 100)
+                        : null,
+                    off: channel.leader.powerState?.power === 'off',
                     open: () => {
                       select(channel.leader.id);
                       if (channel.hasTrack) {
@@ -782,7 +786,8 @@ export function ArtApp() {
               setPlayerOpen(false);
               openBrowse();
             }}
-            queueCount={queue.total}
+            onSignal={openSignal}
+            upNextTotal={upNextTotal}
             onDismiss={() => setPlayerOpen(false)}
           />
         </div>
@@ -823,15 +828,10 @@ export function ArtApp() {
             <GridGlyph size={19} />
           </NavTab>
           {/*
-           * Queue, where a second `search` tab used to be.
-           *
-           * That tab and `music` both called `openBrowse()` — the same destination twice out of five,
-           * one of them under a magnifying glass, and the browse view has a search field of its own at
-           * the top of it. The queue was the thing genuinely missing a way in from the phone.
+           * No queue tab. The queue belongs to the record — it is one swipe up from the player and the
+           * `up next` in the player's foot — and a fifth tab for it put a list of tracks at the same
+           * level as the house. Four: where you start, what there is, where it plays, the rest.
            */}
-          <NavTab label="queue" on={sheet === 'queue'} onClick={() => setSheet('queue')}>
-            <QueueGlyph size={19} />
-          </NavTab>
           <NavTab label="rooms" on={sheet === 'rooms'} onClick={() => setSheet('rooms')}>
             <RoomsGlyph size={19} />
           </NavTab>
@@ -1087,22 +1087,66 @@ function Welcome({
     cover: string | undefined;
     playing: boolean;
     current: boolean;
+    /** How far into its record the room is, 0–100, or null when there is nothing to measure. */
+    pct: number | null;
+    off: boolean;
     open: () => void;
   }>;
 }) {
   return (
     <div className="cx-welcome">
-      <Mark className="cx-welcome-mark" />
+      {/* The day, above the greeting, in the eyebrow's voice: a home screen is also the thing on the
+          wall you glance at in the morning. */}
+      <span className="cx-welcome-date mono">{todayLabel()}</span>
       <h1 className="disp cx-welcome-greet">{greetingText}.</h1>
-      <p className="cx-welcome-sub mono">
-        {playing > 0
-          ? `${playing} of ${rooms} room${rooms === 1 ? '' : 's'} playing`
-          : `the house is quiet — ${rooms} room${rooms === 1 ? '' : 's'} ready`}
-      </p>
 
       {/* Once, quietly, on the screen the app opens onto — see `InstallHint`. */}
       <InstallHint />
 
+      {/*
+       * The house, first.
+       *
+       * This is the shelf no other music app has: every room as a poster of what is on in it — the
+       * sleeve filling the tile, the name and the record over its foot, a hairline of how far along it
+       * is. A quiet room shows its tile dark with the name; a room that is off says so with the power
+       * glyph. The room you are in leads. Pressing a room stands you in it, and opens the player when
+       * it has something on.
+       */}
+      {house.length > 1 && (
+        <section className="cx-hsec">
+          <HomeSec label="the house" right={`${playing} of ${rooms} playing`} />
+          <div className="cx-welcome-recents-row cx-rooms-row">
+            {house.map((room) => (
+              <button
+                type="button"
+                className="cx-roomcard"
+                key={room.key}
+                data-current={room.current || undefined}
+                data-quiet={!room.title || undefined}
+                data-on={room.playing || undefined}
+                onClick={room.open}
+              >
+                {room.cover && <span className="cx-roomcard-cov" style={{ backgroundImage: room.cover }} aria-hidden="true" />}
+                <span className="cx-roomcard-txt">
+                  <span className="cx-roomcard-name mono">
+                    {room.playing && <i className="cx-roomcard-dot" aria-hidden="true" />}
+                    {room.name}
+                  </span>
+                  <span className="cx-roomcard-track">{room.title || (room.off ? 'off' : 'quiet')}</span>
+                  {room.pct !== null && (
+                    <span className="cx-roomcard-prog" aria-hidden="true">
+                      <i style={{ width: `${room.pct}%` }} />
+                    </span>
+                  )}
+                </span>
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* The ways in, as words. On a desk with a quiet house this is the whole point of the screen; on a
+          phone it is the shortcut row under the greeting. */}
       <div className="cx-welcome-shortcuts mono">
         {services.map((service) => (
           <button type="button" key={service.id} onClick={() => onBrowse({ id: service.rootId, label: service.name })}>
@@ -1114,44 +1158,9 @@ function Welcome({
         </button>
       </div>
 
-      {/*
-       * The house, on the home screen.
-       *
-       * This is the shelf no other music app has, and it was the thing this one kept in a sheet:
-       * every room, what is on in it, and one press to stand in it. A phone home that led with
-       * recents and favourites was a good *music* home and said nothing about the product — the
-       * whole reason there is a server in the hall is that the music is in more than one place.
-       *
-       * The room you are in leads, marked; the rest follow in the house's own order. A room with
-       * nothing on says so rather than being hidden, because "the kitchen is quiet" is an answer.
-       */}
-      {house.length > 1 && (
-        <div className="cx-welcome-recents">
-          <span className="cx-welcome-recents-lbl mono">the house</span>
-          <div className="cx-welcome-recents-row cx-rooms-row">
-            {house.map((room) => (
-              <button
-                type="button"
-                className="cx-roomcard"
-                key={room.key}
-                data-current={room.current || undefined}
-                data-quiet={!room.title || undefined}
-                onClick={room.open}
-              >
-                <span className="cx-roomcard-cov" style={{ backgroundImage: room.cover }}>
-                  {room.playing && <span className="cx-roomcard-dot" />}
-                </span>
-                <span className="cx-roomcard-name mono">{room.name}</span>
-                <span className="cx-roomcard-track">{room.title || 'quiet'}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
       {favorites.length > 0 && (
-        <div className="cx-welcome-recents">
-          <span className="cx-welcome-recents-lbl mono">favourites</span>
+        <section className="cx-hsec">
+          <HomeSec label="favourites" />
           <div className="cx-welcome-recents-row">
             {favorites.map((item) => (
               <button type="button" className="cx-welcome-recent" key={item.key} onClick={item.play}>
@@ -1160,17 +1169,16 @@ function Welcome({
               </button>
             ))}
           </div>
-        </div>
+        </section>
       )}
 
       {/*
         Scenes before recents, because they are the stronger promise: a recent needs a room to be
-        selected to land anywhere, a scene brings its own rooms and volumes with it. Same shelf,
-        same records — what a scene *is* to the eye is the sleeve of the moment it saved.
+        selected to land anywhere, a scene brings its own rooms and volumes with it.
       */}
       {scenes.length > 0 && (
-        <div className="cx-welcome-recents">
-          <span className="cx-welcome-recents-lbl mono">set the scene</span>
+        <section className="cx-hsec">
+          <HomeSec label="set the scene" />
           <div className="cx-welcome-recents-row">
             {scenes.map((item) => (
               <button type="button" className="cx-welcome-recent" key={item.key} onClick={item.play}>
@@ -1179,12 +1187,12 @@ function Welcome({
               </button>
             ))}
           </div>
-        </div>
+        </section>
       )}
 
       {recents.length > 0 && (
-        <div className="cx-welcome-recents">
-          <span className="cx-welcome-recents-lbl mono">pick up where you left off</span>
+        <section className="cx-hsec">
+          <HomeSec label="pick up where you left off" />
           <div className="cx-welcome-recents-row">
             {recents.map((item) => (
               <button type="button" className="cx-welcome-recent" key={item.key} onClick={item.play}>
@@ -1193,8 +1201,24 @@ function Welcome({
               </button>
             ))}
           </div>
-        </div>
+        </section>
       )}
     </div>
   );
+}
+
+/** A section's head: the label, a hairline running out to the right, and one optional fact. */
+function HomeSec({ label, right }: { label: string; right?: string }) {
+  return (
+    <div className="cx-hsec-head">
+      <span className="cx-hsec-lbl mono">{label}</span>
+      <span className="cx-hsec-rule" aria-hidden="true" />
+      {right && <span className="cx-hsec-right mono">{right}</span>}
+    </div>
+  );
+}
+
+/** `Thursday 10 September` — the day, the way it is said, not the way it is stored. */
+function todayLabel(now = new Date()): string {
+  return now.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' });
 }
