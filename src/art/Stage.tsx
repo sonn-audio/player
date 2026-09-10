@@ -290,6 +290,18 @@ export function titleStep(title: string): 1 | 2 | 3 | 4 | 5 {
  * zero dropped, then the protocol carrying it. When the zone has not reported a format yet the chip
  * still says where it goes — `signal` — so the door does not blink in and out while a stream starts.
  */
+/**
+ * Whether the album line is worth a line: not when it is the title again with `- Single` or `- EP`
+ * behind it, which is how a store spells "this is the only track".
+ */
+export function albumWorthShowing(title: string, album: string): boolean {
+  if (!album || album === title) {
+    return false;
+  }
+  const bare = album.replace(/\s+-\s+(single|ep)$/i, '').trim();
+  return bare.toLowerCase() !== title.trim().toLowerCase();
+}
+
 export function wireLabel(cur: Cur): string {
   /* `format.output` is what is on the wire — the reading's own "handed off" column, not the source. */
   const format = cur.leader?.format?.output;
@@ -316,6 +328,7 @@ export function Stage({
   upNext,
   upNextTotal,
   lastCover,
+  elsewhere,
 }: {
   cur: Cur;
   /** The room gestures — the sleeve is the thing you pick up. See `useRoomDrag`. */
@@ -333,6 +346,11 @@ export function Stage({
   upNext: { key: string; title: string; artist: string; cover: string | undefined; play: () => void }[];
   /** How many entries follow the one playing — the shelf shows two, the count says the rest. */
   upNextTotal: number;
+  /**
+   * Music playing in another room, for a room with none: the one thing a quiet stage can offer that a
+   * catalogue cannot. `join` puts this room in that room's group.
+   */
+  elsewhere?: { room: string; title: string; join: () => void } | undefined;
   /**
    * The last record this room played, as `url("…")`.
    *
@@ -546,7 +564,7 @@ export function Stage({
 
           {/* The album, under the artist rather than folded into it with a dash: it is a place the
               track came from, not part of its name. */}
-          {cur.album && cur.album !== cur.title && (
+          {albumWorthShowing(cur.title, cur.album) && (
             <span className="cx-album cx-swap cx-swap-3" key={`b:${cur.title}|${cur.album}`}>
               {cur.album}
             </span>
@@ -557,14 +575,26 @@ export function Stage({
           {cur.error && <p className="cx-error">{cur.error}</p>}
 
           {!cur.hasTrack && (
-            <span className="cx-cta">
-              <button type="button" className="mono" onClick={onBrowse}>
-                browse music
-              </button>
-              <button type="button" className="mono" onClick={onOpenRooms}>
-                rooms
-              </button>
-            </span>
+            <>
+              <span className="cx-cta">
+                <button type="button" className="mono" onClick={onBrowse}>
+                  browse music
+                </button>
+                <button type="button" className="mono" onClick={onOpenRooms}>
+                  rooms
+                </button>
+              </span>
+              {/* What the house is doing, as an invitation rather than a fact: one press and this room
+                  is listening too. Only when there is something to join. */}
+              {elsewhere && (
+                <button type="button" className="cx-else" onClick={elsewhere.join}>
+                  <span className="cx-else-txt">
+                    <i className="cx-else-room mono">{elsewhere.room}</i> is playing {elsewhere.title}
+                  </span>
+                  <span className="cx-else-go mono">listen here</span>
+                </button>
+              )}
+            </>
           )}
 
           {cur.isLive && <Live />}
@@ -866,7 +896,7 @@ export function MobileStage({
           <span className="cx-np-titles">
             <span className="disp cx-np-title">{cur.title}</span>
             {cur.artist && <span className="cx-np-artist">{cur.artist}</span>}
-            {cur.album && cur.album !== cur.title && <span className="cx-np-album">{cur.album}</span>}
+            {albumWorthShowing(cur.title, cur.album) && <span className="cx-np-album">{cur.album}</span>}
           </span>
           {cur.hasTrack && <Favourite cur={cur} round />}
         </div>

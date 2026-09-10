@@ -307,6 +307,27 @@ export function ArtApp() {
     return next ? { title: next.title, artist: next.artist, cover: itemCoverCss(next.coverUrl) } : null;
   }, [queue]);
 
+  /**
+   * Music in another room, for a room with none — see `Stage`'s `elsewhere`. The first channel playing
+   * something that is not this one; joining it is the same call the desk's `join` makes.
+   */
+  const elsewhere = useMemo(() => {
+    if (cur.hasTrack || !zone) {
+      return undefined;
+    }
+    const mine = leaderOf(zone, zones)?.id;
+    const other = channels.find((channel) => channel.playing && channel.hasTrack && channel.leader.id !== mine);
+    if (!other) {
+      return undefined;
+    }
+    return {
+      room: other.leader.name,
+      title: other.leader.track?.title ?? '',
+      join: () =>
+        void api.setGroup(other.leader.id, [...other.members.map((member) => member.id), zone.id]).catch(() => undefined),
+    };
+  }, [cur.hasTrack, zone, zones, channels, api]);
+
   /** How many entries follow the one playing — the number the shelf's label carries. */
   const upNextTotal =
     queue.currentIndex === null || cur.isLive ? 0 : Math.max(0, queue.total - queue.currentIndex - 1);
@@ -680,6 +701,7 @@ export function ArtApp() {
                       onBrowse={() => openBrowse()}
                       upNext={upNext}
                       upNextTotal={upNextTotal}
+                      elsewhere={elsewhere}
                       /* What this room played last, for the one thing an idle room can honestly show:
                          the record that was on, in the dark. See `Stage`'s empty branch. */
                       lastCover={recents[0]?.coverUrl ? `url("${recents[0].coverUrl}")` : undefined}

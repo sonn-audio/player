@@ -1094,7 +1094,17 @@ export function Sources({ zone, onDone }: { zone: ApiZoneState | null; onDone: (
         </div>
 
         {inputs.length === 0 ? (
-          <p className="cx-browse-empty mono">nothing wired in yet</p>
+          /* An empty room, not an empty page: say what would appear here and where it is set up. */
+          <div className="cx-inputs-empty">
+            <p className="cx-browse-empty mono">nothing wired in yet</p>
+            <p className="cx-inputs-empty-txt">
+              A turntable, a line-in, a phone over Bluetooth — wire something into a room and it appears here,
+              ready to play in any of them.
+            </p>
+            <a className="cx-inputs-empty-go mono" href="/admin/">
+              set it up in admin
+            </a>
+          </div>
         ) : (
           <div className="cx-inputs">
             {inputs.map((input) => (

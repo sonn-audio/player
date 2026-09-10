@@ -9752,3 +9752,158 @@
   border-color: rgb(255 255 255 / 28%);
   color: var(--t1);
 }
+
+/* ==========================================================================================
+ * Fourth pass: the record's two colours as the room, the strip alive, the title at poster size.
+ * ========================================================================================== */
+
+@property --cx-a1 {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #0a0a0c;
+}
+
+@property --cx-a2 {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #0a0a0c;
+}
+
+.cx-root {
+  --cx-a1: #0a0a0c;
+  --cx-a2: #0a0a0c;
+  transition:
+    --g 1.9s ease,
+    --gb 1.9s ease,
+    --cx-stage 1.9s ease,
+    --cx-a1 2.4s ease,
+    --cx-a2 2.4s ease;
+}
+
+/*
+ * The room, in the record's two colours.
+ *
+ * The primary sits behind the sleeve, where the bloom already puts the record's light; the accent
+ * takes the far corner, so the page has a warm side and a cool side the way a lit room does. Both are
+ * grounds (see `groundOf`), never fills: the type stays white type and the sleeve stays the only
+ * bright thing. They glide on a track change with the rest of the palette.
+ */
+.cx-root[data-view='home'] .cx-bg-scrim {
+  background:
+    radial-gradient(122% 108% at 50% 44%, transparent 40%, rgb(0 0 0 / 42%) 100%),
+    radial-gradient(92% 80% at 26% 44%, color-mix(in srgb, var(--cx-a1) 72%, transparent) 0%, transparent 62%),
+    radial-gradient(80% 70% at 88% 92%, color-mix(in srgb, var(--cx-a2) 58%, transparent) 0%, transparent 60%),
+    linear-gradient(180deg, rgb(10 10 12 / 62%), rgb(10 10 12 / 88%));
+}
+
+/* The phone player: the same two colours, the accent rising from the foot where the controls are. */
+.cx-mstage-scrim {
+  background:
+    radial-gradient(120% 60% at 50% 100%, color-mix(in srgb, var(--cx-a2) 55%, transparent) 0%, transparent 70%),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--cx-stage) 30%, transparent),
+      color-mix(in srgb, var(--cx-stage) 85%, transparent)
+    );
+}
+
+/* The title, at poster size on a wide window: the ladder's cap goes from 76 to 96. */
+@media (min-width: 1500px) {
+  .cx-title {
+    font-size: clamp(38px, min(6.4vh, 4.8vw), 96px);
+  }
+}
+
+/* The strip: a playing room carries its progress as a hairline under its line. */
+.cx-house-prog {
+  display: block;
+  width: 100%;
+  height: 1px;
+  margin-top: 2px;
+  overflow: hidden;
+  background: rgb(255 255 255 / 8%);
+}
+
+.cx-house-prog i {
+  display: block;
+  height: 100%;
+  background: var(--g);
+  opacity: 0.8;
+  transition: width 0.92s linear;
+}
+
+.cx-inputs-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 16px;
+  max-width: 460px;
+  margin-top: 8px;
+}
+
+.cx-inputs-empty-txt {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--t4);
+}
+
+.cx-inputs-empty-go {
+  display: inline-flex;
+  align-items: center;
+  height: 40px;
+  padding: 0 18px;
+  border: 1px solid rgb(255 255 255 / 14%);
+  border-radius: 20px;
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  color: var(--t3);
+  text-decoration: none;
+  transition:
+    color 0.18s,
+    border-color 0.18s;
+}
+
+.cx-inputs-empty-go:hover {
+  color: var(--t1);
+  border-color: rgb(255 255 255 / 28%);
+}
+
+/* A quiet room's invitation: what the house is playing, and one word to listen along. */
+.cx-else {
+  display: inline-flex;
+  align-items: center;
+  gap: 18px;
+  margin-top: 26px;
+  padding: 12px 16px 12px 14px;
+  border: 1px solid rgb(255 255 255 / 10%);
+  border-radius: 6px;
+  text-align: left;
+  transition:
+    border-color 0.18s,
+    background 0.18s;
+}
+
+.cx-else:hover {
+  border-color: rgb(255 255 255 / 22%);
+  background: rgb(255 255 255 / 3%);
+}
+
+.cx-else-txt {
+  font-size: 13px;
+  color: var(--t4);
+}
+
+.cx-else-room {
+  font-style: normal;
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  color: var(--t2);
+}
+
+.cx-else-go {
+  flex: none;
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  color: var(--g);
+}

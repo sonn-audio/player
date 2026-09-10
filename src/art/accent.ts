@@ -37,7 +37,15 @@ const DAMP = 0.4;
  */
 const MIN_LUM = 0.5;
 
-export type Accent = { '--g': string; '--gb': string; '--gon': string; '--cx-stage': string };
+export type Accent = {
+  '--g': string;
+  '--gb': string;
+  '--gon': string;
+  '--cx-stage': string;
+  /** The record's two colours as a ground: the primary and the accent the server read off the sleeve, damped. */
+  '--cx-a1': string;
+  '--cx-a2': string;
+};
 
 /** The page's own near-black (`--cx-bg`), the pole every stage colour is pulled toward. */
 const STAGE_BASE: Rgb = [10, 10, 12];
@@ -120,6 +128,26 @@ function stageOf(track: ApiTrack | null | undefined): Rgb {
   return stage;
 }
 
+/*
+ * A colour as a *ground*: pulled most of the way to the page's black, then capped in luminance so a
+ * yellow sleeve does not light the room like a lamp. 0.22 is bright enough to read as a colour on
+ * #0a0a0c and dark enough that white type over it stays white type.
+ */
+const GROUND_DAMP = 0.55;
+const GROUND_MAX_LUM = 0.22;
+
+function groundOf(rgb: readonly [number, number, number] | undefined): Rgb {
+  if (!rgb) {
+    return STAGE_BASE;
+  }
+  let ground = blend([rgb[0], rgb[1], rgb[2]], STAGE_BASE, GROUND_DAMP);
+  const lum = luminance(ground);
+  if (lum > GROUND_MAX_LUM) {
+    ground = blend(ground, STAGE_BASE, Math.min(1, (lum - GROUND_MAX_LUM) / lum + 0.3));
+  }
+  return ground;
+}
+
 export function accentOf(track: ApiTrack | null | undefined): Accent {
   const silver = parse(SILVER);
   let accent = silver;
@@ -139,6 +167,10 @@ export function accentOf(track: ApiTrack | null | undefined): Accent {
     '--gb': toHex(lighten(accent, 0.42)),
     '--gon': '#0a0a0b',
     '--cx-stage': toHex(stageOf(track)),
+    '--cx-a1': toHex(groundOf(track?.colors?.primary)),
+    /* The accent falls back to the primary rather than to black, so a sleeve the server read as one colour
+       still makes a room of one colour rather than a room with a dark corner. */
+    '--cx-a2': toHex(groundOf(track?.colors?.accent ?? track?.colors?.primary)),
   };
 }
 

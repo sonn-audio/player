@@ -122,6 +122,9 @@ function Room({
     : off
       ? 'off'
       : 'quiet';
+  /* How far into its record the room is — the one thing about another room a glance at the strip
+     might want beyond what is on. Null for a station, which has no far. */
+  const pct = channel.hasTrack && leader.duration > 0 ? Math.min(100, (leader.position / leader.duration) * 100) : null;
 
   return (
     <button
@@ -154,6 +157,11 @@ function Room({
           {channel.members.length > 1 && <i className="cx-house-plus"> +{channel.members.length - 1}</i>}
         </span>
         <span className="cx-house-line">{line}</span>
+        {pct !== null && (
+          <span className="cx-house-prog" aria-hidden="true">
+            <i style={{ width: `${pct}%` }} />
+          </span>
+        )}
       </span>
     </button>
   );
