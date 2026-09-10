@@ -30,7 +30,7 @@
  * seeing before pressing play.
  */
 import { useEffect, useRef } from 'react';
-import { describeFormat, isLosslessCodec } from '@/components/StreamFormat';
+import { describeFormat, isLosslessCodec } from '@/lib/streamFormat';
 import { useServer } from '@/state/ServerContext';
 import type { ApiProcessingChain, ApiStreamFormat, ApiZoneState } from '@/api/types';
 
@@ -378,7 +378,7 @@ function roomsThatCannotPlay(
  *    clean; the loss happened before it reached us, and no amount of care downstream undoes it.
  *  - **Altered** — this server changed the samples, and the reason says which stage did it.
  */
-function Verdict({ zone }: { zone: ApiZoneState }) {
+export function Verdict({ zone }: { zone: ApiZoneState }) {
   // The other rooms, for the resample reason: a group shares one format, so the device that cannot
   // take the source's rate may be any of them.
   const { zones } = useServer();
@@ -549,6 +549,7 @@ export function SignalWire({ zone }: { zone: ApiZoneState }) {
           {sync ? sync.delayMs : '—'} {sync && <span className="signal-metric-unit">ms</span>}
         </dd>
       </div>
+
     </dl>
   );
 }

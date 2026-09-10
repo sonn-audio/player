@@ -4,6 +4,10 @@
  * The subscription and the frequency maths live in `useAnalysis`; what is left here is the drawing,
  * plus hosting the equalizer, which is overlaid on this display rather than given one of its own.
  *
+ * The numeric readout that used to sit beside it went with the technical player: the signal view
+ * draws its own level column (`art/Instruments`), and two components reading one stream and printing
+ * the same dB in two hands is how they end up disagreeing about it.
+ *
  * Two decisions in the drawing worth keeping:
  *
  *  - **Segments, not bars.** One repeating gradient is used twice — as each column's own faint
@@ -19,7 +23,15 @@ import { Icon } from '@/components/Icon';
 import type { ApiOutputCapabilities } from '@/api/types';
 
 /** Frequencies to label under the spectrum. Three decades, enough to read it by. */
-const AXIS_TICKS = [100, 1000, 10000];
+/*
+ * A full ladder rather than three decades.
+ *
+ * Three ticks are enough to *orient* a reader and not enough to let them place a peak: "that lump is
+ * somewhere between 100 and 1000" is a third of the resolution the display itself has. Eight is what
+ * fits without the labels touching at the narrow end, and they are the values a person reading a
+ * spectrum already thinks in.
+ */
+const AXIS_TICKS = [50, 100, 200, 500, 1000, 2000, 5000, 10000];
 
 /**
  * The horizontal rules, in dB.
@@ -74,136 +86,6 @@ function probeHz(hz: number): string {
  */
 const BAR_FRACTION = 0.44;
 const MIN_SEAM_PX = 2.5;
-
-/**
- * Loudness as dBFS, which is the unit this reading actually has.
- *
- * The percentage it replaced was a percentage *of full-scale amplitude*, so 50% was −6 dB and the
- * bottom two thirds of the scale were squeezed into the first fifth of the number — a readout that
- * barely moved through everything you can hear. dB is what the bars are already drawn in
- * (`toHeight`), so the number and the display finally agree.
- *
- * The conversion is `toDb` — the plain inverse of the stream's encoding. It used to take
- * `20·log10` of a value the server had already put in dB, which read −20 dBFS as −3.5 and made
- * every level look like it was clipping.
- */
-function dbfs(loudness: number): string {
-  return toDb(loudness).toFixed(1);
-}
-
-/**
- * The nameplate's right half: what the audio is doing, in numbers, at a size you can read.
- *
- * These two values were already measured and were spending their life at 10px in the corner of the
- * spectrum's heading — on a face whose entire subject is the reading. Beside the title instead, in
- * tabular figures with the label engraved above them, they are what fills the half of the hero that
- * was empty page, and they fill it with the one thing this player has that the others do not.
- *
- * It subscribes to the same stream the display does; `useAnalysis` is refcounted per zone, so a
- * second reader of one room costs one more listener and no second connection.
- *
- * Idle says `—` rather than `-inf` or `0.0`: a meter that reports a number it did not measure is
- * worse than one that admits it is not measuring.
- */
-export function Readout({
-  zoneId,
-  active,
-  capabilities,
-}: {
-  zoneId: number;
-  active: boolean;
-  capabilities: ApiOutputCapabilities | null | undefined;
-}) {
-  const analysis = useAnalysis(zoneId, active, capabilities?.visualizer?.rateMax ?? 30);
-  const level = Math.min(100, analysis.loudness / (spectrumGeometry().fullScale / 100));
-  /* The louder side's held peak, in the wire's own scale — see the note on the Peak row. */
-  const held = Math.max(analysis.leftPeak, analysis.rightPeak);
-
-  /*
-   * The balance, in dB, from the two levels the stream already sends.
-   *
-   * The display draws the channels as a mirrored field, so the *shape* of the reading says which side
-   * is louder — but a shape cannot be compared with yesterday and cannot be read at a glance. The
-   * number can: `0.0 dB` is centred, and the side it leans to is named rather than left to the eye.
-   * Null until the stream has sent a stereo event, which is also what an older server looks like.
-   */
-  const balance = (): string => {
-    const left = analysis.left;
-    const right = analysis.right;
-    if (!active || left === null || right === null || (left < 40 && right < 40)) {
-      return '—';
-    }
-    const db = 20 * Math.log10((Math.max(left, 1) + 1) / (Math.max(right, 1) + 1));
-    const side = db > 0.2 ? ' L' : db < -0.2 ? ' R' : '';
-    return `${Math.abs(db) < 0.05 ? '0.0' : Math.abs(db).toFixed(1)}${side}`;
-  };
-
-  /*
-   * Nothing flowing, nothing measured.
-   *
-   * Paused, the four blocks read `— dBFS`, `— dBFS`, `—`, `— dB`: four labels and four dashes, which
-   * is the same noise the rooms' own lines were carrying until it was taken out of them. A meter with
-   * no signal has one thing to say and this says it once.
-   */
-  if (!active) {
-    return (
-      <div className="np-readout" data-quiet>
-        <p className="np-read-quiet mono">no signal — nothing is flowing to this room</p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="np-readout">
-      <div className="np-read">
-        {/* The lamp belongs to the number it is about: beside `LEVEL` it is what it is on the
-            equipment this borrows from — the mark that says the reading next to it is the one to
-            react to. */}
-        <span className="np-read-label">
-          Level
-          <i className="np-read-lamp" data-lit={(active && level > 92) || undefined} title="Approaching full scale" />
-        </span>
-        <span className="np-read-value">
-          {active ? dbfs(analysis.loudness) : '—'}
-          <i>dBFS</i>
-        </span>
-      </div>
-
-      {/*
-       * The peak, under the level — the *held* one, per side, whichever is higher.
-       *
-       * Loudness is what the music is doing; the peak is how close it came to the ceiling, and on a
-       * panel whose subject is what happened to the audio that is the number that says whether
-       * anything is about to clip. It reads the same held peaks the meter's ticks use, so the two
-       * cannot disagree, and it hangs and falls rather than flickering.
-       *
-       * Not `analysis.peak`: that field is the stream's *onset* detector — an energy ratio scaled to
-       * 0-255, a transient marker rather than a level. Run through `dbfs` it produced -59 dBFS under a
-       * -11 dBFS reading, which is how a wrong label announces itself if you look at it.
-       */}
-      <div className="np-read">
-        <span className="np-read-label">Peak</span>
-        <span className="np-read-value" data-size="sm">
-          {active && held > 0 ? dbfs(held) : '—'}
-          <i>dBFS</i>
-        </span>
-      </div>
-
-      <div className="np-read">
-        <span className="np-read-label">Note</span>
-        <span className="np-read-value">{(active && analysis.pitch) || '—'}</span>
-      </div>
-
-      <div className="np-read">
-        <span className="np-read-label">Balance</span>
-        <span className="np-read-value" data-size="sm">
-          {balance()}
-          <i>dB</i>
-        </span>
-      </div>
-    </div>
-  );
-}
 
 export function AnalysisPanel({
   zoneId,
@@ -292,6 +174,7 @@ export function AnalysisPanel({
    * cannot drift away from the bars it is measuring.
    */
   const floorDb = spectrumGeometry().floorDb;
+  const geometry = spectrumGeometry();
   /*
    * A short field shows fewer rules.
    *
@@ -395,8 +278,21 @@ export function AnalysisPanel({
     <section className="analysis-panel">
       <div className="analysis-heading">
         <span>Spectrum</span>
+        {/*
+         * What the display is actually drawing, said once.
+         *
+         * Bands, range and which half is which channel — three facts that decide how every peak on
+         * it should be read, and which a reader would otherwise have to infer from the axis and a
+         * guess. Taken from the stream's own geometry rather than written down, so it cannot drift
+         * from what is being drawn.
+         */}
+        <span className="analysis-geometry mono">
+          {SPECTRUM_BARS} bands · {Math.round(geometry.fMin)} Hz –{' '}
+          {geometry.fMax >= 1000 ? `${Math.round(geometry.fMax / 1000)} kHz` : `${Math.round(geometry.fMax)} Hz`} · L
+          above, R below
+        </span>
         {/* The numbers moved up to the nameplate, where there was a window's worth of empty page and
-            where a reading this face is *about* should be legible from across a desk — see `Readout`.
+            where a reading this face is *about* should be legible from across a desk.
             What stays here is the display's name and the door to the equalizer. */}
         <span className="analysis-readout">
           <button

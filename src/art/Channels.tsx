@@ -18,6 +18,7 @@
  */
 import { useState } from 'react';
 import { useApi } from '@/state/ServerContext';
+import { DELAY_MAX_MS, DELAY_NUDGE_MS, useOutputDelay } from '@/state/useOutputDelay';
 import { sceneable, useScenes } from '@/state/useScenes';
 import { itemCoverCss, zoneCoverCss } from '@/art/cover';
 import { useVolumeControl } from '@/art/volume';
@@ -215,6 +216,71 @@ function stateLabel(zone: ApiZoneState): string {
   return 'quiet';
 }
 
+/**
+ * One room's place in time, on the axis it shares with the others.
+ *
+ * A group of speakers is one instrument, and a room that lands 20 ms early is not heard as late — it
+ * is heard as a smear. So the moment a second room joins, the interesting control stops being *who
+ * plays* and becomes *line them up*, and comparing offsets only works if every room's knob is on the
+ * same scale, one under the other. That is the whole reason this is a row in a list rather than a
+ * setting on a room.
+ *
+ * It lived on the technical player's grouping screen, which was the right place while that face was a
+ * shell with screens in it. It is not somewhere else now — it is here, where the rooms are joined,
+ * which is where the question comes up.
+ *
+ * You raise it on the room that arrives **late**: the number is the delay that room's own amplifier
+ * adds after us, and we compensate by sending it that much earlier. See `useOutputDelay`.
+ */
+function AlignRow({ zone, leader }: { zone: ApiZoneState; leader: boolean }) {
+  const { delayMs, settable, failed, drag, commit } = useOutputDelay(zone);
+
+  return (
+    <li className="cx-align-row">
+      <span className="cx-align-name">
+        {zone.name}
+        {leader && <i className="mono">reference</i>}
+      </span>
+      <span className="cx-align-axis">
+        <button
+          type="button"
+          className="cx-align-step mono"
+          disabled={!settable || delayMs <= 0}
+          aria-label={`${DELAY_NUDGE_MS} ms less — ${zone.name} plays later`}
+          onClick={() => commit(delayMs - DELAY_NUDGE_MS)}
+        >
+          −
+        </button>
+        <input
+          type="range"
+          className="cx-align-range"
+          min={0}
+          max={DELAY_MAX_MS}
+          step={DELAY_NUDGE_MS}
+          value={delayMs}
+          disabled={!settable}
+          style={{ '--fill': `${(delayMs / DELAY_MAX_MS) * 100}%` } as React.CSSProperties}
+          onChange={(event) => drag(Number(event.target.value))}
+          onPointerUp={(event) => commit(Number((event.target as HTMLInputElement).value))}
+          onKeyUp={(event) => commit(Number((event.target as HTMLInputElement).value))}
+          aria-label={`Delay for ${zone.name}, milliseconds`}
+        />
+        <button
+          type="button"
+          className="cx-align-step mono"
+          disabled={!settable || delayMs >= DELAY_MAX_MS}
+          aria-label={`${DELAY_NUDGE_MS} ms more — ${zone.name} plays earlier`}
+          onClick={() => commit(delayMs + DELAY_NUDGE_MS)}
+        >
+          +
+        </button>
+        <span className="cx-align-value mono">{settable ? `${delayMs} ms` : 'no clock'}</span>
+      </span>
+      {failed && <span className="cx-align-warn mono">that delay could not be applied</span>}
+    </li>
+  );
+}
+
 export function RoomsSheet({
   zones,
   selectedId,
@@ -370,6 +436,42 @@ export function RoomsSheet({
             );
           })}
         </div>
+      )}
+
+      {/*
+       * Alignment, and only once there is something to align.
+       *
+       * One room cannot be out of step with itself, so before a group exists this section would be a
+       * control for a problem nobody has. It appears with the second room, which is also the moment
+       * the problem does.
+       */}
+      {selected && grouped && (
+        <>
+          <div className="cx-sec-head cx-rooms-head">
+            <span className="cx-sec-lbl mono">line them up</span>
+            <span className="cx-sec-rule" />
+          </div>
+          <ul className="cx-align">
+            {members.map((member) => (
+              <AlignRow
+                key={member.id}
+                zone={member}
+                leader={member.id === (group?.leader ?? selected.id)}
+              />
+            ))}
+          </ul>
+          {/*
+           * Where to stand, because no server can measure it.
+           *
+           * Sound crosses a metre in about 3 ms, so a speaker at arm's length and one five metres off
+           * are ~15 ms apart at your ear whatever any of this reports — that difference is in the air,
+           * not in the audio. Tuning from a spot that is not equidistant corrects your own position
+           * instead of the system's, and the result is only right from that one chair.
+           */}
+          <p className="cx-align-note">
+            Stand where the rooms are equally far away, then raise the one that sounds late.
+          </p>
+        </>
       )}
 
       {others.length > 0 && (

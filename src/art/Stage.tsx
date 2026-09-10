@@ -49,11 +49,17 @@ export function greeting(hour = new Date().getHours()): string {
   return 'Good evening';
 }
 
-/** Transport, one row, shared by both layouts so the two can never disagree about behaviour. */
-function Transport({ cur, size }: { cur: Cur; size: 'desk' | 'phone' }) {
+/**
+ * Transport, one row, shared by every layout so they can never disagree about behaviour.
+ *
+ * Three sizes rather than two: `bar` is the signal view's context strip, where the transport rides a
+ * 64px band beside a thumbnail. Same five controls and the same handlers — only the metal shrinks,
+ * because a reading you cannot pause from is a reading you have to leave to act on.
+ */
+export function Transport({ cur, size }: { cur: Cur; size: 'desk' | 'phone' | 'bar' }) {
   const api = useApi();
   const leader = cur.leader;
-  const phone = size === 'phone';
+  const phone = size !== 'desk';
 
   const toggle = (): void => {
     if (!leader) {
@@ -111,7 +117,7 @@ function Transport({ cur, size }: { cur: Cur; size: 'desk' | 'phone' }) {
  * known duration, never `duration > 0` on its own. A live stream gets the LIVE mark instead, which
  * is a statement rather than a bar that cannot be dragged.
  */
-function Timeline({ cur, bare = false }: { cur: Cur; bare?: boolean }) {
+export function Timeline({ cur, bare = false }: { cur: Cur; bare?: boolean }) {
   const api = useApi();
   const [scrubbing, setScrubbing] = useState(false);
   const leader = cur.leader;
@@ -264,7 +270,7 @@ function NextUp({
 }
 
 /** A room's volume, as a horizontal fader with a readout that appears while dragging. */
-function VolumeRow({ cur, className }: { cur: Cur; className: string }) {
+export function VolumeRow({ cur, className }: { cur: Cur; className: string }) {
   const control = useVolumeControl(cur.zone);
   return (
     <span className={className}>
@@ -327,6 +333,7 @@ export function Stage({
   onBrowse,
   onCanvas,
   onHouse,
+  onSignal,
   onLeaveCanvas,
   resting,
   drag,
@@ -345,6 +352,8 @@ export function Stage({
   onCanvas: () => void;
   /** Ask for the other one: every room the same width, the house as a gallery. */
   onHouse: () => void;
+  /** The third way of looking: what the audio is doing, in this same window. */
+  onSignal: () => void;
   /** Leave it again — see the click handler below for what counts as leaving. */
   onLeaveCanvas: () => void;
   /** Whether the picture is what is on screen, however it was arrived at. */
@@ -639,6 +648,18 @@ export function Stage({
             <button type="button" className="mono cx-rooms-btn" onClick={onHouse}>
               house
             </button>
+            {/*
+              The third way of looking, and the one that is awake.
+              `canvas` and `house` are withdrawals; this is the opposite — the same room with the
+              technology *in* sight. It stands in this row rather than in the corner because it is a
+              view of this window and not another player, and it is present on the same condition the
+              canvas is: no record, nothing to read.
+            */}
+            {cur.hasTrack && (
+              <button type="button" className="mono cx-rooms-btn" onClick={onSignal}>
+                signal
+              </button>
+            )}
           </div>
 
           {/*

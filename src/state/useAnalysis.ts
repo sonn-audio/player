@@ -36,7 +36,7 @@ import { useApi } from '@/state/ServerContext';
  * because they are the meter's, not one view's: the values below are the tuned ones, and a reading of
  * them is one component away.
  */
-const PEAK_HOLD_MS = 700;
+export const PEAK_HOLD_MS = 700;
 const PEAK_FALL_PER_SEC = 0.45;
 
 /**
@@ -211,6 +211,28 @@ export type Analysis = {
   /** Held peaks per side, wire scale — the meter bridge's ticks, same hold-then-fall as the caps. */
   leftPeak: number;
   rightPeak: number;
+  /**
+   * The measured readings, which are *not* in the wire's u16 dB window.
+   *
+   * Everything above is a position in the `floorDb`…0 window, encoded for a display that draws
+   * bars. These are the units the equipment states: a correlation coefficient, dBTP, LUFS, LU. They
+   * are passed through untouched — no ballistics, because a number that is read rather than watched
+   * should not be a moving average of itself, and no rescaling, because rescaling is how a reading
+   * loses the precision that made it worth printing.
+   */
+  correlation: number | null;
+  /** The window's mean, as a fraction of full scale — a signal that is not centred on zero. */
+  dcOffset: number | null;
+  truePeakLeft: number | null;
+  truePeakRight: number | null;
+  clips: number;
+  loudnessMomentary: number | null;
+  loudnessShort: number | null;
+  loudnessIntegrated: number | null;
+  loudnessRange: number | null;
+  /** The scope's trace and the goniometer's dots, signed bytes as the server measured them. */
+  scope: Int8Array | null;
+  gonio: Int8Array | null;
 };
 
 const EMPTY: Analysis = {
@@ -223,6 +245,17 @@ const EMPTY: Analysis = {
   right: null,
   leftPeak: 0,
   rightPeak: 0,
+  correlation: null,
+  dcOffset: null,
+  truePeakLeft: null,
+  truePeakRight: null,
+  clips: 0,
+  loudnessMomentary: null,
+  loudnessShort: null,
+  loudnessIntegrated: null,
+  loudnessRange: null,
+  scope: null,
+  gonio: null,
 };
 
 type Entry = {
@@ -302,6 +335,29 @@ function dueAt(entry: Entry, timestampUs: unknown): number | null {
   return dueMs;
 }
 
+/**
+ * Base64 back to the signed bytes the server measured.
+ *
+ * The scope's trace and the goniometer's dots travel as bytes rather than as JSON numbers — 160 and
+ * 256 of them per frame, thirty times a second, is a picture and not a list of readings. `atob` is
+ * the one decoder every browser has had forever, and the copy it costs is 400 bytes.
+ */
+function decodeBytes(value: string): Int8Array | null {
+  try {
+    const binary = atob(value);
+    const bytes = new Int8Array(binary.length);
+    for (let i = 0; i < binary.length; i += 1) {
+      // `charCodeAt` gives 0…255; the Int8Array view reinterprets the high half as negative, which
+      // is exactly the signed byte the server wrote.
+      bytes[i] = binary.charCodeAt(i);
+    }
+    return bytes;
+  } catch {
+    // A truncated frame is a dropped picture, not a broken stream.
+    return null;
+  }
+}
+
 /** One entry per zone being watched, keyed by id. */
 const entries = new Map<number, Entry>();
 
@@ -313,7 +369,15 @@ function publish(entry: Entry): void {
 
 function open(base: string, zoneId: number, rate: number): Entry {
   const source = new EventSource(
-    `${base}/zones/${zoneId}/analysis?types=loudness,spectrum,peak,pitch,stereo&rate=${rate}&bins=${SPECTRUM_BARS}`,
+    /*
+     * Every reading this player can draw, in one subscription.
+     *
+     * The heavy ones are opt-in on the server precisely so a client does not pay for what it does
+     * not draw — and this client draws all of them, in one place: the signal view. There is exactly
+     * one stream per room however many instruments read it (the entry below is refcounted), so the
+     * cost is paid once while the deck is open and not at all while it is not.
+     */
+    `${base}/zones/${zoneId}/analysis?types=loudness,spectrum,peak,pitch,stereo,correlation,truepeak,ebu,scope,gonio&rate=${rate}&bins=${SPECTRUM_BARS}`,
   );
   const entry: Entry = {
     refs: 0,
@@ -352,6 +416,36 @@ function open(base: string, zoneId: number, rate: number): Entry {
     }
     if (event.type === 'stereo' && typeof event.left === 'number' && typeof event.right === 'number') {
       entry.pending = { ...entry.pending, left: event.left, right: event.right };
+    }
+    if (event.type === 'correlation' && typeof event.value === 'number') {
+      entry.pending = {
+        ...entry.pending,
+        correlation: event.value,
+        dcOffset: typeof event.dcOffset === 'number' ? event.dcOffset : null,
+      };
+    }
+    if (event.type === 'truepeak') {
+      entry.pending = {
+        ...entry.pending,
+        // Null is what silence measures — the server sends it rather than a −Infinity JSON cannot carry.
+        truePeakLeft: typeof event.leftDb === 'number' ? event.leftDb : null,
+        truePeakRight: typeof event.rightDb === 'number' ? event.rightDb : null,
+        clips: typeof event.clips === 'number' ? event.clips : entry.pending.clips,
+      };
+    }
+    if (event.type === 'ebu') {
+      const number = (value: unknown): number | null => (typeof value === 'number' ? value : null);
+      entry.pending = {
+        ...entry.pending,
+        loudnessMomentary: number(event.momentary),
+        loudnessShort: number(event.shortTerm),
+        loudnessIntegrated: number(event.integrated),
+        loudnessRange: number(event.range),
+      };
+    }
+    if ((event.type === 'scope' || event.type === 'gonio') && typeof event.points === 'string') {
+      const points = decodeBytes(event.points);
+      entry.pending = event.type === 'scope' ? { ...entry.pending, scope: points } : { ...entry.pending, gonio: points };
     }
     // Events only move the targets; the ballistics loop is the one thing that ever publishes.
     entry.dirty = true;
@@ -474,6 +568,18 @@ function open(base: string, zoneId: number, rate: number): Entry {
       right: entry.pending.right === null ? null : right,
       leftPeak,
       rightPeak,
+      // Passed through as measured; see the note on the type.
+      correlation: entry.pending.correlation,
+      dcOffset: entry.pending.dcOffset,
+      truePeakLeft: entry.pending.truePeakLeft,
+      truePeakRight: entry.pending.truePeakRight,
+      clips: entry.pending.clips,
+      loudnessMomentary: entry.pending.loudnessMomentary,
+      loudnessShort: entry.pending.loudnessShort,
+      loudnessIntegrated: entry.pending.loudnessIntegrated,
+      loudnessRange: entry.pending.loudnessRange,
+      scope: entry.pending.scope,
+      gonio: entry.pending.gonio,
     };
     publish(entry);
   };

@@ -10,10 +10,10 @@ import { createRoot } from 'react-dom/client';
 import { Root } from '@/shell/Root';
 import { ServerProvider } from '@/state/ServerContext';
 /*
- * Three sheets, in dependency order: the technical player defines the tokens both other sheets read
- * (fonts, surfaces, the accent), the shell styles the splash and the choice between the two players,
- * and the art player's rules are all scoped under `.cx-root` so the two faces cannot leak into each
- * other. Order matters only for the tokens; nothing below overrides anything above.
+ * Three sheets, in dependency order: `styles.css` defines the tokens the other two read (fonts,
+ * surfaces, the accent) and styles the instruments, `shell.css` the splash and the frame drawn over
+ * the app, and `art.css` the player itself, scoped under `.cx-root`. Order matters only for the
+ * tokens; nothing below overrides anything above.
  */
 import '@/styles.css';
 import '@/shell.css';

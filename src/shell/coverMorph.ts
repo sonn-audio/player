@@ -85,14 +85,34 @@ export function captureCover(): boolean {
 
   const style = getComputedStyle(best);
   /*
-   * Three ways a cover carries its picture, because the two faces draw them differently and both are
-   * right where they are: the art face paints `background-image` on the element itself (it needs the
-   * same picture cropped, blurred and tinted in five places, none of which is an image element), while
-   * the technical player wraps a real `<img>` in a clipping box so a failed fetch can fall back to a
-   * second url. `currentSrc` rather than `src` — it is the one the browser actually loaded, so the clone
-   * cannot start a second download of a slightly different address.
+   * Four ways a cover carries its picture, because the surfaces draw them differently and each is right
+   * where it is: a `background-image` on the element itself, a real `<img>` in a clipping box (so a
+   * failed fetch can fall back to a second url), a video poster, or — the art face's sleeve — a
+   * dissolving slot *inside* the element. `currentSrc` rather than `src`: it is the one the browser
+   * actually loaded, so the clone cannot start a second download of a slightly different address.
    */
   const inner = best.querySelector<HTMLImageElement | HTMLVideoElement>('img, video');
+  /*
+   * Fourth way: a descendant paints it.
+   *
+   * The art face's sleeve stopped carrying its own `background-image` when the artwork moved into
+   * `Crossfade` — the picture lives on one of two slot spans inside the button, so the three ways above
+   * all came up empty and the flight silently never happened. Silently is the problem: a capture is
+   * *allowed* to fail, so a cover that cannot be measured looks exactly like a screen with no artwork on
+   * it. The crossfade's `data-front` slot is the record you are looking at; the one behind it is the
+   * record being dissolved away, so it is only the fallback.
+   */
+  const painted = (): string => {
+    const all = Array.from(best.querySelectorAll<HTMLElement>('*'));
+    const front = all.filter((element) => element.closest('[data-front]') !== null);
+    for (const element of [...front, ...all]) {
+      const background = getComputedStyle(element).backgroundImage;
+      if (background && background !== 'none') {
+        return background;
+      }
+    }
+    return '';
+  };
   const image =
     style.backgroundImage !== 'none'
       ? style.backgroundImage
@@ -102,7 +122,7 @@ export function captureCover(): boolean {
           ? `url("${inner.currentSrc}")`
           : inner instanceof HTMLVideoElement && inner.poster
             ? `url("${inner.poster}")`
-            : '';
+            : painted();
 
   if (!image) {
     pending = null;

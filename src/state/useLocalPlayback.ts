@@ -147,6 +147,8 @@ export function toLocalZone(
     volume,
     // A browser has no configured cap; the server applies none to a local destination.
     volumeLimits: { max: 100, default: volume, step: 5 },
+    /* A tab has no mute of its own: silence here is the volume, and there is no level to come back to. */
+    muted: false,
     repeat: 'off',
     shuffle: false,
     track: np?.title

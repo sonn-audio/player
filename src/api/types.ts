@@ -271,6 +271,14 @@ export interface ApiZoneState {
   duration: number;
   volume: number;
   volumeLimits: ApiVolumeLimits;
+  /**
+   * Silenced on purpose.
+   *
+   * A muted zone reports `volume: 0` like any other silent one; this is what says it will come back to
+   * the level it had. Part of the contract since the beginning and simply never mirrored here — the
+   * player had no reading that cared, and now the output tile does.
+   */
+  muted: boolean;
   repeat: ApiRepeatMode;
   shuffle: boolean;
   track: ApiTrack | null;
@@ -279,6 +287,17 @@ export interface ApiZoneState {
   output: ApiOutput | null;
   /** What is on the wire to the device, or null when the zone streams nothing. */
   format: ApiAudioFormat | null;
+  /**
+   * What this room has been doing since the music started, or null when nothing is.
+   *
+   * Counters over a *sequence* of zone states — how long, how many tracks, how many of them
+   * untouched, how often the format changed and how often the clock had to be found again. They come
+   * from the server because a client that opened mid-evening never saw the changes it would have to
+   * count. A run survives a pause and ends at a stop.
+   *
+   * Notably absent: an underrun count. Nothing in the server measures one, so nothing reports one.
+   */
+  session?: ApiZoneSession | null;
   /**
    * Why the last playback attempt failed, when it did. Absent on a healthy zone.
    *
@@ -292,6 +311,17 @@ export interface ApiZoneState {
 }
 
 /** One entry in a zone's queue. `id` identifies the *entry*, not the track. */
+/** Counters for one run of playback in a room. See `ApiZoneState.session`. */
+export interface ApiZoneSession {
+  /** Unix milliseconds when this run began. */
+  startedAt: number;
+  tracks: number;
+  /** How many of those reached the output with their samples untouched. */
+  bitPerfect: number;
+  formatChanges: number;
+  clockResyncs: number;
+}
+
 export interface ApiQueueItem {
   id: string;
   title: string;

@@ -17,7 +17,7 @@
  * way. Grouping, the queue and the settings are decisions about the house rather than places in it,
  * so they overlay what you were doing instead of replacing it.
  */
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useApi, useServer } from '@/state/ServerContext';
 import { useSelectedZone } from '@/state/useSelectedZone';
 import { useLocalPlayback } from '@/state/useLocalPlayback';
@@ -28,6 +28,7 @@ import { Brand } from '@/shell/Brand';
 import { InstallHint } from '@/shell/InstallHint';
 import { Mark } from '@/components/Mark';
 import { Stage, MobileStage, greeting } from '@/art/Stage';
+import { Signal } from '@/art/Signal';
 import { RoomsSheet } from '@/art/Channels';
 import { Wall } from '@/art/Wall';
 import { useRoomDrag } from '@/art/useRoomDrag';
@@ -39,6 +40,7 @@ import { channelsOf, leaderOf, useCur } from '@/art/useCur';
 import { useFavorites, useQueue, useRecents } from '@/art/useCollections';
 import { accentOf, artKeyOf } from '@/art/accent';
 import { useClock, useIdle } from '@/art/useIdle';
+import { captureCover } from '@/shell/coverMorph';
 import { zoneCoverCss, itemCoverCss } from '@/art/cover';
 import {
   ChevronGlyph,
@@ -76,8 +78,18 @@ function useIsPhone(): boolean {
   return phone;
 }
 
-/** What the middle of the screen is showing. */
-type View = { kind: 'home' } | { kind: 'browse'; node: BrowseNode } | { kind: 'inputs' };
+/**
+ * What the middle of the screen is showing.
+ *
+ * `signal` is the technical side of the product, and it is a view here rather than a second app
+ * because that is all it ever was: one room's chain, meters and clock, which needs a room with
+ * something playing in it and no shell of its own. See `art/Signal`.
+ */
+type View =
+  | { kind: 'home' }
+  | { kind: 'browse'; node: BrowseNode }
+  | { kind: 'inputs' }
+  | { kind: 'signal' };
 
 type Sheet = null | 'rooms' | 'queue' | 'more';
 
@@ -351,7 +363,45 @@ export function ArtApp() {
   const goHome = (): void => setView({ kind: 'home' });
   const openBrowse = (node: BrowseNode = {}): void => setView({ kind: 'browse', node });
 
-  const browsing = view.kind !== 'home';
+  /*
+   * Into the reading and back out, with the sleeve flying between the two.
+   *
+   * `captureCover` measures what is on screen *before* React is told anything — the state update
+   * unmounts the stage in the same commit that mounts the deck, so a capture taken any later has
+   * nothing left to measure. The arriving cover consumes it (`useCoverAnchor` in both places), which
+   * is why this works in both directions with one call each way.
+   */
+  const openSignal = (): void => {
+    captureCover();
+    setView({ kind: 'signal' });
+  };
+  const leaveSignal = useCallback((): void => {
+    captureCover();
+    setView({ kind: 'home' });
+  }, []);
+
+  /* The one shortcut a view that covers the player owes you. The door in the band is the discoverable
+     half; this is for the hand already on the keyboard. */
+  useEscape(view.kind === 'signal', leaveSignal);
+
+  /*
+   * And the moment there is nothing to read, it closes itself.
+   *
+   * The same rule the canvas has, for the same reason and deliberately not a different one: two
+   * answers to "the record went away while I was looking at it" is how a window becomes
+   * unpredictable. `hasTrack`, not `isPlaying` — a paused room still has a chain, a format and a
+   * clock lock worth reading, and pausing from the band must not throw you out of the view you
+   * pressed pause in.
+   */
+  useEffect(() => {
+    if (view.kind === 'signal' && !cur.hasTrack) {
+      setView({ kind: 'home' });
+    }
+  }, [view.kind, cur.hasTrack]);
+
+  /* The mini bar exists for "you are looking at something else and want the music" — which is not the
+     signal view, whose own band carries the identity and the transport. */
+  const browsing = view.kind === 'browse' || view.kind === 'inputs';
 
   return (
     <div
@@ -547,7 +597,18 @@ export function ArtApp() {
                * A quiet house has no wall to put anything in, so it keeps the old shape: the welcome
                * screen, or a listing at full width.
                */}
-              {!phone ? (
+              {/*
+               * The deck stands on its own, edge to edge.
+               *
+               * Browsing goes *inside* the wall because the question it raises — which room is this
+               * going to play in — is answered by the rooms standing either side of it. The deck
+               * raises no such question: it is one room's instruments, and the only thing 152px of
+               * other rooms' spines does here is take the width the spectrum wanted. A rack is
+               * edge to edge or it is a widget.
+               */}
+              {!phone && view.kind === 'signal' && zone ? (
+                <Signal cur={cur} zone={zone} zones={zones} onLeave={leaveSignal} />
+              ) : !phone ? (
                 <Wall
                   channels={channels}
                   currentLeaderId={leaderOf(zone, zones)?.id ?? null}
@@ -612,6 +673,7 @@ export function ArtApp() {
                       drag={drag}
                       onCanvas={() => setAsked('record')}
                       onHouse={() => setAsked('house')}
+                      onSignal={openSignal}
                       onLeaveCanvas={() => setAsked(null)}
                       resting={idle}
                       onOpenRooms={() => setSheet('rooms')}
@@ -635,6 +697,10 @@ export function ArtApp() {
                 />
               ) : view.kind === 'inputs' ? (
                 <Sources zone={zone} onDone={goHome} />
+              ) : view.kind === 'signal' && zone ? (
+                /* One column of instruments, read one at a time down the page — which is what a phone
+                   can honestly do with a deck, and what it never could with a whole second shell. */
+                <Signal cur={cur} zone={zone} zones={zones} onLeave={leaveSignal} />
               ) : (
                 /*
                  * Home is where you decide what to play.
@@ -728,7 +794,7 @@ export function ArtApp() {
         </div>
       )}
 
-      {phone && !playerOpen && leader && cur.hasTrack && (
+      {phone && !playerOpen && leader && cur.hasTrack && view.kind !== 'signal' && (
         <MiniBar cur={cur} onOpen={() => setPlayerOpen(true)} />
       )}
 
@@ -848,13 +914,31 @@ export function ArtApp() {
             </span>
           </button>
           {/*
-           * No way to the technical face from here any more.
+           * The reading, on a phone too.
            *
-           * This sheet is phone-only, and a phone has one face (see `useFace`): that player is four
-           * instruments read side by side, and the honest one-column version of it is a different
-           * app rather than the same one in a narrow coat. Offering the door meant offering the
-           * squeeze — this face *is* the phone product.
+           * This door could not exist while the technical side was a *face*: that player was a shell
+           * with a nav rail, a browser and a queue, and the one-column version of it was a different
+           * app rather than the same one in a narrow coat. As a view of one record it is a stack of
+           * instruments, which is exactly what a phone can hold — so the squeeze the old note was
+           * protecting against is not what is on offer any more.
            */}
+          {cur.hasTrack && (
+            <button
+              type="button"
+              className="cx-more-row"
+              onClick={() => {
+                setSheet(null);
+                setPlayerOpen(false);
+                openSignal();
+              }}
+            >
+              <span className="cx-more-name">Signal</span>
+              <span className="cx-more-sub mono">what happened to the audio on its way here</span>
+              <span className="cx-more-go">
+                <ForwardGlyph size={15} />
+              </span>
+            </button>
+          )}
           {/*
            * The console, which this face's corner cannot offer on a phone.
            *

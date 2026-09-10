@@ -1,27 +1,26 @@
 /**
- * The shell around both players: the splash, the choice, and the way between them.
+ * The shell around the player: the splash, and what is drawn over the app.
  *
- * One component owns three things that are easy to get wrong separately:
+ * Two things that are easy to get wrong separately:
  *
  *  - **The splash is the connecting phase**, not a timer. It leaves when the event stream has
  *    answered *and* it has been on screen long enough not to flash — whichever is later. A local
  *    server answers in 40 ms, and a mark that appears and vanishes inside one frame reads as a
  *    glitch rather than as a boot.
- *  - **The transition between faces is feedback**, so it only plays when someone pressed the switch.
- *    Arriving at `#/art` by reload should look like the art player was always there; arriving by pressing
- *    `ART MODE` in the other face should carry the sleeve across (see `shell/coverMorph`).
- *  - **Both faces mount under one `ServerProvider`** (in `main.tsx`), so switching face does not
- *    reopen the stream, refetch the zones, or lose the selected room. That is the whole reason these
- *    are two views rather than two apps.
+ *  - **The frame is drawn over the app**, not inside it: the wordmark and the way out to admin sit
+ *    outside the player so nothing the player does can move them.
+ *
+ * There used to be two players here — a technical face and an art one — with a switch, a remembered
+ * choice, a hash route and a cover that flew between them. One of them has absorbed the other: the
+ * instruments are a *view* of the player now (`art/Signal`) rather than a second application, so the
+ * machinery that kept two shells in step is gone. What it protected is not: the sleeve still flies,
+ * between the stage and the deck, through the same `coverMorph`.
  */
 import { useEffect, useRef, useState } from 'react';
-import { App } from '@/App';
 import { ArtApp } from '@/art/ArtApp';
+import { AdminLink } from '@/shell/AdminLink';
 import { Brand } from '@/shell/Brand';
-import { Choice } from '@/shell/Choice';
-import { FaceSwitch } from '@/shell/FaceSwitch';
 import { Intro } from '@/shell/Intro';
-import { useFace, type Face } from '@/shell/useFace';
 import { useServer } from '@/state/ServerContext';
 
 /** How long the splash stays even when the server answers instantly. */
@@ -44,37 +43,25 @@ const INTRO_FADE_MS = 520;
 /** How long the black layer takes to clear once it starts. */
 const INTRO_OUT_MS = 640;
 
-/** How long the ask takes to fade once answered — same curve family as the intro's exit. */
-const CHOICE_OUT_MS = 700;
-
 export function Root() {
-  const { face, go, chose, morphing, undecided } = useFace();
   const { status } = useServer();
+
+  /*
+   * An old bookmark does not get to leave a lie in the address bar.
+   *
+   * `#/technical` and `#/art` addressed the two faces. There is one player now, so the hash routes
+   * nothing — and a url that names a face the app no longer has is the kind of small untruth that
+   * later reads as a bug. Cleared once, on arrival, without adding a history entry.
+   */
+  useEffect(() => {
+    if (/^#\/?(technical|art)$/i.test(window.location.hash)) {
+      window.history.replaceState(null, '', window.location.pathname + window.location.search);
+    }
+  }, []);
 
   const [intro, setIntro] = useState<'holding' | 'fading' | 'out' | 'gone'>('holding');
   const [minElapsed, setMinElapsed] = useState(false);
   const [gaveUp, setGaveUp] = useState(false);
-
-  /*
-   * The ask's lifecycle, owned here because only the shell knows the layering: the choice sits
-   * *under* the splash, so the intro's black dissolves into the question rather than into a face
-   * — and once answered it fades over the face that was mounted underneath all along. `undecided`
-   * is read once by `useFace`; from `asking` onwards this state is the authority.
-   */
-  const [ask, setAsk] = useState<'asking' | 'leaving' | 'gone'>(undecided ? 'asking' : 'gone');
-
-  useEffect(() => {
-    if (ask !== 'leaving') {
-      return;
-    }
-    const timer = setTimeout(() => setAsk('gone'), CHOICE_OUT_MS);
-    return () => clearTimeout(timer);
-  }, [ask]);
-
-  const pick = (next: Face): void => {
-    go(next);
-    setAsk('leaving');
-  };
 
   useEffect(() => {
     const min = setTimeout(() => setMinElapsed(true), INTRO_MIN_MS);
@@ -108,36 +95,18 @@ export function Root() {
 
   return (
     <>
-      {/*
-        Keyed on the face so React remounts on a switch, which is what lets the CSS entrance
-        animation run again rather than only on the first mount. Cheap: the expensive state (zones,
-        stream, selection) lives above this in the provider and is untouched by the remount.
-      */}
-      <div
-        className="face"
-        key={face}
-        data-face={face}
-        data-entered={chose || undefined}
-        /* A switch that carries the sleeve across gets a fade and no scale: the flight is the
-           transition, and `getBoundingClientRect` on a face mid-scale measures the wrong destination
-           for it (see `coverMorph.flyTo`). */
-        data-morph={morphing || undefined}
-      >
-        {face === 'technical' && <App />}
-        {face === 'art' && <ArtApp />}
+      {/* One player, so no key and no entrance to replay: the splash's own dissolve is the arrival. */}
+      <div className="face">
+        <ArtApp />
       </div>
 
       {/*
-        Drawn once, over both faces, so a switch cannot move it or fade it. Outside the keyed `.face`
-        deliberately — that is the whole point (see `Brand`). Phone-hidden in CSS, because the art face
-        gives the artwork all four edges at that width.
+        Drawn over the app so nothing inside it can move them. Outside on purpose — that is the whole
+        point (see `Brand`). Phone-hidden in CSS, because the player gives the artwork all four edges
+        at that width.
       */}
       <Brand vt={intro === 'gone'} />
-      <FaceSwitch face={face} onSwitch={go} />
-
-      {/* Under the splash, over the frame: the intro dissolves into the question, the question
-          fades into the face. Mounted only for a browser that has never answered it. */}
-      {ask !== 'gone' && <Choice leaving={ask === 'leaving'} onPick={pick} />}
+      <AdminLink />
 
       {intro !== 'gone' && <Intro fading={intro !== 'holding'} out={intro === 'out'} vt />}
     </>

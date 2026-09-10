@@ -424,37 +424,6 @@
   animation: cx-breathe 2.4s ease-in-out infinite;
 }
 
-/*
- * The way to the other player.
- *
- * The technical face draws its counterpart as a hairline box, which is right over there — that surface is
- * made of edges. Here nothing is boxed, so this is a label that brightens, with an arrow that steps
- * sideways when you reach for it. Same corner, same words' worth of weight, opposite construction.
- */
-.cx-face-switch {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  flex: none;
-  padding: 7px 0 7px 9px;
-  font-size: 10px;
-  letter-spacing: 0.2em;
-  color: var(--t5);
-  transition: color 0.18s var(--cx-ease);
-}
-
-.cx-face-switch:hover {
-  color: var(--t1);
-}
-
-.cx-face-switch-arrow {
-  rotate: -90deg;
-  transition: translate 0.22s var(--cx-ease);
-}
-
-.cx-face-switch:hover .cx-face-switch-arrow {
-  translate: 3px 0;
-}
 
 .cx-room-btn {
   display: inline-flex;
@@ -5614,6 +5583,1278 @@
   font-size: 10.5px;
   font-variant-numeric: tabular-nums;
   color: var(--t4);
+}
+
+/* --- lining the rooms up -------------------------------------------------- */
+
+/*
+ * The alignment axis, one room to a line.
+ *
+ * The rows share a scale on purpose: the reason this control is a list and not a setting is that
+ * "the kitchen is 25 ms out" should be something you *see* by comparing two knob positions, not
+ * something you work out by reading two numbers. So the axis is the same width on every row and the
+ * names are held to a fixed column, which is what keeps the knobs comparable.
+ */
+.cx-align {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin: 0;
+  padding: 4px 0 0;
+  list-style: none;
+}
+
+.cx-align-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+}
+
+.cx-align-name {
+  flex: none;
+  width: 34%;
+  max-width: 190px;
+  overflow: hidden;
+  font-size: 14px;
+  color: var(--t2);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* The room the others are measured against — a fact about the group, in the quietest voice. */
+.cx-align-name i {
+  display: block;
+  margin-top: 3px;
+  font-size: 9px;
+  font-style: normal;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--t7);
+}
+
+.cx-align-axis {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+/*
+ * A native range input, dressed down.
+ *
+ * The rest of this face drags its own sliders, and for a volume that is right: it is a gesture, not a
+ * number. An offset is a number — you nudge it by five, you type nothing, you compare it with the row
+ * above — and the native control is the one that comes with arrow keys, page steps and a screen
+ * reader that says what it is.
+ */
+.cx-align-range {
+  flex: 1;
+  min-width: 0;
+  height: 18px;
+  margin: 0;
+  background: none;
+  /* Both spellings: the unprefixed one is what standards-mode Chromium reads, the prefixed one is
+     what makes the pseudo-element rules below take over from the native control. */
+  appearance: none;
+  -webkit-appearance: none;
+  /* Belt and braces: where the pseudo-element rules below are honoured the thumb is already this
+     colour, and where the native control survives, this is what tints it. The faders in this face
+     have white knobs on neutral rails; an offset is not more important than a volume. */
+  accent-color: var(--t1);
+  cursor: pointer;
+}
+
+/*
+ * The knob is white here, and that takes three classes to say.
+ *
+ * `styles.css` styles every range in the bundle — an accent knob with a glow, which is right on the
+ * technical surface and wrong in this one, where every fader has a white knob on a neutral rail. Its
+ * selector carries an element and an attribute, so a single class cannot beat it; the specificity
+ * here is the cost of one shared stylesheet serving two faces, and it is cheaper than a second
+ * stylesheet. Everything else about the control — the track, the fill, the sizes — is inherited from
+ * there on purpose: two implementations of a slider is how they end up different by accident.
+ */
+.cx-root .cx-align .cx-align-range::-webkit-slider-thumb {
+  background: var(--t1);
+  box-shadow: 0 0 0 3px var(--cx-bg);
+}
+
+.cx-root .cx-align .cx-align-range::-moz-range-thumb {
+  background: var(--t1);
+  box-shadow: 0 0 0 3px var(--cx-bg);
+}
+
+.cx-align-range:disabled {
+  cursor: default;
+  opacity: 0.4;
+}
+
+.cx-align-step {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  font-size: 13px;
+  color: var(--t5);
+  transition: color 0.15s, background 0.15s;
+}
+
+.cx-align-step:hover:not(:disabled) {
+  color: var(--t1);
+  background: rgb(255 255 255 / 6%);
+}
+
+.cx-align-step:disabled {
+  color: var(--t8);
+}
+
+.cx-align-value {
+  flex: none;
+  width: 76px;
+  white-space: nowrap;
+  font-size: 11.5px;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  color: var(--t3);
+}
+
+.cx-align-warn {
+  flex-basis: 100%;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  color: #e4584f;
+}
+
+/* The one thing the server cannot measure, said where the measuring happens. */
+.cx-align-note {
+  margin-top: 14px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--t6);
+}
+
+/* --- signal: the reading, in this window ---------------------------------- */
+
+/*
+ * The fourth view, and the only awake one.
+ *
+ * `canvas` and `house` are withdrawals — the chrome dims, a clock comes up, the screen becomes a
+ * picture. This is their opposite: it is the same room with the technology deliberately *in* sight,
+ * so nothing here dims and nothing is soft. Two constructions carry that difference, and they are the
+ * only two things in this face that are allowed them:
+ *
+ *  - **Seams.** The deck is a grid of hairlines with the page showing through, which is what a rack of
+ *    instruments looks like and what nothing else in this player is. Elsewhere the rule holds: nothing
+ *    is boxed.
+ *  - **The green.** `.cx-root` sets the accent to silver on purpose — a stage has a record playing and
+ *    reports nothing. This surface has verdicts to give, so it takes the product's green back, and it
+ *    has to be set here rather than on the root because `accent.ts` writes `--g` inline per track.
+ */
+.cx-sig {
+  --g: var(--accent);
+  --gb: var(--accent);
+  /*
+   * The screen: the ground the two drawn instruments decay onto.
+   *
+   * A shade above the page, and deliberately visible. The persistence has to fade toward *some*
+   * colour, and once it does the lit area becomes an object with an edge — so that edge may as well
+   * be the thing it looks like, which is the face of a tube. The spectrum next to it makes the same
+   * move for the same reason: bars on a page are loose, bars in a window are a reading.
+   */
+  --cx-screen: #101216;
+
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+}
+
+/*
+ * The band: identity, position, transport, level — and the way out.
+ *
+ * It exists so that reading never costs you the controls. The old technical player had this problem
+ * the other way round: it was a whole shell, so it carried a second copy of everything *including* a
+ * browser, and the one thing a reading actually needs beside it is the record it is about.
+ */
+.cx-sig-band {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: clamp(16px, 1.8vw, 28px);
+  padding: 12px clamp(16px, 1.6vw, 26px);
+  border-bottom: 1px solid var(--hair);
+}
+
+/*
+ * The sleeve, at 52px, and it is the same object as the one on the stage.
+ *
+ * It flies between the two — see `shell/coverMorph`, written for the flight between the two faces and
+ * doing a better job between two views of one window: the thing the eye holds is the thing that was
+ * always the same before and after.
+ */
+.cx-sig-cover {
+  width: 52px;
+  height: 52px;
+  flex: none;
+  border-radius: 2px;
+  background-color: var(--cx-cover);
+  background-position: center;
+  background-size: cover;
+  box-shadow: 0 6px 18px rgb(0 0 0 / 45%);
+}
+
+.cx-sig-id {
+  display: flex;
+  flex: 0 1 auto;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  max-width: 320px;
+}
+
+.cx-sig-eyebrow {
+  font-size: 9.5px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--t6);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cx-sig-title {
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--t1);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cx-sig-sub {
+  font-size: 11.5px;
+  color: var(--t5);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cx-sig-bar {
+  display: block;
+  flex: 1 1 160px;
+  min-width: 0;
+  max-width: 420px;
+}
+
+/* The stage sets the bar a top margin because it hangs under a 100px title. In a 76px band there is
+   nothing above it to clear. */
+.cx-sig-bar .cx-bar-wrap {
+  max-width: none;
+  margin-top: 0;
+}
+
+.cx-sig-vol {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 10px;
+  color: var(--t6);
+}
+
+.cx-sig-vol .cx-vol-slider {
+  width: 96px;
+}
+
+/*
+ * The way back, in the corner the face switch used to occupy — one row down and inside the view.
+ *
+ * A view that covers the player has to say how to leave it *in itself*; `Escape` works and nobody
+ * discovers `Escape`. It says `player` because that is the place it returns to, which is the same
+ * naming the row of doors on the stage uses.
+ */
+.cx-sig-back {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 7px;
+  margin-left: auto;
+  font-size: 10.5px;
+  letter-spacing: 0.2em;
+  color: var(--t5);
+  transition: color 0.18s;
+}
+
+.cx-sig-back:hover {
+  color: var(--t1);
+}
+
+/* The transport, shrunk for the band: same five controls, same handlers, less metal. */
+.cx-transport[data-size='bar'] {
+  flex: none;
+  gap: 16px;
+  margin-top: 0;
+}
+
+.cx-transport[data-size='bar'] .cx-tr-play {
+  width: 40px;
+  height: 40px;
+  box-shadow: inset 0 0 0 1.25px rgb(255 255 255 / 78%);
+}
+
+/*
+ * The deck: twelve columns, seamed with hairlines.
+ *
+ * `align-content: start` so a short deck sits at the top of the panel rather than floating in the
+ * middle of it — instruments hang from a rail, they do not centre in a frame.
+ */
+.cx-sig-deck {
+  display: grid;
+  flex: 1;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  /*
+   * Three rows that divide the window, rather than a stack that outgrows it.
+   *
+   * The deck used to measure its own contents and scroll when they came to more than the screen —
+   * which is the one thing an instrument panel must not do. You cannot read a meter that is below the
+   * fold, and scrolling to find one is how a rack turns into a web page.
+   *
+   * So the chain takes the height it needs and the two rows of instruments split what is left. Both
+   * carry a floor, so a genuinely short window falls back to scrolling rather than crushing the
+   * spectrum into a line — but at any sane height nothing moves.
+   */
+  grid-template-rows: auto minmax(200px, 1fr) minmax(184px, 1fr);
+  gap: 1px;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: var(--hair-soft);
+}
+
+.cx-sig-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+  /* Zero, so a tile gives way to its row rather than pushing the row past the window. */
+  min-height: 0;
+  padding: 13px clamp(14px, 1.3vw, 20px) 16px;
+  background: var(--cx-bg);
+  overflow: hidden;
+}
+
+.cx-sig-tile[data-span='6'] {
+  grid-column: span 6;
+}
+
+.cx-sig-tile[data-span='12'] {
+  grid-column: span 12;
+}
+
+.cx-sig-tile[data-span='3'] {
+  grid-column: span 3;
+}
+
+/*
+ * The tile's name is its whole frame.
+ *
+ * Only where the instrument does not already draw its own: the chain's card is named here, the
+ * spectrum names itself (`analysis-heading`) and the clock says `Clock`. Labelling those twice is how
+ * a deck turns into a form.
+ */
+.cx-sig-tile-label {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 9.5px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--t7);
+}
+
+/* How the instrument behaves, at the other end of its own name — a caption, not a reading. */
+.cx-sig-tile-label i {
+  font-style: normal;
+  letter-spacing: 0.1em;
+  text-transform: none;
+  color: var(--t8);
+}
+
+/*
+ * The clock at the head of its column, the wire at the foot.
+ *
+ * Two readings of different kinds — one about time, one about the link — and stacked flush they left
+ * a third of the column empty underneath. Pushed apart they read as what they are: the tile's subject
+ * at the top and its footnote at the bottom, which is the same shape the level column has and the
+ * reason the two columns either side of the display now look like a pair.
+ */
+.cx-sig-tile .signal-wire {
+  margin-top: auto;
+}
+
+/* The strip's own seam and padding come from the tile it now sits in. */
+.cx-sig-chain {
+  padding-top: 0;
+  border-top: 0;
+}
+
+/*
+ * The hero: the verdict, the two caps, and the rail between them.
+ *
+ * One row of the grid, four columns: a headline wide enough for a sentence, the format the audio
+ * arrived as, the stations, and the format it left as. The caps sit at the ends because that is
+ * where they are in the signal — read left to right, the row *is* the path.
+ */
+.cx-sig-hero {
+  display: grid;
+  grid-column: span 12;
+  grid-template-columns: minmax(220px, 22%) auto minmax(0, 1fr) auto;
+  align-items: start;
+  gap: clamp(20px, 2.4vw, 44px);
+  padding-top: 18px;
+  padding-bottom: 20px;
+}
+
+/*
+ * The answer, at the size of an answer.
+ *
+ * It was a 10px label in a row of 10px labels — the one line on the panel that says whether the
+ * record is reaching the speakers intact, set in the same voice as the word `LEVEL`. The rest of the
+ * face is working; this is the conclusion, and a conclusion is allowed to be the largest thing.
+ */
+/*
+ * The rule down the left is the one mark that says the equipment has an opinion, so it stays — but
+ * the text has to clear it, which is what the padding is for.
+ */
+.cx-sig-verdict .signal-verdict {
+  margin: 0;
+  padding: 0 0 0 14px;
+}
+
+.cx-sig-verdict .signal-verdict-head {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(26px, 2.6vw, 38px);
+  font-weight: 500;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  /* Sentence case. Engraved uppercase is this product's *label* voice, and a conclusion is not a
+     label — at 38px it also stops being a word and becomes a wall. */
+  text-transform: none;
+  color: var(--accent);
+}
+
+.cx-sig-verdict[data-tone='altered'] .signal-verdict-head {
+  color: var(--t1);
+}
+
+.cx-sig-verdict .signal-verdict-note {
+  margin-top: 12px;
+  max-width: 34ch;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--t5);
+}
+
+/* The two ends of the chain, in the same notation so that identical caps read as "nothing happened". */
+.cx-sig-cap {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 3px;
+}
+
+.cx-sig-cap[data-side='out'] {
+  text-align: right;
+}
+
+.cx-sig-cap-label {
+  font-size: 9px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--t7);
+}
+
+.cx-sig-cap-format {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--t2);
+}
+
+.cx-sig-cap-format i {
+  display: block;
+  font-style: normal;
+  font-size: 11px;
+  color: var(--t5);
+}
+
+.cx-sig-cap-format[data-quiet] {
+  color: var(--t7);
+}
+
+/*
+ * The rail: a hairline the stations stand on.
+ *
+ * The line runs behind the dots rather than between them, so a chain of eight is one object instead
+ * of seven segments — and the travelling light below is what makes it a *signal* path rather than a
+ * diagram of one.
+ */
+.cx-sig-rail {
+  position: relative;
+  display: flex;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.cx-sig-rail::before {
+  content: '';
+  position: absolute;
+  top: 4px;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: rgb(255 255 255 / 9%);
+}
+
+/* Light travelling the length of it, only while audio is flowing. Stopped means still, which is
+   itself a reading. */
+.cx-sig-rail[data-live]::after {
+  content: '';
+  position: absolute;
+  top: 4px;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgb(74 222 128 / 70%) 50%, transparent) -90px 0 /
+    90px 1px no-repeat;
+  animation: cx-sig-flow 4.6s linear infinite;
+}
+
+@keyframes cx-sig-flow {
+  from {
+    background-position: -90px 0;
+  }
+
+  to {
+    background-position: calc(100% + 90px) 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cx-sig-rail[data-live]::after {
+    animation: none;
+    opacity: 0;
+  }
+}
+
+.cx-sig-station {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 0;
+  padding-right: 12px;
+}
+
+.cx-sig-dot {
+  display: block;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  /* The page shows through the ring, so the rail appears to pass behind each dot rather than under it. */
+  box-shadow: 0 0 0 4px var(--cx-bg);
+  background: var(--cx-bg);
+  outline: 1.5px solid var(--t8);
+  outline-offset: -1.5px;
+}
+
+.cx-sig-station[data-state='on'] .cx-sig-dot {
+  background: var(--accent);
+  outline-color: var(--accent);
+}
+
+.cx-sig-station[data-state='off'] .cx-sig-dot {
+  outline-color: #e7b75a;
+}
+
+.cx-sig-station-name {
+  display: block;
+  margin-top: 14px;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--t6);
+}
+
+.cx-sig-station[data-state='on'] .cx-sig-station-name {
+  color: var(--t2);
+}
+
+/*
+ * Two lines a station, whether it needs them or not.
+ *
+ * Half the readings fit one line and half do not, so the rail's bottom edge came out ragged — a row
+ * of values sitting at two different depths, which reads as a mistake rather than as a difference.
+ * Reserving the second line everywhere costs a few pixels and buys one baseline across the chain.
+ */
+.cx-sig-station-value {
+  display: block;
+  min-height: 2.9em;
+  margin-top: 5px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.45;
+  color: var(--t5);
+  animation: cx-sig-relock 1.4s ease both;
+}
+
+/* A station that re-locks lands in the accent and settles out of it. */
+@keyframes cx-sig-relock {
+  from {
+    color: var(--accent);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cx-sig-station-value {
+    animation: none;
+  }
+}
+
+/*
+ * What the instruments give up to hang here.
+ *
+ * They were written for a 300px inspector rail and a 900px player column in the other shell, and both
+ * of those carried their own padding and their own centring. In a seamed tile the tile is the padding.
+ */
+.cx-sig-tile .np-readout {
+  /*
+   * Centred against the display beside it, which is the arrangement it was built for.
+   *
+   * Pinned to the top of the tile it read as four numbers with 400px of nothing under them; the
+   * spectrum sets this row's height and a column of readings should stand in the middle of it, the way
+   * the level column stands beside the display on the equipment this borrows from.
+   */
+  align-self: center;
+  flex: 1;
+  justify-content: center;
+  gap: clamp(14px, 3vh, 26px);
+  padding-left: 0;
+}
+
+.cx-sig-tile .analysis-panel {
+  flex: 1;
+  min-height: 0;
+}
+
+.cx-sig-tile .signal-path,
+.cx-sig-tile .signal-timing {
+  padding: 0;
+}
+
+/*
+ * The one number a tile is about.
+ *
+ * Set in the display face at three times the size of everything around it, because a panel of
+ * readings all at one size is a spreadsheet: every number available, none of them findable. The unit
+ * rides beside it in the label voice, so the figure itself is the only thing at this size.
+ */
+.cx-sig-headline {
+  display: block;
+  flex: none;
+  font-family: var(--font-display);
+  font-size: clamp(21px, 1.9vw, 30px);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.035em;
+  line-height: 1;
+  color: var(--t1);
+}
+
+.cx-sig-headline i {
+  display: block;
+  margin-top: 7px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-style: normal;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--t7);
+}
+
+.cx-sig-headline[data-tone='ok'] {
+  color: var(--g);
+}
+
+.cx-sig-headline[data-tone='bad'] {
+  color: #e4584f;
+}
+
+/* Whatever stands under an instrument: the headline, then its qualifications, pinned to the foot of
+   the tile so the drawing above keeps the height. */
+.cx-sig-foot-rows {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: auto;
+}
+
+/*
+ * A row of figures under an instrument.
+ *
+ * `auto-fit` rather than a fixed count: the same row carries six readings under a wide graph and
+ * wraps to two lines in a narrow one, without a breakpoint deciding for it.
+ */
+.cx-sig-stats {
+  display: grid;
+  flex: none;
+  grid-template-columns: repeat(auto-fit, minmax(84px, 1fr));
+  gap: 12px 16px;
+}
+
+.cx-sig-stat span {
+  display: block;
+  font-size: 9px;
+  letter-spacing: 0.16em;
+  color: var(--t7);
+}
+
+/*
+ * All four at reading size.
+ *
+ * The row used to hold six figures of two kinds — loudness and peaks — so one had to lead and the
+ * rest had to get out of its way. With the peaks moved to the meter these four are one instrument's
+ * answer, four views of the same quantity, and setting them equally is what says so.
+ */
+.cx-sig-stat em {
+  display: block;
+  margin-top: 6px;
+  font-family: var(--font-mono);
+  font-size: 19px;
+  font-style: normal;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+  color: var(--t2);
+  white-space: nowrap;
+}
+
+/* Two numbers in one reading need two columns; nowrap in one would print over its neighbour. */
+.cx-sig-stat[data-wide] {
+  grid-column: span 2;
+}
+
+/* The one the others qualify keeps the brightest ink, at the same size as its neighbours. */
+.cx-sig-stat[data-lead] em {
+  color: var(--t1);
+}
+
+.cx-sig-stat[data-tone='bad'] em {
+  color: #e4584f;
+}
+
+.cx-sig-stat em i {
+  margin-left: 5px;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-style: normal;
+  letter-spacing: 0.08em;
+  color: var(--t7);
+}
+
+/*
+ * A named fact: what it is on the left, what it reads on the right.
+ *
+ * The one shape the standing tiles are built from. Right-aligned readings because a column of numbers
+ * that share an edge can be compared at a glance and a ragged one cannot — the same reason the level
+ * column beside the spectrum sets its numbers flush right.
+ */
+.cx-sig-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.cx-sig-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 14px;
+  min-width: 0;
+}
+
+.cx-sig-row > span {
+  flex: none;
+  font-size: 11.5px;
+  color: var(--t6);
+}
+
+.cx-sig-row > em {
+  /*
+   * The mono face, not the `.mono` class.
+   *
+   * That class is this product's *label* voice — bold, tracked out, uppercase — and it is right for
+   * `LEVEL` and `ON THE WIRE` and wrong for everything they are naming: it turned `192 kHz` into
+   * `192 KHZ` and `not reported` into a shout. A reading is set in the same face at its own size, and
+   * the deck's labels stay the only things on it that are engraved.
+   */
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  font-style: normal;
+  font-variant-numeric: tabular-nums;
+  color: var(--t2);
+  text-align: right;
+  min-width: 0;
+}
+
+/* The unit is not part of the number: it is quieter, it never wraps away from it, and it is the same
+   distance from every reading on the deck. */
+.cx-sig-unit {
+  margin-left: 5px;
+  font-size: 9.5px;
+  font-style: normal;
+  letter-spacing: 0.08em;
+  color: var(--t7);
+}
+
+/*
+ * The level meter: two columns against a printed scale.
+ *
+ * The gradient sits on the *track* and the fill clips it, so a bar's colour says where it is rather
+ * than how tall it is — the top of a loud column is amber because it is close to zero, and a quiet
+ * column stays green however far it happens to reach. A bar that turned amber whenever it grew would
+ * be a decoration dressed as a warning.
+ */
+/*
+ * The cell grid, written once and worn by both layers.
+ *
+ * Rows alone were right on a 20px spectrum bar and wrong here: chopped only horizontally, a 200px
+ * column is a stack of *stripes*, which is a texture from a different object entirely. Cut both ways
+ * it is a matrix of cells — the shape a level display has when it is made of lamps — and at this
+ * width that is what the eye was expecting.
+ *
+ * Two gradients intersected rather than one: `mask-composite` is what keeps a single grid in one
+ * declaration instead of a sprite that has to be regenerated whenever a size changes.
+ */
+.cx-meter {
+  --cell: repeating-linear-gradient(to top, #000 0 6px, transparent 6px 9px),
+    repeating-linear-gradient(to right, #000 0 15px, transparent 15px 18px);
+
+  display: flex;
+  flex: 1;
+  gap: 9px;
+  min-height: 0;
+  padding-top: 4px;
+}
+
+.cx-meter-scale {
+  position: relative;
+  flex: none;
+  width: 20px;
+  /* The letters and figures under the columns are outside the scale's own span. */
+  margin-bottom: 32px;
+}
+
+.cx-meter-scale span {
+  position: absolute;
+  right: 0;
+  font-size: 8.5px;
+  letter-spacing: 0.06em;
+  color: var(--t7);
+  translate: 0 50%;
+}
+
+.cx-meter-bars {
+  display: flex;
+  flex: 1;
+  /* The pair fills the tile. Two narrow columns in a wide box read as a diagram of a meter; two
+     that take the width read as the meter itself, which is the whole reason to draw one. */
+  gap: 10px;
+  /* Against the scale, not centred in whatever is left: a scale a hand's width from the columns it
+     measures is a legend, and a legend is something you have to look up. */
+  justify-content: flex-start;
+}
+
+/*
+ * Wide columns, not needles.
+ *
+ * Capped at 26px they read as two indicator lights standing in an empty tile; given the width they
+ * become what a meter on a piece of equipment is — two bands of light whose *shape* is legible from
+ * across the room, which is the whole argument for drawing a level instead of printing it.
+ */
+.cx-meter-column {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/*
+ * The column is a stack of cells, not a slab.
+ *
+ * Two 200px blocks of flat colour next to a spectrum made of segments read as the one object on the
+ * deck that had not been finished. The same chop, on the same 6/3 grid the display uses, does two
+ * things at once: it ties the two instruments into one piece of equipment, and it gives the eye
+ * something to count — a level you can read to the nearest cell without going to the number.
+ *
+ * The unlit cells are drawn on the *track*, so a quiet column is still a column of dark LEDs rather
+ * than an empty box, and both grids are anchored to the same bottom edge — the lit cells sit exactly
+ * on the unlit ones however far the level reaches.
+ */
+.cx-meter-bar {
+  position: relative;
+  flex: 1;
+  overflow: hidden;
+  border-radius: 2px;
+}
+
+/*
+ * The unlit lamps.
+ *
+ * A quiet column is a column of dark cells rather than an empty box — the same statement the
+ * spectrum's unlit segments make, and the reason a meter at rest still looks like equipment that is
+ * switched on. Drawn on the track so the lit cells above land exactly on top of them.
+ */
+.cx-meter-bar::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgb(255 255 255 / 5%);
+  -webkit-mask-image: var(--cell);
+  -webkit-mask-composite: source-in;
+  mask-image: var(--cell);
+  mask-composite: intersect;
+}
+
+.cx-meter-rule {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: rgb(255 255 255 / 6%);
+}
+
+/*
+ * Dim mass, bright mark — the same language the spectrum speaks.
+ *
+ * This was a saturated gradient running to red, and beside a display whose bars are a quiet green
+ * with a bright cap it read as the loudest object on the deck: a slab of light where the argument of
+ * the whole face is restraint. Flat and dim, the bar is *quantity*; the peak above it is the only
+ * thing here allowed to be bright, because it is the only thing that is telling you something.
+ *
+ * No transition, either: the ballistics live in `useAnalysis`, and CSS smoothing on top of a meter's
+ * own ballistics is two lags arguing about the same transient.
+ */
+.cx-meter-fill {
+  position: absolute;
+  inset: 0;
+  background: rgb(74 222 128 / 34%);
+  /* The lit cells, on the same grid as the unlit ones — see `.cx-meter`. */
+  -webkit-mask-image: var(--cell);
+  -webkit-mask-composite: source-in;
+  mask-image: var(--cell);
+  mask-composite: intersect;
+  /*
+   * No lit edge on the fill.
+   *
+   * It had one, and two bright lines a few pixels apart — the top of the bar and the held peak just
+   * above it — is a meter arguing with itself about which mark to read. One bright thing per column.
+   */
+}
+
+/*
+ * The held peak: the one mark that is remembering, and the one that carries the warning.
+ *
+ * Colour belongs here rather than on the bar. A bar that reddens as it grows says "loud", which the
+ * height already said; a mark that reddens says "that transient came within a decibel of the
+ * ceiling", which nothing else on the tile can say.
+ */
+.cx-meter-held {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--accent);
+}
+
+.cx-meter-held[data-tone='warm'] {
+  background: #e7b75a;
+}
+
+.cx-meter-held[data-tone='hot'] {
+  background: #e4584f;
+  box-shadow: 0 0 6px rgb(228 88 79 / 55%);
+}
+
+.cx-meter-side {
+  flex: none;
+  font-size: 8.5px;
+  font-style: normal;
+  letter-spacing: 0.16em;
+  text-align: center;
+  color: var(--t7);
+}
+
+/* Each column's own figure, under its own column: which side is louder is half of what a pair of
+   meters is for, and one number averaged across both cannot say it. */
+.cx-meter-read {
+  flex: none;
+  margin-top: -1px;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  font-style: normal;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  color: var(--t3);
+}
+
+/* Nothing flowing: the columns stay, unlit, because a meter that vanishes reads as equipment that
+   has gone rather than as a room that is quiet. */
+.cx-meter[data-quiet] .cx-meter-fill {
+  opacity: 0.25;
+}
+
+/*
+ * A drawn instrument, and the ink it draws with.
+ *
+ * The canvas takes its colour from `color` rather than from a value baked into the drawing code, so
+ * the deck's accent is defined exactly once — in `.cx-sig` — and the scope, the goniometer and the
+ * chain's lit stations can never disagree about which green this is.
+ */
+.cx-sig-figure {
+  position: relative;
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+  margin: 0 auto;
+  color: var(--accent);
+}
+
+/* The goniometer is a figure, not a field: it stays square and centred in whatever it is given. */
+.cx-sig-figure:not([data-wide]) .cx-sig-canvas {
+  aspect-ratio: 1;
+  width: auto;
+  max-width: 100%;
+  max-height: 100%;
+  margin: 0 auto;
+}
+
+.cx-sig-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 2px;
+  background: var(--cx-screen);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 4%);
+}
+
+/* The grid layer carries the frame; the trace layer sits inside it and paints its own ground. */
+/*
+ * The cage sits *over* the light, and carries nothing of its own.
+ *
+ * A persistence layer has to paint an opaque ground — that is the mechanism — so anything beneath it
+ * is hidden by the first frame. The reference lines therefore go on top, absolutely positioned and
+ * fully transparent: they are drawn once, they never fade, and the glow reads through them.
+ */
+.cx-sig-canvas[data-layer='grid'] {
+  background: none;
+  box-shadow: none;
+}
+
+/*
+ * Two layers to an instrument: the cage, and the light in it.
+ *
+ * The trace canvas fades rather than clears (see `fade` in `Instruments`), and anything drawn into a
+ * fading layer never fades — a grid redrawn every frame converges on its own brightness and turns
+ * into a lit cage. So the reference lines sit underneath, drawn once and left alone.
+ */
+.cx-sig-figure {
+  isolation: isolate;
+}
+
+.cx-sig-canvas[data-layer='grid'] {
+  position: absolute;
+  inset: 0;
+}
+
+/*
+ * The deck arrives.
+ *
+ * Rows in the order the eye reads them, 70 ms apart — enough that it registers as *assembling* and
+ * short enough that nobody waits for it. It plays on entering the view and never again: the second
+ * time you see a screen build itself it is a delay, not a gesture. `both` so a tile is invisible
+ * until its own moment rather than flashing at full opacity first.
+ */
+@keyframes cx-sig-rise {
+  from {
+    opacity: 0;
+    transform: translateY(9px);
+  }
+}
+
+.cx-sig-tile {
+  animation: cx-sig-rise 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.cx-sig-tile[data-span='12'] {
+  animation-delay: 40ms;
+}
+
+.cx-sig-deck > .cx-sig-tile:nth-child(n + 2) {
+  animation-delay: 110ms;
+}
+
+.cx-sig-deck > .cx-sig-tile:nth-child(n + 5) {
+  animation-delay: 180ms;
+}
+
+.cx-sig-band,
+.cx-sig-foot {
+  animation: cx-sig-rise 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+/* Nothing assembles for someone who asked for no motion; it is simply there. */
+@media (prefers-reduced-motion: reduce) {
+  .cx-sig-tile,
+  .cx-sig-band,
+  .cx-sig-foot {
+    animation: none;
+  }
+}
+
+/* The two tones a reading can carry: it is what it should be, or it is not. */
+.cx-sig-row [data-tone='ok'] {
+  color: var(--g);
+}
+
+.cx-sig-row [data-tone='bad'] {
+  color: #e4584f;
+}
+
+.cx-sig-quiet {
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--t6);
+}
+
+/*
+ * The foot: the machine, under everything the machine is doing.
+ *
+ * One line, the width of the deck, in the smallest voice on the screen — it is the only thing here
+ * that is not about the record, and it should be readable exactly when you go looking for it.
+ */
+.cx-sig-foot {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 26px;
+  padding: 9px clamp(16px, 1.6vw, 26px);
+  border-top: 1px solid var(--hair);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--t7);
+}
+
+.cx-sig-foot b {
+  font-weight: 400;
+  color: var(--t4);
+}
+
+.cx-sig-foot [data-tone='warn'],
+.cx-sig-foot [data-tone='warn'] b {
+  color: #e7b75a;
+}
+
+.cx-sig-foot-end {
+  margin-left: auto;
+}
+
+/* One column in the hand: the deck is a stack of instruments read one at a time, which is the shape a
+   phone can hold — and the reason this can exist on a phone at all now that it is not a shell. */
+@media (max-width: 979px) {
+  .cx-sig-band {
+    flex-wrap: wrap;
+    gap: 12px 16px;
+  }
+
+  .cx-sig-bar {
+    flex-basis: 100%;
+    order: 3;
+    max-width: none;
+  }
+
+  .cx-sig-vol {
+    order: 4;
+  }
+
+  .cx-sig-deck {
+    display: flex;
+    flex-direction: column;
+  }
+
+  /*
+   * In the hand every tile takes the height it needs and the page scrolls.
+   *
+   * The desk's rule is the opposite — three rows that divide the window, because a panel you have to
+   * scroll is not a panel. A phone has no such option: four instruments cannot share 700 px of
+   * portrait, and pretending they can is how the chain came out as a heading with nothing under it.
+   * Reading one instrument at a time down a column *is* the phone version of a rack.
+   */
+  .cx-sig-tile {
+    flex: none;
+    overflow: visible;
+  }
+
+
+
+  .cx-sig-tile[data-span='6'] {
+    min-height: 240px;
+  }
+
+  /* In the hand the meter is a band across the screen rather than a tall pair, so it gets a floor
+     of its own — the columns are the one thing here that is worth nothing at 60px. */
+  .cx-meter {
+    min-height: 190px;
+  }
+
+  /*
+   * Eight stations, two to a line.
+   *
+   * Across a desk they are one rail with the light running along it; in the hand that rail is 50px a
+   * station, which is a row of truncated words. Wrapped they are a table of eight readings, which is
+   * the same information doing the job the width allows — and the connector goes with the rail it was
+   * drawing, because a dashed line that wraps is a line pointing at the wrong neighbour.
+   */
+  .cx-sig-chain .signal-path .signal-stages {
+    flex-wrap: wrap;
+    row-gap: 16px;
+  }
+
+  .cx-sig-chain .signal-stage {
+    flex: 1 1 42%;
+  }
+
+  .cx-sig-chain .signal-stage:not(:last-child)::before,
+  .cx-sig-chain .signal-stages[data-live]::after {
+    display: none;
+  }
+
+  .cx-sig-foot {
+    flex-wrap: wrap;
+    gap: 8px 18px;
+  }
+
+  .cx-sig-foot-end {
+    margin-left: 0;
+  }
 }
 
 /* --- phone nav ------------------------------------------------------------ */
