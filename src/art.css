@@ -11352,3 +11352,266 @@
     height: 34px;
   }
 }
+
+/* ==========================================================================================
+ * The spread, finished: the sleeve owns the left edge from the very top, the bar lies on the page,
+ * the type has a light line and a heavy one, and a record you are looking at is a spread too.
+ * ========================================================================================== */
+
+@media (min-width: 1280px) {
+  /* The bar lies on the right page. Out of the flow, so the sleeve starts at the window's top edge. */
+  .cx-root:has(.cx-stage[data-spread]) .cx-top {
+    position: absolute;
+    top: 0;
+    left: min(100vh, 60vw);
+    right: 0;
+    z-index: 5;
+    padding: 0 96px 0 clamp(36px, 4vw, 84px);
+  }
+
+  /* The mark stands at the head of the page, where the bar now is; the shell's fixed copy steps back. */
+  .cx-root:has(.cx-stage[data-spread]) .cx-top .brand-slot {
+    visibility: visible;
+  }
+
+  .cx-root:has(.cx-stage[data-spread]) .cx-top .brand-slot .brand-mark {
+    color: var(--accent);
+  }
+
+  body:has(.cx-stage[data-spread]) .brand-shared {
+    visibility: hidden;
+  }
+
+  .cx-stage[data-spread] .cx-stage-art {
+    width: min(100vh, 60vw);
+  }
+
+  .cx-stage[data-spread] .cx-stage-meta {
+    padding-top: calc(54px + clamp(22px, 3.6vh, 48px));
+  }
+
+  /* Light over heavy: the artist in the display face at 300, the title at 800 under it. */
+  .cx-stage[data-spread] .cx-artistrow {
+    gap: 18px;
+    margin-top: 22px;
+    margin-bottom: 4px;
+  }
+
+  .cx-stage[data-spread] .cx-artist {
+    font-family: var(--font-display);
+    font-size: clamp(24px, 2vw, 38px);
+    font-weight: 300;
+    letter-spacing: -0.015em;
+    color: var(--t2);
+  }
+
+  .cx-stage[data-spread] .cx-fav {
+    color: var(--t6);
+  }
+
+  /* Resting: the caption sinks to the foot of the page, the clock keeps the top; the field stays,
+     faintly, so the page is still the record's room and not a hole beside it. */
+  .cx-root[data-idle] .cx-stage[data-spread] .cx-stage-meta {
+    justify-content: flex-end;
+    padding-bottom: clamp(44px, 7vh, 96px);
+    background:
+      radial-gradient(120% 90% at 0% 30%, color-mix(in srgb, var(--cx-a1) 45%, transparent) 0%, transparent 70%),
+      #0a0a0c;
+  }
+
+  .cx-root[data-idle] .cx-stage[data-spread] .cx-title {
+    font-size: clamp(36px, 5.2vh, 64px);
+  }
+
+  .cx-root[data-idle] .cx-stage[data-spread] .cx-artist {
+    font-size: clamp(20px, 2.6vh, 30px);
+  }
+
+  .cx-root[data-idle]:has(.cx-stage[data-spread]) .cx-idle-next {
+    top: clamp(112px, 15vh, 170px);
+    bottom: auto;
+    right: clamp(24px, 3vw, 52px);
+  }
+
+  /* --- a record you are looking at is a spread as well --- */
+
+  .cx-browse-inner[data-detail]:has(.cx-detail:not([data-portrait])) {
+    --page-pad: clamp(40px, 4vw, 84px);
+    display: grid;
+    grid-template-columns: min(calc(100vh - 54px), 50vw) minmax(0, 1fr);
+    grid-template-rows: auto auto auto auto auto minmax(0, 1fr);
+    column-gap: 0;
+    padding: 0;
+  }
+
+  .cx-browse-inner[data-detail]:has(.cx-detail:not([data-portrait])) > .cx-detail {
+    display: contents;
+  }
+
+  /* The left page: the sleeve, the height of the window, staying put while the tracks scroll. */
+  .cx-browse-inner[data-detail]:has(.cx-detail:not([data-portrait])) .cx-detail-art {
+    grid-column: 1;
+    grid-row: 1 / -1;
+    position: sticky;
+    top: 0;
+    align-self: start;
+    width: 100%;
+    height: calc(100vh - 54px);
+    margin: 0;
+    aspect-ratio: auto;
+  }
+
+  .cx-browse-inner[data-detail]:has(.cx-detail:not([data-portrait])) .cx-detail-cover {
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .cx-browse-inner[data-detail]:has(.cx-detail:not([data-portrait])) .cx-detail-bloom {
+    display: none;
+  }
+
+  /* The right page: the way back, then the record's head, then everything it lists. */
+  .cx-browse-inner[data-detail]:has(.cx-detail:not([data-portrait])) > .cx-browse-back {
+    grid-column: 2;
+    grid-row: 1;
+    margin: 22px var(--page-pad) 0;
+  }
+
+  .cx-browse-inner[data-detail]:has(.cx-detail:not([data-portrait])) .cx-detail-kind {
+    grid-column: 2;
+    grid-row: 2;
+    margin: clamp(34px, 5.6vh, 64px) var(--page-pad) 0;
+  }
+
+  .cx-browse-inner[data-detail]:has(.cx-detail:not([data-portrait])) .cx-detail-title {
+    grid-column: 2;
+    grid-row: 3;
+    max-width: 880px;
+    margin: 14px var(--page-pad) 0;
+    font-size: clamp(44px, min(7vh, 4.8vw), 96px);
+    letter-spacing: -0.045em;
+    line-height: 0.98;
+  }
+
+  .cx-browse-inner[data-detail]:has(.cx-detail:not([data-portrait])) .cx-detail-title[data-len='3'] {
+    font-size: clamp(36px, 5vh, 64px);
+  }
+
+  .cx-browse-inner[data-detail]:has(.cx-detail:not([data-portrait])) .cx-detail-title[data-len='4'] {
+    font-size: clamp(30px, 4.2vh, 52px);
+  }
+
+  .cx-browse-inner[data-detail]:has(.cx-detail:not([data-portrait])) .cx-detail-title[data-len='5'] {
+    font-size: clamp(26px, 3.6vh, 44px);
+  }
+
+  .cx-browse-inner[data-detail]:has(.cx-detail:not([data-portrait])) .cx-detail-sub {
+    grid-column: 2;
+    grid-row: 4;
+    margin: 14px var(--page-pad) 0;
+    font-family: var(--font-display);
+    font-size: clamp(22px, 1.8vw, 34px);
+    font-weight: 300;
+    letter-spacing: -0.015em;
+    color: var(--t2);
+  }
+
+  .cx-browse-inner[data-detail]:has(.cx-detail:not([data-portrait])) .cx-detail > .cx-browse-actions {
+    grid-column: 2;
+    grid-row: 5;
+    margin: clamp(24px, 3.6vh, 40px) var(--page-pad) 0;
+  }
+
+  .cx-browse-inner[data-detail]:has(.cx-detail:not([data-portrait])) > .cx-browse-body {
+    grid-column: 2;
+    grid-row: 6;
+    padding: clamp(30px, 4.6vh, 56px) var(--page-pad) 56px;
+  }
+
+  .cx-browse-inner[data-detail]:has(.cx-detail:not([data-portrait])) .cx-about {
+    max-width: 760px;
+  }
+}
+
+/* The phone player takes the same pairing: a light artist line under the heavy name. */
+@media (max-width: 979px) {
+  .cx-np-artist {
+    font-family: var(--font-display);
+    font-size: 20px;
+    font-weight: 300;
+    letter-spacing: -0.01em;
+    color: var(--t2);
+  }
+}
+
+/* ==========================================================================================
+ * The spread, corrected against the screen: the resting caption at the foot, the album's left page
+ * the height of the view it stands in, its ground continuous, its list one column until there is room.
+ * ========================================================================================== */
+
+@media (min-width: 1280px) {
+  .cx-stage[data-spread] .cx-stage-art,
+  .cx-root[data-idle] .cx-stage[data-spread] .cx-stage-art {
+    width: min(100vh, 62vw);
+  }
+
+  .cx-root:has(.cx-stage[data-spread]) .cx-top {
+    left: min(100vh, 62vw);
+  }
+
+  .cx-root[data-idle]:has(.cx-stage[data-spread]) .cx-idle-progress {
+    left: min(100vh, 62vw);
+  }
+
+  /* The hidden rows keep no auto margin at rest, so the caption can sink to the foot. */
+  .cx-root[data-idle] .cx-stage[data-spread] .cx-stage-meta > .cx-bar-wrap,
+  .cx-root[data-idle] .cx-stage[data-spread] .cx-stage-meta > .cx-live,
+  .cx-root[data-idle] .cx-stage[data-spread] .cx-stage-foot {
+    margin-top: 0;
+  }
+
+  /* The browse is the box the record's page is measured against: the sleeve is as tall as it. */
+  .cx-browse {
+    container-type: size;
+  }
+
+  .cx-browse-inner[data-detail]:has(.cx-detail:not([data-portrait])) {
+    grid-template-columns: min(100cqh, 50vw) minmax(0, 1fr);
+  }
+
+  .cx-browse-inner[data-detail]:has(.cx-detail:not([data-portrait])) .cx-detail-art {
+    height: 100cqh;
+  }
+
+  /* One ground, not a band: the record's wash fades over the whole view instead of stopping at 430px. */
+  .cx-browse:has(.cx-browse-inner[data-detail] .cx-detail:not([data-portrait])) > .cx-browse-bg,
+  .cx-browse:has(.cx-browse-inner[data-detail] .cx-detail:not([data-portrait])) > .cx-browse-fade {
+    height: 100%;
+  }
+
+  .cx-browse:has(.cx-browse-inner[data-detail] .cx-detail:not([data-portrait])) > .cx-browse-fade {
+    background: linear-gradient(180deg, rgb(10 10 12 / 20%), rgb(10 10 12 / 72%) 55%, var(--cx-bg));
+  }
+
+  /* The list: one column until the page is wide enough for two to read. */
+  .cx-browse-inner[data-detail]:has(.cx-detail:not([data-portrait])) .cx-trows {
+    max-width: 760px;
+    column-count: 1;
+  }
+}
+
+@media (min-width: 1800px) {
+  .cx-browse-inner[data-detail]:has(.cx-detail:not([data-portrait])) .cx-trows {
+    max-width: none;
+    column-count: 2;
+  }
+}
+
+/* The record's left page is a square, whatever the view's height: a sleeve is never cropped. */
+@media (min-width: 1280px) {
+  .cx-browse-inner[data-detail]:has(.cx-detail:not([data-portrait])) .cx-detail-art {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1;
+  }
+}

@@ -605,7 +605,7 @@ export function Stage({
               track came from, not part of its name. */}
           {albumWorthShowing(cur.title, cur.album) && (
             <span className="cx-album cx-swap cx-swap-3" key={`b:${cur.title}|${cur.album}`}>
-              {cur.album}
+              {bareAlbum(cur.album)}
             </span>
           )}
 
@@ -939,7 +939,7 @@ export function MobileStage({
               <span className="cx-np-tags mono">{splitTitle(cur.title).tags.join(' · ')}</span>
             )}
             {cur.artist && <span className="cx-np-artist">{cur.artist}</span>}
-            {albumWorthShowing(cur.title, cur.album) && <span className="cx-np-album">{cur.album}</span>}
+            {albumWorthShowing(cur.title, cur.album) && <span className="cx-np-album">{bareAlbum(cur.album)}</span>}
           </span>
           {cur.hasTrack && <Favourite cur={cur} round />}
         </div>

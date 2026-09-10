@@ -133,8 +133,8 @@ function stageOf(track: ApiTrack | null | undefined): Rgb {
  * yellow sleeve does not light the room like a lamp. 0.22 is bright enough to read as a colour on
  * #0a0a0c and dark enough that white type over it stays white type.
  */
-const GROUND_DAMP = 0.55;
-const GROUND_MAX_LUM = 0.22;
+const GROUND_DAMP = 0.5;
+const GROUND_MAX_LUM = 0.26;
 
 function groundOf(rgb: readonly [number, number, number] | undefined): Rgb {
   if (!rgb) {
