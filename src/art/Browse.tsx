@@ -472,6 +472,7 @@ function TrackRow({
   index,
   playing,
   paused,
+  albumArtist,
   onPlay,
   onQueue,
 }: {
@@ -479,16 +480,20 @@ function TrackRow({
   index: number;
   playing?: boolean;
   paused?: boolean;
+  /** The record's own artist: a track by the same one does not say so again under its title. */
+  albumArtist?: string | undefined;
   onPlay: () => void;
   onQueue: () => void;
 }) {
+  const sameArtist =
+    Boolean(item.artist && albumArtist) && item.artist!.trim().toLowerCase() === albumArtist!.trim().toLowerCase();
   return (
     <div className="cx-trow" data-playing={playing || undefined}>
       <button type="button" className="cx-trow-main" onClick={onPlay}>
         <span className="cx-tidx mono">{playing ? <Bars still={paused} /> : index + 1}</span>
         <span className="cx-tmeta">
           <span className="cx-ttitle">{item.name}</span>
-          {item.artist && <span className="cx-tartist">{item.artist}</span>}
+          {item.artist && !sameArtist && <span className="cx-tartist">{item.artist}</span>}
         </span>
       </button>
       <button type="button" className="cx-tact" onClick={onQueue} title="Add to the queue">
@@ -1005,6 +1010,7 @@ export function Browse({
                   index={index}
                   playing={nowPlaying !== '' && item.name.trim().toLowerCase() === nowPlaying}
                   paused={zone?.state !== 'playing'}
+                  albumArtist={detail?.artist}
                   onPlay={() => play(item)}
                   onQueue={() => queue(item)}
                 />

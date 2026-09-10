@@ -221,7 +221,9 @@ export function VolumeRow({ cur, className }: { cur: Cur; className: string }) {
           </span>
         </span>
       </span>
-      <SpeakerGlyph size={17} waves />
+      {/* The number, always: a fader without its reading is a line. The louder speaker glyph it
+          replaces said nothing the number does not. */}
+      <span className="cx-vol-num mono">{control.value}</span>
     </span>
   );
 }

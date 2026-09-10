@@ -9284,3 +9284,160 @@
     0 30px 80px -30px rgb(0 0 0 / 85%),
     inset 0 0 0 1px rgb(255 255 255 / 10%);
 }
+
+/* ==========================================================================================
+ * Second pass toward the concept.
+ * ========================================================================================== */
+
+/* --- stage: the record colours the room, the fader has its number, the timeline answers a hover --- */
+
+/* The page wash was forced almost grey so it would not tint a wall of covers in a listing. The stage
+   has one cover, and the concept's whole idea is that its colour is the room's. */
+.cx-root[data-view='home'] .cx-bg {
+  filter: grayscale(0.4) saturate(1.15) blur(110px) brightness(0.5);
+}
+
+.cx-vol-num {
+  min-width: 2ch;
+  font-size: 11.5px;
+  letter-spacing: 0.1em;
+  color: var(--t4);
+  text-align: right;
+}
+
+.cx-stage .cx-bar:hover .cx-bar-rail {
+  height: 5px;
+}
+
+.cx-stage .cx-bar:hover .cx-bar-knob {
+  display: block;
+}
+
+.cx-stage .cx-bar-knob {
+  background: var(--t1);
+  box-shadow: 0 0 0 3px var(--cx-bg);
+}
+
+/* --- the album: two columns of tracks, the sleeve clear of the back word --- */
+
+@media (min-width: 1180px) {
+  .cx-browse-inner[data-detail] > .cx-browse-back {
+    margin-bottom: 14px;
+  }
+
+  .cx-browse-inner[data-detail] .cx-detail {
+    top: 14px;
+  }
+
+  .cx-browse-inner[data-detail] .cx-trows {
+    max-width: none;
+    column-count: 2;
+    column-gap: 56px;
+  }
+
+  .cx-browse-inner[data-detail] .cx-trow {
+    break-inside: avoid;
+    margin: 0;
+    padding: 10px 6px;
+    border-bottom: 1px solid var(--hair);
+    border-radius: 0;
+  }
+}
+
+.cx-detail-title {
+  font-size: clamp(30px, 3.6vw, 52px);
+  letter-spacing: -0.04em;
+}
+
+.cx-detail-kind {
+  color: var(--t6);
+}
+
+/* --- home on a phone: the shortcut row scrolls, and the cut edge says so rather than clipping a word --- */
+
+@media (max-width: 979px) {
+  .cx-welcome-shortcuts {
+    mask-image: linear-gradient(to right, #000 86%, transparent);
+    padding-right: 40px;
+  }
+}
+
+/* --- the queue: rows at the concept's height, sleeves at 44px --- */
+
+.cx-qrow {
+  gap: 14px;
+  padding: 8px 8px;
+}
+
+.cx-qcov {
+  width: 44px !important;
+  height: 44px !important;
+  border-radius: 3px !important;
+}
+
+.cx-qtitle {
+  font-size: 15px !important;
+}
+
+/* --- the reading on a phone: the band in three rows, no tab bar under an instrument --- */
+
+@media (max-width: 979px) {
+  .cx-root[data-view='signal'] .cx-bnav {
+    display: none;
+  }
+
+  .cx-root[data-view='signal'] .cx-body {
+    padding-bottom: 0 !important;
+  }
+
+  .cx-sig-band {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-areas:
+      'back back back'
+      'cover id transport'
+      'bar bar bar';
+    gap: 12px 14px;
+    padding: 12px 16px 14px;
+  }
+
+  .cx-sig-back {
+    grid-area: back;
+    margin-left: 0;
+    justify-self: start;
+  }
+
+  .cx-sig-cover {
+    grid-area: cover;
+    width: 44px;
+    height: 44px;
+  }
+
+  .cx-sig-id {
+    grid-area: id;
+    max-width: none;
+  }
+
+  .cx-sig-eyebrow {
+    display: none;
+  }
+
+  .cx-transport[data-size='bar'] {
+    grid-area: transport;
+    gap: 10px;
+  }
+
+  .cx-transport[data-size='bar'] .cx-tr-side {
+    display: none;
+  }
+
+  .cx-sig-bar {
+    grid-area: bar;
+    order: 0;
+    max-width: none;
+  }
+
+  .cx-sig-vol {
+    display: none;
+  }
+}
