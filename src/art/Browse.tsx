@@ -370,14 +370,32 @@ function Billboard({
  * frame lands like a page refresh, and the same forty arriving over a fifth of a second reads as a shelf
  * being filled. Capped in CSS so the fortieth is not a second late.
  */
+/**
+ * A name without the shelf's own name in front of it.
+ *
+ * A provider that names every stream `Radio Paradise - Rock Mix` is right to, on its own; under a
+ * heading that already says `Radio Paradise` it is the same word five times in a row. The prefix is
+ * only dropped when something is left, so a tile is never blank.
+ */
+function shortName(name: string, under: string | undefined): string {
+  if (!under) {
+    return name;
+  }
+  const rest = name.replace(new RegExp(`^${under.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*[-–—:·]\\s*`, 'i'), '');
+  return rest.trim() || name;
+}
+
 function Tile({
   item,
   index = 0,
+  under,
   onOpen,
   onPlay,
 }: {
   item: ContentItem;
   index?: number;
+  /** The shelf this tile stands on, so its name need not repeat it. */
+  under?: string | undefined;
   onOpen: () => void;
   onPlay: () => void;
 }) {
@@ -422,7 +440,7 @@ function Tile({
           </span>
         )}
       </button>
-      <span className="cx-tile-title">{item.name}</span>
+      <span className="cx-tile-title">{shortName(item.name, under)}</span>
       {(item.artist || item.album) && (
         <span className="cx-tile-sub">{item.artist || item.album}</span>
       )}
@@ -473,6 +491,7 @@ function TrackRow({
   playing,
   paused,
   albumArtist,
+  thumb = false,
   onPlay,
   onQueue,
 }: {
@@ -482,14 +501,17 @@ function TrackRow({
   paused?: boolean;
   /** The record's own artist: a track by the same one does not say so again under its title. */
   albumArtist?: string | undefined;
+  /** Draw the sleeve instead of the number — for a row that is not one of its record's tracks. */
+  thumb?: boolean;
   onPlay: () => void;
   onQueue: () => void;
 }) {
   const sameArtist =
     Boolean(item.artist && albumArtist) && item.artist!.trim().toLowerCase() === albumArtist!.trim().toLowerCase();
   return (
-    <div className="cx-trow" data-playing={playing || undefined}>
+    <div className="cx-trow" data-playing={playing || undefined} data-thumb={thumb || undefined}>
       <button type="button" className="cx-trow-main" onClick={onPlay}>
+        {thumb && <span className="cx-tthumb" style={{ backgroundImage: itemCoverCss(item.coverUrl) }} aria-hidden="true" />}
         <span className="cx-tidx mono">{playing ? <Bars still={paused} /> : index + 1}</span>
         <span className="cx-tmeta">
           <span className="cx-ttitle">{item.name}</span>
@@ -894,7 +916,11 @@ export function Browse({
             </div>
 
             {/* A shelf's own controls, when the shelf is itself playable. A category is not. */}
-            {!query && container?.playable && <Actions container={container} zone={zone} onPlay={play} />}
+            {/* Only for a thing that is itself a record — an album, a playlist. "Play New Releases" is a
+                button on a category, and a category is a place, not a thing you press play on. */}
+            {!query && container?.playable && container.coverUrl && (
+              <Actions container={container} zone={zone} onPlay={play} />
+            )}
           </div>
         )}
 
@@ -933,18 +959,38 @@ export function Browse({
                 <span className="cx-sec-lbl mono">{section.name}</span>
                 <span className="cx-sec-rule" />
               </div>
-              {/* The mask on the right edge is what says "this row continues" without a scrollbar. */}
-              <div className="cx-shelf-row">
-                {section.items.map((item, index) => (
-                  <Tile
-                    key={item.id}
-                    item={item}
-                    index={index}
-                    onOpen={() => open(item)}
-                    onPlay={() => play(item)}
-                  />
-                ))}
-              </div>
+              {section.items.length > 0 && section.items.every((item) => item.kind === 'track') ? (
+                /* Songs are rows. A song as a 160px tile is a sleeve with the wrong name under it —
+                   the album's picture, the track's title — and eight of them in a row say nothing a
+                   list does not say better, with the artist and the length beside each. */
+                <div className="cx-trows" data-cols>
+                  {section.items.map((item, index) => (
+                    <TrackRow
+                      key={item.id}
+                      item={item}
+                      index={index}
+                      thumb
+                      playing={nowPlaying !== '' && item.name.trim().toLowerCase() === nowPlaying}
+                      paused={zone?.state !== 'playing'}
+                      onPlay={() => play(item)}
+                      onQueue={() => queue(item)}
+                    />
+                  ))}
+                </div>
+              ) : (
+                /* The mask on the right edge is what says "this row continues" without a scrollbar. */
+                <div className="cx-shelf-row">
+                  {section.items.map((item, index) => (
+                    <Tile
+                      key={item.id}
+                      item={item}
+                      index={index}
+                      onOpen={() => open(item)}
+                      onPlay={() => play(item)}
+                    />
+                  ))}
+                </div>
+              )}
             </section>
           ))}
 
@@ -990,6 +1036,7 @@ export function Browse({
                           key={entry.id}
                           item={entry}
                           index={at}
+                          under={item.name}
                           onOpen={() => open(entry)}
                           onPlay={() => play(entry)}
                         />

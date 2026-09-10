@@ -9907,3 +9907,79 @@
   letter-spacing: 0.22em;
   color: var(--g);
 }
+
+/* ==========================================================================================
+ * Browse: calmer tiles, a roomier grid, songs as rows.
+ * ========================================================================================== */
+
+/* A tile's words are a caption, not a headline: regular weight, the body face, the artist a step down. */
+.cx-tile-title {
+  margin-top: 12px;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0;
+  color: var(--t2);
+}
+
+.cx-tile-sub {
+  margin-top: 3px;
+  font-size: 12px;
+  color: var(--t6);
+}
+
+.cx-tile-cov {
+  border-radius: 3px;
+}
+
+.cx-grid {
+  grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
+  gap: 30px 24px;
+}
+
+.cx-shelf {
+  margin-bottom: clamp(38px, 5vh, 54px);
+}
+
+.cx-browse-head {
+  margin-bottom: 34px;
+}
+
+/* Songs in a shelf are rows, not tiles: a sleeve at 44px, the name, who, how long. */
+.cx-trows[data-cols] .cx-trow {
+  margin: 0;
+  padding: 8px 6px;
+  border-bottom: 1px solid var(--hair);
+  border-radius: 0;
+  break-inside: avoid;
+}
+
+@media (min-width: 1180px) {
+  .cx-trows[data-cols] {
+    max-width: none;
+    column-count: 2;
+    column-gap: 56px;
+  }
+}
+
+.cx-tthumb {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border-radius: 3px;
+  background-color: var(--cx-cover);
+  background-position: center;
+  background-size: cover;
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 10%);
+}
+
+.cx-trow[data-thumb] .cx-tidx {
+  display: none;
+}
+
+/* Two across on a phone: a 168px minimum made the grid one column at 390px. */
+@media (max-width: 979px) {
+  .cx-grid {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 22px 14px;
+  }
+}
