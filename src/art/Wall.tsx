@@ -20,6 +20,8 @@
  */
 import { useApi } from '@/state/ServerContext';
 import { zoneCoverCss } from '@/art/cover';
+import { PowerGlyph, SpeakerGlyph } from '@/art/glyphs';
+import { mainTitle } from '@/lib/title';
 import type { Channel } from '@/art/useCur';
 import type { RoomDrag } from '@/art/useRoomDrag';
 
@@ -118,7 +120,7 @@ function Room({
   const playing = channel.playing && channel.hasTrack;
   const off = leader.powerState?.power === 'off';
   const line = channel.hasTrack
-    ? [leader.track?.title, leader.track?.artist].filter(Boolean).join(' · ')
+    ? [leader.track?.title ? mainTitle(leader.track.title) : '', leader.track?.artist].filter(Boolean).join(' · ')
     : off
       ? 'off'
       : 'quiet';
@@ -149,7 +151,10 @@ function Room({
       }}
       title={channel.hasTrack ? `${leader.name} — ${leader.track?.title ?? ''}` : leader.name}
     >
-      <span className="cx-house-cov" style={cover ? { backgroundImage: cover } : undefined} aria-hidden="true" />
+      <span className="cx-house-cov" style={cover ? { backgroundImage: cover } : undefined} aria-hidden="true">
+        {/* A room with nothing on shows what it is, not an empty square. */}
+        {!channel.hasTrack && (off ? <PowerGlyph size={14} /> : <SpeakerGlyph size={14} />)}
+      </span>
       <span className="cx-house-txt">
         <span className="cx-house-name mono">
           {playing && <i className="cx-house-lit" aria-hidden="true" />}

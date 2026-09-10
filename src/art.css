@@ -10785,3 +10785,206 @@
   letter-spacing: -0.025em;
   line-height: 1.12;
 }
+
+/* ==========================================================================================
+ * The stage, composed for a wide screen: a compact column centred on the sleeve, a real shelf, a real
+ * fader, the edition under the name. And the reading's two footnotes stand where they belong.
+ * ========================================================================================== */
+
+/* The column is as tall as its contents and centred on the sleeve — not stretched to the sleeve's height
+   with the foot pinned to the bottom, which left a quarter of the screen empty between transport and shelf. */
+.cx-stage-meta {
+  align-self: center;
+  width: min(820px, 44vw);
+}
+
+.cx-stage-foot {
+  align-items: flex-end;
+  gap: clamp(30px, 3vw, 56px);
+  margin-top: 0;
+  padding-top: clamp(30px, 5vh, 56px);
+}
+
+.cx-upnext {
+  flex: 1 1 auto;
+  gap: 12px;
+}
+
+.cx-upnext-list {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.cx-upnext-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  min-width: 0;
+  padding: 7px 8px 7px 0;
+  text-align: left;
+  border-bottom: 1px solid var(--hair-soft);
+  transition: background 0.18s var(--cx-ease);
+}
+
+.cx-upnext-list li:last-child .cx-upnext-item {
+  border-bottom: 0;
+}
+
+.cx-upnext-item:hover .cx-upnext-title {
+  color: var(--t1);
+}
+
+.cx-upnext-item .cx-upnext-art {
+  width: 52px;
+  height: 52px;
+  opacity: 1;
+}
+
+.cx-upnext-item:hover .cx-upnext-art {
+  scale: 1;
+}
+
+.cx-upnext-item .cx-upnext-txt {
+  flex: 1;
+  width: auto;
+  margin-left: 0;
+  gap: 4px;
+}
+
+.cx-upnext-item .cx-upnext-title {
+  font-size: 14px;
+}
+
+.cx-upnext-item .cx-upnext-artist {
+  font-size: 12px;
+}
+
+.cx-upnext-dur {
+  flex: none;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: var(--t6);
+}
+
+.cx-upnext-empty {
+  padding: 8px 0;
+  font-size: 13px;
+  color: var(--t7);
+}
+
+/* The fader has the length of a fader. */
+.cx-stage-foot .cx-vol {
+  flex: none;
+  padding-bottom: 10px;
+}
+
+.cx-stage-foot .cx-vol-slider {
+  width: clamp(150px, 13vw, 240px);
+}
+
+/* The edition under the name: small, mono, the same grey as the album. */
+.cx-title-tags {
+  display: block;
+  margin-top: 14px;
+  font-size: 10px;
+  letter-spacing: 0.24em;
+  color: var(--t5);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cx-title-tags + .cx-album {
+  margin-top: 8px;
+}
+
+.cx-np-tags {
+  display: block;
+  margin-top: 8px;
+  font-size: 9.5px;
+  letter-spacing: 0.22em;
+  color: var(--t5);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* On a wide window the controls grow with it. */
+@media (min-width: 1500px) {
+  .cx-eyebrow {
+    font-size: 11px;
+  }
+
+  .cx-artist {
+    font-size: 23px;
+  }
+
+  .cx-album {
+    font-size: 14px;
+  }
+
+  .cx-transport[data-size='desk'] {
+    gap: clamp(36px, 3vw, 56px);
+  }
+
+  .cx-transport[data-size='desk'] .cx-tr-play {
+    width: 80px;
+    height: 80px;
+  }
+
+  .cx-upnext-item .cx-upnext-art {
+    width: 58px;
+    height: 58px;
+  }
+
+  .cx-upnext-item .cx-upnext-title {
+    font-size: 15px;
+  }
+
+  .cx-house {
+    height: 80px;
+  }
+
+  .cx-house-cov {
+    width: 40px;
+    height: 40px;
+  }
+}
+
+/* The strip: the line has room for a name and an artist; a quiet room shows its glyph. */
+.cx-house-line {
+  max-width: clamp(160px, 18vw, 340px);
+}
+
+.cx-house-cov {
+  display: grid;
+  place-items: center;
+  color: var(--t7);
+}
+
+/* The record's accent, a little more present in the far corner. */
+.cx-root[data-view='home'] .cx-bg-scrim {
+  background:
+    radial-gradient(122% 108% at 50% 44%, transparent 40%, rgb(0 0 0 / 42%) 100%),
+    radial-gradient(92% 80% at 26% 44%, color-mix(in srgb, var(--cx-a1) 72%, transparent) 0%, transparent 62%),
+    radial-gradient(90% 80% at 88% 92%, color-mix(in srgb, var(--cx-a2) 74%, transparent) 0%, transparent 62%),
+    linear-gradient(180deg, rgb(10 10 12 / 62%), rgb(10 10 12 / 88%));
+}
+
+/* --- the reading --- */
+
+/* The wire follows the clock; a footnote pushed to the floor of a tall tile was a hole, not a footnote. */
+.cx-sig-tile .signal-wire {
+  margin-top: 6px;
+}
+
+/* The side letters stand inside the figure, not on its edge. */
+.cx-root .spectrum-side {
+  left: 6px;
+  font-size: 9px;
+  color: rgb(255 255 255 / 42%);
+}

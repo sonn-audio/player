@@ -294,6 +294,7 @@ export function ArtApp() {
       title: item.title,
       artist: item.artist,
       cover: itemCoverCss(item.coverUrl),
+      duration: item.duration,
       play: () => leader && void api.queuePlay(leader.id, item.id),
     }));
   }, [queue, cur.isLive, api, leader]);

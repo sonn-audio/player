@@ -39,6 +39,7 @@ import {
   SpeakerGlyph,
 } from '@/art/glyphs';
 import { formatTime } from '@/lib/format';
+import { bareAlbum, mainTitle, splitTitle } from '@/lib/title';
 import type { Cur } from '@/art/useCur';
 
 /** Greeting by hour — the welcome screen's line, reused as the stage's eyebrow. */
@@ -315,8 +316,7 @@ export function albumWorthShowing(title: string, album: string): boolean {
   if (!album || album === title) {
     return false;
   }
-  const bare = album.replace(/\s+-\s+(single|ep)$/i, '').trim();
-  return bare.toLowerCase() !== title.trim().toLowerCase();
+  return bareAlbum(album).toLowerCase() !== mainTitle(title).toLowerCase();
 }
 
 export function wireLabel(cur: Cur): string {
@@ -360,7 +360,15 @@ export function Stage({
   /** Whether the picture is what is on screen, however it was arrived at. */
   resting: boolean;
   /** What comes after this one, as sleeves — the room's own shelf. See `.cx-upnext`. */
-  upNext: { key: string; title: string; artist: string; cover: string | undefined; play: () => void }[];
+  upNext: {
+    key: string;
+    title: string;
+    artist: string;
+    cover: string | undefined;
+    /** Seconds; 0 when unknown. */
+    duration: number;
+    play: () => void;
+  }[];
   /** How many entries follow the one playing — the shelf shows two, the count says the rest. */
   upNextTotal: number;
   /**
@@ -573,11 +581,17 @@ export function Stage({
 
           <h1
             className="disp cx-title cx-swap cx-swap-2"
-            data-len={titleStep(cur.title)}
+            data-len={titleStep(mainTitle(cur.title))}
             key={`t:${cur.title}|${cur.artist}`}
           >
-            {cur.title}
+            {mainTitle(cur.title)}
           </h1>
+          {/* The edition, as a line of small type: what the store hung off the name — see `splitTitle`. */}
+          {splitTitle(cur.title).tags.length > 0 && (
+            <span className="cx-title-tags mono cx-swap cx-swap-3" key={`v:${cur.title}`}>
+              {splitTitle(cur.title).tags.join(' · ')}
+            </span>
+          )}
 
           {/* The album, under the artist rather than folded into it with a dash: it is a place the
               track came from, not part of its name. */}
@@ -647,29 +661,28 @@ export function Stage({
                 <button type="button" className="cx-upnext-lbl mono" onClick={onOpenQueue}>
                   up next{upNextTotal > 0 ? ` · ${upNextTotal}` : ''}
                 </button>
-                <div className="cx-upnext-row">
-                  {upNext.slice(0, 2).map((entry) => (
-                    <button
-                      type="button"
-                      key={entry.key}
-                      className="cx-upnext-art"
-                      style={{ backgroundImage: entry.cover }}
-                      onClick={entry.play}
-                      title={`Play ${entry.title}${entry.artist ? ` — ${entry.artist}` : ''}`}
-                      aria-label={`Play ${entry.title}`}
-                    />
+                {/* Three rows, each a record: sleeve, name, who, how long. Two thumbnails and one line
+                    said less than this and took the same height. The label opens the whole queue. */}
+                <ol className="cx-upnext-list">
+                  {upNext.slice(0, 3).map((entry) => (
+                    <li key={entry.key}>
+                      <button
+                        type="button"
+                        className="cx-upnext-item"
+                        onClick={entry.play}
+                        title={`Play ${entry.title}${entry.artist ? ` — ${entry.artist}` : ''}`}
+                      >
+                        <span className="cx-upnext-art" style={{ backgroundImage: entry.cover }} aria-hidden="true" />
+                        <span className="cx-upnext-txt">
+                          <span className="cx-upnext-title">{entry.title}</span>
+                          {entry.artist && <i className="cx-upnext-artist">{entry.artist}</i>}
+                        </span>
+                        {entry.duration > 0 && <span className="cx-upnext-dur mono">{formatTime(entry.duration)}</span>}
+                      </button>
+                    </li>
                   ))}
-                  <button type="button" className="cx-upnext-txt" onClick={onOpenQueue}>
-                    {upNext[0] ? (
-                      <>
-                        <span className="cx-upnext-title">{upNext[0].title}</span>
-                        {upNext[0].artist && <i className="cx-upnext-artist">{upNext[0].artist}</i>}
-                      </>
-                    ) : (
-                      <i className="cx-upnext-artist">nothing after this one</i>
-                    )}
-                  </button>
-                </div>
+                  {upNext.length === 0 && <li className="cx-upnext-empty">nothing after this one</li>}
+                </ol>
               </div>
             )}
             <VolumeRow cur={cur} className="cx-vol" />
@@ -911,7 +924,10 @@ export function MobileStage({
         {/* Keyed on the room *and* the track, so the block crossfades when either changes. */}
         <div className="cx-np-head" key={`${currentLeaderId ?? 'none'}:${cur.title}`}>
           <span className="cx-np-titles">
-            <span className="disp cx-np-title">{cur.title}</span>
+            <span className="disp cx-np-title">{mainTitle(cur.title)}</span>
+            {splitTitle(cur.title).tags.length > 0 && (
+              <span className="cx-np-tags mono">{splitTitle(cur.title).tags.join(' · ')}</span>
+            )}
             {cur.artist && <span className="cx-np-artist">{cur.artist}</span>}
             {albumWorthShowing(cur.title, cur.album) && <span className="cx-np-album">{cur.album}</span>}
           </span>

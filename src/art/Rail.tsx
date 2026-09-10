@@ -19,6 +19,7 @@ import { Timeline } from '@/art/Stage';
 import { zoneCoverCss } from '@/art/cover';
 import type { Cur } from '@/art/useCur';
 import { entryTitleOf, formatTime } from '@/lib/format';
+import { mainTitle } from '@/lib/title';
 import type { ApiQueue, ApiRecentItem, ApiZoneState } from '@/api/types';
 
 /**
@@ -232,7 +233,7 @@ export function QueueSheet({
           <span className="cx-qnow-cov" style={{ backgroundImage: zoneCoverCss(api, cur.leader, 160) }} />
           <span className="cx-qnow-txt">
             <span className="cx-qnow-lbl mono">now playing</span>
-            <span className="cx-qnow-title">{cur.title}</span>
+            <span className="cx-qnow-title">{mainTitle(cur.title)}</span>
             {cur.artist && <span className="cx-qnow-sub">{cur.artist}</span>}
           </span>
           <button type="button" className="cx-qnow-ring" aria-label={cur.isPlaying ? 'Pause' : 'Play'} onClick={toggle}>

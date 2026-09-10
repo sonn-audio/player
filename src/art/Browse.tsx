@@ -43,6 +43,7 @@ import {
   SpeakerGlyph,
 } from '@/art/glyphs';
 import { formatTime } from '@/lib/format';
+import { mainTitle } from '@/lib/title';
 import type { ContentAbout, ContentItem, ContentListing, ContentSection, ContentSource } from '@/api/content';
 import type { ApiInput, ApiZoneState } from '@/api/types';
 import type { Cur } from '@/art/useCur';
@@ -1472,7 +1473,7 @@ export function MiniBar({ cur, onOpen }: { cur: Cur; onOpen: () => void }) {
       <button type="button" className="cx-mini-track" onClick={onOpen}>
         <span className="cx-mini-cov" style={{ backgroundImage: zoneCoverCss(api, leader, 120) }} />
         <span className="cx-mini-meta">
-          <span className="cx-mini-title">{cur.title}</span>
+          <span className="cx-mini-title">{mainTitle(cur.title)}</span>
           <span className="cx-mini-sub mono">{cur.name}</span>
         </span>
       </button>
