@@ -30,7 +30,7 @@ import { Mark } from '@/components/Mark';
 import { Stage, MobileStage, greeting } from '@/art/Stage';
 import { Signal } from '@/art/Signal';
 import { RoomsSheet } from '@/art/Channels';
-import { Wall } from '@/art/Wall';
+import { Gallery, HouseStrip, Wall } from '@/art/Wall';
 import { useRoomDrag } from '@/art/useRoomDrag';
 import { useEdges, useEscape } from '@/art/useEdges';
 import { QueueSheet } from '@/art/Rail';
@@ -578,7 +578,9 @@ export function ArtApp() {
        * a station gets nothing, which is honest.
        */}
       {idle && cur.showBar && (
-        <span className="cx-idle-progress" style={{ width: cur.pct }} aria-hidden="true" />
+        <span className="cx-idle-progress" aria-hidden="true">
+          <i style={{ width: cur.pct }} />
+        </span>
       )}
 
       {/* And the one thing about the future a glance from across the room might want: what is next.
@@ -710,7 +712,9 @@ export function ArtApp() {
                   onCanvas={() => setAsked('record')}
                   onHouse={() => setAsked('house')}
                   canCanvas={cur.hasTrack}
-                  foot={view.kind === 'home'}
+                  /* Under the stage the rooms stand on the record's own page; the strip is for the
+                     quiet house, whose welcome has no page of its own. */
+                  foot={view.kind === 'home' && houseQuiet}
                 >
                   {view.kind === 'browse' ? (
                     <Browse
@@ -724,6 +728,14 @@ export function ArtApp() {
                     />
                   ) : view.kind === 'inputs' ? (
                     <Sources zone={zone} onDone={goHome} />
+                  ) : rest === 'house' ? (
+                    /* The house at rest: every room the same width — see `Gallery`. */
+                    <Gallery
+                      channels={channels}
+                      currentLeaderId={leaderOf(zone, zones)?.id ?? null}
+                      onSelect={select}
+                      onLeave={() => setAsked(null)}
+                    />
                   ) : houseQuiet ? (
                     /*
                      * A quiet house is still a house.
@@ -778,6 +790,20 @@ export function ArtApp() {
                       upNext={upNext}
                       upNextTotal={upNextTotal}
                       elsewhere={elsewhere}
+                      house={
+                        channels.length > 0 ? (
+                          <HouseStrip
+                            channels={channels}
+                            currentLeaderId={leaderOf(zone, zones)?.id ?? null}
+                            onSelect={select}
+                            drag={drag}
+                            onCanvas={() => setAsked('record')}
+                            onHouse={() => setAsked('house')}
+                            canCanvas={cur.hasTrack}
+                            compact
+                          />
+                        ) : undefined
+                      }
                       /* What this room played last, for the one thing an idle room can honestly show:
                          the record that was on, in the dark. See `Stage`'s empty branch. */
                       lastCover={recents[0]?.coverUrl ? `url("${recents[0].coverUrl}")` : undefined}

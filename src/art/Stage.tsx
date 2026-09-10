@@ -346,6 +346,7 @@ export function Stage({
   upNextTotal,
   lastCover,
   elsewhere,
+  house,
 }: {
   cur: Cur;
   /** The room gestures — the sleeve is the thing you pick up. See `useRoomDrag`. */
@@ -376,6 +377,13 @@ export function Stage({
    * catalogue cannot. `join` puts this room in that room's group.
    */
   elsewhere?: { room: string; title: string; join: () => void } | undefined;
+  /**
+   * The house, drawn at the foot of the record's own page.
+   *
+   * On a wide window the stage is a spread — the sleeve is the left page, the room the right — and the
+   * rooms belong on the right page, not on a strip under both. See `HouseStrip`.
+   */
+  house?: React.ReactNode;
   /**
    * The last record this room played, as `url("…")`.
    *
@@ -412,7 +420,7 @@ export function Stage({
   };
 
   return (
-    <div className="cx-stage" onClick={leave}>
+    <div className="cx-stage" data-spread={cur.hasTrack || undefined} onClick={leave}>
       {/* The composition is one block, centred: cover and column together, capped, rather than a cover
           pinned left and a column stretching to whatever the window happens to be. A player on a
           2560px monitor should look composed, not spread. */}
@@ -687,6 +695,8 @@ export function Stage({
             )}
             <VolumeRow cur={cur} className="cx-vol" />
           </div>
+
+          {house && <div className="cx-stage-house">{house}</div>}
         </div>
       </div>
     </div>

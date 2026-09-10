@@ -8135,12 +8135,18 @@
 .cx-idle-progress {
   position: absolute;
   left: 0;
+  right: 0;
   bottom: 0;
   z-index: 4;
   height: 2px;
+  pointer-events: none;
+}
+
+.cx-idle-progress i {
+  display: block;
+  height: 100%;
   background: var(--g);
   opacity: 0.22;
-  pointer-events: none;
   transition: width 1s linear;
   animation: cx-clock-in 1.6s var(--cx-ease) both;
 }
@@ -10987,4 +10993,362 @@
   left: 6px;
   font-size: 9px;
   color: rgb(255 255 255 / 42%);
+}
+
+/* ==========================================================================================
+ * The spread.
+ *
+ * On a wide window a room with a record on is two pages: the sleeve is the left one — square, from the
+ * bar to the floor, flush to the edge, no shadow, never cropped — and the room is the right one, a
+ * field in the record's colour with the type on it and the house at its foot. Not an object on a
+ * table: a poster. A room with nothing on keeps the centred composition — a blank left page is not
+ * a picture of anything.
+ * ========================================================================================== */
+
+/* The row of rooms, inside a page: a section like the others, with a head and rooms that wrap. */
+.cx-house-row {
+  display: flex;
+  align-items: center;
+  gap: clamp(28px, 3.6vw, 56px);
+  width: 100%;
+  min-width: 0;
+}
+
+.cx-house .cx-house-row {
+  height: 100%;
+}
+
+.cx-stage-house {
+  order: 3;
+  margin-top: clamp(22px, 3.4vh, 40px);
+}
+
+.cx-house-row[data-compact] {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 14px;
+}
+
+.cx-house-head {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.cx-house-lbl {
+  flex: none;
+  font-size: 10px;
+  letter-spacing: 0.26em;
+  color: var(--t6);
+}
+
+.cx-house-rule {
+  flex: 1;
+  height: 1px;
+  background: var(--hair);
+}
+
+.cx-house-row[data-compact] .cx-house-ways {
+  margin-left: 0;
+}
+
+.cx-house-rooms {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px clamp(22px, 2.4vw, 40px);
+}
+
+.cx-house-row[data-compact] .cx-house-line {
+  max-width: clamp(120px, 12vw, 220px);
+}
+
+/* --- the gallery: the house at rest --- */
+
+.cx-gallery {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(24px, 3vw, 56px);
+  flex: 1;
+  min-height: 0;
+  padding: 6vh clamp(40px, 5vw, 96px);
+  animation: cx-view-in 0.6s var(--cx-ease) both;
+}
+
+.cx-gal-room {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  gap: 12px;
+  max-width: min(520px, calc(78vh - 120px));
+  min-width: 0;
+  text-align: left;
+}
+
+.cx-gal-cov {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 3px;
+  background-color: rgb(255 255 255 / 3%);
+  background-position: center;
+  background-size: cover;
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 10%);
+  color: var(--t7);
+  transition: opacity 0.8s var(--cx-ease);
+}
+
+.cx-gal-room[data-quiet] .cx-gal-cov {
+  opacity: 0.6;
+}
+
+.cx-gal-room:not([data-on]):not([data-quiet]) .cx-gal-cov {
+  opacity: 0.55;
+}
+
+.cx-gal-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  font-size: 10px;
+  letter-spacing: 0.24em;
+  color: var(--t5);
+}
+
+.cx-gal-title {
+  overflow: hidden;
+  font-family: var(--font-display);
+  font-size: clamp(18px, 1.5vw, 26px);
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  line-height: 1.1;
+  color: var(--t1);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cx-gal-room[data-quiet] .cx-gal-title,
+.cx-gal-artist {
+  overflow: hidden;
+  font-size: 13px;
+  color: var(--t6);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cx-gal-prog {
+  display: block;
+  height: 1px;
+  margin-top: 6px;
+  overflow: hidden;
+  background: rgb(255 255 255 / 8%);
+}
+
+.cx-gal-prog i {
+  display: block;
+  height: 100%;
+  background: var(--g);
+  transition: width 0.92s linear;
+}
+
+@media (min-width: 1280px) {
+  .cx-stage[data-spread] {
+    padding: 0;
+    overflow: hidden;
+  }
+
+  .cx-stage[data-spread] .cx-stage-inner {
+    align-items: stretch;
+    gap: 0;
+    width: 100%;
+    max-width: none;
+    height: 100%;
+    padding-bottom: 0;
+  }
+
+  /* The left page: as tall as the room, as wide as it is tall. On a window taller than it is wide the
+     sleeve is capped by width and stands centred on the same ground as the page. */
+  .cx-stage[data-spread] .cx-stage-art {
+    display: flex;
+    align-items: center;
+    flex: none;
+    width: min(calc(100vh - 54px), 60vw);
+    height: 100%;
+  }
+
+  .cx-stage[data-spread] .cx-stage-art .cx-cover {
+    width: 100%;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .cx-stage[data-spread] .cx-stage-art .cx-cover::after {
+    content: none;
+  }
+
+  .cx-stage[data-spread] .cx-bloom,
+  .cx-stage[data-spread] .cx-bloom-far {
+    display: none;
+  }
+
+  /* The right page: the record's colour as a field, strongest where it meets the sleeve. Nothing on it
+     may shrink: a title squeezed to one clipped line is worse than a page that scrolls. */
+  .cx-stage[data-spread] .cx-stage-meta {
+    display: flex;
+    flex: 1 1 auto;
+    align-self: stretch;
+    width: auto;
+    min-width: 0;
+    padding: clamp(30px, 4.6vh, 64px) clamp(36px, 4vw, 84px) clamp(22px, 3vh, 40px);
+    overflow: hidden auto;
+    scrollbar-width: none;
+    background:
+      linear-gradient(90deg, rgb(0 0 0 / 28%), transparent 14%),
+      radial-gradient(120% 90% at 0% 30%, color-mix(in srgb, var(--cx-a1) 92%, transparent) 0%, transparent 70%),
+      radial-gradient(90% 80% at 100% 100%, color-mix(in srgb, var(--cx-a2) 88%, transparent) 0%, transparent 66%),
+      #0a0a0c;
+    transition: background 1.9s ease;
+  }
+
+  .cx-stage[data-spread] .cx-stage-meta > * {
+    flex-shrink: 0;
+  }
+
+  /* Three groups on the page — who this is, the transport, the rest — and the room's height shared
+     between them, so nothing on it is a hole. */
+  .cx-stage[data-spread] .cx-stage-meta > .cx-bar-wrap,
+  .cx-stage[data-spread] .cx-stage-meta > .cx-live {
+    margin-top: auto;
+  }
+
+  .cx-stage[data-spread] .cx-stage-foot {
+    margin-top: auto;
+    padding-top: clamp(22px, 3.6vh, 44px);
+  }
+
+  .cx-stage[data-spread] .cx-stage-house {
+    margin-top: clamp(18px, 2.8vh, 34px);
+  }
+
+  .cx-stage[data-spread] .cx-eyebrow .cx-wire {
+    margin-left: auto;
+  }
+
+  /* The page's text keeps a reading measure on a very wide window; the house row takes the width. */
+  .cx-stage[data-spread] .cx-stage-meta > *:not(.cx-stage-house):not(.cx-stage-foot) {
+    max-width: 880px;
+  }
+
+  .cx-stage[data-spread] .cx-title {
+    font-size: clamp(44px, min(8vh, 5.4vw), 112px);
+  }
+
+  /* Resting: the page goes dark and the type steps back; the sleeve stays the whole left page, which
+     is now the whole height, the bar having gone. */
+  .cx-root[data-idle] .cx-stage[data-spread] .cx-stage-inner {
+    flex-direction: row;
+    align-items: stretch;
+    gap: 0;
+    height: 100%;
+    animation: none;
+  }
+
+  .cx-root[data-idle] .cx-stage[data-spread] .cx-stage-art {
+    --cx-cover-size: auto;
+    width: min(100vh, 60vw);
+  }
+
+  .cx-root[data-idle] .cx-stage[data-spread] .cx-stage-meta {
+    align-items: flex-start;
+    width: auto;
+    text-align: left;
+    background: #0a0a0c;
+  }
+
+  .cx-root[data-idle] .cx-stage[data-spread] .cx-stage-house {
+    opacity: 0;
+    visibility: hidden;
+    transition:
+      opacity 1.4s var(--cx-ease),
+      visibility 1.4s step-end;
+  }
+
+  .cx-root[data-idle] .cx-stage[data-spread] .cx-title {
+    font-size: clamp(28px, 3.4vh, 44px);
+  }
+
+  /* The resting page's two readouts sit on the page, not on the picture. */
+  .cx-root[data-idle]:has(.cx-stage[data-spread]) .cx-idle-next {
+    left: auto;
+    right: clamp(24px, 3vw, 52px);
+    max-width: 30vw;
+  }
+
+  .cx-root[data-idle]:has(.cx-stage[data-spread]) .cx-idle-progress {
+    left: min(100vh, 60vw);
+  }
+}
+
+/* A narrower page: the source leaves the eyebrow, the fader takes a line of its own under the shelf. */
+@media (min-width: 1280px) and (max-width: 1499px) {
+  .cx-stage[data-spread] .cx-eyebrow-src {
+    display: none;
+  }
+
+  .cx-stage[data-spread] .cx-stage-foot {
+    flex-wrap: wrap;
+  }
+
+  .cx-stage[data-spread] .cx-stage-foot .cx-vol {
+    flex-basis: 100%;
+    justify-content: flex-end;
+    padding-bottom: 0;
+    margin-top: 14px;
+  }
+}
+
+/* A short window: the type steps down, the shelf shows two, the rows sit closer. */
+@media (min-width: 1280px) and (max-height: 960px) {
+  .cx-stage[data-spread] .cx-title {
+    font-size: clamp(40px, min(6.6vh, 5vw), 84px);
+  }
+
+  .cx-stage[data-spread] .cx-artistrow {
+    margin-top: 10px;
+    margin-bottom: 8px;
+  }
+
+  .cx-stage[data-spread] .cx-transport[data-size='desk'] {
+    margin-top: clamp(12px, 2.6vh, 28px);
+  }
+
+  .cx-stage[data-spread] .cx-transport[data-size='desk'] .cx-tr-play {
+    width: 64px;
+    height: 64px;
+  }
+
+  .cx-stage[data-spread] .cx-upnext-list li:nth-child(n + 3) {
+    display: none;
+  }
+
+  .cx-stage[data-spread] .cx-upnext-item {
+    padding: 5px 8px 5px 0;
+  }
+
+  .cx-stage[data-spread] .cx-upnext-item .cx-upnext-art {
+    width: 44px;
+    height: 44px;
+  }
+
+  .cx-stage[data-spread] .cx-stage-house {
+    margin-top: 14px;
+  }
+
+  .cx-stage[data-spread] .cx-house-cov {
+    width: 34px;
+    height: 34px;
+  }
 }

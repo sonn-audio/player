@@ -66,32 +66,167 @@ export function Wall({
 
       {foot && channels.length > 0 && (
         <footer className="cx-house">
-          {channels.map((channel) => (
-            <Room
-              key={channel.leader.id}
-              channel={channel}
-              current={channel.leader.id === currentLeaderId}
-              onSelect={onSelect}
-              drag={drag}
-            />
-          ))}
-
-          {/*
-           * The two withdrawals, at the far end of the row of rooms — which is where they belong,
-           * because both are ways of looking at the house rather than at this room's controls.
-           */}
-          <span className="cx-house-ways mono">
-            {canCanvas && (
-              <button type="button" onClick={onCanvas}>
-                canvas
-              </button>
-            )}
-            <button type="button" onClick={onHouse}>
-              house
-            </button>
-          </span>
+          <HouseStrip
+            channels={channels}
+            currentLeaderId={currentLeaderId}
+            onSelect={onSelect}
+            drag={drag}
+            onCanvas={onCanvas}
+            onHouse={onHouse}
+            canCanvas={canCanvas}
+          />
         </footer>
       )}
+    </div>
+  );
+}
+
+/**
+ * The house, as a row of rooms: what the strip along the foot of the wall holds, and what the stage's
+ * own page holds at its foot on a wide window (see `Stage`'s `house`). One component, two places, so
+ * the rooms cannot be drawn two ways.
+ */
+export function HouseStrip({
+  channels,
+  currentLeaderId,
+  onSelect,
+  drag,
+  onCanvas,
+  onHouse,
+  canCanvas,
+  compact = false,
+}: {
+  channels: Channel[];
+  currentLeaderId: number | null;
+  onSelect: (zoneId: number) => void;
+  drag: RoomDrag;
+  onCanvas: () => void;
+  onHouse: () => void;
+  canCanvas: boolean;
+  /** Inside a column rather than across the page: the rooms wrap, and the row has no fixed height. */
+  compact?: boolean;
+}) {
+  /*
+   * The two withdrawals — the record alone, or the whole house — stand at the far end of the row of
+   * rooms, because both are ways of looking at the house rather than at this room's controls.
+   */
+  const ways = (
+    <span className="cx-house-ways mono">
+      {canCanvas && (
+        <button type="button" onClick={onCanvas}>
+          canvas
+        </button>
+      )}
+      <button type="button" onClick={onHouse}>
+        house
+      </button>
+    </span>
+  );
+  const rooms = channels.map((channel) => (
+    <Room
+      key={channel.leader.id}
+      channel={channel}
+      current={channel.leader.id === currentLeaderId}
+      onSelect={onSelect}
+      drag={drag}
+      compact={compact}
+    />
+  ));
+
+  if (compact) {
+    /* Inside a page the row has a head like every other section — the label, the hairline, the ways —
+       so the rooms below it can wrap without the words wrapping with them. */
+    return (
+      <div className="cx-house-row" data-compact>
+        <div className="cx-house-head">
+          <span className="cx-house-lbl mono">the house</span>
+          <span className="cx-house-rule" aria-hidden="true" />
+          {ways}
+        </div>
+        <div className="cx-house-rooms">{rooms}</div>
+      </div>
+    );
+  }
+  return (
+    <div className="cx-house-row">
+      {rooms}
+      {ways}
+    </div>
+  );
+}
+
+/**
+ * The house at rest: every room the same width, each showing what is on in it.
+ *
+ * This is the gallery — the picture a panel in a hallway shows when nobody is touching it, where the
+ * useful question is not *what is this* but *what is the house doing*. A room with a record shows its
+ * sleeve whole with the name and the record under it and a hairline of how far along it is; a quiet
+ * room shows its name on the dark. Pressing a room stands you in it and wakes the screen.
+ */
+export function Gallery({
+  channels,
+  currentLeaderId,
+  onSelect,
+  onLeave,
+}: {
+  channels: Channel[];
+  currentLeaderId: number | null;
+  onSelect: (zoneId: number) => void;
+  onLeave: () => void;
+}) {
+  const api = useApi();
+  return (
+    <div
+      className="cx-gallery"
+      onClick={(event) => {
+        if ((event.target as HTMLElement).closest('button') === null) {
+          onLeave();
+        }
+      }}
+    >
+      {channels.map((channel) => {
+        const leader = channel.leader;
+        const cover = zoneCoverCss(api, leader, 640);
+        const playing = channel.playing && channel.hasTrack;
+        const off = leader.powerState?.power === 'off';
+        const pct = channel.hasTrack && leader.duration > 0 ? Math.min(100, (leader.position / leader.duration) * 100) : null;
+        return (
+          <button
+            type="button"
+            className="cx-gal-room"
+            key={leader.id}
+            data-current={leader.id === currentLeaderId || undefined}
+            data-quiet={!channel.hasTrack || undefined}
+            data-on={playing || undefined}
+            onClick={() => {
+              onSelect(leader.id);
+              onLeave();
+            }}
+          >
+            <span className="cx-gal-cov" style={cover && channel.hasTrack ? { backgroundImage: cover } : undefined} aria-hidden="true">
+              {!channel.hasTrack && (off ? <PowerGlyph size={22} /> : <SpeakerGlyph size={22} />)}
+            </span>
+            <span className="cx-gal-name mono">
+              {playing && <i className="cx-house-lit" aria-hidden="true" />}
+              {leader.name}
+              {channel.members.length > 1 && <i className="cx-house-plus"> +{channel.members.length - 1}</i>}
+            </span>
+            {channel.hasTrack ? (
+              <>
+                <span className="cx-gal-title">{leader.track?.title ? mainTitle(leader.track.title) : ''}</span>
+                {leader.track?.artist && <span className="cx-gal-artist">{leader.track.artist}</span>}
+              </>
+            ) : (
+              <span className="cx-gal-artist">{off ? 'off' : 'quiet'}</span>
+            )}
+            {pct !== null && (
+              <span className="cx-gal-prog" aria-hidden="true">
+                <i style={{ width: `${pct}%` }} />
+              </span>
+            )}
+          </button>
+        );
+      })}
     </div>
   );
 }
@@ -108,11 +243,14 @@ function Room({
   current,
   onSelect,
   drag,
+  compact = false,
 }: {
   channel: Channel;
   current: boolean;
   onSelect: (zoneId: number) => void;
   drag: RoomDrag;
+  /** In a page's row there is room for the record's name, not for the artist too. */
+  compact?: boolean;
 }) {
   const api = useApi();
   const leader = channel.leader;
@@ -120,7 +258,9 @@ function Room({
   const playing = channel.playing && channel.hasTrack;
   const off = leader.powerState?.power === 'off';
   const line = channel.hasTrack
-    ? [leader.track?.title ? mainTitle(leader.track.title) : '', leader.track?.artist].filter(Boolean).join(' · ')
+    ? [leader.track?.title ? mainTitle(leader.track.title) : '', compact ? '' : leader.track?.artist]
+        .filter(Boolean)
+        .join(' · ')
     : off
       ? 'off'
       : 'quiet';
