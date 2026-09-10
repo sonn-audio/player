@@ -792,7 +792,11 @@ export function ArtApp() {
               setPlayerOpen(false);
               openBrowse();
             }}
-            onSignal={openSignal}
+            /* The reading is a view under the player layer, so the layer goes first. */
+            onSignal={() => {
+              setPlayerOpen(false);
+              openSignal();
+            }}
             upNextTotal={upNextTotal}
             onDismiss={() => setPlayerOpen(false)}
           />

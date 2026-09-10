@@ -530,7 +530,7 @@ export function Signal({
          */}
         <button type="button" className="cx-sig-back mono" onClick={onLeave}>
           <BackGlyph size={13} />
-          player
+          stage
         </button>
       </header>
 
