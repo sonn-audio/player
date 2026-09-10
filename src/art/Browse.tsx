@@ -193,6 +193,22 @@ function artOf(items: ContentItem[]): string[] {
 }
 
 /**
+ * The *records* in a peek: albums only.
+ *
+ * A door's stack is a picture of what is behind it, and a playlist's cover is a tile with a word on it —
+ * `Op repeat`, `Chill` — where an album's is a sleeve. Where a service offers both, the stack is made of
+ * albums; the playlists stay for the shelf, where the word is the point.
+ */
+function albumArtOf(items: ContentItem[]): string[] {
+  return artOf(items.filter((item) => item.kind === 'album'));
+}
+
+/** Children worth opening for albums first: the ones whose name says so. */
+function albumish(item: ContentItem): boolean {
+  return /album|release|nieuw|new|recent/i.test(item.name);
+}
+
+/**
  * A door: a name the size of a heading, and a glimpse of what is behind it.
  *
  * The alternative — and what this replaces — is a tile with no picture, which is a hole the shape of a
@@ -236,10 +252,34 @@ function Door({
         return;
       }
       setInside(found);
+      /* Enough records on the doorstep: no need to look further in. */
+      if (albumArtOf(found.items).length >= 3) {
+        return;
+      }
+      /* Otherwise look behind the first few doors inside, the ones named for albums first, and
+         gather records until there are three. What is found is kept even if it is fewer. */
+      const children = found.items.filter((entry) => entry.browsable);
+      const ordered = [...children.filter(albumish), ...children.filter((entry) => !albumish(entry))].slice(0, 4);
+      const found_: string[] = [];
+      for (const child of ordered) {
+        const below = await peek(content, child.id);
+        if (!live) {
+          return;
+        }
+        found_.push(...albumArtOf(below.items));
+        if (found_.length >= 3) {
+          break;
+        }
+      }
+      if (found_.length > 0) {
+        setDeeper(found_);
+        return;
+      }
+      /* No records anywhere: any picture beats a blank, so the old rule — the first child with art. */
       if (artOf(found.items).length > 0) {
         return;
       }
-      for (const child of found.items.filter((entry) => entry.browsable).slice(0, 3)) {
+      for (const child of children.slice(0, 3)) {
         const below = await peek(content, child.id);
         if (!live) {
           return;
@@ -256,8 +296,10 @@ function Door({
     };
   }, [content, item.id]);
 
+  /* Records first — the door's own, then those found behind it — and only failing both, any art at all. */
   const own = artOf(inside.items);
-  const art = (own.length > 0 ? own : deeper).slice(0, 4);
+  const albums = [...albumArtOf(inside.items), ...deeper];
+  const art = (albums.length > 0 ? albums : own).slice(0, 4);
   // For a door with nothing to show: the names of the first few things behind it, which is what
   // a table of contents does when there is no illustration.
   const names = inside.items.map((entry) => entry.name).filter(Boolean).slice(0, 3);
