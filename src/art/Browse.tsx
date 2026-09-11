@@ -225,9 +225,61 @@ function albumArtOf(items: ContentItem[]): string[] {
   return artOf(items.filter((item) => item.kind === 'album'));
 }
 
+/**
+ * A service's *own* artwork: what it publishes rather than what it stocks.
+ *
+ * An album sleeve is the record company's and it is on every service at once — a rack of them says
+ * nothing about whose door it is standing behind. A service's playlists and stations are the one
+ * picture only that service has: Apple's `Nieuwe muziek` in its own gradient with its own mark in the
+ * corner, Spotify's `New Music Friday NL`, a station's logo. The tile with a word on it, which is a
+ * poor way to show a record, is the best way to show a shop.
+ */
+function brandArtOf(items: ContentItem[]): string[] {
+  return artOf(items.filter((item) => item.kind === 'playlist' || item.kind === 'radio' || item.kind === 'show'));
+}
+
 /** Children worth opening for albums first: the ones whose name says so. */
 function albumish(item: ContentItem): boolean {
   return /album|release|nieuw|new|recent/i.test(item.name);
+}
+
+/** Children likely to hold the service's own programmes rather than other people's records. */
+function editorial(item: ContentItem): boolean {
+  return /playlist|afspeel|station|radio|mood|genre|popular|hits|presets|featured|voor jou|for you/i.test(item.name);
+}
+
+/**
+ * The records behind a door, looking as far in as it takes.
+ *
+ * A service that puts its music on the doorstep needs no looking: one request and the sleeves are
+ * there. A library does not. Its door leads to `Local Media`, which leads to `Albums · Artists ·
+ * Tracks`, which is where the records finally are — three levels down, and a search that stopped one
+ * short drew the library as three lines of grey type in a player holding a thousand sleeves.
+ *
+ * Bounded in both directions: at most `depth` levels further in, the first three doors at each level,
+ * and it stops the moment three records are in hand. Doors whose names say `albums` are opened first,
+ * because they are where records are kept. Everything is cached module-wide by id, so a hall walked
+ * back into costs nothing and the worst case is a handful of requests, once, for the one door that
+ * keeps its music in a back room.
+ */
+async function records(content: ContentSource, id: string, depth: number, own = false): Promise<string[]> {
+  const found = await peek(content, id);
+  const pick = own ? brandArtOf : albumArtOf;
+  const here = pick(found.items);
+  if (here.length >= 4 || depth <= 0) {
+    return here;
+  }
+  const children = found.items.filter((entry) => entry.browsable);
+  const first = own ? editorial : albumish;
+  const ordered = [...children.filter(first), ...children.filter((entry) => !first(entry))].slice(0, 3);
+  const out = [...here];
+  for (const child of ordered) {
+    out.push(...(await records(content, child.id, depth - 1, own)));
+    if (out.length >= 4) {
+      break;
+    }
+  }
+  return out;
 }
 
 /**
@@ -281,29 +333,44 @@ function Door({
         return;
       }
       setInside(found);
+      /*
+       * At the front of the catalogue, what the door shows is the service's own artwork — see
+       * `brandArtOf`. Its own records are the fallback, which is the right answer for a library:
+       * a library has no editorial voice, and your own sleeves are exactly what it is.
+       */
+      if (hall) {
+        const mine = await records(content, item.id, 2, true);
+        if (!live) {
+          return;
+        }
+        if (mine.length >= 3) {
+          setDeeper(mine);
+          return;
+        }
+        const theirs = await records(content, item.id, 2);
+        if (!live) {
+          return;
+        }
+        if (theirs.length > 0 || mine.length > 0) {
+          setDeeper(theirs.length > 0 ? theirs : mine);
+          return;
+        }
+      }
       /* Enough records on the doorstep: no need to look further in. */
       if (albumArtOf(found.items).length >= 3) {
         return;
       }
-      /* Otherwise look behind the first few doors inside, the ones named for albums first, and
-         gather records until there are three. What is found is kept even if it is fewer. */
-      const children = found.items.filter((entry) => entry.browsable);
-      const ordered = [...children.filter(albumish), ...children.filter((entry) => !albumish(entry))].slice(0, 4);
-      const found_: string[] = [];
-      for (const child of ordered) {
-        const below = await peek(content, child.id);
-        if (!live) {
-          return;
-        }
-        found_.push(...albumArtOf(below.items));
-        if (found_.length >= 3) {
-          break;
-        }
+      /* Otherwise go and find them — see `records`. Two levels, which is what a library needs and
+         one more than anything else does. */
+      const found_ = await records(content, item.id, 2);
+      if (!live) {
+        return;
       }
       if (found_.length > 0) {
         setDeeper(found_);
         return;
       }
+      const children = found.items.filter((entry) => entry.browsable);
       /* No records anywhere: any picture beats a blank, so the old rule — the first child with art. */
       if (artOf(found.items).length > 0) {
         return;
@@ -323,13 +390,25 @@ function Door({
     return () => {
       live = false;
     };
-  }, [content, item.id]);
+  }, [content, item.id, hall]);
 
   /* Records first — the door's own, then those found behind it — and only failing both, any art at all. */
   const own = artOf(inside.items);
   const albums = [...albumArtOf(inside.items), ...deeper];
   const behind = albums.length > 0 ? albums : own;
-  const art = [...preferred, ...behind.filter((url) => !preferred.includes(url))].slice(0, 4);
+  /*
+   * At the front of the catalogue a door shows whose door it is.
+   *
+   * Its own artwork first — Apple's root hands over six of its own playlist tiles before it hands
+   * over a single sleeve — then whatever was found further in, and only then records. Your own
+   * favourites are dropped here: they stand in front of a shelf *inside* a service, where the
+   * question is what you have, and the same four records of yours in front of all five doors answers
+   * nothing about any of them. Neither does an album sleeve, which is the record company's and is on
+   * every service at once. See `brandArtOf`.
+   */
+  const art = hall
+    ? [...new Set([...brandArtOf(inside.items), ...deeper, ...albums, ...own])].slice(0, 4)
+    : [...preferred, ...behind.filter((url) => !preferred.includes(url))].slice(0, 4);
   // For a door with nothing to show: the names of the first few things behind it, which is what
   // a table of contents does when there is no illustration.
   const names = inside.items.map((entry) => entry.name).filter(Boolean).slice(0, 3);
@@ -345,7 +424,6 @@ function Door({
   const stack = [...art].reverse();
 
   if (hall) {
-    const count = inside.items.length;
     return (
       <button
         type="button"
@@ -362,7 +440,7 @@ function Door({
             first in front. */}
         {art.length > 0 && (
           <span className="cx-portal-stack" aria-hidden="true">
-            {art.slice(0, 3).map((url, n) => (
+            {art.slice(0, 4).map((url, n) => (
               <i key={url} style={{ backgroundImage: itemCoverCss(url) }} data-n={n} />
             ))}
           </span>
@@ -375,15 +453,16 @@ function Door({
             ))}
           </span>
         )}
+        {/*
+         * The name, and nothing under it.
+         *
+         * It used to carry the first three things behind the door — `Local Media · alerts ·
+         * Event_So…`, `Nieuwe muziek · Op repeat · Jouw esse…` — which is a table of contents
+         * truncated to the point of saying nothing, under a rack of records that already says what
+         * is in there. A caption that repeats the picture in worse words is not a second fact.
+         */}
         <span className="cx-portal-txt">
           <span className="cx-portal-name disp">{item.name}</span>
-          <span className="cx-portal-line">
-            {art.length > 0 && names.length > 0
-              ? names.join(' · ')
-              : count > 0
-                ? `${count} ${count === 1 ? 'folder' : 'folders'}`
-                : ''}
-          </span>
         </span>
         <span className="cx-portal-go" aria-hidden="true">
           <ForwardGlyph size={16} />

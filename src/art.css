@@ -4972,12 +4972,24 @@
   animation: cx-door-in 0.5s var(--cx-ease) backwards;
 }
 
+/*
+ * The record's own colour, across the whole band.
+ *
+ * It was held down so far that the band came out the same near-black as the page behind it — a
+ * full-width stripe of nothing with a small sleeve and a heading sitting in the left quarter of it,
+ * and eight hundred pixels of dead grey to their right. The colour was already there; it was simply
+ * turned off.
+ *
+ * So it is let up, and then shaped: dark on the left where the type is and opening out to the right,
+ * which turns the empty half of the band into the field the record throws — the same composition the
+ * stage makes of a sleeve and the colour beside it.
+ */
 .cx-bill-wall {
   position: absolute;
   inset: -14%;
   background-position: center 30%;
   background-size: cover;
-  filter: blur(84px) brightness(0.5) saturate(1.05);
+  filter: blur(84px) brightness(0.72) saturate(1.15);
   pointer-events: none;
 }
 
@@ -4985,13 +4997,15 @@
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background: linear-gradient(
-    180deg,
-    var(--cx-bg),
-    rgb(10 10 12 / 34%) 30%,
-    rgb(10 10 12 / 34%) 62%,
-    var(--cx-bg)
-  );
+  background:
+    linear-gradient(90deg, rgb(10 10 12 / 80%) 0%, rgb(10 10 12 / 52%) 38%, rgb(10 10 12 / 8%) 100%),
+    linear-gradient(
+      180deg,
+      var(--cx-bg),
+      rgb(10 10 12 / 26%) 28%,
+      rgb(10 10 12 / 26%) 64%,
+      var(--cx-bg)
+    );
 }
 
 .cx-bill-cover {
@@ -10297,25 +10311,40 @@
 .cx-portal {
   flex: 1 1 260px;
   max-width: 440px;
-  height: clamp(340px, calc(100vh - 470px), 600px);
+  /*
+   * Shorter than it was, because a door twice as tall as it is wide cannot be filled by a rack of
+   * records: the sleeves are capped by the width and the height then has nowhere to go but empty.
+   * At about five to three the rack reaches the head of the panel on its own.
+   */
+  height: clamp(320px, calc(100vh - 560px), 520px);
   padding: 24px;
+  /* So the rack inside can be measured against the door — see `.cx-portal-stack`. */
+  container-type: size;
 }
 
+/*
+ * The colour of the room behind the door, held right down.
+ *
+ * At two thirds of full it took the panel's temperature from whichever record happened to be in
+ * front — a pale sleeve made a pale card, and five doors came out five different greys with the
+ * artwork no longer the brightest thing on any of them. Near-black with a trace of the record in it
+ * is what the rest of this face does, and it is what makes five doors read as five of one thing.
+ */
 .cx-portal-wall {
   position: absolute;
   inset: -20%;
   display: block;
   background-position: center;
   background-size: cover;
-  filter: blur(70px) saturate(1.2) brightness(0.55);
-  opacity: 0.7;
+  filter: blur(70px) saturate(1.15) brightness(0.34);
+  opacity: 0.62;
   transform: none;
   transition: opacity 0.5s var(--cx-ease);
 }
 
 .cx-portal:hover .cx-portal-wall {
-  opacity: 0.9;
-  filter: blur(70px) saturate(1.2) brightness(0.55);
+  opacity: 0.85;
+  filter: blur(70px) saturate(1.15) brightness(0.34);
   transform: none;
 }
 
@@ -10323,13 +10352,33 @@
   background: linear-gradient(to top, rgb(10 10 12 / 90%) 0%, rgb(10 10 12 / 40%) 34%, rgb(10 10 12 / 0%) 60%);
 }
 
+/*
+ * The stack, as a crate rather than an ornament.
+ *
+ * It was three sleeves at three different sizes floating at the top of a six-hundred-pixel panel,
+ * which left the bottom half of every door empty and read as scatter rather than as records. A stack
+ * of records is all one size, one behind the other, and it leans back: you see the front one whole
+ * and the edges of the ones behind it climbing away. So it is drawn that way, and it is drawn big
+ * enough to be the door — the front sleeve sits just above the name and the rest go up from there,
+ * so the panel is full from its foot to near its head.
+ *
+ * Occluded, not cropped. A sleeve half hidden behind another sleeve is what a stack looks like; a
+ * sleeve with its edge cut off is what this player does not do.
+ */
 .cx-portal-stack {
-  position: absolute;
-  left: 50%;
-  top: 14%;
-  width: 56%;
+  position: relative;
+  /* In the column rather than pinned to a guessed distance from the foot: a service whose name wraps
+     to two lines — `YouTube Music` — used to have its own sleeves printed over it. */
+  margin: auto auto clamp(16px, 2.6vh, 26px);
+  /*
+   * Sized by the panel, not by a number. A rack of four leaning records stands about 1.66 sleeves
+   * tall, and what it has to stand in is the panel's height less the name and the padding under it —
+   * so that is what it is told, and it fills a 600px door and a 340px one without either clipping a
+   * sleeve at the top or leaving a hole above them.
+   */
+  width: min(94%, calc((100cqh - 96px) / 1.59));
   aspect-ratio: 1;
-  translate: -50% 0;
+  translate: none;
 }
 
 .cx-portal-stack i {
@@ -10345,32 +10394,47 @@
   transition: translate 0.45s var(--cx-ease);
 }
 
-/* The first in front, the others stepped back and to the sides, each a little dimmer. */
+/*
+ * The front record whole, the rest climbing away behind it — same size, alternating a little to
+ * either side, each step dimmer, because that is what the back of a rack looks like.
+ */
 .cx-portal-stack i[data-n='0'] {
-  z-index: 3;
-  translate: 0 8%;
+  z-index: 4;
+  translate: 0 0;
 }
 
 .cx-portal-stack i[data-n='1'] {
-  z-index: 2;
-  translate: -18% -4%;
-  scale: 0.88;
-  filter: brightness(0.7);
+  z-index: 3;
+  translate: -7% -26%;
+  scale: 0.95;
+  filter: brightness(0.62);
 }
 
 .cx-portal-stack i[data-n='2'] {
-  z-index: 1;
-  translate: 18% -12%;
-  scale: 0.8;
-  filter: brightness(0.5);
+  z-index: 2;
+  translate: 6% -48%;
+  scale: 0.9;
+  filter: brightness(0.42);
 }
 
+.cx-portal-stack i[data-n='3'] {
+  z-index: 1;
+  translate: -4% -66%;
+  scale: 0.86;
+  filter: brightness(0.28);
+}
+
+/* Pressed towards, the rack opens a little — the one motion a door makes. */
 .cx-portal:hover .cx-portal-stack i[data-n='1'] {
-  translate: -24% -6%;
+  translate: -9% -30%;
 }
 
 .cx-portal:hover .cx-portal-stack i[data-n='2'] {
-  translate: 24% -16%;
+  translate: 8% -54%;
+}
+
+.cx-portal:hover .cx-portal-stack i[data-n='3'] {
+  translate: -6% -74%;
 }
 
 .cx-portal[data-art='0'] {
@@ -10391,8 +10455,8 @@
   }
 
   .cx-portal-stack {
-    top: 8%;
-    width: 50%;
+    margin-bottom: 12px;
+    width: min(50%, 132px);
   }
 }
 
@@ -12524,4 +12588,45 @@
   .cx-np-foot {
     padding-top: 14px;
   }
+}
+
+/*
+ * The hall stands in the middle of what is left, not at the top of it.
+ *
+ * The doors got shorter when the racks inside them were made to fill — and a row of doors pinned
+ * under the band left a hundred and sixty pixels of nothing between them and the foot of the page,
+ * which reads as a second row that failed to load. Centred, the same space becomes air above and
+ * below, which is what air is for.
+ */
+@media (min-width: 980px) {
+  .cx-browse-inner[data-root] {
+    display: flex;
+    flex-direction: column;
+    min-height: 100%;
+  }
+
+  .cx-browse-inner[data-root] > .cx-browse-body {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  .cx-browse-inner[data-root] > .cx-browse-body > .cx-hall {
+    margin-block: auto;
+  }
+}
+
+/*
+ * Every door's name keeps two lines, whether it needs them or not.
+ *
+ * `YouTube Music` wraps and the other four do not, so its rack of records stood forty pixels higher
+ * than the rest of the row — five doors that were meant to read as one thing, out of line because of
+ * one name. The name sits at the foot of the space it reserves, so a single line is where it always
+ * was and the space it does not use is above it, where there is nothing to see.
+ */
+.cx-portal-name {
+  display: flex;
+  align-items: flex-end;
+  min-height: 2lh;
 }
