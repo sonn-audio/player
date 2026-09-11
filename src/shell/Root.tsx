@@ -21,6 +21,7 @@ import { ArtApp } from '@/art/ArtApp';
 import { AdminLink } from '@/shell/AdminLink';
 import { Brand } from '@/shell/Brand';
 import { Intro } from '@/shell/Intro';
+import { ServerMismatch } from '@/shell/ServerMismatch';
 import { useServer } from '@/state/ServerContext';
 
 /** How long the splash stays even when the server answers instantly. */
@@ -107,6 +108,7 @@ export function Root() {
       */}
       <Brand vt={intro === 'gone'} />
       <AdminLink />
+      <ServerMismatch />
 
       {intro !== 'gone' && <Intro fading={intro !== 'holding'} out={intro === 'out'} vt />}
     </>

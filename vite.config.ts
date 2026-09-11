@@ -4,22 +4,26 @@ import { defineConfig, loadEnv, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
 
 /**
- * `version.json`, beside `index.html`, saying which build this is.
+ * `version.json`, beside `index.html`, saying which build this is and which server it needs.
  *
- * The audioserver reads it (`readPlayerVersion` in `miscHandlers.ts`) to report the installed player
+ * The audioserver reads it (`describeBundle` in `bundleManifest.ts`) to report the installed player
  * on its status endpoint, which is how the console knows whether the bundle it is serving is behind
  * the latest release. Nothing emitted it, so that reading was permanently `null` and the player was
  * the one component the update surface could not name a version for.
  *
+ * `minCore` — from `sonn.minCore` in package.json — is the oldest server core that can serve this
+ * build. The server reads it out of the extracted tarball and refuses the swap when it is below
+ * that, which is what stops a player from being installed onto a core that cannot answer it.
+ *
  * Emitted through `emitFile` rather than written to disk, so it is part of the build output wherever
  * that output goes: the release tarball, a local `npm run build`, and `npm run fetch:player`'s copy of
  * `dist/` all carry it without any of them knowing about it.
+ *
+ * Always name the beta the requirement landed in, never the stable it is heading for —
+ * `4.0.0-beta.30` does not satisfy a minimum of `4.0.0`, so the round number locks out every
+ * install in the beta cycle.
  */
-function versionManifest(): Plugin {
-  const pkg = JSON.parse(
-    readFileSync(fileURLToPath(new URL('./package.json', import.meta.url)), 'utf-8'),
-  ) as { version?: string };
-
+function versionManifest(pkg: { version?: string; sonn?: { minCore?: string } }): Plugin {
   return {
     name: 'sonn-version-manifest',
     apply: 'build',
@@ -27,7 +31,11 @@ function versionManifest(): Plugin {
       this.emitFile({
         type: 'asset',
         fileName: 'version.json',
-        source: `${JSON.stringify({ version: pkg.version ?? '0.0.0' }, null, 2)}\n`,
+        source: `${JSON.stringify(
+          { version: pkg.version ?? '0.0.0', minCore: pkg.sonn?.minCore ?? null },
+          null,
+          2,
+        )}\n`,
       });
     },
   };
@@ -47,15 +55,24 @@ function versionManifest(): Plugin {
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
   const target = env.AUDIOSERVER_URL ?? 'http://localhost:7090';
+  const pkg = JSON.parse(
+    readFileSync(fileURLToPath(new URL('./package.json', import.meta.url)), 'utf-8'),
+  ) as { version?: string; sonn?: { minCore?: string } };
 
   return {
     base: '/player/',
+    define: {
+      __APP_VERSION__: JSON.stringify(pkg.version ?? '0.0.0'),
+      // So a build that outgrew the server it is served by can say so itself. The update
+      // gate cannot help here: by this point the bundle is already installed and running.
+      __MIN_CORE__: JSON.stringify(pkg.sonn?.minCore ?? null),
+    },
     resolve: {
       alias: {
         '@': fileURLToPath(new URL('./src', import.meta.url)),
       },
     },
-    plugins: [react(), versionManifest()],
+    plugins: [react(), versionManifest(pkg)],
     server: {
       // Bind all interfaces: Vite's default `localhost` resolves to IPv6 only, which a
       // devcontainer's IPv4 port-forward never reaches.

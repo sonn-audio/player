@@ -457,6 +457,37 @@ body:has(.cx-root[data-idle]) .admin-link {
 }
 
 /*
+ * The bundle saying it is the wrong one for this server.
+ *
+ * Bottom centre, out of the way of both the artwork and the transport, and quiet: a guest standing
+ * in front of this screen cannot fix a version mismatch, so the line points at admin and otherwise
+ * asks for nothing. It is only ever on screen in a state the update gate already refuses to create
+ * — a rolled-back core, or a bundle waved through at build time.
+ */
+.server-mismatch {
+  position: fixed;
+  left: 50%;
+  bottom: 10px;
+  transform: translateX(-50%);
+  z-index: 130;
+  max-width: min(92vw, 640px);
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-mute);
+  pointer-events: auto;
+}
+
+.server-mismatch a {
+  color: var(--text);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/*
  * The player gives this up on a phone.
  *
  * It drops its bar entirely once a record is playing, so a link pinned to the top-right would be

@@ -1,8 +1,11 @@
 {
   "name": "@sonn-audio/player",
   "private": true,
-  "version": "0.3.0",
+  "version": "0.3.1",
   "type": "module",
+  "sonn": {
+    "minCore": "4.0.0-beta.21"
+  },
   "description": "The Sonn web player — built entirely on the server's public /api/v1 contract.",
   "scripts": {
     "dev": "vite",

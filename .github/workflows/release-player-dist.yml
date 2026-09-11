@@ -6,6 +6,10 @@
 # has to be **flat** — `index.html`, `assets/` and `version.json` at its root, which is what
 # `tar -C dist` produces and why the `-C` is not optional.
 #
+# `version.json` goes up as an asset of its own as well as inside the tarball. The server reads it
+# *before* downloading anything, to work out which release an install on an older core should be
+# offered — reaching that answer by downloading each candidate bundle would cost megabytes a guess.
+#
 # Same shape as adminui's `release-admin-dist.yml`, deliberately: two bundles fetched by one
 # mechanism should not be published by two different ones.
 name: Release Player
@@ -33,6 +37,23 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # A release without a stated minimum installs onto anything, which is the right default
+      # for the bundles published before minimums existed and the wrong one for everything
+      # after. Cheaper to refuse the release than to chase a player that loads and misbehaves.
+      - name: Check the declared minimum core
+        run: |
+          node -e '
+            const pkg = require("./package.json");
+            const min = pkg.sonn && pkg.sonn.minCore;
+            if (typeof min !== "string" || !/^\d+\.\d+\.\d+(-[0-9A-Za-z.-]+)?$/.test(min.trim())) {
+              console.error("package.json needs sonn.minCore set to the oldest server core that can serve this build.");
+              console.error("Name the beta the requirement landed in (4.0.0-beta.22), never the stable it is heading for:");
+              console.error("a minimum of 4.0.0 is not satisfied by 4.0.0-beta.30, so it locks out the whole beta cycle.");
+              process.exit(1);
+            }
+            console.log("minCore:", min.trim());
+          '
+
       - name: Build
         run: npm run build
 
@@ -42,4 +63,6 @@ jobs:
       - name: Upload release artifact
         uses: softprops/action-gh-release@v2
         with:
-          files: player-dist.tgz
+          files: |
+            player-dist.tgz
+            dist/version.json
