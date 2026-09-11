@@ -34,7 +34,8 @@ import { artKeyOf } from '@/art/accent';
 import { useLeaving } from '@/art/Leaving';
 import { Origin, titleStep } from '@/art/Stage';
 import { useResolved } from '@/art/useOrigin';
-import { ArtistIndex, ArtistWork, artistLine, useArtistRecords } from '@/art/Artist';
+import { ArtistWork, artistLine, useArtistRecords } from '@/art/Artist';
+import { LetterIndex, alphabetical } from '@/art/Index';
 import {
   BackGlyph,
   Bars,
@@ -1224,11 +1225,25 @@ export function Browse({
    * than take a knife to a record cover.
    */
   /*
-   * A listing of people, long enough to need finding rather than reading. Twelve is about where a
-   * grid stops being a page you take in at a glance and starts being a rack — under that, a letter
-   * over five names is a divider card in a box of six records.
+   * A listing long enough to need finding rather than reading, and already in the order an index
+   * would read it in.
+   *
+   * Twelve is about where a grid stops being a page you take in at a glance and starts being a rack
+   * — under that, a letter over five names is a divider card in a box of six records. One kind at a
+   * time, because a letter over a mixture of albums and folders is filing two things under one rule.
+   * And never a menu: a service's own categories are a way in, not a collection, and six of them do
+   * not need an alphabet. The rest is up to the listing itself — see `alphabetical`.
    */
-  const people = !query && items.length >= 12 && items.every((item) => item.kind === 'artist');
+  const indexed = useMemo(() => {
+    if (query || items.length < 12) {
+      return false;
+    }
+    const kind = items[0]?.kind;
+    if (!kind || kind === 'category' || kind === 'folder' || !items.every((item) => item.kind === kind)) {
+      return false;
+    }
+    return alphabetical(items);
+  }, [query, items]);
 
   const face = portrait ? here.seed?.coverUrl : undefined;
   const heroArt = face ?? hero?.coverUrl;
@@ -1545,8 +1560,8 @@ export function Browse({
             </div>
           ) : (
             items.length > 0 &&
-            (people ? (
-              <ArtistIndex items={items} returning={returning} onOpen={open} onPlay={play} />
+            (indexed ? (
+              <LetterIndex items={items} returning={returning} onOpen={open} onPlay={play} />
             ) : (
               <div className="cx-grid">
                 {items.map((item, index) => (
