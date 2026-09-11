@@ -26,6 +26,7 @@ import { Motion } from '@/art/Motion';
 import { useZoneFavorite } from '@/state/useZoneFavorite';
 import { useCoverAnchor } from '@/shell/coverMorph';
 import {
+  BackGlyph,
   ChevronGlyph,
   EmptyArtGlyph,
   ForwardGlyph,
@@ -40,6 +41,7 @@ import {
 } from '@/art/glyphs';
 import { formatTime } from '@/lib/format';
 import { bareAlbum, mainTitle, splitTitle } from '@/lib/title';
+import { useCoverRead } from '@/art/coverRead';
 import type { Cur } from '@/art/useCur';
 
 /** Greeting by hour — the welcome screen's line, reused as the stage's eyebrow. */
@@ -347,6 +349,8 @@ export function Stage({
   lastCover,
   elsewhere,
   house,
+  onTurn,
+  neighbours,
 }: {
   cur: Cur;
   /** The room gestures — the sleeve is the thing you pick up. See `useRoomDrag`. */
@@ -384,6 +388,10 @@ export function Stage({
    * rooms belong on the right page, not on a strip under both. See `HouseStrip`.
    */
   house?: React.ReactNode;
+  /** Turn to the next room, or the one before — see `ArtApp`'s `turnRoom`. Absent with one room. */
+  onTurn?: ((dir: 'left' | 'right') => void) | undefined;
+  /** Who is on either side, for the edges' labels. */
+  neighbours?: { left: string; right: string } | undefined;
   /**
    * The last record this room played, as `url("…")`.
    *
@@ -396,6 +404,11 @@ export function Stage({
   const coverAnchor = useCoverAnchor();
   /* What "the artwork changed" means — the same handle the page's wash dissolves on. */
   const artKey = artKeyOf(leader?.track);
+  /* The sleeve read for its composition — see `coverRead`. A quiet sleeve carries the title itself. */
+  const read = useCoverRead(
+    leader?.track ? api.coverUrl(leader.id, { size: 96, cacheKey: leader.track.coverUrl }) : undefined,
+  );
+  const poster = Boolean(cur.hasTrack && read?.quiet);
 
   const toggle = (): void => {
     /* A press that turned into a throw is not a press. See `useRoomDrag`. */
@@ -419,8 +432,51 @@ export function Stage({
     }
   };
 
+  /*
+   * A horizontal wheel — a trackpad swipe — turns the page. Summed until it is a deliberate gesture,
+   * then one turn and a moment's silence, so a long swipe is one page and not four.
+   */
+  const wheelSum = useRef(0);
+  const wheelUntil = useRef(0);
+  const onWheel = (event: React.WheelEvent): void => {
+    if (!onTurn || Math.abs(event.deltaX) <= Math.abs(event.deltaY)) {
+      return;
+    }
+    const now = Date.now();
+    if (now < wheelUntil.current) {
+      return;
+    }
+    wheelSum.current += event.deltaX;
+    if (Math.abs(wheelSum.current) > 140) {
+      onTurn(wheelSum.current > 0 ? 'right' : 'left');
+      wheelSum.current = 0;
+      wheelUntil.current = now + 900;
+    }
+  };
+
   return (
-    <div className="cx-stage" data-spread={cur.hasTrack || undefined} onClick={leave}>
+    <div
+      className="cx-stage"
+      data-spread={cur.hasTrack || undefined}
+      data-poster={poster || undefined}
+      data-ink={poster ? read?.ink : undefined}
+      onClick={leave}
+      onWheel={onWheel}
+    >
+      {/* The page's edges: rest the pointer there and the neighbouring room's name appears; press and the
+          page turns. Drawn only with somewhere to turn to. */}
+      {onTurn && neighbours && !resting && (
+        <>
+          <button type="button" className="cx-turn" data-side="left" onClick={() => onTurn('left')} aria-label={`To ${neighbours.left}`}>
+            <BackGlyph size={18} />
+            <span className="cx-turn-name mono">{neighbours.left}</span>
+          </button>
+          <button type="button" className="cx-turn" data-side="right" onClick={() => onTurn('right')} aria-label={`To ${neighbours.right}`}>
+            <span className="cx-turn-name mono">{neighbours.right}</span>
+            <ForwardGlyph size={18} />
+          </button>
+        </>
+      )}
       {/* The composition is one block, centred: cover and column together, capped, rather than a cover
           pinned left and a column stretching to whatever the window happens to be. A player on a
           2560px monitor should look composed, not spread. */}
@@ -509,6 +565,26 @@ export function Stage({
                   </span>
                 </span>
               </button>
+
+              {/*
+               * The title on the sleeve, for a sleeve that can carry it.
+               *
+               * Drawn only when the reading says the lower-left is calm (see `coverRead`), in the ink that
+               * reads there. The page beside the sleeve then keeps only the eyebrow and the controls, at
+               * its foot: one enormous thing and the rest small. Keyed like the column's title, so it
+               * crossfades on a change of record.
+               */}
+              {poster && (
+                <div className="cx-poster" key={`p:${cur.title}|${cur.artist}`} aria-hidden="true">
+                  {cur.artist && <span className="cx-poster-artist">{cur.artist}</span>}
+                  <span className="cx-poster-title disp" data-len={titleStep(mainTitle(cur.title))}>
+                    {mainTitle(cur.title)}
+                  </span>
+                  {splitTitle(cur.title).tags.length > 0 && (
+                    <span className="cx-poster-tags mono">{splitTitle(cur.title).tags.join(' · ')}</span>
+                  )}
+                </div>
+              )}
 
             </>
           ) : (

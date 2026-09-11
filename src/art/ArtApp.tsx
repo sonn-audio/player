@@ -197,6 +197,16 @@ export function ArtApp() {
   const timedOut = useIdle(IDLE_AFTER_MS, !asked && cur.isPlaying && view.kind === 'home' && sheet === null);
   const idle = asked !== null || timedOut;
   const rest = asked ?? (timedOut ? 'record' : null);
+
+  /*
+   * Stillness, before rest.
+   *
+   * Six seconds without a pointer moving and the page's controls step back to a whisper — the title and
+   * the sleeve stay, the transport, the shelf and the house go to a third — so a screen nobody is touching
+   * is a poster with one word on it, long before the minute that turns it into the canvas. Any movement
+   * brings everything back at once. Desk only; a phone is either in the hand or asleep.
+   */
+  const still = useIdle(6_000, !phone && !idle && cur.isPlaying && view.kind === 'home' && sheet === null);
   const clock = useClock(idle);
 
   /* Leaving what was asked for. Any key at all, the way a screensaver has always ended. */
@@ -389,6 +399,39 @@ export function ArtApp() {
     return () => window.clearTimeout(timer);
   }, [dropSaid]);
 
+  /*
+   * The house as pages you turn.
+   *
+   * Every room is a page of one magazine: the next room slides in as a page does, with its own record and
+   * its own colour. Shift with the arrows, a horizontal wheel or trackpad swipe on the stage, or the edge
+   * of the page under the pointer. `turn` carries the direction for the animation and a nonce so two
+   * turns in a row both play; it clears itself once the page has landed.
+   */
+  const [turn, setTurn] = useState<{ dir: 'left' | 'right'; at: number } | null>(null);
+  const turnRoom = useCallback(
+    (dir: 'left' | 'right') => {
+      if (channels.length < 2) {
+        return;
+      }
+      const mine = leaderOf(zone, zones)?.id ?? null;
+      const at = channels.findIndex((channel) => channel.leader.id === mine);
+      const next = channels[(at + (dir === 'right' ? 1 : -1) + channels.length) % channels.length];
+      if (!next) {
+        return;
+      }
+      setTurn({ dir, at: Date.now() });
+      select(next.leader.id);
+    },
+    [channels, zone, zones, select],
+  );
+  useEffect(() => {
+    if (!turn) {
+      return undefined;
+    }
+    const timer = window.setTimeout(() => setTurn(null), 700);
+    return () => window.clearTimeout(timer);
+  }, [turn]);
+
   const goHome = (): void => setView({ kind: 'home' });
   const openBrowse = (node: BrowseNode = {}): void => setView({ kind: 'browse', node });
 
@@ -443,10 +486,13 @@ export function ArtApp() {
           break;
         case 'ArrowRight':
         case 'ArrowLeft':
-          if (room && cur.showBar && cur.durationSec > 0) {
+          if (event.shiftKey) {
+            /* Shift turns the page: the next room, or the one before. */
             event.preventDefault();
-            const step = event.shiftKey ? 30 : 10;
-            const next = cur.elapsedSec + (event.key === 'ArrowRight' ? step : -step);
+            turnRoom(event.key === 'ArrowRight' ? 'right' : 'left');
+          } else if (room && cur.showBar && cur.durationSec > 0) {
+            event.preventDefault();
+            const next = cur.elapsedSec + (event.key === 'ArrowRight' ? 10 : -10);
             void api.seek(room.id, Math.max(0, Math.min(cur.durationSec, Math.round(next))));
           }
           break;
@@ -485,7 +531,7 @@ export function ArtApp() {
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [phone, leader, zone, cur, api, view.kind]);
+  }, [phone, leader, zone, cur, api, view.kind, turnRoom]);
 
   /*
    * And the moment there is nothing to read, it closes itself.
@@ -515,6 +561,8 @@ export function ArtApp() {
       data-view={view.kind}
       data-dragging={drag.active?.kind}
       data-rest={rest ?? undefined}
+      data-still={still || undefined}
+      data-turn={turn?.dir}
       style={accent as React.CSSProperties}
     >
       {/*
@@ -790,6 +838,20 @@ export function ArtApp() {
                       upNext={upNext}
                       upNextTotal={upNextTotal}
                       elsewhere={elsewhere}
+                      onTurn={channels.length > 1 ? turnRoom : undefined}
+                      neighbours={
+                        channels.length > 1
+                          ? (() => {
+                              const mine = leaderOf(zone, zones)?.id ?? null;
+                              const at = channels.findIndex((channel) => channel.leader.id === mine);
+                              const n = channels.length;
+                              return {
+                                left: channels[(at - 1 + n) % n]!.leader.name,
+                                right: channels[(at + 1) % n]!.leader.name,
+                              };
+                            })()
+                          : undefined
+                      }
                       house={
                         channels.length > 0 ? (
                           <HouseStrip
