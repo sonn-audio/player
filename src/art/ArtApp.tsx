@@ -37,6 +37,7 @@ import { QueueSheet } from '@/art/Rail';
 import { Crossfade } from '@/art/Crossfade';
 import { Browse, MiniBar, Sources, type BrowseNode } from '@/art/Browse';
 import { channelsOf, leaderOf, useCur, type Channel } from '@/art/useCur';
+import { serviceOf, useResolved } from '@/art/useOrigin';
 import { useFavorites, useQueue, useRecents } from '@/art/useCollections';
 import { accentOf, artKeyOf } from '@/art/accent';
 import { useClock, useIdle } from '@/art/useIdle';
@@ -50,7 +51,7 @@ import {
   MoreGlyph,
   RoomsGlyph,
 } from '@/art/glyphs';
-import type { ContentService } from '@/api/content';
+import type { ContentItem, ContentService } from '@/api/content';
 
 /** Where the desktop tree ends and the phone tree begins. Matches `art.css`. */
 const PHONE_MAX = 979;
@@ -431,6 +432,33 @@ export function ArtApp() {
     const timer = window.setTimeout(() => setTurn(null), 700);
     return () => window.clearTimeout(timer);
   }, [turn]);
+
+  /*
+   * Where the record playing here came from, as somewhere you can go.
+   *
+   * Every other player has this behind a context menu; here the artist's name and the album's name are
+   * already printed on the page, so they are the doors — see `Stage`'s `Origin`. Resolved by name in
+   * the service the room is playing from (`useOrigin`), which is the only route the contract offers:
+   * a track's album and artist are words, not ids.
+   */
+  const playingService = serviceOf(leader, services);
+  /* Not gated on `isLive`: that reads `source.seekable`, which at least one provider says `false` to for
+     an ordinary album track (the queue rail carries the same note). A station simply has no album, and
+     its service cannot search, so it answers nothing and no door is drawn. */
+  const originAlbum = useResolved('album', cur.album, playingService, cur.artist);
+  const originArtist = useResolved('artist', cur.artist, playingService);
+  const origin = useMemo(() => ({ album: originAlbum, artist: originArtist }), [originAlbum, originArtist]);
+  const openOrigin = useCallback(
+    (item: ContentItem) => {
+      setPlayerOpen(false);
+      setSheet(null);
+      setView({
+        kind: 'browse',
+        node: { id: item.id, label: item.name, ...(item.coverUrl ? { seed: item } : {}) },
+      });
+    },
+    [],
+  );
 
   const goHome = (): void => setView({ kind: 'home' });
   const openBrowse = (node: BrowseNode = {}): void => setView({ kind: 'browse', node });
@@ -839,6 +867,8 @@ export function ArtApp() {
                       upNextTotal={upNextTotal}
                       elsewhere={elsewhere}
                       onTurn={channels.length > 1 ? turnRoom : undefined}
+                      origin={origin}
+                      onOpenOrigin={openOrigin}
                       neighbours={
                         channels.length > 1
                           ? (() => {
@@ -984,6 +1014,8 @@ export function ArtApp() {
               openSignal();
             }}
             upNextTotal={upNextTotal}
+            origin={origin}
+            onOpenOrigin={openOrigin}
             onDismiss={() => setPlayerOpen(false)}
           />
         </div>

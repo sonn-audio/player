@@ -29,7 +29,8 @@ import { captureCoverFrom, useCoverAnchor } from '@/shell/coverMorph';
 import { itemCoverCss, zoneCoverCss } from '@/art/cover';
 import { useVolumeControl } from '@/art/volume';
 import { Motion } from '@/art/Motion';
-import { titleStep } from '@/art/Stage';
+import { Origin, titleStep } from '@/art/Stage';
+import { useResolved } from '@/art/useOrigin';
 import {
   BackGlyph,
   Bars,
@@ -1007,6 +1008,9 @@ export function Browse({
    */
   /* The record itself, or — while it loads — what the tile that opened it already knew. */
   const hero = !query ? (container?.coverUrl ? container : (here.seed ?? null)) : null;
+  /* A record's own page names its artist, and that name is a door to everything by them — the same
+     move the stage makes with the record it is playing. See `useOrigin`. */
+  const heroArtist = useResolved('artist', hero?.artist, hero?.service);
   const detail = hero && trackish ? hero : null;
 
   /*
@@ -1106,7 +1110,16 @@ export function Browse({
             <h1 className="disp cx-detail-title" data-len={titleStep(title)}>
               {title}
             </h1>
-            {hero.artist && <span className="cx-detail-sub">{hero.artist}</span>}
+            {/* An artist's page is named after them; saying it twice is not two facts. */}
+            {hero.artist && hero.artist.trim().toLowerCase() !== title.trim().toLowerCase() && (
+              <Origin
+                className="cx-detail-sub"
+                text={hero.artist}
+                item={heroArtist}
+                onOpen={open}
+                title={`Everything by ${hero.artist}`}
+              />
+            )}
 
             {hero.playable && <Actions container={hero} zone={zone} onPlay={play} onQueue={queue} onOpenRooms={onOpenRooms} />}
           </header>

@@ -42,6 +42,7 @@ import {
 import { formatTime } from '@/lib/format';
 import { bareAlbum, mainTitle, splitTitle } from '@/lib/title';
 import type { Cur } from '@/art/useCur';
+import type { ContentItem } from '@/api/content';
 
 /** Greeting by hour — the welcome screen's line, reused as the stage's eyebrow. */
 export function greeting(hour = new Date().getHours()): string {
@@ -285,6 +286,36 @@ function PhoneVolume({ cur }: { cur: Cur }) {
   );
 }
 
+/**
+ * A name that becomes a door when there is a page behind it.
+ *
+ * The artist above the title and the album under it are already on the page; a player that wants you
+ * to *go* to them does not need a menu for it, it needs those words to be pressable. Rendered as plain
+ * type until the catalogue has answered (see `useOrigin`), so a door is never drawn onto a dead end.
+ */
+export function Origin({
+  className,
+  text,
+  item,
+  onOpen,
+  title,
+}: {
+  className: string;
+  text: string;
+  item: ContentItem | null | undefined;
+  onOpen?: ((item: ContentItem) => void) | undefined;
+  title: string;
+}) {
+  if (!item || !onOpen) {
+    return <span className={className}>{text}</span>;
+  }
+  return (
+    <button type="button" className={`${className} cx-door`} onClick={() => onOpen(item)} title={title}>
+      {text}
+    </button>
+  );
+}
+
 export function titleStep(title: string): 1 | 2 | 3 | 4 | 5 {
   const length = title.trim().length;
   if (length <= 12) {
@@ -350,6 +381,8 @@ export function Stage({
   house,
   onTurn,
   neighbours,
+  origin,
+  onOpenOrigin,
 }: {
   cur: Cur;
   /** The room gestures — the sleeve is the thing you pick up. See `useRoomDrag`. */
@@ -391,6 +424,9 @@ export function Stage({
   onTurn?: ((dir: 'left' | 'right') => void) | undefined;
   /** Who is on either side, for the edges' labels. */
   neighbours?: { left: string; right: string } | undefined;
+  /** The album and the artist this record belongs to, once the catalogue has answered. See `useOrigin`. */
+  origin?: { album: ContentItem | null; artist: ContentItem | null } | undefined;
+  onOpenOrigin?: ((item: ContentItem) => void) | undefined;
   /**
    * The last record this room played, as `url("…")`.
    *
@@ -630,7 +666,15 @@ export function Stage({
            * at full size, and the record it came from set small underneath.
            */}
           <div className="cx-artistrow cx-swap" key={`a:${cur.title}|${cur.artist}`}>
-            {cur.artist && <span className="cx-artist">{cur.artist}</span>}
+            {cur.artist && (
+              <Origin
+                className="cx-artist"
+                text={cur.artist}
+                item={origin?.artist}
+                onOpen={onOpenOrigin}
+                title={`Everything by ${cur.artist}`}
+              />
+            )}
             {cur.hasTrack && <Favourite cur={cur} />}
           </div>
 
@@ -651,8 +695,14 @@ export function Stage({
           {/* The album, under the artist rather than folded into it with a dash: it is a place the
               track came from, not part of its name. */}
           {albumWorthShowing(cur.title, cur.album) && (
-            <span className="cx-album cx-swap cx-swap-3" key={`b:${cur.title}|${cur.album}`}>
-              {bareAlbum(cur.album)}
+            <span className="cx-albumrow cx-swap cx-swap-3" key={`b:${cur.title}|${cur.album}`}>
+              <Origin
+                className="cx-album"
+                text={bareAlbum(cur.album)}
+                item={origin?.album}
+                onOpen={onOpenOrigin}
+                title={`Open ${bareAlbum(cur.album)}`}
+              />
             </span>
           )}
 
@@ -789,6 +839,8 @@ export function MobileStage({
   onSignal,
   onDismiss,
   upNextTotal = 0,
+  origin,
+  onOpenOrigin,
 }: {
   cur: Cur;
   artKey: string;
@@ -801,6 +853,9 @@ export function MobileStage({
   onSignal: () => void;
   /** How many entries follow the one playing; the foot's `up next` carries the number. */
   upNextTotal?: number;
+  /** The album and the artist this record belongs to — see `useOrigin`. */
+  origin?: { album: ContentItem | null; artist: ContentItem | null } | undefined;
+  onOpenOrigin?: ((item: ContentItem) => void) | undefined;
   /**
    * Put the player away — it is a layer over the app now, not the app's home screen.
    *
@@ -985,8 +1040,24 @@ export function MobileStage({
             {splitTitle(cur.title).tags.length > 0 && (
               <span className="cx-np-tags mono">{splitTitle(cur.title).tags.join(' · ')}</span>
             )}
-            {cur.artist && <span className="cx-np-artist">{cur.artist}</span>}
-            {albumWorthShowing(cur.title, cur.album) && <span className="cx-np-album">{bareAlbum(cur.album)}</span>}
+            {cur.artist && (
+              <Origin
+                className="cx-np-artist"
+                text={cur.artist}
+                item={origin?.artist}
+                onOpen={onOpenOrigin}
+                title={`Everything by ${cur.artist}`}
+              />
+            )}
+            {albumWorthShowing(cur.title, cur.album) && (
+              <Origin
+                className="cx-np-album"
+                text={bareAlbum(cur.album)}
+                item={origin?.album}
+                onOpen={onOpenOrigin}
+                title={`Open ${bareAlbum(cur.album)}`}
+              />
+            )}
           </span>
           {cur.hasTrack && <Favourite cur={cur} round />}
         </div>

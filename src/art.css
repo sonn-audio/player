@@ -10904,7 +10904,7 @@
   white-space: nowrap;
 }
 
-.cx-title-tags + .cx-album {
+.cx-title-tags + .cx-albumrow {
   margin-top: 8px;
 }
 
@@ -11435,7 +11435,7 @@
 
   /* --- a record you are looking at is a spread as well --- */
 
-  .cx-browse-inner[data-detail]:has(.cx-detail:not([data-portrait])) {
+  .cx-browse-inner[data-detail]:has(.cx-detail) {
     --page-pad: clamp(40px, 4vw, 84px);
     display: grid;
     grid-template-columns: min(calc(100vh - 54px), 50vw) minmax(0, 1fr);
@@ -11444,12 +11444,12 @@
     padding: 0;
   }
 
-  .cx-browse-inner[data-detail]:has(.cx-detail:not([data-portrait])) > .cx-detail {
+  .cx-browse-inner[data-detail]:has(.cx-detail) > .cx-detail {
     display: contents;
   }
 
   /* The left page: the sleeve, the height of the window, staying put while the tracks scroll. */
-  .cx-browse-inner[data-detail]:has(.cx-detail:not([data-portrait])) .cx-detail-art {
+  .cx-browse-inner[data-detail]:has(.cx-detail) .cx-detail-art {
     grid-column: 1;
     grid-row: 1 / -1;
     position: sticky;
@@ -11461,29 +11461,29 @@
     aspect-ratio: auto;
   }
 
-  .cx-browse-inner[data-detail]:has(.cx-detail:not([data-portrait])) .cx-detail-cover {
+  .cx-browse-inner[data-detail]:has(.cx-detail) .cx-detail-cover {
     border-radius: 0;
     box-shadow: none;
   }
 
-  .cx-browse-inner[data-detail]:has(.cx-detail:not([data-portrait])) .cx-detail-bloom {
+  .cx-browse-inner[data-detail]:has(.cx-detail) .cx-detail-bloom {
     display: none;
   }
 
   /* The right page: the way back, then the record's head, then everything it lists. */
-  .cx-browse-inner[data-detail]:has(.cx-detail:not([data-portrait])) > .cx-browse-back {
+  .cx-browse-inner[data-detail]:has(.cx-detail) > .cx-browse-back {
     grid-column: 2;
     grid-row: 1;
     margin: 22px var(--page-pad) 0;
   }
 
-  .cx-browse-inner[data-detail]:has(.cx-detail:not([data-portrait])) .cx-detail-kind {
+  .cx-browse-inner[data-detail]:has(.cx-detail) .cx-detail-kind {
     grid-column: 2;
     grid-row: 2;
     margin: clamp(34px, 5.6vh, 64px) var(--page-pad) 0;
   }
 
-  .cx-browse-inner[data-detail]:has(.cx-detail:not([data-portrait])) .cx-detail-title {
+  .cx-browse-inner[data-detail]:has(.cx-detail) .cx-detail-title {
     grid-column: 2;
     grid-row: 3;
     max-width: 880px;
@@ -11493,19 +11493,19 @@
     line-height: 0.98;
   }
 
-  .cx-browse-inner[data-detail]:has(.cx-detail:not([data-portrait])) .cx-detail-title[data-len='3'] {
+  .cx-browse-inner[data-detail]:has(.cx-detail) .cx-detail-title[data-len='3'] {
     font-size: clamp(36px, 5vh, 64px);
   }
 
-  .cx-browse-inner[data-detail]:has(.cx-detail:not([data-portrait])) .cx-detail-title[data-len='4'] {
+  .cx-browse-inner[data-detail]:has(.cx-detail) .cx-detail-title[data-len='4'] {
     font-size: clamp(30px, 4.2vh, 52px);
   }
 
-  .cx-browse-inner[data-detail]:has(.cx-detail:not([data-portrait])) .cx-detail-title[data-len='5'] {
+  .cx-browse-inner[data-detail]:has(.cx-detail) .cx-detail-title[data-len='5'] {
     font-size: clamp(26px, 3.6vh, 44px);
   }
 
-  .cx-browse-inner[data-detail]:has(.cx-detail:not([data-portrait])) .cx-detail-sub {
+  .cx-browse-inner[data-detail]:has(.cx-detail) .cx-detail-sub {
     grid-column: 2;
     grid-row: 4;
     margin: 14px var(--page-pad) 0;
@@ -11516,19 +11516,19 @@
     color: var(--t2);
   }
 
-  .cx-browse-inner[data-detail]:has(.cx-detail:not([data-portrait])) .cx-detail > .cx-browse-actions {
+  .cx-browse-inner[data-detail]:has(.cx-detail) .cx-detail > .cx-browse-actions {
     grid-column: 2;
     grid-row: 5;
     margin: clamp(24px, 3.6vh, 40px) var(--page-pad) 0;
   }
 
-  .cx-browse-inner[data-detail]:has(.cx-detail:not([data-portrait])) > .cx-browse-body {
+  .cx-browse-inner[data-detail]:has(.cx-detail) > .cx-browse-body {
     grid-column: 2;
     grid-row: 6;
     padding: clamp(30px, 4.6vh, 56px) var(--page-pad) 56px;
   }
 
-  .cx-browse-inner[data-detail]:has(.cx-detail:not([data-portrait])) .cx-about {
+  .cx-browse-inner[data-detail]:has(.cx-detail) .cx-about {
     max-width: 760px;
   }
 }
@@ -11575,33 +11575,33 @@
     container-type: size;
   }
 
-  .cx-browse-inner[data-detail]:has(.cx-detail:not([data-portrait])) {
+  .cx-browse-inner[data-detail]:has(.cx-detail) {
     grid-template-columns: min(100cqh, 50vw) minmax(0, 1fr);
   }
 
-  .cx-browse-inner[data-detail]:has(.cx-detail:not([data-portrait])) .cx-detail-art {
+  .cx-browse-inner[data-detail]:has(.cx-detail) .cx-detail-art {
     height: 100cqh;
   }
 
   /* One ground, not a band: the record's wash fades over the whole view instead of stopping at 430px. */
-  .cx-browse:has(.cx-browse-inner[data-detail] .cx-detail:not([data-portrait])) > .cx-browse-bg,
-  .cx-browse:has(.cx-browse-inner[data-detail] .cx-detail:not([data-portrait])) > .cx-browse-fade {
+  .cx-browse:has(.cx-browse-inner[data-detail] .cx-detail) > .cx-browse-bg,
+  .cx-browse:has(.cx-browse-inner[data-detail] .cx-detail) > .cx-browse-fade {
     height: 100%;
   }
 
-  .cx-browse:has(.cx-browse-inner[data-detail] .cx-detail:not([data-portrait])) > .cx-browse-fade {
+  .cx-browse:has(.cx-browse-inner[data-detail] .cx-detail) > .cx-browse-fade {
     background: linear-gradient(180deg, rgb(10 10 12 / 20%), rgb(10 10 12 / 72%) 55%, var(--cx-bg));
   }
 
   /* The list: one column until the page is wide enough for two to read. */
-  .cx-browse-inner[data-detail]:has(.cx-detail:not([data-portrait])) .cx-trows {
+  .cx-browse-inner[data-detail]:has(.cx-detail) .cx-trows {
     max-width: 760px;
     column-count: 1;
   }
 }
 
 @media (min-width: 1800px) {
-  .cx-browse-inner[data-detail]:has(.cx-detail:not([data-portrait])) .cx-trows {
+  .cx-browse-inner[data-detail]:has(.cx-detail) .cx-trows {
     max-width: none;
     column-count: 2;
   }
@@ -11609,7 +11609,7 @@
 
 /* The record's left page is a square, whatever the view's height: a sleeve is never cropped. */
 @media (min-width: 1280px) {
-  .cx-browse-inner[data-detail]:has(.cx-detail:not([data-portrait])) .cx-detail-art {
+  .cx-browse-inner[data-detail]:has(.cx-detail) .cx-detail-art {
     width: 100%;
     height: auto;
     aspect-ratio: 1;
@@ -11747,5 +11747,96 @@
 @media (max-width: 1279px) {
   .cx-turn {
     display: none;
+  }
+}
+
+/* ==========================================================================================
+ * From the record to where it came from: the words that name it are the doors.
+ * ========================================================================================== */
+
+/*
+ * A name that leads somewhere.
+ *
+ * The type does not change — the artist stays the artist's size and colour — it only stands on a
+ * hairline, the same 1px this whole face draws its divisions with, which lifts to the word's own ink
+ * under the hand. Drawn at rest rather than only on hover, because a phone has no hover and an
+ * affordance nobody can see is not one. Every other player puts this behind a `…` menu; here the word
+ * is the button, so the page gains a way in and not a control.
+ */
+.cx-root .cx-door {
+  /* A button's box is taller than its text — the browser's own padding and centring — and an underline
+     is drawn per line box, so the extra height drew a second line under the word. Hugging the text is
+     what makes the door look like type rather than like a control. */
+  display: inline-block;
+  padding: 0;
+  line-height: inherit;
+  min-width: 0;
+  max-width: 100%;
+  text-align: left;
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, currentcolor 24%, transparent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.24em;
+  transition:
+    color 0.18s var(--cx-ease),
+    text-decoration-color 0.18s var(--cx-ease);
+}
+
+.cx-root .cx-door:hover,
+.cx-root .cx-door:focus-visible {
+  color: var(--t1);
+  text-decoration-color: currentcolor;
+}
+
+/* The album line keeps its own row, so the door is as wide as the word and not as the column. */
+.cx-albumrow {
+  display: flex;
+  min-width: 0;
+  margin-top: 14px;
+}
+
+.cx-albumrow .cx-album {
+  margin-top: 0;
+}
+
+/* On the phone the two lines stack, so each door sits on its own row already. */
+.cx-np-artist.cx-door,
+.cx-np-album.cx-door {
+  align-self: flex-start;
+}
+
+/* A record's own page names its artist too: the same door, in the light line under the title. */
+.cx-root .cx-detail-sub.cx-door {
+  align-self: flex-start;
+}
+
+/* An artist is a person, not a record: the left page carries the portrait as a circle on the ground
+   rather than a sleeve to the edges, and the page's own wash is what stands behind it. */
+@media (min-width: 1280px) {
+  .cx-browse-inner[data-detail]:has(.cx-detail[data-portrait]) .cx-detail-art {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .cx-browse-inner[data-detail]:has(.cx-detail[data-portrait]) .cx-detail-cover {
+    position: relative;
+    inset: auto;
+    width: min(64%, 64cqh);
+    aspect-ratio: 1;
+    border-radius: 50%;
+    box-shadow:
+      0 40px 90px -40px rgb(0 0 0 / 90%),
+      inset 0 0 0 1px rgb(255 255 255 / 10%);
+  }
+
+  .cx-browse-inner[data-detail]:has(.cx-detail[data-portrait]) .cx-detail-bloom {
+    display: block;
+    inset: auto;
+    width: min(64%, 64cqh);
+    aspect-ratio: 1;
+    filter: blur(70px) saturate(1.2);
+    opacity: 0.35;
   }
 }
