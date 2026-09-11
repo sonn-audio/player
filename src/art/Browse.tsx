@@ -540,6 +540,7 @@ export function Tile({
 }) {
   const [hovered, setHovered] = useState(false);
   const landing = useCoverAnchor();
+  const sub = item.artist || item.album;
 
   return (
     <div
@@ -591,8 +592,10 @@ export function Tile({
         )}
       </button>
       <span className="cx-tile-title">{shortName(item.name, under)}</span>
-      {(item.artist || item.album) && (
-        <span className="cx-tile-sub">{item.artist || item.album}</span>
+      {/* Not the name of the shelf it is standing on: eighteen sleeves on Coldplay's own page do not
+          each need to say Coldplay, any more than their titles need to repeat the folder's. */}
+      {sub && sub.trim().toLowerCase() !== under?.trim().toLowerCase() && (
+        <span className="cx-tile-sub">{sub}</span>
       )}
     </div>
   );
@@ -1169,15 +1172,31 @@ export function Browse({
    */
   const portrait = hero?.kind === 'artist';
 
+  /*
+   * Whose face this is.
+   *
+   * A person's container can come back describing one of their records: Apple Music answers the
+   * browse of an artist with the first album's name and its sleeve, which is how the Parachutes
+   * cover ended up standing in for the band. The tile that opened the page knew who this was — it
+   * came from a search, which does describe the artist — so for a person its picture wins.
+   *
+   * It is also the only picture on this page that may be cropped. A photograph of a person can be
+   * composed to a page; a sleeve cannot, and without a photograph the page keeps the circle rather
+   * than take a knife to a record cover.
+   */
+  const face = portrait ? here.seed?.coverUrl : undefined;
+  const heroArt = face ?? hero?.coverUrl;
+
   /* What this person made. Not in the listing — browsing an artist answers with their top songs —
      so it is one search under the strict rule. See `Artist`. */
-  const records = useArtistRecords(portrait ? title : undefined, hero?.service);
+  const records = useArtistRecords(portrait ? title : undefined, hero?.service, items);
 
   /** `24 tracks · 1 hr 32 min` — what the object is, in the two numbers anyone wants of it. */
   const runLine = ((): string => {
-    /* A person has no running time. Theirs is how much there is of them. */
+    /* A person has no running time. Theirs is how much there is of them — and how much there is
+       is what the provider says, not how many rows have been fetched so far. */
     if (portrait) {
-      return artistLine(records.length, items.length);
+      return artistLine(records.length, listing?.total ?? items.length);
     }
     if (!detail) {
       return '';
@@ -1198,7 +1217,7 @@ export function Browse({
           and only when there is a picture to wash. */}
       {hero && (
         <>
-          <span className="cx-browse-bg" style={{ backgroundImage: itemCoverCss(hero.coverUrl) }} />
+          <span className="cx-browse-bg" style={{ backgroundImage: itemCoverCss(heroArt) }} />
           <span className="cx-browse-fade" />
         </>
       )}
@@ -1225,12 +1244,12 @@ export function Browse({
            * picture stays with you down a hundred-track playlist: the list is the thing that
            * scrolls, not the thing it belongs to.
            */
-          <header className="cx-detail" data-portrait={portrait || undefined}>
+          <header className="cx-detail" data-portrait={portrait || undefined} data-photo={face ? '' : undefined}>
             <span className="cx-detail-art">
-              <span className="cx-detail-bloom" style={{ backgroundImage: itemCoverCss(hero.coverUrl) }} />
+              <span className="cx-detail-bloom" style={{ backgroundImage: itemCoverCss(heroArt) }} />
               <span
                 className="cx-detail-cover"
-                style={{ backgroundImage: itemCoverCss(hero.coverUrl) }}
+                style={{ backgroundImage: itemCoverCss(heroArt) }}
                 {...detailLanding}
               >
                 <Motion src={hero.animatedCoverUrl} />

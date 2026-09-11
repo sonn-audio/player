@@ -12208,3 +12208,96 @@
     opacity: 0;
   }
 }
+
+/* ==========================================================================================
+ * A person gets the page, not a hole with a circle in it.
+ *
+ * The artist page was an album page wearing a round picture: a portrait floating at 64% of a left
+ * page that was otherwise seven hundred pixels of black, beside a run line that said `8 tracks · 30
+ * min` — a fact about a record and nothing at all about a person.
+ *
+ * A sleeve is never cropped, and that is why a record's left page is a square with the ground above
+ * and below it. A photograph is not a sleeve. It was composed by someone, it has no edges that mean
+ * anything, and it is the only picture of this person the page has — so it takes the whole left page,
+ * the way the sleeve takes the whole left page of the stage. The crop sits above the middle, because
+ * that is where faces are.
+ *
+ * The circle stays everywhere it was earning its keep — a tile, a phone, a band across a narrow view.
+ * Round for a person is a rule about how you tell a person from a record at a glance, and at the size
+ * of a whole page there is nothing left to tell apart. It also stays here when the page has no
+ * photograph to show: `data-photo` says the picture came from the artist rather than from whatever
+ * the provider handed back, and only that picture is ever cropped.
+ * ========================================================================================== */
+
+@media (min-width: 1280px) {
+  .cx-browse-inner[data-detail]:has(.cx-detail[data-portrait][data-photo]) .cx-detail-art {
+    display: block;
+    height: calc(100vh - 54px);
+    aspect-ratio: auto;
+  }
+
+  .cx-browse-inner[data-detail]:has(.cx-detail[data-portrait][data-photo]) .cx-detail-cover {
+    position: absolute;
+    inset: 0;
+    width: auto;
+    aspect-ratio: auto;
+    border-radius: 0;
+    /* Heads are above the centre of almost every photograph ever taken of a musician. */
+    background-position: center 30%;
+    box-shadow: none;
+  }
+
+  /* The light behind the picture was the answer to a picture that did not fill anything. */
+  .cx-browse-inner[data-detail]:has(.cx-detail[data-portrait][data-photo]) .cx-detail-bloom {
+    display: none;
+  }
+
+  /*
+   * The seam. The photograph runs to the fold and the right page darkens into it — the same shadow
+   * the stage lays where its sleeve meets the colour field, so the two spreads are one idea.
+   */
+  .cx-browse-inner[data-detail]:has(.cx-detail[data-portrait][data-photo]) .cx-detail-art::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background:
+      linear-gradient(90deg, transparent 76%, rgb(10 10 12 / 55%)),
+      linear-gradient(180deg, rgb(10 10 12 / 45%), transparent 26%, transparent 74%, rgb(10 10 12 / 55%));
+  }
+}
+
+@media (min-width: 1500px) {
+  .cx-browse-inner[data-detail]:has(.cx-detail[data-portrait][data-photo]) .cx-detail-art {
+    height: 100cqh;
+  }
+}
+
+/* The artist's two blocks: the same head every shelf has, over a grid or a list rather than a row. */
+.cx-artist-sec {
+  margin-top: clamp(26px, 3.4vh, 40px);
+}
+
+.cx-artist-sec .cx-sec-head {
+  margin-bottom: 16px;
+}
+
+/* The rest of the ranked songs, offered rather than dumped — see `Artist`. */
+.cx-root .cx-sec-more {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: none;
+  padding: 0;
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: lowercase;
+  color: var(--t5);
+  cursor: pointer;
+  transition: color 0.18s var(--cx-ease);
+}
+
+.cx-root .cx-sec-more:hover,
+.cx-root .cx-sec-more:focus-visible {
+  color: var(--t1);
+}
