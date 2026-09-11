@@ -41,7 +41,6 @@ import {
 } from '@/art/glyphs';
 import { formatTime } from '@/lib/format';
 import { bareAlbum, mainTitle, splitTitle } from '@/lib/title';
-import { useCoverRead } from '@/art/coverRead';
 import type { Cur } from '@/art/useCur';
 
 /** Greeting by hour — the welcome screen's line, reused as the stage's eyebrow. */
@@ -404,11 +403,6 @@ export function Stage({
   const coverAnchor = useCoverAnchor();
   /* What "the artwork changed" means — the same handle the page's wash dissolves on. */
   const artKey = artKeyOf(leader?.track);
-  /* The sleeve read for its composition — see `coverRead`. A quiet sleeve carries the title itself. */
-  const read = useCoverRead(
-    leader?.track ? api.coverUrl(leader.id, { size: 96, cacheKey: leader.track.coverUrl }) : undefined,
-  );
-  const poster = Boolean(cur.hasTrack && read?.quiet);
 
   const toggle = (): void => {
     /* A press that turned into a throw is not a press. See `useRoomDrag`. */
@@ -458,8 +452,6 @@ export function Stage({
     <div
       className="cx-stage"
       data-spread={cur.hasTrack || undefined}
-      data-poster={poster || undefined}
-      data-ink={poster ? read?.ink : undefined}
       onClick={leave}
       onWheel={onWheel}
     >
@@ -565,27 +557,6 @@ export function Stage({
                   </span>
                 </span>
               </button>
-
-              {/*
-               * The title on the sleeve, for a sleeve that can carry it.
-               *
-               * Drawn only when the reading says the lower-left is calm (see `coverRead`), in the ink that
-               * reads there. The page beside the sleeve then keeps only the eyebrow and the controls, at
-               * its foot: one enormous thing and the rest small. Keyed like the column's title, so it
-               * crossfades on a change of record.
-               */}
-              {poster && (
-                <div className="cx-poster" key={`p:${cur.title}|${cur.artist}`} aria-hidden="true">
-                  {cur.artist && <span className="cx-poster-artist">{cur.artist}</span>}
-                  <span className="cx-poster-title disp" data-len={titleStep(mainTitle(cur.title))}>
-                    {mainTitle(cur.title)}
-                  </span>
-                  {splitTitle(cur.title).tags.length > 0 && (
-                    <span className="cx-poster-tags mono">{splitTitle(cur.title).tags.join(' · ')}</span>
-                  )}
-                </div>
-              )}
-
             </>
           ) : (
             /*

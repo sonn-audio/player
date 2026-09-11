@@ -11622,12 +11622,6 @@
 
 /* --- the title face: the grotesk at 800, as it was — a serif was tried and the grotesk won on the screen --- */
 
-.cx-root .cx-poster-title {
-  font-family: var(--font-display);
-  font-weight: 800;
-  letter-spacing: -0.04em;
-}
-
 .cx-title {
   line-height: 0.96;
 }
@@ -11642,114 +11636,6 @@
 
 .cx-portal-name {
   font-size: clamp(28px, 2.2vw, 40px);
-}
-
-/* --- the poster: a quiet sleeve carries its own title --- */
-
-.cx-poster {
-  position: absolute;
-  left: 6%;
-  right: 8%;
-  bottom: 7%;
-  z-index: 2;
-  display: flex;
-  flex-direction: column;
-  gap: 0.35em;
-  pointer-events: none;
-  color: #fff;
-  animation: cx-title-swap 0.9s var(--cx-ease) both;
-}
-
-.cx-stage[data-ink='dark'] .cx-poster {
-  color: #0a0a0c;
-}
-
-.cx-poster-artist {
-  font-family: var(--font-display);
-  font-size: clamp(20px, 2.2vw, 40px);
-  font-weight: 300;
-  letter-spacing: -0.01em;
-  opacity: 0.85;
-}
-
-.cx-poster-title {
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 3;
-  line-clamp: 3;
-  overflow: hidden;
-  font-size: clamp(52px, min(15vh, 8.4vw), 200px);
-  line-height: 0.92;
-  letter-spacing: -0.04em;
-  text-wrap: balance;
-  overflow-wrap: break-word;
-}
-
-.cx-poster-title[data-len='3'] {
-  font-size: clamp(44px, min(11vh, 6.2vw), 150px);
-}
-
-.cx-poster-title[data-len='4'] {
-  font-size: clamp(36px, min(8vh, 4.6vw), 104px);
-}
-
-.cx-poster-title[data-len='5'] {
-  font-size: clamp(30px, min(6vh, 3.4vw), 76px);
-}
-
-.cx-poster-tags {
-  font-size: 10.5px;
-  letter-spacing: 0.24em;
-  opacity: 0.7;
-}
-
-/* Under the poster the sleeve's own edge darkens a little at the foot, so white type reads on any field. */
-.cx-stage[data-poster][data-ink='light'] .cx-stage-art .cx-cover::before {
-  content: '';
-  position: absolute;
-  inset: 45% 0 0;
-  z-index: 1;
-  background: linear-gradient(to top, rgb(0 0 0 / 34%), transparent);
-  pointer-events: none;
-}
-
-/* The page beside a poster: the eyebrow at the head, everything else at the foot. */
-@media (min-width: 1280px) {
-  .cx-stage[data-poster] .cx-stage-meta > .cx-artistrow,
-  .cx-stage[data-poster] .cx-stage-meta > .cx-title,
-  .cx-stage[data-poster] .cx-stage-meta > .cx-title-tags,
-  .cx-stage[data-poster] .cx-stage-meta > .cx-album {
-    display: none;
-  }
-
-  .cx-stage[data-poster] .cx-stage-meta > .cx-bar-wrap,
-  .cx-stage[data-poster] .cx-stage-meta > .cx-live {
-    margin-top: auto;
-  }
-
-  .cx-stage[data-poster] .cx-stage-foot {
-    margin-top: clamp(20px, 3.4vh, 40px);
-  }
-
-  .cx-stage[data-poster] .cx-stage-meta {
-    background:
-      linear-gradient(90deg, rgb(0 0 0 / 28%), transparent 14%),
-      radial-gradient(120% 90% at 0% 60%, color-mix(in srgb, var(--cx-a1) 92%, transparent) 0%, transparent 70%),
-      radial-gradient(90% 80% at 100% 0%, color-mix(in srgb, var(--cx-a2) 88%, transparent) 0%, transparent 66%),
-      #0a0a0c;
-  }
-
-  /* Resting, the poster stays: the type is already on the picture. */
-  .cx-root[data-idle] .cx-stage[data-poster] .cx-poster {
-    bottom: 6%;
-  }
-}
-
-/* Below the spread the poster is not drawn: the column beside the sleeve carries the words. */
-@media (max-width: 1279px) {
-  .cx-poster {
-    display: none;
-  }
 }
 
 /* --- the whisper: six seconds still and the controls step back --- */
