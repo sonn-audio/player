@@ -26,6 +26,7 @@ import { Motion } from '@/art/Motion';
 import { useZoneFavorite } from '@/state/useZoneFavorite';
 import { useCoverAnchor } from '@/shell/coverMorph';
 import { useFitText } from '@/art/useFitText';
+import { useLeaving } from '@/art/Leaving';
 import {
   BackGlyph,
   ChevronGlyph,
@@ -140,7 +141,15 @@ export function Timeline({ cur, bare = false }: { cur: Cur; bare?: boolean }) {
     /* While scrubbing the fill must not animate: a transition on `width` fights the finger and the knob
        lands where the drag was a moment ago. */
     <div className="cx-bar" onPointerDown={seek} data-scrub={scrubbing || undefined}>
-      <span className="cx-bar-rail">
+      {/*
+       * Keyed on the record, so a new one starts at nought instead of winding back to it.
+       *
+       * The fill glides between the server's once-a-second ticks, which is right for a line that is
+       * filling and exactly wrong at the moment it empties: 95% to 0% over the same 0.92s is a
+       * rewind, drawn every single time a track ends. A remount has no previous width to travel
+       * from.
+       */}
+      <span className="cx-bar-rail" key={`${cur.title}|${cur.durationSec}`}>
         <span className="cx-bar-fill" style={{ width: cur.pct }} />
         <span className="cx-bar-knob" style={{ left: cur.pct }} />
       </span>
@@ -444,6 +453,24 @@ export function Stage({
   /* The largest the name may be, and the smallest it may shrink to before the box clips it. */
   const fit = useFitText(mainTitle(cur.title), { max: 200, min: 24 });
 
+  /*
+   * A track change is a dissolve, so each line keeps the one it is replacing.
+   *
+   * Four lines, four identities, each changing on its own: two tracks by the same artist do not
+   * redraw the artist, and a record whose name carries no edition leaves that line alone. What
+   * dissolves is what actually changed, which is the difference between a page turning and a page
+   * flickering. See `useLeaving`.
+   */
+  const titleId = `${cur.title}|${cur.artist}`;
+  const tagsText = splitTitle(cur.title).tags.join(' · ');
+  const albumText = albumWorthShowing(cur.title, cur.album) ? bareAlbum(cur.album) : '';
+  const gone = {
+    artist: useLeaving(cur.artist, cur.artist),
+    title: useLeaving(titleId, { text: mainTitle(cur.title), size: fit.size }),
+    tags: useLeaving(tagsText, tagsText),
+    album: useLeaving(albumText, albumText),
+  };
+
   const toggle = (): void => {
     /* A press that turned into a throw is not a press. See `useRoomDrag`. */
     if (drag.consumed() || !leader || !cur.hasTrack) {
@@ -528,18 +555,21 @@ export function Stage({
            * screenshot, and this is the thing that says the room is live.
            */}
           {cur.hasTrack && (
-            <>
-              <span
-                className="cx-bloom-far"
-                style={{ backgroundImage: zoneCoverCss(api, leader, 160) }}
-                aria-hidden="true"
-              />
-              <span
-                className="cx-bloom"
-                style={{ backgroundImage: zoneCoverCss(api, leader, 320) }}
-                aria-hidden="true"
-              />
-            </>
+            /* The light dissolves too, and slower than the sleeve that throws it: 1.9s is the same
+               beat the page's wash keeps, so the room settles into the new record after it has
+               arrived rather than with it. One picture feeds both halos — at 52px and 130px of blur
+               the difference between a 160px copy and a 320px one is not a difference. */
+            <Crossfade
+              artKey={artKey}
+              cover={zoneCoverCss(api, leader, 320)}
+              ms={1900}
+              render={(slot) => (
+                <>
+                  <span className="cx-bloom-far" style={{ backgroundImage: slot.cover }} aria-hidden="true" />
+                  <span className="cx-bloom" style={{ backgroundImage: slot.cover }} aria-hidden="true" />
+                </>
+              )}
+            />
           )}
 
           {cur.hasTrack ? (
@@ -653,11 +683,11 @@ export function Stage({
           {/*
            * A track change is a moment, so the words arrive like one.
            *
-           * Keyed on the track's identity: React remounts the three lines and each runs the same
-           * rise the phone's meta block already had, staggered a beat apart (`cx-swap-2/-3`) so
-           * the title leads and the provenance follows. Keyed on title+artist rather than on the
-           * zone object, which is replaced every second — a rise per progress tick would turn a
-           * gesture into a twitch.
+           * Each line keeps the line it replaces for a beat and hands over to it — the copy that is
+           * leaving lifts and blurs away, the new one rises into its place, a beat later for each
+           * step down the column. See `useLeaving` and `.cx-in` / `.cx-out`. Lines are identified by
+           * what they say rather than by the zone object, which is replaced every second: a dissolve
+           * per progress tick would turn a gesture into a twitch.
            */}
           {/*
            * Who, then what — a gallery card's order, not a search result's.
@@ -669,16 +699,24 @@ export function Stage({
            * which was the same size as the other. Now the drop is deliberate — a tracked name, the work
            * at full size, and the record it came from set small underneath.
            */}
-          <div className="cx-artistrow cx-swap" key={`a:${cur.title}|${cur.artist}`}>
+          <div className="cx-artistrow">
+            {gone.artist && (
+              <span className="cx-artist cx-out" key={gone.artist.id} aria-hidden="true">
+                {gone.artist.value}
+              </span>
+            )}
             {cur.artist && (
               <Origin
-                className="cx-artist"
+                className="cx-artist cx-in"
+                key={cur.artist}
                 text={cur.artist}
                 item={origin?.artist}
                 onOpen={onOpenOrigin}
                 title={`Everything by ${cur.artist}`}
               />
             )}
+            {/* The heart is not part of the record, it is a control that happens to sit beside one, so
+                it stands still while the name behind it changes. */}
             {cur.hasTrack && <Favourite cur={cur} />}
           </div>
 
@@ -686,9 +724,28 @@ export function Stage({
            * The name, measured into a box of a height that never changes — see `useFitText`. The old
            * ladder sized it by character count, which is a guess about width, and a title that wrapped
            * to a third line pushed the timeline, the transport and the house down the page with it.
+           *
+           * The name that is leaving keeps the size that was measured for *it* — `useLeaving` hands
+           * back the value that was on screen, and at the moment of the change that is still the old
+           * measurement, because the new one has not been taken yet.
            */}
-          <div className="cx-titlebox cx-swap cx-swap-2" key={`t:${cur.title}|${cur.artist}`}>
-            <h1 className="disp cx-title" ref={fit.ref} style={fit.size ? { fontSize: `${fit.size}px` } : undefined}>
+          <div className="cx-titlebox">
+            {gone.title && (
+              <h1
+                className="disp cx-title cx-out"
+                key={gone.title.id}
+                style={gone.title.value.size ? { fontSize: `${gone.title.value.size}px` } : undefined}
+                aria-hidden="true"
+              >
+                {gone.title.value.text}
+              </h1>
+            )}
+            <h1
+              className="disp cx-title cx-in cx-in-2"
+              key={titleId}
+              ref={fit.ref}
+              style={fit.size ? { fontSize: `${fit.size}px` } : undefined}
+            >
               {mainTitle(cur.title)}
             </h1>
           </div>
@@ -700,20 +757,33 @@ export function Stage({
            * minutes. Their rows are kept whether or not they have anything to say; empty type on black
            * is nothing to look at, and the timeline, the transport and the house stand still.
            */}
-          <span className="cx-title-tags mono cx-swap cx-swap-3" key={`v:${cur.title}`}>
-            {splitTitle(cur.title).tags.join(' · ')}
+          <span className="cx-title-tags mono">
+            {gone.tags && (
+              <i className="cx-line cx-out" key={gone.tags.id} aria-hidden="true">
+                {gone.tags.value}
+              </i>
+            )}
+            <i className="cx-line cx-in cx-in-3" key={tagsText}>
+              {tagsText}
+            </i>
           </span>
 
           {/* The album, under the artist rather than folded into it with a dash: it is a place the
               track came from, not part of its name. */}
-          <span className="cx-albumrow cx-swap cx-swap-3" key={`b:${cur.title}|${cur.album}`}>
-            {albumWorthShowing(cur.title, cur.album) && (
+          <span className="cx-albumrow">
+            {gone.album && (
+              <span className="cx-album cx-out" key={gone.album.id} aria-hidden="true">
+                {gone.album.value}
+              </span>
+            )}
+            {albumText && (
               <Origin
-                className="cx-album"
-                text={bareAlbum(cur.album)}
+                className="cx-album cx-in cx-in-3"
+                key={albumText}
+                text={albumText}
                 item={origin?.album}
                 onOpen={onOpenOrigin}
-                title={`Open ${bareAlbum(cur.album)}`}
+                title={`Open ${albumText}`}
               />
             )}
           </span>
@@ -884,6 +954,18 @@ export function MobileStage({
      than cut off at an ellipsis, and the transport below it does not move from track to track. */
   const fit = useFitText(mainTitle(cur.title), { max: 38, min: 17 });
 
+  /* The label that is leaving, kept whole — see the head below and `useLeaving`. */
+  const npId = `${currentLeaderId ?? 'none'}:${cur.title}`;
+  const npTags = splitTitle(cur.title).tags.join(' · ');
+  const npAlbum = albumWorthShowing(cur.title, cur.album) ? bareAlbum(cur.album) : '';
+  const npGone = useLeaving(npId, {
+    title: mainTitle(cur.title),
+    size: fit.size,
+    tags: npTags,
+    artist: cur.artist,
+    album: npAlbum,
+  });
+
   const toggle = (): void => {
     if (!leader || !cur.hasTrack) {
       return;
@@ -1006,7 +1088,6 @@ export function MobileStage({
           <div
             className="cx-np-cover"
             style={{
-              backgroundImage: zoneCoverCss(api, leader),
               translate: dx ? `${dx}px 0` : undefined,
               scale: dragging ? 0.985 : undefined,
             }}
@@ -1016,6 +1097,15 @@ export function MobileStage({
             onPointerUp={onUp}
             onPointerCancel={settle}
           >
+            {/* The sleeve was an inline `background-image` on the box itself, which cannot animate —
+                so every track change cut, on the one screen that is almost entirely artwork. Same
+                two slots the desk's sleeve has had all along. */}
+            <Crossfade
+              artKey={artKey}
+              cover={zoneCoverCss(api, leader)}
+              ms={900}
+              render={(slot) => <span className="cx-np-cover-art" style={{ backgroundImage: slot.cover }} />}
+            />
             <Motion src={cur.motion} />
             {/* The printed gloss, the same breath the desk's sleeve carries. */}
             <span className="cx-np-gloss" aria-hidden="true" />
@@ -1048,33 +1138,59 @@ export function MobileStage({
           </div>
         )}
 
-        {/* Keyed on the room *and* the track, so the block crossfades when either changes. */}
-        <div className="cx-np-head" key={`${currentLeaderId ?? 'none'}:${cur.title}`}>
+        {/*
+         * The label, as one object that is replaced rather than four lines that blink.
+         *
+         * The whole block dissolves here, not line by line as on the desk: a phone's lines sit
+         * directly under one another and the edition and the album come and go, so a per-line
+         * dissolve would leave a frozen copy hanging beside lines that had already moved up. The
+         * copy that is leaving is a still of the whole label, at the size and the spacing it had.
+         */}
+        <div className="cx-np-head">
           <span className="cx-np-titles">
-            <span className="cx-np-titlebox">
+            {npGone && (
+              <span className="cx-np-ghost cx-out" key={npGone.id} aria-hidden="true">
+                <span className="cx-np-titlebox">
+                  <span
+                    className="disp cx-np-title"
+                    style={npGone.value.size ? { fontSize: `${npGone.value.size}px` } : undefined}
+                  >
+                    {npGone.value.title}
+                  </span>
+                </span>
+                {npGone.value.tags && <span className="cx-np-tags mono">{npGone.value.tags}</span>}
+                {npGone.value.artist && <span className="cx-np-artist">{npGone.value.artist}</span>}
+                {npGone.value.album && <span className="cx-np-album">{npGone.value.album}</span>}
+              </span>
+            )}
+            <span className="cx-np-titlebox cx-in" key={`t:${npId}`}>
               <span className="disp cx-np-title" ref={fit.ref} style={fit.size ? { fontSize: `${fit.size}px` } : undefined}>
                 {mainTitle(cur.title)}
               </span>
             </span>
-            {splitTitle(cur.title).tags.length > 0 && (
-              <span className="cx-np-tags mono">{splitTitle(cur.title).tags.join(' · ')}</span>
+            {npTags && (
+              <span className="cx-np-tags mono cx-in cx-in-2" key={`v:${npId}`}>
+                {npTags}
+              </span>
             )}
             {cur.artist && (
               <Origin
-                className="cx-np-artist"
+                className="cx-np-artist cx-in cx-in-2"
+                key={`a:${npId}`}
                 text={cur.artist}
                 item={origin?.artist}
                 onOpen={onOpenOrigin}
                 title={`Everything by ${cur.artist}`}
               />
             )}
-            {albumWorthShowing(cur.title, cur.album) && (
+            {npAlbum && (
               <Origin
-                className="cx-np-album"
-                text={bareAlbum(cur.album)}
+                className="cx-np-album cx-in cx-in-3"
+                key={`b:${npId}`}
+                text={npAlbum}
                 item={origin?.album}
                 onOpen={onOpenOrigin}
-                title={`Open ${bareAlbum(cur.album)}`}
+                title={`Open ${npAlbum}`}
               />
             )}
           </span>

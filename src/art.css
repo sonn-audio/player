@@ -2651,21 +2651,9 @@
 }
 
 /*
- * The same rise, for the desktop stage's three lines — keyed remounts run it on every track
- * change (see `Stage`). Staggered a beat apart so the title leads and the provenance follows:
- * one gesture read left to right down the column, not three lines blinking at once.
+ * The rise the desk's lines used to run on a keyed remount. It is now half of a dissolve rather
+ * than the whole of a fade-in — see `.cx-in` / `.cx-out` at the foot of this file.
  */
-.cx-swap {
-  animation: cx-title-swap 0.55s var(--cx-ease) both;
-}
-
-.cx-swap-2 {
-  animation-delay: 60ms;
-}
-
-.cx-swap-3 {
-  animation-delay: 110ms;
-}
 
 /*
  * Title and artist, left-aligned under the artwork.
@@ -4732,6 +4720,23 @@
 .cx-browse-empty {
   display: block;
   padding: 20px 0;
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  color: var(--t7);
+}
+
+/*
+ * The mark at the end of a listing that has more to come.
+ *
+ * Tall enough for the observer to have something to see, and for the word — only there while a page
+ * is actually being waited on — to sit clear of the last row. Nothing else: the grid growing under
+ * you is the feedback, and a spinner on a face with no motion in it would be the only thing moving.
+ */
+.cx-browse-more {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 56px;
   font-size: 10px;
   letter-spacing: 0.18em;
   color: var(--t7);
@@ -7134,7 +7139,6 @@
   align-items: center;
   gap: 16px;
   margin-top: clamp(12px, 2.4vh, 22px);
-  animation: cx-title-swap 0.42s var(--cx-ease) both;
 }
 
 .cx-np-titles {
@@ -12001,5 +12005,206 @@
      there too, so the shelf keeps one record and the name keeps the height. */
   .cx-upnext-list li:nth-child(n + 2) {
     display: none;
+  }
+}
+
+/* ==========================================================================================
+ * A record changes the way one dissolves into another.
+ *
+ * It used to be a cut wearing a fade's clothes. The words were keyed on the track, so React threw
+ * the old ones away the instant the new ones existed, and what you actually saw was a hole and then
+ * new type rising into it. A fade-in is not a fade: a dissolve needs both halves on screen at once,
+ * the old one going as the new one comes, which is the only way a change of subject reads as one
+ * movement instead of two events.
+ *
+ * So every line that carries the record keeps the line it replaces for one beat (`useLeaving`), as a
+ * plain unpressable copy of itself laid over the same spot. The copy lifts and blurs away; the new
+ * one rises and sharpens into its place.
+ *
+ * They are not mirror images, and the reason is that type is not film. Two photographs at half
+ * strength are a dissolve; two lines of 200px type at half strength, one exactly on top of the
+ * other, are a smear — measured at the midpoint of the first attempt and it was unreadable for a
+ * sixth of a second. So this is a *handover* rather than an overlap: the old line is almost gone
+ * before the new one starts, and what carries the eye across the gap is the drift, not the ink. Each
+ * leaves in 0.28s and the next begins at 0.15s, so they are both faint at the only instant they are
+ * both there.
+ *
+ * The whole change is composed in three speeds, fastest nearest the reader: the words in about
+ * two thirds of a second, the sleeve in nine tenths, the light in the room in one and nine tenths.
+ * The room settles into the record *after* it has arrived, which is what a room does.
+ * ========================================================================================== */
+
+@keyframes cx-word-in {
+  from {
+    opacity: 0;
+    translate: 0 13px;
+    filter: blur(10px);
+  }
+
+  to {
+    opacity: 1;
+    translate: none;
+    filter: blur(0);
+  }
+}
+
+@keyframes cx-word-out {
+  from {
+    opacity: 1;
+    translate: none;
+    filter: blur(0);
+  }
+
+  to {
+    opacity: 0;
+    translate: 0 -10px;
+    filter: blur(8px);
+  }
+}
+
+/*
+ * `backwards`, not `both`: the fill holds the first frame through the stagger and then lets go
+ * entirely, so no blur filter is left standing on a 200px headline for the rest of its life. A
+ * lingering filter costs the type its subpixel rendering, which is a permanent price for a
+ * half-second effect.
+ */
+.cx-in {
+  animation: cx-word-in 0.52s 150ms var(--cx-ease) backwards;
+}
+
+.cx-in-2 {
+  animation-delay: 205ms;
+}
+
+.cx-in-3 {
+  animation-delay: 255ms;
+}
+
+/*
+ * The copy that is leaving. Absolutely positioned with no offsets at all, so it takes the static
+ * position it would have had as a child — which inside a flex row is the place the live line sits,
+ * alignment included — and takes no room while it goes.
+ */
+.cx-out {
+  position: absolute;
+  max-width: 100%;
+  pointer-events: none;
+  animation: cx-word-out 0.28s cubic-bezier(0.2, 0.82, 0.3, 1) forwards;
+}
+
+/* The rows are the stage each dissolve plays on. */
+.cx-artistrow,
+.cx-titlebox,
+.cx-title-tags,
+.cx-albumrow,
+.cx-np-titles,
+.cx-mini-titlebox {
+  position: relative;
+}
+
+/* The edition line holds its own text now, so the truncation belongs to the text and not the row. */
+.cx-title-tags .cx-line {
+  display: block;
+  font-style: normal;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* The phone's label leaves as one still: the lines under the name come and go from track to track,
+   and a per-line copy would hang beside lines that had already closed up. */
+.cx-np-ghost {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  pointer-events: none;
+}
+
+/* Two slots for the phone's sleeve and for the bar's, the same as the desk's. */
+.cx-np-cover-art,
+.cx-mini-cov-art {
+  position: absolute;
+  inset: 0;
+  background-position: center;
+  background-size: cover;
+}
+
+.cx-mini-cov {
+  position: relative;
+  overflow: hidden;
+}
+
+.cx-mini-titlebox {
+  display: block;
+  min-width: 0;
+}
+
+/*
+ * The halo pair is wider than the sleeve that throws it and reaches past the frame, so its slots
+ * must not clip; and they sit behind the sleeve, which the stacking context an animating opacity
+ * creates would otherwise argue with.
+ */
+.cx-stage-art > .cx-xfade {
+  z-index: 0;
+  contain: none;
+}
+
+/*
+ * The dissolve of two stacked pictures, without the dip in the middle.
+ *
+ * Both slots on a linear ramp means both sit at half strength halfway through, and half over half
+ * is three quarters — a quarter of the surface underneath shows through at the midpoint, and the
+ * record goes momentarily pale. The incoming picture rises early and the outgoing holds and then
+ * drops, so between them the surface stays covered from the first frame to the last.
+ */
+.cx-xfade {
+  transition-timing-function: cubic-bezier(0.72, 0, 0.88, 0.42);
+}
+
+.cx-xfade[data-front] {
+  transition-timing-function: cubic-bezier(0.22, 0.62, 0.3, 1);
+}
+
+/*
+ * Asked for less movement: the handover stays, because a line replacing itself with no transition at
+ * all is the cut this was written to remove. What goes is the travel and the blur — the two things
+ * that are motion rather than change.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .cx-in,
+  .cx-out {
+    animation-duration: 0.2s;
+    animation-delay: 0s;
+  }
+
+  .cx-in {
+    animation-name: cx-word-in-plain;
+  }
+
+  .cx-out {
+    animation-name: cx-word-out-plain;
+  }
+}
+
+@keyframes cx-word-in-plain {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes cx-word-out-plain {
+  from {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 0;
   }
 }
