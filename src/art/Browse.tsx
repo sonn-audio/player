@@ -29,8 +29,12 @@ import { captureCoverFrom, useCoverAnchor } from '@/shell/coverMorph';
 import { itemCoverCss, zoneCoverCss } from '@/art/cover';
 import { useVolumeControl } from '@/art/volume';
 import { Motion } from '@/art/Motion';
+import { Crossfade } from '@/art/Crossfade';
+import { artKeyOf } from '@/art/accent';
+import { useLeaving } from '@/art/Leaving';
 import { Origin, titleStep } from '@/art/Stage';
 import { useResolved } from '@/art/useOrigin';
+import { ArtistWork, artistLine, useArtistRecords } from '@/art/Artist';
 import {
   BackGlyph,
   Bars,
@@ -511,7 +515,13 @@ function shortName(name: string, under: string | undefined): string {
   return rest.trim() || name;
 }
 
-function Tile({
+/*
+ * Exported for the artist page, which is built from the same two pieces as every other listing — a
+ * sleeve on a shelf and a row in a list. See `Artist`. The import runs the other way as well, which
+ * is safe because neither module touches the other while it is being evaluated: these are components,
+ * looked up when something renders.
+ */
+export function Tile({
   item,
   index = 0,
   under,
@@ -625,12 +635,13 @@ function Waiting() {
  * `playing` swaps the number for the moving bars. It is matched by title rather than by id because the
  * queue's ids and the catalogue's ids are different namespaces for the same recording — see `nowPlaying`.
  */
-function TrackRow({
+export function TrackRow({
   item,
   index,
   playing,
   paused,
   albumArtist,
+  sub,
   thumb = false,
   onPlay,
   onQueue,
@@ -641,6 +652,9 @@ function TrackRow({
   paused?: boolean;
   /** The record's own artist: a track by the same one does not say so again under its title. */
   albumArtist?: string | undefined;
+  /** Said instead of the artist, where the artist is not the useful half — an artist's own page
+      already carries their name in 120px type, and what the row is missing there is the record. */
+  sub?: string | undefined;
   /** Draw the sleeve instead of the number — for a row that is not one of its record's tracks. */
   thumb?: boolean;
   onPlay: () => void;
@@ -655,7 +669,11 @@ function TrackRow({
         <span className="cx-tidx mono">{playing ? <Bars still={paused} /> : index + 1}</span>
         <span className="cx-tmeta">
           <span className="cx-ttitle">{item.name}</span>
-          {item.artist && !sameArtist && <span className="cx-tartist">{item.artist}</span>}
+          {sub ? (
+            <span className="cx-tartist">{sub}</span>
+          ) : (
+            item.artist && !sameArtist && <span className="cx-tartist">{item.artist}</span>
+          )}
         </span>
       </button>
       <button type="button" className="cx-tact" onClick={onQueue} title="Add to the queue">
@@ -784,6 +802,24 @@ export function Browse({
   const [results, setResults] = useState<ContentSection[]>([]);
   const [about, setAbout] = useState<ContentAbout | null>(null);
   const field = useRef<HTMLInputElement>(null);
+  /*
+   * Paging state for the listing.
+   *
+   * One page of `PAGE` used to be the whole listing: a library of 362 artists stopped at the 120th
+   * and there was nothing on the page to say the rest existed. `cursor` is how many rows the server
+   * has handed over — the offset of the next page — counted from the responses rather than from what
+   * is on screen, so a provider that repeats a row still advances instead of asking for the same page
+   * forever. `done` is the other stop: `total` is allowed to be null, and a short page is the only
+   * thing that reliably means "no more".
+   */
+  const cursor = useRef(0);
+  const [done, setDone] = useState(false);
+  const [paging, setPaging] = useState(false);
+  const inFlight = useRef(false);
+  /** The scroll container, as the observer's frame of reference — the page itself does not scroll. */
+  const scroller = useRef<HTMLDivElement>(null);
+  /** The mark at the end of the listing: when it comes into view, the next page is asked for. */
+  const sentinel = useRef<HTMLDivElement>(null);
 
   const here = stack[stack.length - 1] ?? {};
 
@@ -802,6 +838,10 @@ export function Browse({
      */
     setListing(null);
     setPeeks({});
+    cursor.current = 0;
+    setDone(false);
+    setPaging(false);
+    inFlight.current = false;
     void content
       .browse(here.id, 0, PAGE)
       .then(async (next) => {
@@ -830,6 +870,9 @@ export function Browse({
         }
         if (!cancelled) {
           setListing(next);
+          cursor.current = pool.length;
+          // A first page shorter than asked for is the whole listing, whatever `total` claims.
+          setDone(pool.length < PAGE);
           // Copied at the moment of the set: stragglers keep mutating `found` after the race and
           // must not reach under a page that has already decided its shape.
           setPeeks({ ...found });
@@ -952,6 +995,86 @@ export function Browse({
     };
   }, [content, aboutId]);
 
+  /*
+   * Is there more of this listing than has arrived?
+   *
+   * Two stops, because the API documents two. `total` is the count when the provider can give one —
+   * Apple Music says 362 artists — and `done` covers the case it cannot: `total` is explicitly
+   * allowed to be null, and then a page shorter than the one asked for is the only honest signal.
+   * Either stop alone leaves a library truncated or a scroll asking forever.
+   */
+  const more =
+    !query &&
+    !loading &&
+    listing !== null &&
+    !done &&
+    (listing.total === null || listing.items.length < listing.total);
+
+  /** The next page, appended. */
+  const grow = useCallback(() => {
+    if (inFlight.current) {
+      return;
+    }
+    const at = cursor.current;
+    const of = listing?.container?.id ?? null;
+    inFlight.current = true;
+    setPaging(true);
+    void content
+      .browse(here.id, at, PAGE)
+      .then((next) => {
+        const fresh = next.items ?? [];
+        cursor.current = at + fresh.length;
+        if (fresh.length < PAGE) {
+          setDone(true);
+        }
+        setListing((cur) => {
+          // A page that arrives after you have moved on belongs to the listing you left.
+          if (!cur || (cur.container?.id ?? null) !== of) {
+            return cur;
+          }
+          const held = new Set(cur.items.map((item) => item.id));
+          return {
+            ...cur,
+            items: [...cur.items, ...fresh.filter((item) => !held.has(item.id))],
+            total: next.total ?? cur.total,
+          };
+        });
+      })
+      .catch(() => {
+        // A failed page is the end of the listing as far as this view is concerned: retrying on every
+        // scroll event would hammer a provider that is already not answering.
+        setDone(true);
+      })
+      .finally(() => {
+        inFlight.current = false;
+        setPaging(false);
+      });
+  }, [content, here.id, listing]);
+
+  /*
+   * Paging by looking, not by pressing.
+   *
+   * The mark sits under the last row and the next page is fetched while it is still 800px away, so
+   * the grid grows before the bottom of it is ever reached — no button, no spinner in the common
+   * case, which is the only version of this that suits a face with no motion in it.
+   */
+  useEffect(() => {
+    const mark = sentinel.current;
+    if (!mark || !more) {
+      return undefined;
+    }
+    const watch = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          grow();
+        }
+      },
+      { root: scroller.current, rootMargin: '800px 0px' },
+    );
+    watch.observe(mark);
+    return () => watch.disconnect();
+  }, [more, grow]);
+
   // Search comes back in buckets and is rendered as shelves, so it takes the sections slot and leaves
   // the flat one empty — the two are never both populated.
   const items = query ? [] : (listing?.items ?? []);
@@ -1046,8 +1169,16 @@ export function Browse({
    */
   const portrait = hero?.kind === 'artist';
 
+  /* What this person made. Not in the listing — browsing an artist answers with their top songs —
+     so it is one search under the strict rule. See `Artist`. */
+  const records = useArtistRecords(portrait ? title : undefined, hero?.service);
+
   /** `24 tracks · 1 hr 32 min` — what the object is, in the two numbers anyone wants of it. */
   const runLine = ((): string => {
+    /* A person has no running time. Theirs is how much there is of them. */
+    if (portrait) {
+      return artistLine(records.length, items.length);
+    }
     if (!detail) {
       return '';
     }
@@ -1062,7 +1193,7 @@ export function Browse({
   })();
 
   return (
-    <div className="cx-browse">
+    <div className="cx-browse" ref={scroller}>
       {/* The container's own artwork, washed out behind its title — the one flourish in this view,
           and only when there is a picture to wash. */}
       {hero && (
@@ -1315,6 +1446,18 @@ export function Browse({
                 ) : null;
               })}
             </div>
+          ) : portrait ? (
+            <ArtistWork
+              name={title}
+              records={records}
+              songs={items}
+              nowPlaying={nowPlaying}
+              paused={zone?.state !== 'playing'}
+              returning={returning}
+              onOpen={open}
+              onPlay={play}
+              onQueue={queue}
+            />
           ) : trackish ? (
             <div className="cx-trows">
               {items.map((item, index) => (
@@ -1345,6 +1488,16 @@ export function Browse({
                 ))}
               </div>
             )
+          )}
+
+          {/*
+            The end of what has arrived. Invisible while there is more coming (the grid simply grows),
+            and a line of type only once a page is actually being waited on.
+          */}
+          {more && (
+            <div className="cx-browse-more" ref={sentinel}>
+              {paging && <span className="mono">more…</span>}
+            </div>
           )}
 
           {/*
@@ -1466,6 +1619,11 @@ export function MiniBar({ cur, onOpen }: { cur: Cur; onOpen: () => void }) {
   const api = useApi();
   const control = useVolumeControl(cur.zone);
   const leader = cur.leader;
+  /* The bar is on screen through every track change while you are reading the catalogue, so it
+     dissolves like everything else that carries a record. */
+  const artKey = artKeyOf(leader?.track);
+  const title = mainTitle(cur.title);
+  const gone = useLeaving(title, title);
 
   if (!leader) {
     return null;
@@ -1475,18 +1633,39 @@ export function MiniBar({ cur, onOpen }: { cur: Cur; onOpen: () => void }) {
     <div className="cx-mini">
       {cur.hasTrack && (
         <>
-          <span className="cx-mini-bg" style={{ backgroundImage: zoneCoverCss(api, leader, 240) }} />
+          <Crossfade
+            artKey={artKey}
+            cover={zoneCoverCss(api, leader, 240)}
+            ms={1400}
+            render={(slot) => <span className="cx-mini-bg" style={{ backgroundImage: slot.cover }} />}
+          />
           <span className="cx-mini-scrim" />
         </>
       )}
       <span className="cx-mini-prog">
-        <i style={{ width: cur.pct }} />
+        <i style={{ width: cur.pct }} key={`${cur.title}|${cur.durationSec}`} />
       </span>
 
       <button type="button" className="cx-mini-track" onClick={onOpen}>
-        <span className="cx-mini-cov" style={{ backgroundImage: zoneCoverCss(api, leader, 120) }} />
+        <span className="cx-mini-cov">
+          <Crossfade
+            artKey={artKey}
+            cover={zoneCoverCss(api, leader, 120)}
+            ms={700}
+            render={(slot) => <span className="cx-mini-cov-art" style={{ backgroundImage: slot.cover }} />}
+          />
+        </span>
         <span className="cx-mini-meta">
-          <span className="cx-mini-title">{mainTitle(cur.title)}</span>
+          <span className="cx-mini-titlebox">
+            {gone && (
+              <span className="cx-mini-title cx-out" key={gone.id} aria-hidden="true">
+                {gone.value}
+              </span>
+            )}
+            <span className="cx-mini-title cx-in" key={title}>
+              {title}
+            </span>
+          </span>
           <span className="cx-mini-sub mono">{cur.name}</span>
         </span>
       </button>
