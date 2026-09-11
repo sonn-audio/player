@@ -133,7 +133,8 @@ export function ArtApp() {
   const cur = useCur(zone, zones);
   const channels = useMemo(() => channelsOf(zones), [zones]);
   const leader = cur.leader;
-  const { queue } = useQueue(leader?.id ?? null);
+  /* Re-read when the record changes as well as when the queue does — see `useQueue`. */
+  const { queue } = useQueue(leader?.id ?? null, leader?.source?.id);
   const recents = useRecents(zone?.id ?? null);
   const favorites = useFavorites(zone?.id ?? null);
   const { scenes, recall } = useScenes();

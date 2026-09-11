@@ -21,12 +21,32 @@ const PAGE = 50;
 
 const EMPTY_QUEUE: ApiQueue = { zoneId: 0, items: [], start: 0, total: 0, currentIndex: null };
 
-export function useQueue(zoneId: number | null): { queue: ApiQueue; refresh: () => void } {
+/**
+ * The room's running order, and where in it the room has got to.
+ *
+ * Re-read when the server says the queue changed *and* when the record changes, which are not the
+ * same event and only one of them was being listened to. Pressing next moves nothing in the queue —
+ * the same entries stand in the same order — so no `queue.changed` is emitted and none should be.
+ * What moves is `currentIndex`, and everything this face draws from a queue is drawn from *after*
+ * that index: the shelf on the stage, the count beside `up next`, the head of the queue sheet. With
+ * only the invalidation to go on they all stayed pinned to whichever track was playing when the
+ * queue was last fetched, so a stage could show `Shiver` as the next record while Shiver played.
+ *
+ * So the caller hands over what is on the wire — the provider's own handle for the audio, which is a
+ * different string for every track — and the page is re-read when that changes. One request per
+ * track change, which is the same cost as the event that is not coming.
+ */
+export function useQueue(
+  zoneId: number | null,
+  /** The playing record's own id: `zone.source.id`, which changes on next, previous and a new queue. */
+  playing?: string | undefined,
+): { queue: ApiQueue; refresh: () => void } {
   const api = useApi();
   const { data, refresh } = useZoneCollection<ApiQueue>(
     (id) => api.getQueue(id, 0, PAGE),
     zoneId,
     'queue',
+    [playing],
   );
   return { queue: data ?? EMPTY_QUEUE, refresh };
 }
