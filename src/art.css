@@ -11203,8 +11203,9 @@
     width: auto;
     min-width: 0;
     padding: clamp(30px, 4.6vh, 64px) clamp(36px, 4vw, 84px) clamp(22px, 3vh, 40px);
-    overflow: hidden auto;
-    scrollbar-width: none;
+    /* Never scrollable: this is a page, not a panel. What is on it is sized to fit it — the name into
+       its own box (`useFitText`), the rest by the short-window rules below. */
+    overflow: hidden;
     background:
       linear-gradient(90deg, rgb(0 0 0 / 28%), transparent 14%),
       radial-gradient(120% 90% at 0% 30%, color-mix(in srgb, var(--cx-a1) 92%, transparent) 0%, transparent 70%),
@@ -11833,5 +11834,172 @@
     aspect-ratio: 1;
     filter: blur(70px) saturate(1.2);
     opacity: 0.35;
+  }
+}
+
+/* ==========================================================================================
+ * The name has a box of its own, and the box never changes height.
+ * ========================================================================================== */
+
+.cx-titlebox {
+  display: flex;
+  align-items: flex-start;
+  height: clamp(104px, 19vh, 208px);
+  min-height: 0;
+  overflow: hidden;
+}
+
+.cx-titlebox .cx-title {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  /* Three lines at most; the measurement keeps the name inside the box, this keeps a runaway one
+     (a single 60-character word) from painting past it while the first measurement lands. */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  overflow: hidden;
+}
+
+@media (min-width: 1280px) {
+  .cx-stage[data-spread] .cx-titlebox {
+    height: clamp(120px, 23vh, 260px);
+  }
+}
+
+/* A short window gives the name less room rather than taking it from the controls. */
+@media (min-width: 1280px) and (max-height: 960px) {
+  .cx-stage[data-spread] .cx-titlebox {
+    height: clamp(104px, 19vh, 190px);
+  }
+}
+
+/* The two lines that come and go keep their room whether they speak or not — see `Stage`. */
+.cx-title-tags {
+  min-height: 1lh;
+}
+
+.cx-albumrow {
+  min-height: 1lh;
+  font-size: 13px;
+}
+
+@media (min-width: 1500px) {
+  .cx-albumrow {
+    font-size: 14px;
+  }
+}
+
+/* The phone's name gets the same box: two lines of the largest size it may take (38px at 0.96), in
+   pixels rather than `lh`, which would resolve against the box's own inherited line and not the
+   title's. */
+.cx-np-titlebox {
+  display: block;
+  height: 74px;
+  overflow: hidden;
+}
+
+.cx-np-titlebox .cx-np-title {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+@media (max-width: 979px) and (max-height: 700px) {
+  .cx-np-titlebox {
+    height: 62px;
+  }
+}
+
+/* ==========================================================================================
+ * The right page fits, always.
+ *
+ * The page does not scroll — it is a page, not a panel — so everything on it has to be true at any
+ * window height, and the one thing that may not move is the name: it sits in a box whose height
+ * depends on the window and never on the record (see `useFitText`). On a short window the page was
+ * running past its own foot and the house was cut in half, which is the same fault as scrolling,
+ * only quieter.
+ *
+ * So the page gives room up in a fixed order, cheapest first: the shelf drops to one record, then to
+ * none; only then does the name's box give way, and because the type is measured into it the name
+ * simply gets smaller rather than clipped. The transport, the timeline and the house never give.
+ * ========================================================================================== */
+
+@media (min-width: 1280px) {
+  /* The name's box is the page's give of last resort: it may shrink, and the type follows it down. */
+  .cx-stage[data-spread] .cx-titlebox {
+    flex: 0 1 auto;
+    min-height: clamp(44px, 7.2vh, 96px);
+  }
+}
+
+/*
+ * The shelf by the height it has, a record at a time. Three ahead needs a tall screen; a laptop lid
+ * gets two; a short one gets one; a very short one keeps only the count on the label, which is the
+ * thing you actually read at a glance. Each step hands the name's box about seventy pixels back.
+ */
+@media (max-height: 1100px) {
+  .cx-stage .cx-upnext-list li:nth-child(n + 3) {
+    display: none;
+  }
+}
+
+@media (max-height: 940px) {
+  .cx-stage .cx-upnext-list li:nth-child(n + 2) {
+    display: none;
+  }
+}
+
+@media (max-height: 850px) {
+  .cx-stage .cx-upnext-list {
+    display: none;
+  }
+
+  .cx-stage .cx-stage-foot {
+    padding-top: clamp(14px, 2.4vh, 26px);
+  }
+}
+
+/*
+ * The foot by the page's own width, not the window's.
+ *
+ * The right page is as wide as whatever the sleeve leaves it, which is 40% of a tall window and much
+ * more of a short one — so a window-width rule guesses. At 1512×982 it guessed wrong and the shelf's
+ * names came out as `E…` and `T…` beside the fader. The page measures itself instead.
+ */
+@media (min-width: 1280px) {
+  .cx-stage[data-spread] .cx-stage-meta {
+    container-type: inline-size;
+    container-name: page;
+  }
+}
+
+@container page (max-width: 660px) {
+  .cx-stage-foot {
+    flex-wrap: wrap;
+  }
+
+  /* The fader takes a line of its own under the shelf, so the names keep their width. */
+  .cx-stage-foot .cx-vol {
+    flex-basis: 100%;
+    justify-content: flex-end;
+    padding-bottom: 0;
+    margin-top: 14px;
+  }
+
+  /* The source moves off the eyebrow; it is already on the page, under the name. */
+  .cx-eyebrow-src {
+    display: none;
+  }
+
+  /* A narrow page is a page with a big sleeve on a tall window: vertical room is the scarce thing
+     there too, so the shelf keeps one record and the name keeps the height. */
+  .cx-upnext-list li:nth-child(n + 2) {
+    display: none;
   }
 }

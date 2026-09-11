@@ -25,6 +25,7 @@ import type { RoomDrag } from '@/art/useRoomDrag';
 import { Motion } from '@/art/Motion';
 import { useZoneFavorite } from '@/state/useZoneFavorite';
 import { useCoverAnchor } from '@/shell/coverMorph';
+import { useFitText } from '@/art/useFitText';
 import {
   BackGlyph,
   ChevronGlyph,
@@ -440,6 +441,9 @@ export function Stage({
   /* What "the artwork changed" means — the same handle the page's wash dissolves on. */
   const artKey = artKeyOf(leader?.track);
 
+  /* The largest the name may be, and the smallest it may shrink to before the box clips it. */
+  const fit = useFitText(mainTitle(cur.title), { max: 200, min: 24 });
+
   const toggle = (): void => {
     /* A press that turned into a throw is not a press. See `useRoomDrag`. */
     if (drag.consumed() || !leader || !cur.hasTrack) {
@@ -678,24 +682,32 @@ export function Stage({
             {cur.hasTrack && <Favourite cur={cur} />}
           </div>
 
-          <h1
-            className="disp cx-title cx-swap cx-swap-2"
-            data-len={titleStep(mainTitle(cur.title))}
-            key={`t:${cur.title}|${cur.artist}`}
-          >
-            {mainTitle(cur.title)}
-          </h1>
-          {/* The edition, as a line of small type: what the store hung off the name — see `splitTitle`. */}
-          {splitTitle(cur.title).tags.length > 0 && (
-            <span className="cx-title-tags mono cx-swap cx-swap-3" key={`v:${cur.title}`}>
-              {splitTitle(cur.title).tags.join(' · ')}
-            </span>
-          )}
+          {/*
+           * The name, measured into a box of a height that never changes — see `useFitText`. The old
+           * ladder sized it by character count, which is a guess about width, and a title that wrapped
+           * to a third line pushed the timeline, the transport and the house down the page with it.
+           */}
+          <div className="cx-titlebox cx-swap cx-swap-2" key={`t:${cur.title}|${cur.artist}`}>
+            <h1 className="disp cx-title" ref={fit.ref} style={fit.size ? { fontSize: `${fit.size}px` } : undefined}>
+              {mainTitle(cur.title)}
+            </h1>
+          </div>
+          {/*
+           * The edition and the album, always drawn, empty or not.
+           *
+           * They are the two lines that come and go from one track to the next — one has `(Live)` after
+           * its name, the next does not — and the page below them was moving by their height every few
+           * minutes. Their rows are kept whether or not they have anything to say; empty type on black
+           * is nothing to look at, and the timeline, the transport and the house stand still.
+           */}
+          <span className="cx-title-tags mono cx-swap cx-swap-3" key={`v:${cur.title}`}>
+            {splitTitle(cur.title).tags.join(' · ')}
+          </span>
 
           {/* The album, under the artist rather than folded into it with a dash: it is a place the
               track came from, not part of its name. */}
-          {albumWorthShowing(cur.title, cur.album) && (
-            <span className="cx-albumrow cx-swap cx-swap-3" key={`b:${cur.title}|${cur.album}`}>
+          <span className="cx-albumrow cx-swap cx-swap-3" key={`b:${cur.title}|${cur.album}`}>
+            {albumWorthShowing(cur.title, cur.album) && (
               <Origin
                 className="cx-album"
                 text={bareAlbum(cur.album)}
@@ -703,8 +715,8 @@ export function Stage({
                 onOpen={onOpenOrigin}
                 title={`Open ${bareAlbum(cur.album)}`}
               />
-            </span>
-          )}
+            )}
+          </span>
 
           {/* Why the last attempt failed. `play` answers before anything is resolved, so this is the
               only place a failure can appear — and it belongs beside the title it failed to become. */}
@@ -868,6 +880,9 @@ export function MobileStage({
 }) {
   const api = useApi();
   const leader = cur.leader;
+  /* The same measured fit the desk uses, in a box two lines tall: a long name is set smaller rather
+     than cut off at an ellipsis, and the transport below it does not move from track to track. */
+  const fit = useFitText(mainTitle(cur.title), { max: 38, min: 17 });
 
   const toggle = (): void => {
     if (!leader || !cur.hasTrack) {
@@ -1036,7 +1051,11 @@ export function MobileStage({
         {/* Keyed on the room *and* the track, so the block crossfades when either changes. */}
         <div className="cx-np-head" key={`${currentLeaderId ?? 'none'}:${cur.title}`}>
           <span className="cx-np-titles">
-            <span className="disp cx-np-title">{mainTitle(cur.title)}</span>
+            <span className="cx-np-titlebox">
+              <span className="disp cx-np-title" ref={fit.ref} style={fit.size ? { fontSize: `${fit.size}px` } : undefined}>
+                {mainTitle(cur.title)}
+              </span>
+            </span>
             {splitTitle(cur.title).tags.length > 0 && (
               <span className="cx-np-tags mono">{splitTitle(cur.title).tags.join(' · ')}</span>
             )}
