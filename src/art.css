@@ -424,7 +424,6 @@
   animation: cx-breathe 2.4s ease-in-out infinite;
 }
 
-
 .cx-room-btn {
   display: inline-flex;
   align-items: center;
@@ -1419,7 +1418,6 @@
  */
 
 /* Paused, the room stops reflecting quite so brightly — the same withdrawal the bloom makes. */
-
 
 /* Paused is stated by the artwork itself: 3% smaller and half the colour drained out of it, which is a
    quieter way to say "not playing" than a badge. */
@@ -6960,8 +6958,6 @@
     overflow: visible;
   }
 
-
-
   .cx-sig-tile[data-span='6'] {
     min-height: 240px;
   }
@@ -7862,7 +7858,6 @@
   margin-bottom: 0;
   overflow: hidden;
 }
-
 
 /*
  * A third line, since there is room for it.
@@ -10056,111 +10051,6 @@
   min-height: clamp(360px, 52vh, 620px);
 }
 
-.cx-portal {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-  min-height: 300px;
-  padding: 26px 24px 24px;
-  overflow: hidden;
-  border-radius: 6px;
-  background: rgb(255 255 255 / 3%);
-  text-align: left;
-  animation: cx-door-in 0.6s var(--cx-ease) backwards;
-  animation-delay: calc(var(--i, 0) * 80ms);
-  transition:
-    transform 0.4s var(--cx-ease),
-    box-shadow 0.4s var(--cx-ease);
-}
-
-.cx-portal:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 40px 80px -40px rgb(0 0 0 / 90%);
-}
-
-.cx-portal-wall {
-  position: absolute;
-  inset: 0;
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  grid-template-rows: repeat(2, minmax(0, 1fr));
-  filter: saturate(0.85) brightness(0.62);
-  transition:
-    filter 0.5s var(--cx-ease),
-    transform 0.8s var(--cx-ease);
-}
-
-.cx-portal:hover .cx-portal-wall {
-  filter: saturate(1) brightness(0.8);
-  transform: scale(1.03);
-}
-
-.cx-portal-wall i {
-  display: block;
-  background-position: center;
-  background-size: cover;
-}
-
-/* One, two or three covers still fill the wall: the first takes what the missing ones leave. */
-.cx-portal[data-art='1'] .cx-portal-wall i {
-  grid-area: 1 / 1 / 3 / 3;
-}
-
-.cx-portal[data-art='2'] .cx-portal-wall i {
-  grid-row: 1 / 3;
-}
-
-.cx-portal[data-art='3'] .cx-portal-wall i[data-n='0'] {
-  grid-row: 1 / 3;
-}
-
-.cx-portal-scrim {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(to top, rgb(10 10 12 / 96%) 0%, rgb(10 10 12 / 55%) 38%, rgb(10 10 12 / 10%) 70%, rgb(10 10 12 / 25%) 100%);
-}
-
-.cx-portal[data-art='0'] .cx-portal-scrim {
-  background: none;
-}
-
-.cx-portal-txt {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  min-width: 0;
-}
-
-.cx-portal-name {
-  font-size: clamp(28px, 2.2vw, 40px);
-  line-height: 1;
-  letter-spacing: -0.035em;
-  color: var(--t1);
-}
-
-.cx-portal-line {
-  overflow: hidden;
-  font-size: 12.5px;
-  color: var(--t5);
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.cx-portal-go {
-  position: absolute;
-  top: 20px;
-  right: 20px;
-  color: rgb(255 255 255 / 55%);
-  opacity: 0;
-  transition: opacity 0.3s;
-}
-
-.cx-portal:hover .cx-portal-go {
-  opacity: 1;
-}
-
 /* At the front there is no page title: the word MUSIC is lit in the bar. The search stays. */
 .cx-browse-inner[data-root] .cx-browse-title {
   display: none;
@@ -10224,19 +10114,6 @@
     gap: 10px;
     min-height: 0;
   }
-
-  .cx-portal {
-    min-height: 176px;
-    padding: 16px;
-  }
-
-  .cx-portal-name {
-    font-size: 22px;
-  }
-
-  .cx-portal-line {
-    font-size: 11px;
-  }
 }
 
 /* The front's billboard is a band, not a page: the hall under it is the picture. */
@@ -10272,10 +10149,6 @@
   height: clamp(320px, calc(100vh - 470px), 620px);
 }
 
-.cx-portal {
-  min-height: 0;
-}
-
 /* A service's front: the way back, the service's name and the search share one line. */
 .cx-browse-inner[data-spotlight]:not([data-root]) {
   padding-top: 18px;
@@ -10288,10 +10161,6 @@
 @media (max-width: 979px) {
   .cx-hall {
     height: auto;
-  }
-
-  .cx-portal {
-    min-height: 176px;
   }
 }
 
@@ -10308,187 +10177,11 @@
   min-height: 0;
 }
 
-.cx-portal {
-  flex: 1 1 260px;
-  max-width: 440px;
-  /*
-   * Shorter than it was, because a door twice as tall as it is wide cannot be filled by a rack of
-   * records: the sleeves are capped by the width and the height then has nowhere to go but empty.
-   * At about five to three the rack reaches the head of the panel on its own.
-   */
-  height: clamp(320px, calc(100vh - 560px), 520px);
-  padding: 24px;
-  /* So the rack inside can be measured against the door — see `.cx-portal-stack`. */
-  container-type: size;
-}
-
-/*
- * The colour of the room behind the door, held right down.
- *
- * At two thirds of full it took the panel's temperature from whichever record happened to be in
- * front — a pale sleeve made a pale card, and five doors came out five different greys with the
- * artwork no longer the brightest thing on any of them. Near-black with a trace of the record in it
- * is what the rest of this face does, and it is what makes five doors read as five of one thing.
- */
-.cx-portal-wall {
-  position: absolute;
-  inset: -20%;
-  display: block;
-  background-position: center;
-  background-size: cover;
-  filter: blur(70px) saturate(1.15) brightness(0.34);
-  opacity: 0.62;
-  transform: none;
-  transition: opacity 0.5s var(--cx-ease);
-}
-
-.cx-portal:hover .cx-portal-wall {
-  opacity: 0.85;
-  filter: blur(70px) saturate(1.15) brightness(0.34);
-  transform: none;
-}
-
-.cx-portal-scrim {
-  background: linear-gradient(to top, rgb(10 10 12 / 90%) 0%, rgb(10 10 12 / 40%) 34%, rgb(10 10 12 / 0%) 60%);
-}
-
-/*
- * The stack, as a crate rather than an ornament.
- *
- * It was three sleeves at three different sizes floating at the top of a six-hundred-pixel panel,
- * which left the bottom half of every door empty and read as scatter rather than as records. A stack
- * of records is all one size, one behind the other, and it leans back: you see the front one whole
- * and the edges of the ones behind it climbing away. So it is drawn that way, and it is drawn big
- * enough to be the door — the front sleeve sits just above the name and the rest go up from there,
- * so the panel is full from its foot to near its head.
- *
- * Occluded, not cropped. A sleeve half hidden behind another sleeve is what a stack looks like; a
- * sleeve with its edge cut off is what this player does not do.
- */
-.cx-portal-stack {
-  position: relative;
-  /* In the column rather than pinned to a guessed distance from the foot: a service whose name wraps
-     to two lines — `YouTube Music` — used to have its own sleeves printed over it. */
-  margin: auto auto clamp(16px, 2.6vh, 26px);
-  /*
-   * Sized by the panel, not by a number. A rack of four leaning records stands about 1.66 sleeves
-   * tall, and what it has to stand in is the panel's height less the name and the padding under it —
-   * so that is what it is told, and it fills a 600px door and a 340px one without either clipping a
-   * sleeve at the top or leaving a hole above them.
-   */
-  width: min(94%, calc((100cqh - 96px) / 1.59));
-  aspect-ratio: 1;
-  translate: none;
-}
-
-.cx-portal-stack i {
-  position: absolute;
-  inset: 0;
-  border-radius: 3px;
-  background-color: var(--cx-cover);
-  background-position: center;
-  background-size: cover;
-  box-shadow:
-    0 30px 60px -24px rgb(0 0 0 / 90%),
-    inset 0 0 0 1px rgb(255 255 255 / 10%);
-  transition: translate 0.45s var(--cx-ease);
-}
-
-/*
- * The front record whole, the rest climbing away behind it — same size, alternating a little to
- * either side, each step dimmer, because that is what the back of a rack looks like.
- */
-.cx-portal-stack i[data-n='0'] {
-  z-index: 4;
-  translate: 0 0;
-}
-
-.cx-portal-stack i[data-n='1'] {
-  z-index: 3;
-  translate: -7% -26%;
-  scale: 0.95;
-  filter: brightness(0.62);
-}
-
-.cx-portal-stack i[data-n='2'] {
-  z-index: 2;
-  translate: 6% -48%;
-  scale: 0.9;
-  filter: brightness(0.42);
-}
-
-.cx-portal-stack i[data-n='3'] {
-  z-index: 1;
-  translate: -4% -66%;
-  scale: 0.86;
-  filter: brightness(0.28);
-}
-
-/* Pressed towards, the rack opens a little — the one motion a door makes. */
-.cx-portal:hover .cx-portal-stack i[data-n='1'] {
-  translate: -9% -30%;
-}
-
-.cx-portal:hover .cx-portal-stack i[data-n='2'] {
-  translate: 8% -54%;
-}
-
-.cx-portal:hover .cx-portal-stack i[data-n='3'] {
-  translate: -6% -74%;
-}
-
-.cx-portal[data-art='0'] {
-  background: rgb(255 255 255 / 3%);
-}
-
 @media (max-width: 979px) {
   .cx-hall {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-
-  .cx-portal {
-    flex: none;
-    max-width: none;
-    height: 200px;
-    padding: 16px;
-  }
-
-  .cx-portal-stack {
-    margin-bottom: 12px;
-    width: min(50%, 132px);
-  }
-}
-
-/* Five panels fit a 1440 window; on a wider one they grow to 440 and stop. */
-.cx-portal {
-  flex: 1 1 200px;
-}
-
-.cx-portal-words {
-  position: absolute;
-  left: 24px;
-  right: 24px;
-  top: 18%;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.cx-portal-words i {
-  overflow: hidden;
-  font-size: clamp(18px, 1.4vw, 24px);
-  font-style: normal;
-  font-weight: 600;
-  letter-spacing: -0.02em;
-  line-height: 1.15;
-  color: var(--t7);
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.cx-portal-words i:first-child {
-  color: var(--t6);
 }
 
 /* ==========================================================================================
@@ -11737,10 +11430,6 @@
   font-size: 19px;
 }
 
-.cx-portal-name {
-  font-size: clamp(28px, 2.2vw, 40px);
-}
-
 /* --- the whisper: six seconds still and the controls step back --- */
 
 @media (min-width: 1280px) {
@@ -12617,16 +12306,141 @@
   }
 }
 
-/*
- * Every door's name keeps two lines, whether it needs them or not.
+/* ==========================================================================================
+ * The front of the catalogue: the services as marks, and then the music.
  *
- * `YouTube Music` wraps and the other four do not, so its rack of records stood forty pixels higher
- * than the rest of the row — five doors that were meant to read as one thing, out of line because of
- * one name. The name sits at the foot of the space it reserves, so a single line is where it always
- * was and the space it does not use is above it, where there is nothing to see.
- */
-.cx-portal-name {
+ * Five services used to take the whole page — five tall panels with a rack of records in each, which
+ * is a great deal of room spent saying *there are five services*. A service is a place you go
+ * through, not a thing you look at. So it is a mark in a row, and the room that buys goes to the two
+ * shelves anybody actually reaches for: what this room played lately, and what it has been told to
+ * keep. A sleeve you can press beats a panel you have to open.
+ * ========================================================================================== */
+
+.cx-hall {
   display: flex;
-  align-items: flex-end;
-  min-height: 2lh;
+  flex-wrap: wrap;
+  gap: clamp(18px, 2.4vw, 38px);
+  height: auto;
+  min-height: 0;
+  margin-bottom: clamp(30px, 4.4vh, 54px);
+  padding: 4px 0 0;
+}
+
+.cx-root .cx-mark {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: clamp(76px, 7vw, 104px);
+  max-width: none;
+  height: auto;
+  padding: 0;
+  background: none;
+  cursor: pointer;
+  animation: cx-door-in 0.5s var(--cx-ease) backwards;
+  animation-delay: calc(var(--i, 0) * 60ms);
+}
+
+/*
+ * The mark: the service's own logo where the server has one, its own artwork until then. A ring in
+ * the service's colour, because at this size colour is most of what tells one from another.
+ */
+.cx-mark-face {
+  position: relative;
+  container-type: inline-size;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  aspect-ratio: 1;
+  overflow: hidden;
+  border-radius: 50%;
+  background: linear-gradient(
+    152deg,
+    color-mix(in srgb, var(--tint) 92%, #000),
+    color-mix(in srgb, var(--tint) 38%, #0a0a0c)
+  );
+  box-shadow:
+    inset 0 0 0 1px rgb(255 255 255 / 12%),
+    0 18px 36px -20px rgb(0 0 0 / 90%);
+  transition:
+    box-shadow 0.3s var(--cx-ease),
+    transform 0.3s var(--cx-ease);
+}
+
+/*
+ * Until the real logo is there: the service's monogram on its own colour.
+ *
+ * A logo is a trademark and not something a player gets to draw from memory, and a record sleeve
+ * cropped into a 96px circle says nothing about whose circle it is. A letter on the right colour
+ * says it at a glance and looks like it was meant.
+ */
+.cx-mark-mono {
+  position: absolute;
+  font-size: 30cqw;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  line-height: 1;
+  color: rgb(255 255 255 / 92%);
+  text-shadow: 0 2px 10px rgb(0 0 0 / 35%);
+}
+
+.cx-mark:hover .cx-mark-face,
+.cx-mark:focus-visible .cx-mark-face {
+  transform: translateY(-3px);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--tint) 70%, transparent),
+    0 0 0 3px color-mix(in srgb, var(--tint) 26%, transparent),
+    0 22px 44px -20px rgb(0 0 0 / 95%);
+}
+
+/*
+ * A real logo is the mark, not a badge on one: it fills the disc, and the colour, the artwork and the
+ * monogram underneath it step aside. The official icons are already round or a rounded square whose
+ * corners are solid, so a circle takes them without cutting anything that carries meaning.
+ */
+.cx-mark-logo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity 0.3s var(--cx-ease);
+}
+
+.cx-mark-face[data-logo] {
+  background: none;
+}
+
+.cx-mark-face[data-logo] .cx-mark-logo {
+  opacity: 1;
+}
+
+.cx-mark-face[data-logo] .cx-mark-mono {
+  display: none;
+}
+
+.cx-mark-name {
+  font-size: clamp(13px, 1vw, 15px);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.15;
+  color: var(--t3);
+  text-align: center;
+  transition: color 0.2s var(--cx-ease);
+}
+
+.cx-mark:hover .cx-mark-name,
+.cx-mark:focus-visible .cx-mark-name {
+  color: var(--t1);
+}
+
+/* The two shelves under the marks, in the browse page's own section rhythm. */
+.cx-frontsec + .cx-frontsec {
+  margin-top: clamp(26px, 3.4vh, 40px);
+}
+
+.cx-frontsec .cx-sec-head {
+  margin-bottom: 16px;
 }
