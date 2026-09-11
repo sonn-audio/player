@@ -34,7 +34,7 @@ import { artKeyOf } from '@/art/accent';
 import { useLeaving } from '@/art/Leaving';
 import { Origin, titleStep } from '@/art/Stage';
 import { useResolved } from '@/art/useOrigin';
-import { ArtistWork, artistLine, useArtistRecords } from '@/art/Artist';
+import { ArtistIndex, ArtistWork, artistLine, useArtistRecords } from '@/art/Artist';
 import {
   BackGlyph,
   Bars,
@@ -507,6 +507,26 @@ function Billboard({
  * heading that already says `Radio Paradise` it is the same word five times in a row. The prefix is
  * only dropped when something is left, so a tile is never blank.
  */
+/**
+ * A person's initials — one letter per name, two at most.
+ *
+ * The little words are skipped, so `Asaf Avidan and the Mojos` is `AA` rather than `AA` padded out
+ * with a conjunction, and a single name keeps its one letter rather than being doubled into a
+ * monogram nobody uses.
+ */
+const SMALL = new Set(['and', 'the', 'of', 'de', 'van', 'der', 'y', '&', 'a', 'los', 'las', 'le', 'la']);
+
+function initials(name: string): string {
+  const words = name
+    .split(/[\s.]+/)
+    .map((word) => word.replace(/[^\p{L}\p{N}]/gu, ''))
+    .filter((word) => word.length > 0 && !SMALL.has(word.toLowerCase()));
+  return words
+    .slice(0, 2)
+    .map((word) => word[0]!.toUpperCase())
+    .join('');
+}
+
 function shortName(name: string, under: string | undefined): string {
   if (!under) {
     return name;
@@ -540,7 +560,20 @@ export function Tile({
 }) {
   const [hovered, setHovered] = useState(false);
   const landing = useCoverAnchor();
-  const sub = item.artist || item.album;
+  /*
+   * What a tile says under its name, when that is a different fact.
+   *
+   * An artist's tile carries the artist's name in both fields, so a page of people read `Adele /
+   * Adele`, `AC/DC / AC/DC`, twenty-four times down a grid. A line that repeats the line above it is
+   * not a second fact, and neither is the name of the shelf the tile is standing on.
+   */
+  const said = item.artist || item.album;
+  const sub =
+    said &&
+    said.trim().toLowerCase() !== item.name.trim().toLowerCase() &&
+    said.trim().toLowerCase() !== under?.trim().toLowerCase()
+      ? said
+      : undefined;
 
   return (
     <div
@@ -571,7 +604,17 @@ export function Tile({
         aria-label={item.name}
         {...(anchor ? landing : {})}
       >
-        {!item.coverUrl && <EmptyArtGlyph size={26} className="cx-tile-empty" />}
+        {!item.coverUrl &&
+          (item.kind === 'artist' ? (
+            /* A person with no photograph is still a person. Their initials in the display face say
+               who the empty circle is for; a speaker glyph says the file is missing, which is a fact
+               about us and not about them. */
+            <span className="disp cx-tile-initials" aria-hidden="true">
+              {initials(item.name)}
+            </span>
+          ) : (
+            <EmptyArtGlyph size={26} className="cx-tile-empty" />
+          ))}
         {/* Only the tile being pointed at, so a shelf of thirty does not open thirty streams. */}
         <Motion src={item.animatedCoverUrl} active={hovered} />
         <span className="cx-tile-ov" />
@@ -592,11 +635,7 @@ export function Tile({
         )}
       </button>
       <span className="cx-tile-title">{shortName(item.name, under)}</span>
-      {/* Not the name of the shelf it is standing on: eighteen sleeves on Coldplay's own page do not
-          each need to say Coldplay, any more than their titles need to repeat the folder's. */}
-      {sub && sub.trim().toLowerCase() !== under?.trim().toLowerCase() && (
-        <span className="cx-tile-sub">{sub}</span>
-      )}
+      {sub && <span className="cx-tile-sub">{sub}</span>}
     </div>
   );
 }
@@ -1184,6 +1223,13 @@ export function Browse({
    * composed to a page; a sleeve cannot, and without a photograph the page keeps the circle rather
    * than take a knife to a record cover.
    */
+  /*
+   * A listing of people, long enough to need finding rather than reading. Twelve is about where a
+   * grid stops being a page you take in at a glance and starts being a rack — under that, a letter
+   * over five names is a divider card in a box of six records.
+   */
+  const people = !query && items.length >= 12 && items.every((item) => item.kind === 'artist');
+
   const face = portrait ? here.seed?.coverUrl : undefined;
   const heroArt = face ?? hero?.coverUrl;
 
@@ -1277,6 +1323,11 @@ export function Browse({
           <div className="cx-browse-head">
             <div className="cx-browse-title-row">
               <h1 className="disp cx-browse-title">{title}</h1>
+              {/* How much of it there is. Only for a listing of things — the count of a page of
+                  categories is a fact about the menu, not about the music. */}
+              {!query && !doors && listing?.total ? (
+                <span className="mono cx-browse-count">{listing.total}</span>
+              ) : null}
 
               <div className="cx-search">
                 <SearchGlyph size={15} />
@@ -1493,7 +1544,10 @@ export function Browse({
               ))}
             </div>
           ) : (
-            items.length > 0 && (
+            items.length > 0 &&
+            (people ? (
+              <ArtistIndex items={items} returning={returning} onOpen={open} onPlay={play} />
+            ) : (
               <div className="cx-grid">
                 {items.map((item, index) => (
                   <Tile
@@ -1506,7 +1560,7 @@ export function Browse({
                   />
                 ))}
               </div>
-            )
+            ))
           )}
 
           {/*

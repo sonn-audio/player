@@ -12301,3 +12301,136 @@
 .cx-root .cx-sec-more:focus-visible {
   color: var(--t1);
 }
+
+/* ==========================================================================================
+ * A wall of people is an index, not a contact sheet.
+ *
+ * Three hundred and sixty-two artists were one flat grid of identical circles in alphabetical order
+ * — with the order nowhere on the page. A record shop prints divider cards, and they are the only
+ * reason anyone finds anything in a rack of a thousand sleeves. So the letters are drawn, and a rail
+ * of the letters that exist stands beside the page so any of them is one press away.
+ * ========================================================================================== */
+
+.cx-index {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  column-gap: clamp(14px, 2vw, 30px);
+  align-items: start;
+}
+
+.cx-index-body {
+  min-width: 0;
+}
+
+.cx-index-sec + .cx-index-sec {
+  margin-top: clamp(34px, 4.4vh, 58px);
+}
+
+/*
+ * The divider card: the letter, the rule it hangs on, and how many are filed under it.
+ *
+ * It was sticky for a while, and the price was a painted band so the portraits could scroll under
+ * the letter — a flat rectangle laid over a page whose ground is not flat, which read as a box on a
+ * screen whose whole argument is that nothing is boxed. The rail beside the page is the thing that
+ * answers *where am I*; the divider only has to say what comes next.
+ */
+.cx-index-head {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.cx-index-letter {
+  flex: none;
+  font-size: clamp(26px, 2.6vw, 42px);
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  color: var(--t2);
+}
+
+.cx-index-rule {
+  flex: 1;
+  height: 1px;
+  background: var(--hair-soft);
+}
+
+.cx-index-count {
+  flex: none;
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  color: var(--t6);
+}
+
+/*
+ * The rail. Twenty-six words of nine-pixel type are not a menu, they are a ruler — it reads as one
+ * object and only resolves into letters when you go to use it.
+ */
+.cx-index-rail {
+  align-self: stretch;
+  display: flex;
+  justify-content: center;
+}
+
+.cx-index-ruler {
+  position: sticky;
+  top: 34vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  height: max-content;
+  padding: 10px 3px;
+}
+
+.cx-root .cx-index-ruler button {
+  width: 26px;
+  padding: 2px 0;
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+  line-height: 1.2;
+  color: var(--t6);
+  text-align: center;
+  cursor: pointer;
+  border-radius: 4px;
+  transition:
+    color 0.16s var(--cx-ease),
+    background 0.16s var(--cx-ease);
+}
+
+.cx-root .cx-index-ruler button:hover,
+.cx-root .cx-index-ruler button:focus-visible {
+  color: var(--cx-bg);
+  background: var(--t1);
+}
+
+/* A person with no photograph: their initials, in the circle, in the face the titles are set in. */
+.cx-tile-initials {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  font-size: clamp(20px, 2.4vw, 34px);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--t5);
+  user-select: none;
+}
+
+/*
+ * How much there is of it, beside the heading — a fact about the collection, set as one.
+ *
+ * `margin-right: auto` keeps it next to the name: the row spreads its children apart so the search
+ * field can hold the far end, and without this the count drifted into the middle of the page and
+ * read as a stray number rather than as part of the title.
+ */
+.cx-browse-count {
+  flex: none;
+  align-self: flex-end;
+  margin-right: auto;
+  margin-bottom: 0.5em;
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  color: var(--t6);
+}
