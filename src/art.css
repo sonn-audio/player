@@ -8202,17 +8202,41 @@
 
 /* --- the player --------------------------------------------------------------------------- */
 
-/* The sleeve runs to both edges. On a short phone it caps at 52vh so the column below it still fits,
-   and centres; on a tall one that cap is wider than the screen and the edge is the edge. */
+/*
+ * The sleeve runs to both edges, and it is the thing that gives.
+ *
+ * It used to cap at `52vh` so the column below it would still fit, which was the right idea measured
+ * against the wrong thing. A phone's viewport is not the room the player gets: a status bar takes
+ * about sixty pixels off the top and the home indicator another thirty off the foot, and `vh` knows
+ * nothing about either. On an iPhone the arithmetic came out seventy pixels short and the fader
+ * walked off the bottom of the screen — present, laid out, and below the glass.
+ *
+ * So nothing is capped against the viewport any more. The column below states what it needs, the
+ * sleeve takes what is left, and the order of giving is the one the rest of this player already
+ * keeps: the picture yields, the controls never do. A sleeve with a margin either side of it on a
+ * tight screen is still a whole sleeve; a fader you cannot reach is not a fader.
+ */
 .cx-np-art {
   position: relative;
-  flex: none;
+  /* May shrink, never grows: its base is the square it would like to be. */
+  flex: 0 1 auto;
+  min-height: 0;
   align-items: flex-start;
+  justify-content: center;
   padding: 0;
 }
 
 .cx-np-cover {
-  width: min(100%, 52vh);
+  /*
+   * Height-driven, with the width left to the square. An explicit width and a height cap would
+   * squash the sleeve out of square; with `width: auto` the aspect ratio sends the clamp back the
+   * other way, so the picture stays a picture and simply gets smaller. The stated height is what it
+   * would like to be, and `max-height` is the room it actually got.
+   */
+  height: min(52vh, 100vw);
+  max-height: 100%;
+  width: auto;
+  max-width: 100%;
   border-radius: 0;
   box-shadow: none;
 }
@@ -8253,8 +8277,16 @@
   color: var(--g);
 }
 
+/*
+ * Grows into whatever is spare, never shrinks below what it says.
+ *
+ * It was `flex: 1`, which is `1 1 0%` — a basis of nothing, so the column never asked for the height
+ * its own contents needed and simply spilled past the bottom of the screen when there was not enough.
+ * With a basis of `auto` it states its size, the sleeve above it absorbs the shortfall, and the foot
+ * stays on the glass.
+ */
 .cx-np-meta {
-  flex: 1;
+  flex: 1 0 auto;
   min-height: 0;
   padding: 0 24px calc(env(safe-area-inset-bottom) + 18px);
 }
@@ -8664,8 +8696,10 @@
 /* A short phone (an SE, a browser with its bars up): the sleeve gives up height first, then the type,
    so the foot — the fader and what is next — stays on screen. */
 @media (max-width: 979px) and (max-height: 700px) {
+  /* Height-driven like the rule it tightens, or the square comes out a rectangle. */
   .cx-np-cover {
-    width: min(100%, 44vh);
+    height: min(44vh, 100vw);
+    width: auto;
   }
 
   .cx-np-eyebrow {
