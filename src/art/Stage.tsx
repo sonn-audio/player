@@ -310,7 +310,7 @@ export function Origin({
     return <span className={className}>{text}</span>;
   }
   return (
-    <button type="button" className={`${className} cx-door`} onClick={() => onOpen(item)} title={title}>
+    <button type="button" className={`${className} cx-origin`} onClick={() => onOpen(item)} title={title}>
       {text}
     </button>
   );

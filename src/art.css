@@ -11757,16 +11757,18 @@
 /*
  * A name that leads somewhere.
  *
- * The type does not change — the artist stays the artist's size and colour — it only stands on a
- * hairline, the same 1px this whole face draws its divisions with, which lifts to the word's own ink
- * under the hand. Drawn at rest rather than only on hover, because a phone has no hover and an
- * affordance nobody can see is not one. Every other player puts this behind a `…` menu; here the word
- * is the button, so the page gains a way in and not a control.
+ * Nothing is added to it: no underline, no chevron, no box. (`cx-origin`, not `cx-door`: the
+ * catalogue already has a door — the row you press to open a service — and it draws a hairline under
+ * itself, which is where the underline under a record's artist was coming from.)
+ * Every pressable word in this face — the
+ * four in the bar, `canvas`, `house`, the ways out of a sheet — says so by lifting to white under the
+ * hand, and a record's artist is one more word of the same kind. An underline was tried and it read
+ * as a hyperlink pasted onto a poster.
+ *
+ * The box is made to hug its text: a button's own padding is taller than its line, which pushed the
+ * album line down and gave the row a second, empty line of its own.
  */
-.cx-root .cx-door {
-  /* A button's box is taller than its text — the browser's own padding and centring — and an underline
-     is drawn per line box, so the extra height drew a second line under the word. Hugging the text is
-     what makes the door look like type rather than like a control. */
+.cx-root .cx-origin {
   display: inline-block;
   padding: 0;
   line-height: inherit;
@@ -11774,19 +11776,12 @@
   max-width: 100%;
   text-align: left;
   cursor: pointer;
-  text-decoration: underline;
-  text-decoration-color: color-mix(in srgb, currentcolor 24%, transparent);
-  text-decoration-thickness: 1px;
-  text-underline-offset: 0.24em;
-  transition:
-    color 0.18s var(--cx-ease),
-    text-decoration-color 0.18s var(--cx-ease);
+  transition: color 0.18s var(--cx-ease);
 }
 
-.cx-root .cx-door:hover,
-.cx-root .cx-door:focus-visible {
+.cx-root .cx-origin:hover,
+.cx-root .cx-origin:focus-visible {
   color: var(--t1);
-  text-decoration-color: currentcolor;
 }
 
 /* The album line keeps its own row, so the door is as wide as the word and not as the column. */
@@ -11801,13 +11796,13 @@
 }
 
 /* On the phone the two lines stack, so each door sits on its own row already. */
-.cx-np-artist.cx-door,
-.cx-np-album.cx-door {
+.cx-np-artist.cx-origin,
+.cx-np-album.cx-origin {
   align-self: flex-start;
 }
 
 /* A record's own page names its artist too: the same door, in the light line under the title. */
-.cx-root .cx-detail-sub.cx-door {
+.cx-root .cx-detail-sub.cx-origin {
   align-self: flex-start;
 }
 
