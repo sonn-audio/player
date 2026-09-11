@@ -12468,3 +12468,60 @@
   letter-spacing: 0.18em;
   color: var(--t6);
 }
+
+/* ==========================================================================================
+ * The sleeve keeps both edges; the column makes the room.
+ *
+ * A phone hands the page about seventy pixels less than its screen is tall — a status bar and a home
+ * indicator — and the first fix let the sleeve absorb the difference. It did keep the fader on the
+ * glass, and it cost the thing the screen is for: a sleeve edge to edge became a square with margins
+ * either side of it.
+ *
+ * So the order of giving changes once more, and this is the right way round for a phone. The picture
+ * runs to both edges because that is the composition; the column under it steps down instead —
+ * smaller name, tighter rhythm, a smaller ring around the play button, all of which a phone can wear
+ * and none of which anyone has to reach for. The sleeve giving way is still there behind it, as the
+ * thing that catches a screen too short for even this; it just stops being the first answer.
+ * ========================================================================================== */
+
+/* Bounded below at 701 so a short phone keeps the one treatment written for it, and no screen is
+   asked to wear two. */
+@media (max-width: 979px) and (max-height: 830px) and (min-height: 701px) {
+  /* The name's box, which is measured into rather than filled — see `useFitText`. */
+  .cx-np-titlebox {
+    height: 58px;
+  }
+
+  .cx-np-eyebrow {
+    margin-top: 10px;
+  }
+
+  .cx-np-head {
+    margin-top: 8px;
+  }
+
+  .cx-np-artist {
+    margin-top: 7px;
+  }
+
+  .cx-np-album {
+    margin-top: 4px;
+  }
+
+  .cx-np-prog {
+    margin-top: 16px;
+  }
+
+  .cx-np-meta .cx-transport[data-size='phone'] {
+    margin-top: 14px;
+  }
+
+  .cx-np-meta .cx-transport[data-size='phone'] .cx-tr-play {
+    width: 62px;
+    height: 62px;
+  }
+
+  .cx-np-foot {
+    padding-top: 14px;
+  }
+}
