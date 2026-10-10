@@ -8759,6 +8759,11 @@
   .cx-sheet[data-desk] {
     width: min(1080px, calc(100% - 48px));
   }
+
+  /* A big house gets a big desk: past eight channels a wide screen holds twelve to a row, not eight. */
+  .cx-sheet[data-desk]:has(.cx-desk[data-many]) {
+    width: min(1560px, calc(100% - 48px));
+  }
 }
 
 .cx-desk {
@@ -8784,17 +8789,29 @@
   color: var(--t1);
 }
 
+/*
+ * One console, every channel on it. The strips narrow to share the row — a desk with eight channels has
+ * narrower channels, not a second desk under the first — and only wrap once a strip would be too narrow
+ * to read its own name. `--cols` (strips and masters) and `--groups` come from `RoomsSheet`; a group's
+ * frame costs 18px, its padding and border.
+ *
+ * It used to scroll sideways with the bar hidden, which is a swipe on a phone and nothing at all under a
+ * mouse wheel: seven rooms on a desk left the last two out of reach unless you knew to tab to them.
+ */
 .cx-desk-row {
-  display: flex;
-  align-items: stretch;
-  gap: 24px;
-  overflow-x: auto;
-  scrollbar-width: none;
-  padding-bottom: 4px;
-}
+  --gap: 12px;
+  --strip: clamp(
+    100px,
+    (100cqw - (var(--items, 1) - 1) * var(--gap) - var(--groups, 0) * 18px - 2px) / var(--cols, 1),
+    176px
+  );
 
-.cx-desk-row::-webkit-scrollbar {
-  display: none;
+  container-type: inline-size;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: 18px var(--gap);
+  padding-bottom: 4px;
 }
 
 /* --- a strip --------------------------------------------------------------------------------- */
@@ -8806,8 +8823,9 @@
   align-items: center;
   gap: 18px;
   flex: none;
-  width: 176px;
-  padding: 22px 12px 16px;
+  container-type: inline-size;
+  width: var(--strip, 176px);
+  padding: 22px 6px 16px;
   border-radius: 6px;
   transition:
     background 0.25s var(--cx-ease),
@@ -8885,6 +8903,13 @@
   color: var(--t5);
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* A narrowed strip tightens its name before it cuts it: `THIS BROWSER` reads, `THIS BROWSE…` does not. */
+@container (max-width: 140px) {
+  .cx-desk-name {
+    letter-spacing: 0.12em;
+  }
 }
 
 .cx-desk-strip[data-on] .cx-desk-name,
@@ -9017,6 +9042,7 @@
   display: flex;
   flex-direction: column;
   flex: none;
+  max-width: 100%;
   padding: 14px 8px 0;
   border-radius: 8px;
   border: 1px solid color-mix(in srgb, var(--g) 32%, transparent);
@@ -9040,6 +9066,7 @@
 
 .cx-desk-group-row {
   display: flex;
+  flex-wrap: wrap;
   align-items: stretch;
 }
 
@@ -9049,7 +9076,7 @@
 }
 
 .cx-desk-master {
-  width: 160px;
+  width: var(--strip, 160px);
 }
 
 .cx-desk-ring {
@@ -9071,9 +9098,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  align-self: center;
   flex: 1 1 180px;
   min-width: 160px;
-  padding: 0 20px;
+  padding: 14px 20px;
   border: 1px dashed var(--hair-strong, rgb(255 255 255 / 14%));
   border-radius: 6px;
   font-size: 9.5px;
@@ -9142,6 +9170,45 @@
   color: var(--t6);
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/*
+ * --- dense: more than one row ------------------------------------------------------------------
+ *
+ * Two or three rows of full-height strips is a sheet you scroll to find a fader in. Once the desk takes
+ * a second row each strip gives up height, not width: a shorter throw, a smaller sleeve.
+ */
+
+.cx-desk[data-dense] .cx-desk-strip {
+  gap: 14px;
+  padding-top: 16px;
+}
+
+.cx-desk[data-dense] .cx-desk-hit {
+  gap: 12px;
+}
+
+.cx-desk[data-dense] .cx-desk-cov {
+  width: 48px;
+  height: 48px;
+}
+
+.cx-desk[data-dense] .cx-desk-ring {
+  width: 56px;
+  height: 56px;
+}
+
+.cx-desk[data-dense] .cx-desk-fader {
+  gap: 10px;
+}
+
+.cx-desk[data-dense] .cx-desk-fader-rail {
+  height: 88px;
+}
+
+/* The hint is for a first desk. A house that needs a second row has found out how grouping works. */
+.cx-desk[data-dense] .cx-desk-hint {
+  display: none;
 }
 
 /* --- lying down: the phone ------------------------------------------------------------------- */

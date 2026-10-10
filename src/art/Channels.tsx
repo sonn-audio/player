@@ -15,7 +15,7 @@
  * On a phone the same strips lie down: a row each, the fader running under the name, the block the same.
  * One component, two orientations; `phone` picks the drag axis and the stylesheet does the rest.
  */
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useApi } from '@/state/ServerContext';
 import { DELAY_MAX_MS, DELAY_NUDGE_MS, useOutputDelay } from '@/state/useOutputDelay';
 import { sceneable, useScenes } from '@/state/useScenes';
@@ -303,6 +303,45 @@ function AlignRow({ zone, leader }: { zone: ApiZoneState; leader: boolean }) {
 
 // --- the sheet ------------------------------------------------------------------
 
+/** The narrowest a strip gets before the desk takes another row. Matches `.cx-desk-row`. */
+const DESK_MIN_STRIP = 100;
+const DESK_GAP = 12;
+
+/**
+ * How the desk lays out: how many rows, and what one row has to share its width between.
+ *
+ * A house runs to two dozen rooms, and once they do not fit on one row they are dealt out evenly — eight
+ * and eight and eight, never twenty-two and an orphan of two. CSS can wrap but it cannot balance, so the
+ * row's width is measured here and the CSS is told how many columns *one row* has to hold. A group is
+ * its members and a master, and it is not split across rows, so the split is close rather than exact.
+ */
+function useDeskLayout(channels: Channel[], phone: boolean) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [width, setWidth] = useState(0);
+
+  useEffect(() => {
+    const row = ref.current;
+    if (!row || phone) {
+      return undefined;
+    }
+    const observer = new ResizeObserver(() => setWidth(row.clientWidth));
+    observer.observe(row);
+    return () => observer.disconnect();
+  }, [phone]);
+
+  const groups = channels.filter((channel) => channel.members.length > 1).length;
+  const cols = channels.length + channels.reduce((sum, channel) => sum + (channel.members.length > 1 ? channel.members.length : 0), 0);
+  const perRow = width > 0 ? Math.max(1, Math.floor((width + DESK_GAP) / (DESK_MIN_STRIP + DESK_GAP))) : cols;
+  const rows = Math.ceil(cols / perRow);
+  const style = {
+    '--cols': Math.ceil(cols / rows),
+    '--items': Math.ceil(channels.length / rows),
+    '--groups': Math.ceil(groups / rows),
+  } as React.CSSProperties;
+
+  return { ref, rows, many: cols > 8, style };
+}
+
 export function RoomsSheet({
   zones,
   channels,
@@ -326,6 +365,7 @@ export function RoomsSheet({
   const { scenes, save, recall, forget } = useScenes();
 
   const mine = channels.find((channel) => channel.members.some((member) => member.id === selectedId)) ?? null;
+  const desk = useDeskLayout(channels, phone);
   const [alignOpen, setAlignOpen] = useState(false);
 
   const said = (result: { rejected: Array<{ id: number; reason: string }> }): void => {
@@ -392,8 +432,13 @@ export function RoomsSheet({
   };
 
   return (
-    <div className="cx-desk" data-phone={phone || undefined}>
-      <div className="cx-desk-row">
+    <div
+      className="cx-desk"
+      data-phone={phone || undefined}
+      data-dense={(!phone && desk.rows > 1) || undefined}
+      data-many={(!phone && desk.many) || undefined}
+    >
+      <div className="cx-desk-row" ref={desk.ref} style={desk.style}>
         {channels.map((channel) =>
           channel.members.length > 1 ? (
             <div
