@@ -12,7 +12,7 @@
  * pointed at asks for anything; everything else is a still and costs nothing.
  */
 import { useEffect, useRef, useState } from 'react';
-import { motionUrl } from '@/art/motion';
+import { motionUrl } from '@/art/motionUrl';
 
 export function Motion({
   src,

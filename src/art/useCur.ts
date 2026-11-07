@@ -58,7 +58,7 @@ export type Cur = {
   repeat: boolean;
   /** Why the last attempt failed, when it did. */
   error: string | null;
-  /** Motion artwork for the sleeve, when the provider has any. See `art/motion`. */
+  /** Motion artwork for the sleeve, when the provider has any. See `art/motionUrl`. */
   motion: string | undefined;
 };
 
