@@ -492,16 +492,16 @@ html[data-arrived] .cx-side-mark {
 /* --- section heads in the display face: the catalogue's labels read as headings, counts stay mono --- */
 
 /* The labels are written lowercase for the mono face; as headings they start with a capital. */
-.cx-root[data-shell] .cx-sec-lbl.mono::first-letter,
-.cx-root[data-shell] .cx-hsec-lbl.mono::first-letter,
-.cx-root[data-shell] .cx-upnext-lbl.mono::first-letter,
-.cx-root[data-shell] .cx-toc-lbl.mono::first-letter {
+.cx-root .cx-sec-lbl.mono::first-letter,
+.cx-root .cx-hsec-lbl.mono::first-letter,
+.cx-root .cx-upnext-lbl.mono::first-letter,
+.cx-root .cx-toc-lbl.mono::first-letter {
   text-transform: uppercase;
 }
 
-.cx-root[data-shell] .cx-sec-lbl.mono,
-.cx-root[data-shell] .cx-hsec-lbl.mono,
-.cx-root[data-shell] .cx-upnext-lbl.mono {
+.cx-root .cx-sec-lbl.mono,
+.cx-root .cx-hsec-lbl.mono,
+.cx-root .cx-upnext-lbl.mono {
   display: inline-block;
   font-family: var(--font-display);
   font-weight: 600;
@@ -511,7 +511,7 @@ html[data-arrived] .cx-side-mark {
   color: var(--t2);
 }
 
-.cx-root[data-shell] .cx-toc-lbl.mono {
+.cx-root .cx-toc-lbl.mono {
   display: inline-block;
   font-family: var(--font-display);
   font-weight: 600;
@@ -555,28 +555,28 @@ html[data-arrived] .cx-side-mark {
  * card of its own — the record's wall inside it, corners of its own, a hairline — and a shelf that runs
  * on past the gutter fades into it rather than being cut by the pane's corner.
  */
-.cx-root[data-shell] .cx-bill {
+.cx-root .cx-bill {
   margin: 0 0 28px;
   padding: 28px 36px;
   border-radius: 14px;
   box-shadow: inset 0 0 0 1px rgb(255 255 255 / 6%);
 }
 
-.cx-root[data-shell] .cx-browse-inner[data-root] .cx-bill {
+.cx-root .cx-browse-inner[data-root] .cx-bill {
   padding: 22px 30px;
 }
 
-.cx-root[data-shell] .cx-bill-scrim {
+.cx-root .cx-bill-scrim {
   background:
     linear-gradient(90deg, rgb(16 17 20 / 72%) 0%, rgb(16 17 20 / 42%) 45%, rgb(16 17 20 / 14%) 100%),
     linear-gradient(180deg, rgb(16 17 20 / 28%), rgb(16 17 20 / 8%) 30%, rgb(16 17 20 / 8%) 70%, rgb(16 17 20 / 40%));
 }
 
-.cx-root[data-shell] .cx-shelf-row {
+.cx-root .cx-shelf-row {
   mask-image: linear-gradient(
     90deg,
-    #000 calc(100% - var(--pane-pad) - 56px),
-    transparent calc(100% - var(--pane-pad) + 6px)
+    #000 calc(100% - var(--browse-pad) - 56px),
+    transparent calc(100% - var(--browse-pad) + 6px)
   );
 }
 
@@ -588,10 +588,10 @@ html[data-arrived] .cx-side-mark {
  * the bar's. Play is the one filled chip — the one action here with a consequence, the same figure as
  * the bar's play ring.
  */
-.cx-root[data-shell] .cx-play-btn,
-.cx-root[data-shell] .cx-shuffle-btn,
-.cx-root[data-shell] .cx-bill-open,
-.cx-root[data-shell] .cx-inputs-empty-go {
+.cx-root .cx-play-btn,
+.cx-root .cx-shuffle-btn,
+.cx-root .cx-bill-open,
+.cx-root .cx-inputs-empty-go {
   height: 34px;
   padding: 0 16px 0 14px;
   gap: 9px;
@@ -603,20 +603,20 @@ html[data-arrived] .cx-side-mark {
   color: var(--t3);
 }
 
-.cx-root[data-shell] .cx-shuffle-btn:hover,
-.cx-root[data-shell] .cx-bill-open:hover,
-.cx-root[data-shell] .cx-inputs-empty-go:hover {
+.cx-root .cx-shuffle-btn:hover,
+.cx-root .cx-bill-open:hover,
+.cx-root .cx-inputs-empty-go:hover {
   border-color: rgb(255 255 255 / 20%);
   color: var(--t1);
 }
 
-.cx-root[data-shell] .cx-play-btn {
+.cx-root .cx-play-btn {
   border-color: transparent;
   background: var(--t1);
   color: #0b0b0d;
 }
 
-.cx-root[data-shell] .cx-play-btn:hover {
+.cx-root .cx-play-btn:hover {
   background: #fff;
   color: #0b0b0d;
 }
@@ -649,7 +649,7 @@ html[data-arrived] .cx-side-mark {
   gap: 14px;
 }
 
-.cx-root[data-shell] .cx-browse-title {
+.cx-root .cx-browse-title {
   font-size: 24px;
   font-weight: 700;
   letter-spacing: -0.03em;
@@ -659,14 +659,14 @@ html[data-arrived] .cx-side-mark {
   text-overflow: ellipsis;
 }
 
-.cx-root[data-shell] .cx-browse-count {
+.cx-root .cx-browse-count {
   color: var(--t5);
 }
 
 /* A service with a record put forward keeps its name as the head too: the billboard below carries the
    record's name at display size, and the eyebrow treatment the bare window gave the service name would
    leave this one view with a different head from every other. */
-.cx-root[data-shell] .cx-browse-inner[data-spotlight]:not([data-root]) .cx-browse-title {
+.cx-root .cx-browse-inner[data-spotlight]:not([data-root]) .cx-browse-title {
   font-family: var(--font-display);
   font-size: 24px;
   font-weight: 700;
@@ -678,22 +678,22 @@ html[data-arrived] .cx-side-mark {
 
 /* The billboard's kicker on a lit wall: the wall took the record's light and the kicker stayed in the
    greys of a black page, which left "today · where it came from" unreadable over a bright sleeve. */
-.cx-root[data-shell] .cx-bill-kicker {
+.cx-root .cx-bill-kicker {
   color: var(--t3);
   text-shadow: 0 1px 10px rgb(0 0 0 / 55%);
 }
 
-.cx-root[data-shell] .cx-bill-from {
+.cx-root .cx-bill-from {
   color: var(--t4);
 }
 
-.cx-root[data-shell] .cx-bill-from::before {
+.cx-root .cx-bill-from::before {
   background: var(--t5);
 }
 
 /* A shelf opened out of a door inside a service (Spotify's Popular Playlists) heads itself the way the
    server's own sections do (Apple Music's Voor jou), so one page does not carry two kinds of shelf head. */
-.cx-root[data-shell] .cx-browse-body[data-toc] .cx-doorshelf-name {
+.cx-root .cx-browse-body[data-toc] .cx-doorshelf-name {
   font-family: var(--font-display);
   font-size: 14px;
   font-weight: 600;
@@ -746,7 +746,7 @@ html[data-arrived] .cx-side-mark {
 }
 
 /* The search field in the frame's own language: a chip, like the room and the lamp in the bar. */
-.cx-root[data-shell] .cx-search {
+.cx-root .cx-search {
   flex: 0 1 280px;
   height: 36px;
   padding: 0 14px;
@@ -759,15 +759,15 @@ html[data-arrived] .cx-side-mark {
     color 0.18s;
 }
 
-.cx-root[data-shell] .cx-search::after {
+.cx-root .cx-search::after {
   display: none;
 }
 
-.cx-root[data-shell] .cx-search input::placeholder {
+.cx-root .cx-search input::placeholder {
   color: var(--t6);
 }
 
-.cx-root[data-shell] .cx-search:focus-within {
+.cx-root .cx-search:focus-within {
   border-color: rgb(255 255 255 / 20%);
   color: var(--t4);
 }
@@ -1061,3 +1061,97 @@ html[data-arrived] .cx-side-mark {
   }
 }
 
+/* --- the phone speaks the same language ------------------------------------------------ */
+
+@media (max-width: 979px) {
+  /* The billboard stacks: a 200px sleeve beside five lines of kicker was a column of broken words. */
+  .cx-root .cx-bill {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 18px;
+  }
+
+  .cx-root .cx-bill-cover {
+    width: 128px;
+  }
+
+  .cx-root .cx-bill-kicker {
+    display: block;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* The provenance runs on inline so the one line can end in an ellipsis rather than a cut. */
+  .cx-root .cx-bill-from {
+    display: inline;
+    margin-left: 12px;
+  }
+
+  .cx-root .cx-bill-from::before {
+    display: inline-block;
+    margin-right: 12px;
+    vertical-align: middle;
+  }
+
+  /* Four marks across a hand's width, and no second row for the fourth. */
+  .cx-root .cx-hall {
+    gap: 12px;
+    justify-content: space-between;
+  }
+
+  .cx-root .cx-mark {
+    width: 72px;
+  }
+
+  /* The shortcut row scrolls under a fade, like a shelf, rather than ending in a cut word. */
+  .cx-root .cx-welcome-shortcuts {
+    mask-image: linear-gradient(90deg, #000 calc(100% - 36px), transparent 100%);
+  }
+
+  .cx-root .cx-bill-title {
+    font-size: 30px;
+  }
+
+  /* The crate at a hand's width: smaller sleeves, closer together. */
+  .cx-crate-row {
+    height: 220px;
+  }
+
+  .cx-crate-lp {
+    --w: calc(172px - var(--ad) * 26px);
+
+    translate: calc(-50% + var(--d) * 104px) -50%;
+    transform: translateZ(calc(var(--ad) * -60px)) rotateY(calc(var(--d) * -12deg));
+  }
+
+  .cx-crate-title {
+    font-size: 22px;
+  }
+
+  /* The ways in, as chips with the service's colour on them — the sidebar's row, lying down. */
+  .cx-welcome-shortcuts {
+    gap: 8px;
+  }
+
+  .cx-welcome-shortcuts button {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 32px;
+    padding: 0 12px 0 8px;
+    border: 1px solid rgb(255 255 255 / 9%);
+    border-radius: 16px;
+    background: rgb(255 255 255 / 2.5%);
+    font-size: 9.5px;
+    letter-spacing: 0.16em;
+    color: var(--t3);
+    white-space: nowrap;
+  }
+
+  .cx-welcome-shortcuts button:hover {
+    color: var(--t1);
+  }
+}
