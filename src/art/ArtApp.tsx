@@ -35,7 +35,7 @@ import { useRoomDrag } from '@/art/useRoomDrag';
 import { useEdges, useEscape } from '@/art/useEdges';
 import { QueueSheet } from '@/art/Rail';
 import { Crossfade } from '@/art/Crossfade';
-import { Browse, MiniBar, Sources, type BrowseNode } from '@/art/Browse';
+import { Browse, MiniBar, Sources, serviceTint, type BrowseNode } from '@/art/Browse';
 import { channelsOf, leaderOf, useCur, type Channel } from '@/art/useCur';
 import { serviceOf, useResolved } from '@/art/useOrigin';
 import { useFavorites, useQueue, useRecents } from '@/art/useCollections';
@@ -1492,6 +1492,13 @@ function Welcome({
       <div className="cx-welcome-shortcuts mono">
         {services.map((service) => (
           <button type="button" key={service.id} onClick={() => onBrowse({ id: service.rootId, label: service.name })}>
+            <span
+              className="cx-sdot disp"
+              style={{ '--tint': serviceTint(service.id.split(':')[0] ?? service.id) ?? 'var(--t6)' } as React.CSSProperties}
+              aria-hidden="true"
+            >
+              {service.name.slice(0, 2)}
+            </span>
             {service.name}
           </button>
         ))}

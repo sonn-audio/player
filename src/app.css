@@ -996,3 +996,69 @@ html[data-arrived] .cx-side-mark {
   border-radius: 0;
   box-shadow: none;
 }
+
+/* --- a record or an artist, in the frame ------------------------------------------- */
+
+/*
+ * The bare window drew a record as a spread: the sleeve the whole left half, from the window's top edge
+ * to its bottom. Inside the frame the left half's edges are the pane's rounded corners, so the sleeve
+ * becomes a card again — within the gutter, corners and shadow of its own, the bloom behind it — and the
+ * words keep the right column. Same grid, different measure.
+ */
+@media (min-width: 1280px) {
+  .cx-root[data-shell] .cx-browse-inner[data-detail]:has(.cx-detail) {
+    --page-pad: var(--pane-pad);
+
+    grid-template-columns: min(calc(100vh - 92px - 10px - 2 * var(--pane-pad)), 40vw) minmax(0, 1fr);
+    column-gap: clamp(32px, 3.6vw, 64px);
+    padding: var(--pane-pad) 0 0 var(--pane-pad);
+  }
+
+  .cx-root[data-shell] .cx-browse-inner[data-detail]:has(.cx-detail) .cx-detail-art {
+    top: var(--pane-pad);
+    height: auto;
+    aspect-ratio: 1;
+  }
+
+  .cx-root[data-shell] .cx-browse-inner[data-detail]:has(.cx-detail) .cx-detail-cover {
+    border-radius: 8px;
+    box-shadow:
+      0 40px 80px -38px rgb(0 0 0 / 95%),
+      inset 0 0 0 1px rgb(255 255 255 / 12%);
+  }
+
+  /* A person without a photograph of their own is the circle; a photograph is a card like a sleeve. */
+  .cx-root[data-shell] .cx-browse-inner[data-detail]:has(.cx-detail) .cx-detail[data-portrait]:not([data-photo]) .cx-detail-cover {
+    border-radius: 50%;
+  }
+
+  .cx-root[data-shell] .cx-browse-inner[data-detail]:has(.cx-detail[data-portrait][data-photo]) .cx-detail-art {
+    height: auto;
+    aspect-ratio: 1;
+  }
+
+  .cx-root[data-shell] .cx-browse-inner[data-detail]:has(.cx-detail[data-portrait][data-photo]) .cx-detail-cover {
+    border-radius: 8px;
+    box-shadow:
+      0 40px 80px -38px rgb(0 0 0 / 95%),
+      inset 0 0 0 1px rgb(255 255 255 / 12%);
+  }
+
+  /* The seam belonged to a photograph that ran to the fold; a card has edges of its own. */
+  .cx-root[data-shell] .cx-browse-inner[data-detail]:has(.cx-detail[data-portrait][data-photo]) .cx-detail-art::after {
+    display: none;
+  }
+
+  .cx-root[data-shell] .cx-browse-inner[data-detail]:has(.cx-detail) .cx-detail-bloom {
+    display: block;
+  }
+
+  .cx-root[data-shell] .cx-browse-inner[data-detail]:has(.cx-detail) > .cx-browse-back {
+    margin-top: 0;
+  }
+
+  .cx-root[data-shell] .cx-browse-inner[data-detail]:has(.cx-detail) .cx-detail-kind {
+    margin-top: 18px;
+  }
+}
+

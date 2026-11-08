@@ -11283,27 +11283,17 @@
 /* --- the whisper: six seconds still and the controls step back --- */
 
 @media (min-width: 1280px) {
-  .cx-root[data-still] .cx-stage[data-spread] .cx-eyebrow,
-  .cx-root[data-still] .cx-stage[data-spread] .cx-stage-foot,
-  .cx-root[data-still] .cx-stage[data-spread] .cx-fav,
-  .cx-root[data-still] .cx-pbar,
-  .cx-root[data-still] .cx-side {
+  .cx-root[data-still] .cx-stage .cx-eyebrow,
+  .cx-root[data-still] .cx-stage .cx-stage-foot,
+  .cx-root[data-still] .cx-stage .cx-fav {
     opacity: 0.22;
     transition: opacity 1.6s var(--cx-ease);
   }
 
-  .cx-stage[data-spread] .cx-eyebrow,
-  .cx-stage[data-spread] .cx-stage-foot,
-  .cx-stage[data-spread] .cx-fav,
-  .cx-pbar,
-  .cx-side {
+  .cx-stage .cx-eyebrow,
+  .cx-stage .cx-stage-foot,
+  .cx-stage .cx-fav {
     transition: opacity 0.4s var(--cx-ease);
-  }
-
-  /* The bar under the pointer stays legible even in the whisper. */
-  .cx-root[data-still] .cx-pbar:hover,
-  .cx-root[data-still] .cx-side:hover {
-    opacity: 1;
   }
 }
 
