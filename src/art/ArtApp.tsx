@@ -463,6 +463,36 @@ export function ArtApp() {
     [],
   );
 
+  /*
+   * The dial, for a room on a station.
+   *
+   * The radio service's own shelves (Radio Paradise, the TuneIn presets, custom streams) are read once,
+   * the first time a room is heard playing live, and the room's favourites are sifted for stations —
+   * the contract has no kind on a favourite, so a station is known by the shape of its id.
+   */
+  const radio = services.find((service) => service.id === 'radio');
+  const [radioDoors, setRadioDoors] = useState<ContentItem[]>([]);
+  useEffect(() => {
+    if (!cur.isLive || !radio || radioDoors.length > 0 || !content.available) {
+      return;
+    }
+    void content
+      .browse(radio.rootId)
+      .then((listing) => setRadioDoors(listing.items.filter((item) => item.browsable)))
+      .catch(() => undefined);
+  }, [cur.isLive, radio, radioDoors.length, content]);
+  const keptStations = useMemo(
+    () =>
+      favorites
+        .filter((favorite) => /^(tunein|radioparadise|somafm|radio|https?):/i.test(favorite.source))
+        .map((favorite) => ({
+          key: String(favorite.id),
+          name: favorite.name,
+          play: () => zone && void api.play(zone.id, favorite.source),
+        })),
+    [favorites, zone, api],
+  );
+
   const goHome = (): void => setView({ kind: 'home' });
   /*
    * The desk: a view inside the frame on a desk, a sheet over the page on a phone.
@@ -653,6 +683,8 @@ export function ArtApp() {
                 <div className="cx-deskpage-body">
                   <RoomsSheet zones={zones} channels={channels} selectedId={zoneId} phone={false} onSelect={select} drag={drag} />
                 </div>
+                {/* One line about the clocks: what the sync numbers on the zones say, in words. */}
+                <p className="cx-deskpage-note">{clockLine(channels)}</p>
               </div>
             ) : !phone ? (
               <Wall
@@ -671,6 +703,7 @@ export function ArtApp() {
                   <Browse
                     zone={zone}
                     root={view.node}
+                    services={services}
                     onExit={goHome}
                     onOpenRooms={() => setSheet('rooms')}
                     // Remount on a different root so the internal path stack starts fresh rather than
@@ -732,7 +765,19 @@ export function ArtApp() {
                   <Stage
                     cur={cur}
                     drag={drag}
-                    spread={false}
+                    /* Inside the frame the record is a composition; at rest the frame steps back and the
+                       record has the window, which is the spread's own argument. */
+                    spread={idle}
+                    upNextRows={7}
+                    live={
+                      cur.isLive
+                        ? {
+                            doors: radioDoors,
+                            kept: keptStations,
+                            onOpen: (item) => setView({ kind: 'browse', node: { id: item.id, label: item.name } }),
+                          }
+                        : undefined
+                    }
                     onSignal={openSignal}
                     onLeaveCanvas={() => setAsked(null)}
                     resting={idle}
@@ -752,6 +797,7 @@ export function ArtApp() {
               <Browse
                 zone={zone}
                 root={view.node}
+                services={services}
                 onExit={goHome}
                 onOpenRooms={() => setSheet('rooms')}
                 key={view.node.id ?? 'root'}
@@ -1192,6 +1238,44 @@ export function ArtApp() {
       </Sheet>
     </div>
   );
+}
+
+/**
+ * The house's clocks, in a sentence.
+ *
+ * A group reports how far ahead of the stream its leader runs and how far it has drifted
+ * (`output.sync`); a room on its own reports nothing worth a sentence. Protocols are named only when
+ * there is more than one, because that is the one thing that makes a join fail (`protocol-mismatch`).
+ */
+function clockLine(channels: Channel[]): string {
+  const groups = channels.filter((channel) => channel.members.length > 1);
+  const parts: string[] = [];
+  for (const group of groups) {
+    const names = group.members.map((member) => member.name);
+    const last = names.pop();
+    const who = names.length ? `${names.join(', ')} and ${last}` : (last ?? '');
+    const sync = group.leader.output?.sync;
+    if (sync && sync.state === 'synchronized') {
+      const lead = sync.leadMs === null ? '' : ` · ${Math.round(sync.leadMs)} ms ahead of the stream`;
+      const drift =
+        sync.driftMs === null
+          ? ''
+          : ` · drift ${Math.abs(sync.driftMs) < 10 ? sync.driftMs.toFixed(1) : Math.round(sync.driftMs)} ms`;
+      parts.push(`${who} are locked to one clock${lead}${drift}`);
+    } else if (sync && sync.state === 'error') {
+      parts.push(`${who} are not in step right now`);
+    } else {
+      parts.push(`${who} play together`);
+    }
+  }
+  if (parts.length === 0) {
+    parts.push('No rooms are grouped — each keeps its own clock.');
+  }
+  const protocols = [...new Set(channels.map((channel) => channel.leader.output?.protocol).filter(Boolean))] as string[];
+  if (protocols.length > 1) {
+    parts.push(`Rooms on different protocols (${protocols.join(', ')}) cannot be grouped with each other.`);
+  }
+  return parts.join(' ');
 }
 
 /** `3 rooms · 1 group` — the desk's one fact, for the sheet's head. */

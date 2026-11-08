@@ -390,6 +390,7 @@ export function Stage({
   onOpenOrigin,
   spread = true,
   upNextRows = 3,
+  live,
 }: {
   cur: Cur;
   /** The room gestures — the sleeve is the thing you pick up. See `useRoomDrag`. */
@@ -402,6 +403,17 @@ export function Stage({
   spread?: boolean;
   /** How many of what is next to list under the record. Three on a bare window; the frame gives the column more. */
   upNextRows?: number;
+  /**
+   * What a station has instead of a running order: the radio service's own shelves, and the stations this
+   * room keeps. Drawn in the foot where the queue would be. See `ArtApp` for where it comes from.
+   */
+  live?:
+    | {
+        doors: ContentItem[];
+        kept: { key: string; name: string; play: () => void }[];
+        onOpen: (item: ContentItem) => void;
+      }
+    | undefined;
   onOpenRooms: () => void;
   onOpenQueue: () => void;
   onBrowse: () => void;
@@ -445,7 +457,9 @@ export function Stage({
   const artKey = artKeyOf(leader?.track);
 
   /* The largest the name may be, and the smallest it may shrink to before the box clips it. */
-  const fit = useFitText(mainTitle(cur.title), { max: 200, min: 24 });
+  /* At rest the name is a label beside a record, not the subject of the page: a one-word title that
+     never wraps would otherwise stay at the largest size and run off the right page. */
+  const fit = useFitText(mainTitle(cur.title), { max: resting ? 84 : 200, min: 24 });
 
   /*
    * A track change is a dissolve, so each line keeps the one it is replacing.
@@ -531,6 +545,23 @@ export function Stage({
 
           {cur.hasTrack ? (
             <>
+              {/*
+               * The record, at rest: a disc behind the sleeve, turning while the room plays.
+               *
+               * Only here. On every other screen the sleeve stands alone — a turning disc beside every
+               * list would be furniture — and the rest is the one place that is about looking at a
+               * record rather than doing something with it. The label is the sleeve's own artwork, the
+               * grooves are a gradient, and the light on the vinyl stays still while the disc turns under
+               * it (see `.cx-disc` in `app.css`). 1.8 s a turn is 33⅓ rpm.
+               */}
+              {resting && (
+                <span className="cx-disc" data-playing={cur.isPlaying || undefined} aria-hidden="true">
+                  <span className="cx-disc-platter">
+                    <span className="cx-disc-label" style={{ backgroundImage: zoneCoverCss(api, leader, 240) }} />
+                  </span>
+                  <span className="cx-disc-shine" />
+                </span>
+              )}
               <button
                 type="button"
                 className="cx-cover"
@@ -805,6 +836,39 @@ export function Stage({
                   ))}
                   {upNext.length === 0 && <li className="cx-upnext-empty">nothing after this one</li>}
                 </ol>
+              </div>
+            )}
+            {/* A station has no running order; it has the dial. The radio service's shelves, and the
+                stations this room keeps, stand where the queue would. */}
+            {cur.hasTrack && cur.isLive && live && (live.doors.length > 0 || live.kept.length > 0) && (
+              <div className="cx-onradio">
+                {live.doors.length > 0 && (
+                  <>
+                    <span className="cx-upnext-lbl mono">on radio</span>
+                    <div className="cx-onradio-doors">
+                      {live.doors.map((door) => (
+                        <button type="button" className="cx-onradio-door" key={door.id} onClick={() => live.onOpen(door)}>
+                          <span className="cx-onradio-mark disp" aria-hidden="true">
+                            {door.name.slice(0, 2)}
+                          </span>
+                          <span className="cx-onradio-name">{door.name}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
+                {live.kept.length > 0 && (
+                  <>
+                    <span className="cx-upnext-lbl mono">kept stations</span>
+                    <div className="cx-onradio-kept">
+                      {live.kept.map((station) => (
+                        <button type="button" className="cx-onradio-chip" key={station.key} onClick={station.play}>
+                          {station.name}
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
               </div>
             )}
           </div>

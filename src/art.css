@@ -12288,3 +12288,289 @@
   line-height: 1.5;
   color: var(--t6);
 }
+
+/* ==========================================================================================
+ * The crate: what the room played lately, as records to flip through. See `Crate.tsx`.
+ * ========================================================================================== */
+
+.cx-crate {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 0 calc(-1 * var(--browse-pad, 40px));
+  padding: 0 var(--browse-pad, 40px);
+  overflow: hidden;
+}
+
+.cx-crate-row {
+  position: relative;
+  width: 100%;
+  height: clamp(220px, 30vh, 300px);
+  perspective: 1500px;
+  perspective-origin: 50% 45%;
+}
+
+.cx-crate-floor {
+  position: absolute;
+  left: 50%;
+  top: clamp(190px, 27vh, 270px);
+  width: 1000px;
+  height: 80px;
+  translate: -50% 0;
+  background: radial-gradient(50% 50% at 50% 50%, rgb(0 0 0 / 70%), transparent 70%);
+  filter: blur(10px);
+  pointer-events: none;
+}
+
+/*
+ * One rule for every sleeve, from its distance to the middle.
+ *
+ * `--d` is signed (left negative), `--ad` its size. The middle one is upright at full size; each step
+ * out is smaller, further back and more turned away, with a veil over it that deepens with distance.
+ * All of it transitions, so pressing a sleeve at the side turns the crate rather than redrawing it.
+ */
+.cx-crate-lp {
+  --w: calc(250px - var(--ad) * 34px);
+
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: calc(10 - var(--ad));
+  width: var(--w);
+  aspect-ratio: 1;
+  border-radius: 4px;
+  background-color: var(--cx-cover);
+  background-position: center;
+  background-size: cover;
+  box-shadow:
+    0 34px 60px -22px rgb(0 0 0 / 95%),
+    0 4px 10px rgb(0 0 0 / 40%),
+    inset 0 0 0 1px rgb(255 255 255 / 12%);
+  translate: calc(-50% + var(--d) * 165px) -50%;
+  transform: translateZ(calc(var(--ad) * -80px)) rotateY(calc(var(--d) * -14deg));
+  transform-style: preserve-3d;
+  cursor: pointer;
+  transition:
+    translate 0.6s var(--cx-ease),
+    transform 0.6s var(--cx-ease),
+    width 0.6s var(--cx-ease),
+    box-shadow 0.6s var(--cx-ease);
+}
+
+.cx-crate-lp::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 4px;
+  background: rgb(9 9 11 / calc(var(--ad) * 0.2));
+  transition: background 0.6s var(--cx-ease);
+}
+
+.cx-crate-lp::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 4px;
+  background: linear-gradient(100deg, rgb(255 255 255 / 8%), transparent 20%, transparent 85%, rgb(0 0 0 / 25%));
+  pointer-events: none;
+}
+
+.cx-crate-lp[data-centre] {
+  transform: none;
+}
+
+.cx-crate-lp:hover {
+  box-shadow:
+    0 40px 70px -22px rgb(0 0 0 / 95%),
+    0 4px 10px rgb(0 0 0 / 40%),
+    inset 0 0 0 1px rgb(255 255 255 / 22%);
+}
+
+.cx-crate-cap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  margin-top: 14px;
+  text-align: center;
+}
+
+.cx-crate-title {
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.035em;
+  color: var(--t1);
+}
+
+.cx-crate-sub {
+  font-size: 13px;
+  color: var(--t5);
+}
+
+.cx-crate-play {
+  margin-top: 10px;
+}
+
+.cx-crate-dots {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 12px;
+}
+
+.cx-crate-dots i {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--t8);
+  transition:
+    width 0.3s var(--cx-ease),
+    background 0.3s;
+}
+
+.cx-crate-dots i[data-on] {
+  width: 16px;
+  border-radius: 2px;
+  background: var(--t2);
+}
+
+/* --- whose record: a dot in the service's colour, only where services mix --- */
+
+.cx-svc-dot {
+  display: inline-block;
+  border-radius: 50%;
+  background: linear-gradient(152deg, color-mix(in srgb, var(--tint) 92%, #000), color-mix(in srgb, var(--tint) 38%, #0a0a0c));
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 12%);
+}
+
+.cx-tile-svc {
+  position: absolute;
+  right: 7px;
+  bottom: 7px;
+  z-index: 2;
+  width: 16px;
+  height: 16px;
+  box-shadow:
+    0 0 0 2px rgb(10 10 12 / 75%),
+    inset 0 0 0 1px rgb(255 255 255 / 12%);
+}
+
+.cx-trow-svc {
+  width: 8px;
+  height: 8px;
+  margin-left: 8px;
+  vertical-align: 1px;
+}
+
+/* --- what a search cannot say for itself --- */
+
+.cx-search-notes {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 28px;
+  padding-top: 18px;
+  border-top: 1px solid var(--hair-soft);
+}
+
+.cx-search-note {
+  margin: 0;
+  font-size: 9.5px;
+  letter-spacing: 0.18em;
+  color: var(--t6);
+}
+
+.cx-search-note-go {
+  color: var(--t3);
+  transition: color 0.18s;
+}
+
+.cx-search-note-go:hover {
+  color: var(--t1);
+}
+
+/* --- the dial: the radio's shelves and the kept stations, where a queue would stand --- */
+
+.cx-onradio {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+.cx-onradio-doors {
+  display: flex;
+  gap: 6px;
+  margin: 0 -6px 8px;
+}
+
+.cx-onradio-door {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 9px;
+  width: 104px;
+  padding: 12px 6px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  text-align: center;
+  color: var(--t4);
+  transition:
+    background 0.18s,
+    color 0.18s;
+}
+
+.cx-onradio-door:hover {
+  background: rgb(255 255 255 / 3.5%);
+  color: var(--t1);
+}
+
+.cx-onradio-mark {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: linear-gradient(152deg, color-mix(in srgb, #e8b84b 92%, #000), color-mix(in srgb, #e8b84b 38%, #0a0a0c));
+  box-shadow:
+    inset 0 0 0 1px rgb(255 255 255 / 12%),
+    0 10px 24px -10px rgb(0 0 0 / 80%);
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0;
+  color: rgb(255 255 255 / 92%);
+}
+
+.cx-onradio-name {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cx-onradio-kept {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.cx-onradio-chip {
+  display: inline-flex;
+  align-items: center;
+  height: 30px;
+  padding: 0 13px;
+  border: 1px solid rgb(255 255 255 / 10%);
+  border-radius: 15px;
+  font-size: 12.5px;
+  color: var(--t3);
+  transition:
+    color 0.18s,
+    border-color 0.18s;
+}
+
+.cx-onradio-chip:hover {
+  color: var(--t1);
+  border-color: rgb(255 255 255 / 22%);
+}
+

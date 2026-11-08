@@ -278,11 +278,20 @@ export function PlayerBar({
           )}
         </div>
         {cur.hasTrack && <BarFavourite cur={cur} />}
-        {cur.hasTrack && (
-          <button type="button" className="cx-wire mono cx-pbar-wire" onClick={onSignal} title="What is happening to the audio">
-            {wireLabel(cur)}
-          </button>
-        )}
+        {/* The verdict, when the server gives one: the file's own samples reach the room. The one green
+            thing in the bar, because it is the one thing in the bar that is a judgement. */}
+        {cur.hasTrack &&
+          (leader?.format?.bitPerfect ? (
+            <button type="button" className="cx-pbar-lamp mono" onClick={onSignal} title="What is happening to the audio">
+              <i aria-hidden="true" />
+              Bit-perfect
+              <b>{wireLabel(cur)}</b>
+            </button>
+          ) : (
+            <button type="button" className="cx-wire mono cx-pbar-wire" onClick={onSignal} title="What is happening to the audio">
+              {wireLabel(cur)}
+            </button>
+          ))}
       </div>
 
       <div className="cx-pbar-mid">

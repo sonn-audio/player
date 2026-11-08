@@ -36,6 +36,7 @@ import { Origin, titleStep } from '@/art/Stage';
 import { useResolved } from '@/art/useOrigin';
 import { ArtistWork, artistLine, useArtistRecords } from '@/art/Artist';
 import { LetterIndex, alphabetical } from '@/art/Index';
+import { Crate } from '@/art/Crate';
 import {
   BackGlyph,
   Bars,
@@ -50,7 +51,7 @@ import {
 } from '@/art/glyphs';
 import { formatTime } from '@/lib/format';
 import { mainTitle } from '@/lib/title';
-import type { ContentAbout, ContentItem, ContentListing, ContentSection, ContentSource } from '@/api/content';
+import type { ContentAbout, ContentItem, ContentListing, ContentSection, ContentService, ContentSource } from '@/api/content';
 import type { ApiInput, ApiZoneState } from '@/api/types';
 import type { Cur } from '@/art/useCur';
 
@@ -619,6 +620,7 @@ export function Tile({
   index = 0,
   under,
   anchor = false,
+  badge,
   onOpen,
   onPlay,
 }: {
@@ -628,6 +630,11 @@ export function Tile({
   under?: string | undefined;
   /** This is the record we just came back from: its sleeve lands here. See `coverMorph`. */
   anchor?: boolean;
+  /**
+   * The service to mark the sleeve with, as a dot in its colour. Only where services stand side by
+   * side — a search across all of them — and never inside one, where the page already says whose it is.
+   */
+  badge?: string | undefined;
   onOpen: () => void;
   onPlay: () => void;
 }) {
@@ -691,6 +698,13 @@ export function Tile({
         {/* Only the tile being pointed at, so a shelf of thirty does not open thirty streams. */}
         <Motion src={item.animatedCoverUrl} active={hovered} />
         <span className="cx-tile-ov" />
+        {badge && (
+          <span
+            className="cx-svc-dot cx-tile-svc"
+            style={{ '--tint': serviceTint(badge.split(':')[0] ?? badge) ?? 'var(--t6)' } as React.CSSProperties}
+            aria-hidden="true"
+          />
+        )}
         {item.playable && (
           <span
             className="cx-tile-chip"
@@ -758,6 +772,7 @@ export function TrackRow({
   albumArtist,
   sub,
   thumb = false,
+  badge,
   onPlay,
   onQueue,
 }: {
@@ -765,6 +780,8 @@ export function TrackRow({
   index: number;
   playing?: boolean;
   paused?: boolean;
+  /** The service, as a dot after the title — the same rule as `Tile`'s `badge`. */
+  badge?: string | undefined;
   /** The record's own artist: a track by the same one does not say so again under its title. */
   albumArtist?: string | undefined;
   /** Said instead of the artist, where the artist is not the useful half — an artist's own page
@@ -783,7 +800,16 @@ export function TrackRow({
         {thumb && <span className="cx-tthumb" style={{ backgroundImage: itemCoverCss(item.coverUrl) }} aria-hidden="true" />}
         <span className="cx-tidx mono">{playing ? <Bars still={paused} /> : index + 1}</span>
         <span className="cx-tmeta">
-          <span className="cx-ttitle">{item.name}</span>
+          <span className="cx-ttitle">
+            {item.name}
+            {badge && (
+              <i
+                className="cx-svc-dot cx-trow-svc"
+                style={{ '--tint': serviceTint(badge.split(':')[0] ?? badge) ?? 'var(--t6)' } as React.CSSProperties}
+                aria-hidden="true"
+              />
+            )}
+          </span>
           {sub ? (
             <span className="cx-tartist">{sub}</span>
           ) : (
@@ -862,10 +888,13 @@ function Actions({
 export function Browse({
   zone,
   root,
+  services = [],
   onExit,
   onOpenRooms,
 }: {
   zone: ApiZoneState | null;
+  /** What the server offers, for the notes a search leaves: which service did not answer, which cannot be asked. */
+  services?: ContentService[];
   /** Where to start: a service root, or nothing for the catalogue's own root. */
   root: BrowseNode;
   /** Called when the back link is pressed at the top of the stack. */
@@ -915,6 +944,9 @@ export function Browse({
   const [query, setQuery] = useState('');
   const [searching, setSearching] = useState(false);
   const [results, setResults] = useState<ContentSection[]>([]);
+  /* The services that did not answer the last search, by id. Shown, because a result that is silently
+     missing a service is a result that lies. */
+  const [failed, setFailed] = useState<string[]>([]);
   const [about, setAbout] = useState<ContentAbout | null>(null);
   const field = useRef<HTMLInputElement>(null);
   /*
@@ -1011,6 +1043,7 @@ export function Browse({
     const trimmed = query.trim();
     if (trimmed.length < 2) {
       setResults([]);
+      setFailed([]);
       setSearching(false);
       return undefined;
     }
@@ -1038,12 +1071,21 @@ export function Browse({
               }))
               .filter((section) => section.items.length > 0),
           );
+          setFailed(found.services.filter((entry) => entry.failed).map((entry) => entry.service));
           setSearching(false);
         })
         .catch(() => setSearching(false));
     }, 260);
     return () => clearTimeout(timer);
   }, [content, query]);
+
+  /* Do the results come from more than one service? Only then does a sleeve need to say whose it is. */
+  const mixed = useMemo(() => new Set(results.flatMap((section) => section.items.map((item) => item.service))).size > 1, [results]);
+  /* The radio, when the server has one and it declares nothing searchable. */
+  const radioService = useMemo(
+    () => services.find((service) => service.id === 'radio' && service.searchableKinds.length === 0) ?? null,
+    [services],
+  );
 
   const open = useCallback((item: ContentItem) => {
     setQuery('');
@@ -1501,6 +1543,7 @@ export function Browse({
             <section
               className="cx-shelf"
               key={section.id}
+              data-mixed={mixed || undefined}
               data-lead={(section.items.length >= 3 && !section.items.every((item) => item.kind === 'track')) || undefined}
             >
               <div className="cx-sec-head">
@@ -1518,6 +1561,7 @@ export function Browse({
                       item={item}
                       index={index}
                       thumb
+                      badge={mixed ? item.service : undefined}
                       playing={nowPlaying !== '' && item.name.trim().toLowerCase() === nowPlaying}
                       paused={zone?.state !== 'playing'}
                       onPlay={() => play(item)}
@@ -1534,6 +1578,7 @@ export function Browse({
                       item={item}
                       index={index}
                       anchor={item.id === returning}
+                      badge={mixed ? item.service : undefined}
                       onOpen={() => open(item)}
                       onPlay={() => play(item)}
                     />
@@ -1542,6 +1587,41 @@ export function Browse({
               )}
             </section>
           ))}
+
+          {/*
+           * What a search cannot say for itself.
+           *
+           * A service that did not answer leaves a hole shaped exactly like a result that does not exist,
+           * so it is named. And the radio has no search of its own — its stations are dials to turn, not
+           * names to type — which is worth one line and a door rather than a shelf that never fills.
+           */}
+          {query && !searching && (failed.length > 0 || radioService) && (
+            <div className="cx-search-notes">
+              {failed.length > 0 && (
+                <p className="cx-search-note mono">
+                  {failed
+                    .map((id) => services.find((service) => service.id === id)?.name ?? id)
+                    .join(', ')}{' '}
+                  did not answer this time
+                </p>
+              )}
+              {radioService && (
+                <p className="cx-search-note mono">
+                  radio has no search of its own ·{' '}
+                  <button
+                    type="button"
+                    className="cx-search-note-go mono"
+                    onClick={() => {
+                      setQuery('');
+                      setStack((prev) => [...prev, { id: radioService.rootId, label: radioService.name }]);
+                    }}
+                  >
+                    open radio
+                  </button>
+                </p>
+              )}
+            </div>
+          )}
 
           {doors ? (
             /*
@@ -1665,19 +1745,17 @@ export function Browse({
                 <span className="cx-sec-lbl mono">lately in this room</span>
                 <span className="cx-sec-rule" />
               </div>
-              <div className="cx-welcome-recents-row">
-                {recents.slice(0, 12).map((entry) => (
-                  <button
-                    type="button"
-                    className="cx-welcome-recent"
-                    key={entry.source}
-                    onClick={() => zone && void api.play(zone.id, entry.source)}
-                  >
-                    <span className="cx-welcome-recent-cov" style={{ backgroundImage: itemCoverCss(entry.coverUrl) }} />
-                    <span className="cx-welcome-recent-title">{entry.title || entry.album || entry.source}</span>
-                  </button>
-                ))}
-              </div>
+              {/* As records in a crate, not a row of thumbnails — see `Crate`. */}
+              <Crate
+                room={zone?.name ?? 'this room'}
+                items={recents.slice(0, 12).map((entry) => ({
+                  key: entry.source,
+                  title: entry.title || entry.album || entry.source,
+                  sub: [entry.artist, entry.album && entry.album !== entry.title ? entry.album : ''].filter(Boolean).join(' · '),
+                  cover: entry.coverUrl || undefined,
+                  play: () => zone && void api.play(zone.id, entry.source),
+                }))}
+              />
             </section>
           )}
 
