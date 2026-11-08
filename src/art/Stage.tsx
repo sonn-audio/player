@@ -394,6 +394,7 @@ export function Stage({
   origin,
   onOpenOrigin,
   spread = true,
+  upNextRows = 3,
 }: {
   cur: Cur;
   /** The room gestures — the sleeve is the thing you pick up. See `useRoomDrag`. */
@@ -404,6 +405,8 @@ export function Stage({
    * with a sidebar beside it and a full-bleed sleeve would be a page torn out of the frame. See `app.css`.
    */
   spread?: boolean;
+  /** How many of what is next to list under the record. Three on a bare window; the frame gives the column more. */
+  upNextRows?: number;
   onOpenRooms: () => void;
   onOpenQueue: () => void;
   onBrowse: () => void;
@@ -858,7 +861,7 @@ export function Stage({
                 {/* Three rows, each a record: sleeve, name, who, how long. Two thumbnails and one line
                     said less than this and took the same height. The label opens the whole queue. */}
                 <ol className="cx-upnext-list">
-                  {upNext.slice(0, 3).map((entry) => (
+                  {upNext.slice(0, upNextRows).map((entry) => (
                     <li key={entry.key}>
                       <button
                         type="button"

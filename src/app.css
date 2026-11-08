@@ -531,6 +531,24 @@ body:has(.cx-root[data-shell]) .admin-link {
   display: none;
 }
 
+/* The house strip under the record says what the sidebar already says; the ways to the two rests are in the bar. */
+.cx-root[data-shell] .cx-stage-house {
+  display: none;
+}
+
+/* --- the keyboard ------------------------------------------------------------- */
+
+.cx-snav:focus-visible,
+.cx-pbar-ic:focus-visible,
+.cx-pbar-fav:focus-visible,
+.cx-pbar-room:focus-visible,
+.cx-pbar-cov:focus-visible,
+.cx-sgroup-go:focus-visible,
+.cx-side-brand:focus-visible {
+  outline: 1.5px solid color-mix(in srgb, var(--accent) 70%, transparent);
+  outline-offset: 2px;
+}
+
 /* --- left alone: the frame steps back and the record has the screen -------- */
 
 .cx-root[data-shell][data-idle] .cx-shell {

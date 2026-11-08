@@ -1752,7 +1752,88 @@ export function Browse({
  * (a turntable, a bare jack) means selecting it *is* the whole interaction, and saying so is more
  * use than offering transport buttons that will do nothing.
  */
-export function Sources({ zone, onDone }: { zone: ApiZoneState | null; onDone: () => void }) {
+/** The kinds of source that arrive on a room by themselves — a receiver someone cast to, not a thing picked here. */
+const RECEIVER_KINDS = new Set(['airplay', 'spotify', 'bluetooth', 'linein']);
+
+/**
+ * An input's icon, from the server's hint.
+ *
+ * The hint is an open set, so the switch has a default rather than an exhaustive list; a value this build
+ * has never seen gets the plain jack. Drawn inline like every glyph in this face, so they take the ink
+ * around them.
+ */
+function InputGlyph({ icon }: { icon: string }) {
+  const common = { width: 20, height: 20, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 1.7, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const, 'aria-hidden': true };
+  switch (icon) {
+    case 'turntable':
+      return (
+        <svg {...common}>
+          <circle cx="11" cy="12" r="7.5" />
+          <circle cx="11" cy="12" r="1.6" />
+          <path d="M19 5v9" />
+          <circle cx="19" cy="15.5" r="1.5" />
+        </svg>
+      );
+    case 'cd-player':
+      return (
+        <svg {...common}>
+          <circle cx="12" cy="12" r="8.5" />
+          <circle cx="12" cy="12" r="2.4" />
+          <path d="M12 3.5v4M12 16.5v4" />
+        </svg>
+      );
+    case 'screen':
+      return (
+        <svg {...common}>
+          <rect x="3" y="5" width="18" height="12" rx="1.5" />
+          <path d="M8 21h8" />
+        </svg>
+      );
+    case 'computer':
+    case 'imac':
+      return (
+        <svg {...common}>
+          <rect x="3" y="4" width="18" height="13" rx="2" />
+          <path d="M3 13h18M10 21h4M12 17v4" />
+        </svg>
+      );
+    case 'mobile':
+    case 'ipod':
+      return (
+        <svg {...common}>
+          <rect x="7" y="2" width="10" height="20" rx="2" />
+          <path d="M11 18h2" />
+        </svg>
+      );
+    case 'radio':
+      return (
+        <svg {...common}>
+          <rect x="3" y="8" width="18" height="12" rx="2" />
+          <path d="M7 8l10-5" />
+          <circle cx="8.5" cy="14" r="2.5" />
+          <path d="M14 12h4M14 16h4" />
+        </svg>
+      );
+    default:
+      return (
+        <svg {...common}>
+          <path d="M4 9v6M8 6v12M12 3v18M16 7v10M20 10v4" />
+        </svg>
+      );
+  }
+}
+
+/**
+ * The inputs page: what is wired into the server, playable from any room — and, under it, what is
+ * arriving on rooms by itself.
+ *
+ * Two different things, kept apart on purpose. An input (`GET /inputs`) is a server-wide jack you *pick*
+ * for a room; a receiver — AirPlay, Spotify Connect, Bluetooth — is set up per room in admin and shows
+ * up only as that room's `source` once something is cast to it. The contract has no list of receivers,
+ * so the second section is read off the zones: it says what the house is receiving right now, and
+ * nothing about what it could.
+ */
+export function Sources({ zone, zones, onDone }: { zone: ApiZoneState | null; zones: ApiZoneState[]; onDone: () => void }) {
   const api = useApi();
   const [inputs, setInputs] = useState<ApiInput[]>([]);
 
@@ -1762,6 +1843,18 @@ export function Sources({ zone, onDone }: { zone: ApiZoneState | null; onDone: (
       .then(setInputs)
       .catch(() => setInputs([]));
   }, [api]);
+
+  /* Which rooms are on which input, so a jack that is already playing somewhere says so. */
+  const onInput = new Map<string, string[]>();
+  for (const candidate of zones) {
+    const id = candidate.source?.id;
+    if (candidate.source?.kind === 'linein' && id) {
+      onInput.set(id, [...(onInput.get(id) ?? []), candidate.name]);
+    }
+  }
+  const receiving = zones.filter(
+    (candidate) => candidate.source && RECEIVER_KINDS.has(candidate.source.kind) && !(candidate.source.id && onInput.has(candidate.source.id)),
+  );
 
   return (
     <div className="cx-browse">
@@ -1788,32 +1881,73 @@ export function Sources({ zone, onDone }: { zone: ApiZoneState | null; onDone: (
           </div>
         ) : (
           <div className="cx-inputs">
-            {inputs.map((input) => (
-              <button
-                type="button"
-                className="cx-input"
-                key={input.id}
-                onClick={() => {
-                  if (zone) {
-                    void api.selectInput(zone.id, input.id);
-                    onDone();
-                  }
-                }}
-              >
-                <span className="cx-input-ic">
-                  <SpeakerGlyph size={18} />
-                </span>
-                <span className="cx-input-meta">
-                  <span className="cx-input-name">{input.name}</span>
-                  {/* In the words of the person standing next to the turntable, not the person who
-                      wrote the driver: `transport works` names a category of API call. */}
-                  <span className="cx-input-sub mono">
-                    {input.controllable ? 'pause and skip work' : 'plays whenever it is on'}
+            {inputs.map((input) => {
+              const rooms = onInput.get(input.id) ?? [];
+              return (
+                <button
+                  type="button"
+                  className="cx-input"
+                  key={input.id}
+                  data-on={rooms.length > 0 || undefined}
+                  onClick={() => {
+                    if (zone) {
+                      void api.selectInput(zone.id, input.id);
+                      onDone();
+                    }
+                  }}
+                >
+                  <span className="cx-input-ic">
+                    <InputGlyph icon={input.icon} />
                   </span>
-                </span>
-              </button>
-            ))}
+                  <span className="cx-input-meta">
+                    <span className="cx-input-name">{input.name}</span>
+                    {/* In the words of the person standing next to the turntable, not the person who
+                        wrote the driver: `transport works` names a category of API call. */}
+                    <span className="cx-input-sub mono">
+                      {input.controllable ? 'pause and skip work' : 'plays whenever it is on'}
+                      {rooms.length > 0 && ` · now in ${rooms.join(', ')}`}
+                    </span>
+                  </span>
+                  {zone && (
+                    <span className="cx-input-go mono">
+                      play in {zone.name}
+                      <ForwardGlyph size={12} />
+                    </span>
+                  )}
+                </button>
+              );
+            })}
           </div>
+        )}
+
+        {receiving.length > 0 && (
+          <section className="cx-receivers">
+            <div className="cx-hsec-head">
+              <span className="cx-hsec-lbl mono">arriving on their own</span>
+              <span className="cx-hsec-rule" aria-hidden="true" />
+            </div>
+            <div className="cx-inputs">
+              {receiving.map((candidate) => (
+                <div className="cx-input" key={candidate.id} data-receiver>
+                  <span className="cx-input-ic">
+                    <SpeakerGlyph size={18} waves={candidate.state === 'playing'} />
+                  </span>
+                  <span className="cx-input-meta">
+                    <span className="cx-input-name">
+                      {candidate.name}
+                      <i className="cx-input-via"> · {candidate.source?.name || candidate.source?.kind}</i>
+                    </span>
+                    <span className="cx-input-sub mono">
+                      {candidate.track?.title ? `${candidate.track.title}${candidate.track.artist ? ` — ${candidate.track.artist}` : ''}` : candidate.state}
+                    </span>
+                  </span>
+                </div>
+              ))}
+            </div>
+            <p className="cx-inputs-note">
+              Receivers are set up per room in admin and appear here while something plays into them.
+            </p>
+          </section>
         )}
       </div>
     </div>

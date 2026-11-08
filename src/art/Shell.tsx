@@ -228,6 +228,7 @@ export function PlayerBar({
   onRooms,
   onQueue,
   onCanvas,
+  onHouse,
 }: {
   cur: Cur;
   onHome: () => void;
@@ -237,6 +238,8 @@ export function PlayerBar({
   onQueue: () => void;
   /** The record alone, full screen — the canvas rest, asked for. */
   onCanvas: () => void;
+  /** The whole house, full screen — the gallery rest. Absent with one room. */
+  onHouse?: (() => void) | undefined;
 }) {
   const api = useApi();
   const leader = cur.leader;
@@ -312,6 +315,16 @@ export function PlayerBar({
         {cur.hasTrack && !cur.isLive && (
           <button type="button" className="cx-pbar-ic" onClick={onQueue} aria-label="Up next">
             <QueueGlyph size={17} />
+          </button>
+        )}
+        {onHouse && (
+          <button type="button" className="cx-pbar-ic" onClick={onHouse} aria-label="The house, full screen" title="Every room, full screen">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true">
+              <rect x="4" y="4" width="7" height="7" rx="1.5" />
+              <rect x="13" y="4" width="7" height="7" rx="1.5" />
+              <rect x="4" y="13" width="7" height="7" rx="1.5" />
+              <rect x="13" y="13" width="7" height="7" rx="1.5" />
+            </svg>
           </button>
         )}
         {cur.hasTrack && (

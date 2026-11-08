@@ -303,7 +303,7 @@ export function ArtApp() {
     if (queue.currentIndex === null || cur.isLive) {
       return [];
     }
-    return queue.items.slice(queue.currentIndex + 1, queue.currentIndex + 5).map((item) => ({
+    return queue.items.slice(queue.currentIndex + 1, queue.currentIndex + 9).map((item) => ({
       key: item.id,
       title: item.title,
       artist: item.artist,
@@ -678,7 +678,7 @@ export function ArtApp() {
                     key={view.node.id ?? 'root'}
                   />
                 ) : view.kind === 'inputs' ? (
-                  <Sources zone={zone} onDone={goHome} />
+                  <Sources zone={zone} zones={zones} onDone={goHome} />
                 ) : rest === 'house' ? (
                   /* The house at rest: every room the same width — see `Gallery`. */
                   <Gallery
@@ -787,7 +787,7 @@ export function ArtApp() {
                 key={view.node.id ?? 'root'}
               />
             ) : view.kind === 'inputs' ? (
-              <Sources zone={zone} onDone={goHome} />
+              <Sources zone={zone} zones={zones} onDone={goHome} />
             ) : view.kind === 'signal' && zone ? (
               /* One column of instruments, read one at a time down the page — which is what a phone
                  can honestly do with a deck, and what it never could with a whole second shell. */
@@ -1009,6 +1009,7 @@ export function ArtApp() {
           onRooms={openRooms}
           onQueue={() => setSheet('queue')}
           onCanvas={() => setAsked('record')}
+          onHouse={channels.length > 1 ? () => setAsked('house') : undefined}
         />
       )}
 

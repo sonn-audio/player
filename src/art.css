@@ -12511,3 +12511,58 @@
 .cx-frontsec .cx-sec-head {
   margin-bottom: 16px;
 }
+
+/* ==========================================================================================
+ * Inputs, again: an icon per jack, the room it would play in, and what arrives by itself.
+ * ========================================================================================== */
+
+.cx-input-ic {
+  width: 28px;
+}
+
+.cx-input[data-on] .cx-input-ic {
+  color: var(--gb);
+}
+
+.cx-input-go {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+  padding-left: 18px;
+  font-size: 9px;
+  letter-spacing: 0.18em;
+  white-space: nowrap;
+  color: var(--t7);
+  transition: color 0.18s;
+}
+
+.cx-input:hover .cx-input-go {
+  color: var(--t2);
+}
+
+.cx-input[data-receiver] {
+  cursor: default;
+}
+
+.cx-input[data-receiver]:hover {
+  padding-left: 0;
+}
+
+.cx-input-via {
+  font-style: normal;
+  font-weight: 500;
+  color: var(--t5);
+}
+
+.cx-receivers {
+  max-width: 720px;
+  margin-top: 44px;
+}
+
+.cx-inputs-note {
+  margin: 18px 0 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--t6);
+}
