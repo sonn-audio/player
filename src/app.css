@@ -1155,3 +1155,76 @@ html[data-arrived] .cx-side-mark {
     color: var(--t1);
   }
 }
+
+/* --- motion: the small answers a control gives a hand ----------------------------------- */
+
+.cx-root .cx-play-btn,
+.cx-root .cx-shuffle-btn,
+.cx-root .cx-bill-open,
+.cx-root .cx-inputs-empty-go,
+.cx-pbar-room,
+.cx-pbar-ic,
+.cx-pbar-fav,
+.cx-snav,
+.cx-onradio-chip {
+  transition:
+    color 0.18s,
+    border-color 0.18s,
+    background 0.18s,
+    transform 0.22s var(--cx-ease);
+}
+
+.cx-root .cx-play-btn:hover,
+.cx-root .cx-shuffle-btn:hover,
+.cx-root .cx-bill-open:hover,
+.cx-root .cx-inputs-empty-go:hover,
+.cx-pbar-room:hover,
+.cx-onradio-chip:hover {
+  transform: translateY(-1px);
+}
+
+.cx-root .cx-play-btn:active,
+.cx-root .cx-shuffle-btn:active,
+.cx-root .cx-bill-open:active,
+.cx-pbar-room:active,
+.cx-pbar-ic:active,
+.cx-snav:active,
+.cx-onradio-chip:active {
+  transform: scale(0.97);
+}
+
+.cx-pbar .cx-tr-play {
+  transition:
+    transform 0.22s var(--cx-ease),
+    background 0.18s,
+    color 0.18s;
+}
+
+.cx-pbar .cx-tr-play:hover {
+  transform: scale(1.06);
+}
+
+.cx-pbar .cx-tr-play:active {
+  transform: scale(0.95);
+}
+
+/* A sleeve in the crate comes forward under the pointer, in the plane it already stands in. */
+.cx-crate-lp:hover {
+  transform: translateZ(calc(var(--ad) * -80px + 18px)) rotateY(calc(var(--d) * -14deg));
+}
+
+.cx-crate-lp[data-centre]:hover {
+  transform: translateZ(18px);
+}
+
+/* The desk's strips lift the same way a tile does. */
+.cx-root[data-shell] .cx-desk-strip {
+  transition:
+    background 0.25s var(--cx-ease),
+    box-shadow 0.25s var(--cx-ease),
+    transform 0.25s var(--cx-ease);
+}
+
+.cx-root[data-shell] .cx-desk-strip:hover {
+  transform: translateY(-2px);
+}
