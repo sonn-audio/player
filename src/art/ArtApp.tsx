@@ -88,7 +88,9 @@ type View =
   | { kind: 'home' }
   | { kind: 'browse'; node: BrowseNode }
   | { kind: 'inputs' }
-  | { kind: 'signal' };
+  | { kind: 'signal' }
+  /* The desk, as a place on a desk; on a phone the rooms stay a sheet. */
+  | { kind: 'rooms' };
 
 type Sheet = null | 'rooms' | 'queue' | 'more';
 
@@ -462,6 +464,21 @@ export function ArtApp() {
   );
 
   const goHome = (): void => setView({ kind: 'home' });
+  /*
+   * The desk: a view inside the frame on a desk, a sheet over the page on a phone.
+   *
+   * The sidebar already lists every room; the desk is the place you go to set their levels and group
+   * them, and a place belongs in the pane with the other places. The phone keeps the sheet, because a
+   * phone has no pane to put it in and the sheet is one swipe away from anything.
+   */
+  const openRooms = (): void => {
+    if (phone) {
+      setSheet('rooms');
+    } else {
+      setView({ kind: 'rooms' });
+    }
+  };
+  useEscape(!phone && view.kind === 'rooms', goHome);
   const openBrowse = (node: BrowseNode = {}): void => setView({ kind: 'browse', node });
 
   /*
@@ -625,6 +642,18 @@ export function ArtApp() {
              */}
             {!phone && view.kind === 'signal' && zone ? (
               <Signal cur={cur} zone={zone} zones={zones} onLeave={leaveSignal} />
+            ) : !phone && view.kind === 'rooms' ? (
+              /* The desk, as a page in the pane: the sheet's own component under a head of its own. */
+              <div className="cx-deskpage">
+                <div className="cx-deskpage-head">
+                  <span className="cx-sec-lbl mono">Rooms</span>
+                  <span className="cx-sec-rule" />
+                  <span className="cx-sheet-tab-static mono">{houseCount(channels)}</span>
+                </div>
+                <div className="cx-deskpage-body">
+                  <RoomsSheet zones={zones} channels={channels} selectedId={zoneId} phone={false} onSelect={select} drag={drag} />
+                </div>
+              </div>
             ) : !phone ? (
               <Wall
                 channels={channels}
@@ -961,7 +990,7 @@ export function ArtApp() {
             }}
             onInputs={() => setView({ kind: 'inputs' })}
             onSignal={openSignal}
-            onRooms={() => setSheet('rooms')}
+            onRooms={openRooms}
             onSelect={select}
           />
           <section className="cx-pane">
@@ -977,7 +1006,7 @@ export function ArtApp() {
           onHome={goHome}
           onBrowse={() => openBrowse()}
           onSignal={openSignal}
-          onRooms={() => setSheet('rooms')}
+          onRooms={openRooms}
           onQueue={() => setSheet('queue')}
           onCanvas={() => setAsked('record')}
         />

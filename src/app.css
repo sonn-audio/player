@@ -453,6 +453,37 @@ body:has(.cx-root[data-shell]) .admin-link {
   background: rgb(255 255 255 / 6%);
 }
 
+/* --- the desk, as a page in the pane ------------------------------------------ */
+
+.cx-deskpage {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  padding: 26px 40px 0;
+  animation: cx-view-in 0.3s var(--cx-ease) both;
+}
+
+.cx-deskpage-head {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex: none;
+  margin-bottom: 22px;
+}
+
+.cx-deskpage-body {
+  flex: 1;
+  min-height: 0;
+  padding-bottom: 28px;
+  overflow-y: auto;
+  mask-image: linear-gradient(180deg, #000 calc(100% - 28px), transparent 100%);
+}
+
+.cx-sgroup-go[data-on] {
+  color: var(--t1);
+}
+
 /* --- what the frame asks of the views inside it ------------------------------ */
 
 /*
@@ -474,16 +505,16 @@ body:has(.cx-root[data-shell]) .admin-link {
  * is the page. Inside the frame the page is the pane — 228px and two gutters narrower — so the same
  * fractions overflow it. Smaller shares of the same viewport, and the pair fits at 1280 and composes at 2560.
  */
-.cx-root[data-shell] .cx-stage {
+.cx-root[data-shell]:not([data-idle]) .cx-stage {
   padding: 18px clamp(24px, 3vw, 48px);
 }
 
-.cx-root[data-shell] .cx-stage-inner {
+.cx-root[data-shell]:not([data-idle]) .cx-stage-inner {
   --cx-cover-size: min(clamp(240px, 58vh, 560px), 31vw);
   gap: clamp(32px, 3.6vw, 60px);
 }
 
-.cx-root[data-shell] .cx-stage-meta {
+.cx-root[data-shell]:not([data-idle]) .cx-stage-meta {
   width: min(640px, 36vw);
 }
 

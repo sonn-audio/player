@@ -26,7 +26,7 @@ import { mainTitle } from '@/lib/title';
 import type { ContentService } from '@/api/content';
 import type { Channel, Cur } from '@/art/useCur';
 
-export type ShellView = 'home' | 'browse' | 'inputs' | 'signal';
+export type ShellView = 'home' | 'browse' | 'inputs' | 'signal' | 'rooms';
 
 /** Two letters of a service's name, for a mark with no logo. Same rule as the hall's `initials`. */
 function monogram(name: string): string {
@@ -146,7 +146,7 @@ export function Sidebar({
         <nav className="cx-sgroup" aria-label="Rooms">
           <span className="cx-sgroup-lbl mono">
             rooms
-            <button type="button" className="cx-sgroup-go" onClick={onRooms}>
+            <button type="button" className="cx-sgroup-go" data-on={view === 'rooms' || undefined} onClick={onRooms}>
               desk ›
             </button>
           </span>
