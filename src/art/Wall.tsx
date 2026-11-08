@@ -82,9 +82,8 @@ export function Wall({
 }
 
 /**
- * The house, as a row of rooms: what the strip along the foot of the wall holds, and what the stage's
- * own page holds at its foot on a wide window (see `Stage`'s `house`). One component, two places, so
- * the rooms cannot be drawn two ways.
+ * The house, as a row of rooms: what the strip along the foot of the wall holds under the quiet-house
+ * screen. On a desk the sidebar lists the rooms for every other view.
  */
 export function HouseStrip({
   channels,
@@ -94,7 +93,6 @@ export function HouseStrip({
   onCanvas,
   onHouse,
   canCanvas,
-  compact = false,
 }: {
   channels: Channel[];
   currentLeaderId: number | null;
@@ -103,8 +101,6 @@ export function HouseStrip({
   onCanvas: () => void;
   onHouse: () => void;
   canCanvas: boolean;
-  /** Inside a column rather than across the page: the rooms wrap, and the row has no fixed height. */
-  compact?: boolean;
 }) {
   /*
    * The two withdrawals — the record alone, or the whole house — stand at the far end of the row of
@@ -129,24 +125,9 @@ export function HouseStrip({
       current={channel.leader.id === currentLeaderId}
       onSelect={onSelect}
       drag={drag}
-      compact={compact}
     />
   ));
 
-  if (compact) {
-    /* Inside a page the row has a head like every other section — the label, the hairline, the ways —
-       so the rooms below it can wrap without the words wrapping with them. */
-    return (
-      <div className="cx-house-row" data-compact>
-        <div className="cx-house-head">
-          <span className="cx-house-lbl mono">the house</span>
-          <span className="cx-house-rule" aria-hidden="true" />
-          {ways}
-        </div>
-        <div className="cx-house-rooms">{rooms}</div>
-      </div>
-    );
-  }
   return (
     <div className="cx-house-row">
       {rooms}
@@ -243,14 +224,11 @@ function Room({
   current,
   onSelect,
   drag,
-  compact = false,
 }: {
   channel: Channel;
   current: boolean;
   onSelect: (zoneId: number) => void;
   drag: RoomDrag;
-  /** In a page's row there is room for the record's name, not for the artist too. */
-  compact?: boolean;
 }) {
   const api = useApi();
   const leader = channel.leader;
@@ -258,7 +236,7 @@ function Room({
   const playing = channel.playing && channel.hasTrack;
   const off = leader.powerState?.power === 'off';
   const line = channel.hasTrack
-    ? [leader.track?.title ? mainTitle(leader.track.title) : '', compact ? '' : leader.track?.artist]
+    ? [leader.track?.title ? mainTitle(leader.track.title) : '', leader.track?.artist]
         .filter(Boolean)
         .join(' · ')
     : off

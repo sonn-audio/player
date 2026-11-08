@@ -18,8 +18,6 @@
  */
 import { useEffect, useRef, useState } from 'react';
 import { ArtApp } from '@/art/ArtApp';
-import { AdminLink } from '@/shell/AdminLink';
-import { Brand } from '@/shell/Brand';
 import { Intro } from '@/shell/Intro';
 import { ServerMismatch } from '@/shell/ServerMismatch';
 import { useServer } from '@/state/ServerContext';
@@ -78,6 +76,18 @@ export function Root() {
    * The stream is up, or the cap expired — see `INTRO_MAX_MS`.
    */
   const resolved = (status === 'open' && minElapsed) || gaveUp;
+
+  /*
+   * Once the splash is gone, the sidebar's mark carries `view-transition-name: sonn-mark` (see
+   * `app.css`), so a navigation to the console can fly it across. Published on the document rather than
+   * threaded through the player: the splash and the sidebar must never hold the name at the same time,
+   * and this is the one place that knows when the splash has left.
+   */
+  useEffect(() => {
+    if (intro === 'gone') {
+      document.documentElement.dataset.arrived = '';
+    }
+  }, [intro]);
   const leaving = useRef(false);
 
   useEffect(() => {
@@ -101,13 +111,8 @@ export function Root() {
         <ArtApp />
       </div>
 
-      {/*
-        Drawn over the app so nothing inside it can move them. Outside on purpose — that is the whole
-        point (see `Brand`). Phone-hidden in CSS, because the player gives the artwork all four edges
-        at that width.
-      */}
-      <Brand vt={intro === 'gone'} />
-      <AdminLink />
+      {/* Drawn over the app so nothing inside it can move it. The wordmark and the way to admin are the
+          player's own now — the desk's sidebar carries them, the phone's header and `more` sheet too. */}
       <ServerMismatch />
 
       {intro !== 'gone' && <Intro fading={intro !== 'holding'} out={intro === 'out'} vt />}

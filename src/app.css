@@ -10,10 +10,9 @@
   background: #0a0a0c;
 }
 
-/* The wordmark and the admin corner are the shell's now; the floating copies stand down. */
-body:has(.cx-root[data-shell]) .brand-shared,
-body:has(.cx-root[data-shell]) .admin-link {
-  display: none;
+/* Once the splash has left, the sidebar's mark is the one that flies to the console — see `Root`. */
+html[data-arrived] .cx-side-mark {
+  view-transition-name: sonn-mark;
 }
 
 /* --- the grid: sidebar | pane, with the bar under both --------------------- */
@@ -487,18 +486,6 @@ body:has(.cx-root[data-shell]) .admin-link {
 /* --- what the frame asks of the views inside it ------------------------------ */
 
 /*
- * The stage keeps its record and its words; the transport, the timeline and the fader have moved to
- * the bar, where they are the same controls for every view. Drawing them twice on one screen is two
- * answers to "where do I press pause".
- */
-.cx-root[data-shell] .cx-stage .cx-transport,
-.cx-root[data-shell] .cx-stage .cx-bar-wrap,
-.cx-root[data-shell] .cx-stage .cx-live,
-.cx-root[data-shell] .cx-stage .cx-stage-foot .cx-vol {
-  display: none;
-}
-
-/*
  * The composition, sized for the pane rather than the window.
  *
  * The stage measures its sleeve and its column in viewport units because, on a bare window, the viewport
@@ -516,24 +503,6 @@ body:has(.cx-root[data-shell]) .admin-link {
 
 .cx-root[data-shell]:not([data-idle]) .cx-stage-meta {
   width: min(640px, 36vw);
-}
-
-/* The reading's band keeps the record's identity; its controls and its way back are the bar's and the sidebar's now. */
-.cx-root[data-shell] .cx-sig-band .cx-transport,
-.cx-root[data-shell] .cx-sig-band .cx-sig-bar,
-.cx-root[data-shell] .cx-sig-vol,
-.cx-root[data-shell] .cx-sig-back {
-  display: none;
-}
-
-/* Rooms stand in the sidebar; the page's turning edges would be a second way to the same place. */
-.cx-root[data-shell] .cx-turn {
-  display: none;
-}
-
-/* The house strip under the record says what the sidebar already says; the ways to the two rests are in the bar. */
-.cx-root[data-shell] .cx-stage-house {
-  display: none;
 }
 
 /* --- the keyboard ------------------------------------------------------------- */

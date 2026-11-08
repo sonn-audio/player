@@ -293,54 +293,6 @@ svg {
 
 /* --- the wordmark -------------------------------------------------------- */
 
-/*
- * Kept when the rest of the chrome went.
- *
- * The bar, the rails and the now-bar that used to be styled beside this belonged to a player that no
- * longer exists. The wordmark does not: it is drawn by the shell, over the app, and it is the one
- * piece of chrome the product has left.
- */
-/*
- * The wordmark: `sonn` in the display face, the face name in the mono one.
- *
- * Not two colours of the same font — the two faces *are* the distinction, which is why the second
- * word can sit at plain grey and still read as a subtitle rather than as a second brand.
- */
-/*
- * Sized as the art face sizes it, which is the version that reads best: a slightly larger mark and a
- * 19 px wordmark, rather than 26 px and 17 px. The two faces had drifted a couple of pixels apart in
- * both, which is not visible on either screen alone and very visible when you switch between them.
- */
-.brand {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 0.33em;
-  font-family: var(--font-display);
-  font-size: 19px;
-  font-weight: 800;
-  letter-spacing: -0.03em;
-  color: var(--text);
-}
-
-.brand-light {
-  color: var(--text-mute);
-  font-family: var(--font-mono);
-  font-size: 0.58em;
-  font-weight: 700;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-}
-
-/* The mark beside it: the roofline over the waveform. Same size as the art face's. */
-.brand-mark {
-  flex: none;
-  width: 30px;
-  height: 24px;
-  margin-right: 0.25em;
-  color: var(--accent);
-}
-
-
 /* --- primitives ----------------------------------------------------------- */
 
 .icon-button {

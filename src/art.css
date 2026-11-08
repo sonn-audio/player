@@ -320,43 +320,9 @@
   mix-blend-mode: overlay;
 }
 
-/* --- top bar (desktop) ---------------------------------------------------- */
+/* --- the marks the phone header keeps -------------------------------------- */
 
-/*
- * 54px, and a 12px left inset — the technical player's numbers, not this face's own.
- *
- * The brand is drawn once by the shell now (see `shell/Brand`), which can only be in one place, so the two
- * bars have to agree about where that is. This one was 58px tall with a 30px inset and the other 54 with
- * 12, which is why the logo used to hop on every switch. The right inset stays at 30: it is this bar's own
- * breathing room and nothing has to match it.
- */
-.cx-top {
-  position: relative;
-  z-index: 3;
-  display: flex;
-  align-items: center;
-  gap: clamp(20px, 3vw, 40px);
-  flex: none;
-  height: 54px;
-  /* 96px on the right: the shell's `admin` word is fixed at right 16px, and the four words end before it. */
-  padding: 0 96px 0 12px;
-}
-
-.cx-brand {
-  display: inline-flex;
-  align-items: center;
-  gap: 11px;
-  flex: none;
-}
-
-/*
- * The mark is the accent, here as everywhere.
- *
- * It was `--t1` — the same near-white as the wordmark beside it — which made the logo two different
- * things on two screens: green in the technical bar, white here. The drawing is the brand and the brand
- * has one colour; the wordmark stays text-coloured, which is what keeps the mark reading as a mark
- * rather than as the first letter of a word.
- */
+/* The mark is the accent, here as everywhere: the drawing is the brand and the brand has one colour. */
 .cx-brand-mark {
   width: 30px;
   height: 24px;
@@ -364,56 +330,11 @@
 }
 
 /*
- * This face's own wordmark is gone: the lockup is drawn once by the shell (`shell/Brand`) so that
- * switching face cannot move it. `.cx-brand-mark` below stays — the *phone* header still draws its own
- * mark, because the shared copy stands down at that width.
- */
-
-.cx-nav {
-  display: flex;
-  align-items: center;
-  gap: clamp(14px, 2vw, 30px);
-  flex: none;
-}
-
-.cx-nav button {
-  display: inline-flex;
-  align-items: center;
-  font-size: 10.5px;
-  letter-spacing: 0.22em;
-  white-space: nowrap;
-  color: var(--t6);
-  transition: color 0.18s;
-}
-
-.cx-nav button:hover,
-.cx-nav button[data-on] {
-  color: var(--t1);
-}
-
-.cx-status {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 18px;
-  flex: 1 1 auto;
-  min-width: 0;
-}
-
-.cx-srv {
-  font-size: 9.5px;
-  letter-spacing: 0.22em;
-  color: var(--t6);
-  white-space: nowrap;
-}
-
-/*
  * Out of touch with the house, as a dot.
  *
- * This said `reconnecting…` — the last piece of server vocabulary on a screen that is supposed to have
- * none of it. But saying nothing is worse than a word: a player whose stream has dropped is displaying
- * the past, and pressing pause on the past is the one thing worth warning about. An amber dot with a
- * `title` warns exactly that much and explains nothing about event streams.
+ * A player whose stream has dropped is displaying the past, and pressing pause on the past is the one
+ * thing worth warning about. An amber dot with a `title` warns exactly that much and explains nothing
+ * about event streams.
  */
 .cx-stale {
   width: 6px;
@@ -440,19 +361,6 @@
   background: rgb(255 255 255 / 4%);
 }
 
-.cx-gear {
-  display: grid;
-  place-items: center;
-  width: 34px;
-  height: 34px;
-  color: var(--t6);
-  transition: color 0.18s;
-}
-
-.cx-gear:hover {
-  color: var(--t1);
-}
-
 /* --- phone header --------------------------------------------------------- */
 
 .cx-mhead {
@@ -464,6 +372,12 @@
   flex: none;
   height: 54px;
   padding: max(6px, env(safe-area-inset-top)) 16px 0;
+}
+
+.cx-brand {
+  display: inline-flex;
+  align-items: center;
+  flex: none;
 }
 
 .cx-mhead .cx-brand-mark {
@@ -524,13 +438,6 @@
   50% {
     opacity: 0.7;
   }
-}
-
-/* The way into the catalogue: the glyph and the word travel together. */
-.cx-nav-browse {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
 }
 
 /* --- the wall: the house, one panel to a room ------------------------------ */
@@ -7803,7 +7710,6 @@
  *
  * The artwork *grows* as the chrome leaves, which is the whole gesture: the record taking the room.
  */
-.cx-root[data-idle] .cx-top,
 .cx-root[data-idle] .cx-mhead,
 .cx-root[data-idle] .cx-mroom,
 .cx-root[data-idle] .cx-bnav,
@@ -7842,7 +7748,6 @@
  * desktop stage grows into the 58px it gives up, so the sleeve ends the transition genuinely centred in
  * the window rather than centred above a bar that is no longer there.
  */
-.cx-root[data-idle] .cx-top,
 .cx-root[data-idle] .cx-mhead,
 .cx-root[data-idle] .cx-bnav,
 .cx-root[data-idle] .cx-transport,
@@ -10744,16 +10649,6 @@
   color: var(--t7);
 }
 
-/* The fader has the length of a fader. */
-.cx-stage-foot .cx-vol {
-  flex: none;
-  padding-bottom: 10px;
-}
-
-.cx-stage-foot .cx-vol-slider {
-  width: clamp(150px, 13vw, 240px);
-}
-
 /* The edition under the name: small, mono, the same grey as the album. */
 .cx-title-tags {
   display: block;
@@ -10793,15 +10688,6 @@
 
   .cx-album {
     font-size: 14px;
-  }
-
-  .cx-transport[data-size='desk'] {
-    gap: clamp(36px, 3vw, 56px);
-  }
-
-  .cx-transport[data-size='desk'] .cx-tr-play {
-    width: 80px;
-    height: 80px;
   }
 
   .cx-upnext-item .cx-upnext-art {
@@ -10878,51 +10764,6 @@
 
 .cx-house .cx-house-row {
   height: 100%;
-}
-
-.cx-stage-house {
-  order: 3;
-  margin-top: clamp(22px, 3.4vh, 40px);
-}
-
-.cx-house-row[data-compact] {
-  flex-direction: column;
-  align-items: stretch;
-  gap: 14px;
-}
-
-.cx-house-head {
-  display: flex;
-  align-items: center;
-  gap: 18px;
-}
-
-.cx-house-lbl {
-  flex: none;
-  font-size: 10px;
-  letter-spacing: 0.26em;
-  color: var(--t6);
-}
-
-.cx-house-rule {
-  flex: 1;
-  height: 1px;
-  background: var(--hair);
-}
-
-.cx-house-row[data-compact] .cx-house-ways {
-  margin-left: 0;
-}
-
-.cx-house-rooms {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 10px clamp(22px, 2.4vw, 40px);
-}
-
-.cx-house-row[data-compact] .cx-house-line {
-  max-width: clamp(120px, 12vw, 220px);
 }
 
 /* --- the gallery: the house at rest --- */
@@ -11092,16 +10933,12 @@
     padding-top: clamp(22px, 3.6vh, 44px);
   }
 
-  .cx-stage[data-spread] .cx-stage-house {
-    margin-top: clamp(18px, 2.8vh, 34px);
-  }
-
   .cx-stage[data-spread] .cx-eyebrow .cx-wire {
     margin-left: auto;
   }
 
-  /* The page's text keeps a reading measure on a very wide window; the house row takes the width. */
-  .cx-stage[data-spread] .cx-stage-meta > *:not(.cx-stage-house):not(.cx-stage-foot) {
+  /* The page's text keeps a reading measure on a very wide window. */
+  .cx-stage[data-spread] .cx-stage-meta > *:not(.cx-stage-foot) {
     max-width: 880px;
   }
 
@@ -11131,14 +10968,6 @@
     background: #0a0a0c;
   }
 
-  .cx-root[data-idle] .cx-stage[data-spread] .cx-stage-house {
-    opacity: 0;
-    visibility: hidden;
-    transition:
-      opacity 1.4s var(--cx-ease),
-      visibility 1.4s step-end;
-  }
-
   .cx-root[data-idle] .cx-stage[data-spread] .cx-title {
     font-size: clamp(28px, 3.4vh, 44px);
   }
@@ -11165,12 +10994,6 @@
     flex-wrap: wrap;
   }
 
-  .cx-stage[data-spread] .cx-stage-foot .cx-vol {
-    flex-basis: 100%;
-    justify-content: flex-end;
-    padding-bottom: 0;
-    margin-top: 14px;
-  }
 }
 
 /* A short window: the type steps down, the shelf shows two, the rows sit closer. */
@@ -11182,15 +11005,6 @@
   .cx-stage[data-spread] .cx-artistrow {
     margin-top: 10px;
     margin-bottom: 8px;
-  }
-
-  .cx-stage[data-spread] .cx-transport[data-size='desk'] {
-    margin-top: clamp(12px, 2.6vh, 28px);
-  }
-
-  .cx-stage[data-spread] .cx-transport[data-size='desk'] .cx-tr-play {
-    width: 64px;
-    height: 64px;
   }
 
   .cx-stage[data-spread] .cx-upnext-list li:nth-child(n + 3) {
@@ -11206,10 +11020,6 @@
     height: 44px;
   }
 
-  .cx-stage[data-spread] .cx-stage-house {
-    margin-top: 14px;
-  }
-
   .cx-stage[data-spread] .cx-house-cov {
     width: 34px;
     height: 34px;
@@ -11217,40 +11027,17 @@
 }
 
 /* ==========================================================================================
- * The spread, finished: the sleeve owns the left edge from the very top, the bar lies on the page,
+ * The spread, finished: the sleeve owns the left edge from the very top,
  * the type has a light line and a heavy one, and a record you are looking at is a spread too.
  * ========================================================================================== */
 
 @media (min-width: 1280px) {
-  /* The bar lies on the right page. Out of the flow, so the sleeve starts at the window's top edge. */
-  .cx-root:has(.cx-stage[data-spread]) .cx-top {
-    position: absolute;
-    top: 0;
-    left: min(100vh, 60vw);
-    right: 0;
-    z-index: 5;
-    padding: 0 96px 0 clamp(36px, 4vw, 84px);
-  }
-
-  /* The mark stands at the head of the page, where the bar now is; the shell's fixed copy steps back. */
-  .cx-root:has(.cx-stage[data-spread]) .cx-top .brand-slot {
-    visibility: visible;
-  }
-
-  .cx-root:has(.cx-stage[data-spread]) .cx-top .brand-slot .brand-mark {
-    color: var(--accent);
-  }
-
-  body:has(.cx-stage[data-spread]) .brand-shared {
-    visibility: hidden;
-  }
-
   .cx-stage[data-spread] .cx-stage-art {
     width: min(100vh, 60vw);
   }
 
   .cx-stage[data-spread] .cx-stage-meta {
-    padding-top: calc(54px + clamp(22px, 3.6vh, 48px));
+    padding-top: clamp(22px, 3.6vh, 48px);
   }
 
   /* Light over heavy: the artist in the display face at 300, the title at 800 under it. */
@@ -11418,10 +11205,6 @@
     width: min(100vh, 62vw);
   }
 
-  .cx-root:has(.cx-stage[data-spread]) .cx-top {
-    left: min(100vh, 62vw);
-  }
-
   .cx-root[data-idle]:has(.cx-stage[data-spread]) .cx-idle-progress {
     left: min(100vh, 62vw);
   }
@@ -11501,77 +11284,30 @@
 
 @media (min-width: 1280px) {
   .cx-root[data-still] .cx-stage[data-spread] .cx-eyebrow,
-  .cx-root[data-still] .cx-stage[data-spread] .cx-bar-wrap,
-  .cx-root[data-still] .cx-stage[data-spread] .cx-live,
-  .cx-root[data-still] .cx-stage[data-spread] .cx-transport,
   .cx-root[data-still] .cx-stage[data-spread] .cx-stage-foot,
-  .cx-root[data-still] .cx-stage[data-spread] .cx-stage-house,
   .cx-root[data-still] .cx-stage[data-spread] .cx-fav,
-  .cx-root[data-still] .cx-top {
+  .cx-root[data-still] .cx-pbar,
+  .cx-root[data-still] .cx-side {
     opacity: 0.22;
     transition: opacity 1.6s var(--cx-ease);
   }
 
   .cx-stage[data-spread] .cx-eyebrow,
-  .cx-stage[data-spread] .cx-bar-wrap,
-  .cx-stage[data-spread] .cx-live,
-  .cx-stage[data-spread] .cx-transport,
   .cx-stage[data-spread] .cx-stage-foot,
-  .cx-stage[data-spread] .cx-stage-house,
   .cx-stage[data-spread] .cx-fav,
-  .cx-top {
+  .cx-pbar,
+  .cx-side {
     transition: opacity 0.4s var(--cx-ease);
   }
 
-  /* The bar under the pointer stays legible even in the whisper — the line's own hover already says so. */
-  .cx-root[data-still] .cx-stage[data-spread] .cx-bar-wrap:hover {
+  /* The bar under the pointer stays legible even in the whisper. */
+  .cx-root[data-still] .cx-pbar:hover,
+  .cx-root[data-still] .cx-side:hover {
     opacity: 1;
   }
 }
 
-/* --- the pages: the house turned, and the edges that turn it --- */
-
-.cx-turn {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  z-index: 6;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  width: 64px;
-  padding: 0 14px;
-  color: rgb(255 255 255 / 85%);
-  opacity: 0;
-  transition: opacity 0.35s var(--cx-ease);
-}
-
-.cx-turn[data-side='left'] {
-  left: 0;
-  justify-content: flex-start;
-}
-
-.cx-turn[data-side='right'] {
-  right: 0;
-  justify-content: flex-end;
-}
-
-.cx-turn:hover {
-  opacity: 1;
-  width: auto;
-  background: linear-gradient(to right, rgb(10 10 12 / 55%), transparent);
-}
-
-.cx-turn[data-side='right']:hover {
-  background: linear-gradient(to left, rgb(10 10 12 / 55%), transparent);
-}
-
-.cx-turn-name {
-  font-size: 10px;
-  letter-spacing: 0.22em;
-  white-space: nowrap;
-  text-shadow: 0 1px 8px rgb(0 0 0 / 60%);
-}
+/* --- the pages: the house turned (Shift and the arrows, or a room in the sidebar) --- */
 
 @keyframes cx-page-right {
   from {
@@ -11601,12 +11337,6 @@
 
 .cx-root[data-turn='left'] .cx-stage {
   animation: cx-page-left 0.62s cubic-bezier(0.2, 0.8, 0.2, 1) both;
-}
-
-@media (max-width: 1279px) {
-  .cx-turn {
-    display: none;
-  }
 }
 
 /* ==========================================================================================
@@ -11840,14 +11570,6 @@
 @container page (max-width: 660px) {
   .cx-stage-foot {
     flex-wrap: wrap;
-  }
-
-  /* The fader takes a line of its own under the shelf, so the names keep their width. */
-  .cx-stage-foot .cx-vol {
-    flex-basis: 100%;
-    justify-content: flex-end;
-    padding-bottom: 0;
-    margin-top: 14px;
   }
 
   /* The source moves off the eyebrow; it is already on the page, under the name. */

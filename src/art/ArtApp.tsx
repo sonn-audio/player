@@ -30,7 +30,7 @@ import { Stage, MobileStage, greeting } from '@/art/Stage';
 import { Signal } from '@/art/Signal';
 import { PlayerBar, Sidebar } from '@/art/Shell';
 import { RoomsSheet } from '@/art/Channels';
-import { Gallery, HouseStrip, Wall } from '@/art/Wall';
+import { Gallery, Wall } from '@/art/Wall';
 import { useRoomDrag } from '@/art/useRoomDrag';
 import { useEdges, useEscape } from '@/art/useEdges';
 import { QueueSheet } from '@/art/Rail';
@@ -641,7 +641,7 @@ export function ArtApp() {
              * edge to edge or it is a widget.
              */}
             {!phone && view.kind === 'signal' && zone ? (
-              <Signal cur={cur} zone={zone} zones={zones} onLeave={leaveSignal} />
+              <Signal cur={cur} zone={zone} zones={zones} onLeave={leaveSignal} bare />
             ) : !phone && view.kind === 'rooms' ? (
               /* The desk, as a page in the pane: the sheet's own component under a head of its own. */
               <div className="cx-deskpage">
@@ -742,36 +742,6 @@ export function ArtApp() {
                     upNext={upNext}
                     upNextTotal={upNextTotal}
                     elsewhere={elsewhere}
-                    onTurn={channels.length > 1 ? turnRoom : undefined}
-                    origin={origin}
-                    onOpenOrigin={openOrigin}
-                    neighbours={
-                      channels.length > 1
-                        ? (() => {
-                            const mine = leaderOf(zone, zones)?.id ?? null;
-                            const at = channels.findIndex((channel) => channel.leader.id === mine);
-                            const n = channels.length;
-                            return {
-                              left: channels[(at - 1 + n) % n]!.leader.name,
-                              right: channels[(at + 1) % n]!.leader.name,
-                            };
-                          })()
-                        : undefined
-                    }
-                    house={
-                      channels.length > 0 ? (
-                        <HouseStrip
-                          channels={channels}
-                          currentLeaderId={leaderOf(zone, zones)?.id ?? null}
-                          onSelect={select}
-                          drag={drag}
-                          onCanvas={() => setAsked('record')}
-                          onHouse={() => setAsked('house')}
-                          canCanvas={cur.hasTrack}
-                          compact
-                        />
-                      ) : undefined
-                    }
                     /* What this room played last, for the one thing an idle room can honestly show:
                        the record that was on, in the dark. See `Stage`'s empty branch. */
                     lastCover={recents[0]?.coverUrl ? `url("${recents[0].coverUrl}")` : undefined}

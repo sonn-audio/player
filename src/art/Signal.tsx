@@ -464,6 +464,7 @@ export function Signal({
   zone,
   zones,
   onLeave,
+  bare = false,
 }: {
   cur: Cur;
   /** The room the window has selected — whose output, format and clock these are. */
@@ -471,6 +472,12 @@ export function Signal({
   /** The whole house — only the foot counts it now, but the deck is a room's view of a house. */
   zones: ApiZoneState[];
   onLeave: () => void;
+  /**
+   * The band without its controls: inside the desk's frame the transport, the fader and the way back are
+   * the player bar's and the sidebar's, so the band keeps only the record's identity. On a phone, which
+   * has neither, the band stays whole.
+   */
+  bare?: boolean;
 }) {
   const api = useApi();
   const { status } = useServer();
@@ -511,15 +518,15 @@ export function Signal({
 
         {/* Only where there is something to seek within — `cur.showBar` is the source's own word, so a
             station gets the transport and no timeline rather than a bar that cannot be dragged. */}
-        {cur.showBar && (
+        {!bare && cur.showBar && (
           <span className="cx-sig-bar">
             <Timeline cur={cur} />
           </span>
         )}
 
-        <Transport cur={cur} size="bar" />
+        {!bare && <Transport cur={cur} size="bar" />}
 
-        <VolumeRow cur={cur} className="cx-sig-vol" />
+        {!bare && <VolumeRow cur={cur} className="cx-sig-vol" />}
 
         {/*
          * The way back, where the way in was.
@@ -528,10 +535,12 @@ export function Signal({
          * `Escape`. It reads `player` rather than `back` because that is where it goes — the same
          * naming the row of doors downstairs uses.
          */}
-        <button type="button" className="cx-sig-back mono" onClick={onLeave}>
-          <BackGlyph size={13} />
-          stage
-        </button>
+        {!bare && (
+          <button type="button" className="cx-sig-back mono" onClick={onLeave}>
+            <BackGlyph size={13} />
+            stage
+          </button>
+        )}
       </header>
 
       {/*

@@ -130,7 +130,6 @@ src/
     useSelectedZone.ts / useLiveProgress.ts / useZoneCollection.ts / useLocalPlayback.ts / useScenes.ts
   shell/        What is drawn around and over the player
     Root.tsx        Splash, then the player
-    Brand.tsx / AdminLink.tsx   The wordmark and the way to the console (the desk's sidebar takes these over)
     coverMorph.ts   The sleeve's flight between the stage and the reading
     Intro.tsx / InstallHint.tsx / ServerMismatch.tsx
   art/          The player

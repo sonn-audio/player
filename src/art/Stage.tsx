@@ -28,7 +28,6 @@ import { useCoverAnchor } from '@/shell/coverMorph';
 import { useFitText } from '@/art/useFitText';
 import { useLeaving } from '@/art/Leaving';
 import {
-  BackGlyph,
   ChevronGlyph,
   EmptyArtGlyph,
   ForwardGlyph,
@@ -61,10 +60,9 @@ export function greeting(hour = new Date().getHours()): string {
  * 64px band beside a thumbnail. Same five controls and the same handlers — only the metal shrinks,
  * because a reading you cannot pause from is a reading you have to leave to act on.
  */
-export function Transport({ cur, size }: { cur: Cur; size: 'desk' | 'phone' | 'bar' }) {
+export function Transport({ cur, size }: { cur: Cur; size: 'phone' | 'bar' }) {
   const api = useApi();
   const leader = cur.leader;
-  const phone = size !== 'desk';
 
   const toggle = (): void => {
     if (!leader) {
@@ -94,13 +92,13 @@ export function Transport({ cur, size }: { cur: Cur; size: 'desk' | 'phone' | 'b
         <ShuffleGlyph size={19} />
       </button>
       <button type="button" className="cx-tr-skip" aria-label="Previous" onClick={() => leader && void api.previous(leader.id)}>
-        <PrevGlyph size={phone ? 23 : 25} />
+        <PrevGlyph size={23} />
       </button>
       <button type="button" className="cx-tr-play" aria-label={cur.isPlaying ? 'Pause' : 'Play'} onClick={toggle}>
-        {cur.isPlaying ? <PauseGlyph size={phone ? 20 : 22} /> : <PlayGlyph size={phone ? 21 : 23} />}
+        {cur.isPlaying ? <PauseGlyph size={20} /> : <PlayGlyph size={21} />}
       </button>
       <button type="button" className="cx-tr-skip" aria-label="Next" onClick={() => leader && void api.next(leader.id)}>
-        <NextGlyph size={phone ? 23 : 25} />
+        <NextGlyph size={23} />
       </button>
       <button
         type="button"
@@ -388,9 +386,6 @@ export function Stage({
   upNextTotal,
   lastCover,
   elsewhere,
-  house,
-  onTurn,
-  neighbours,
   origin,
   onOpenOrigin,
   spread = true,
@@ -433,17 +428,6 @@ export function Stage({
    * catalogue cannot. `join` puts this room in that room's group.
    */
   elsewhere?: { room: string; title: string; join: () => void } | undefined;
-  /**
-   * The house, drawn at the foot of the record's own page.
-   *
-   * On a wide window the stage is a spread — the sleeve is the left page, the room the right — and the
-   * rooms belong on the right page, not on a strip under both. See `HouseStrip`.
-   */
-  house?: React.ReactNode;
-  /** Turn to the next room, or the one before — see `ArtApp`'s `turnRoom`. Absent with one room. */
-  onTurn?: ((dir: 'left' | 'right') => void) | undefined;
-  /** Who is on either side, for the edges' labels. */
-  neighbours?: { left: string; right: string } | undefined;
   /** The album and the artist this record belongs to, once the catalogue has answered. See `useOrigin`. */
   origin?: { album: ContentItem | null; artist: ContentItem | null } | undefined;
   onOpenOrigin?: ((item: ContentItem) => void) | undefined;
@@ -503,49 +487,12 @@ export function Stage({
     }
   };
 
-  /*
-   * A horizontal wheel — a trackpad swipe — turns the page. Summed until it is a deliberate gesture,
-   * then one turn and a moment's silence, so a long swipe is one page and not four.
-   */
-  const wheelSum = useRef(0);
-  const wheelUntil = useRef(0);
-  const onWheel = (event: React.WheelEvent): void => {
-    if (!onTurn || Math.abs(event.deltaX) <= Math.abs(event.deltaY)) {
-      return;
-    }
-    const now = Date.now();
-    if (now < wheelUntil.current) {
-      return;
-    }
-    wheelSum.current += event.deltaX;
-    if (Math.abs(wheelSum.current) > 140) {
-      onTurn(wheelSum.current > 0 ? 'right' : 'left');
-      wheelSum.current = 0;
-      wheelUntil.current = now + 900;
-    }
-  };
-
   return (
     <div
       className="cx-stage"
       data-spread={(cur.hasTrack && spread) || undefined}
       onClick={leave}
-      onWheel={onWheel}
     >
-      {/* The page's edges: rest the pointer there and the neighbouring room's name appears; press and the
-          page turns. Drawn only with somewhere to turn to. */}
-      {onTurn && neighbours && !resting && (
-        <>
-          <button type="button" className="cx-turn" data-side="left" onClick={() => onTurn('left')} aria-label={`To ${neighbours.left}`}>
-            <BackGlyph size={18} />
-            <span className="cx-turn-name mono">{neighbours.left}</span>
-          </button>
-          <button type="button" className="cx-turn" data-side="right" onClick={() => onTurn('right')} aria-label={`To ${neighbours.right}`}>
-            <span className="cx-turn-name mono">{neighbours.right}</span>
-            <ForwardGlyph size={18} />
-          </button>
-        </>
-      )}
       {/* The composition is one block, centred: cover and column together, capped, rather than a cover
           pinned left and a column stretching to whatever the window happens to be. A player on a
           2560px monitor should look composed, not spread. */}
@@ -825,32 +772,10 @@ export function Stage({
             </>
           )}
 
-          {cur.isLive && <Live />}
           {/*
-           * The plain bar, on this face, at every width.
-           *
-           * The desk drew the track's scanned envelope here for a while — the same shape the phone
-           * player once carried — and it was the wrong instrument on the wrong stage: forty bars of
-           * measurement under a 100px title is a reading, and this face's argument is that readings
-           * live on the other one. The line says the one thing the room needs from it, which is how
-           * far in it is.
-           */}
-          {cur.showBar && <Timeline cur={cur} />}
-
-          <Transport cur={cur} size="desk" />
-
-          {/*
-           * The foot of the column: what is next on the left, the level on the right.
-           *
-           * The row that stood here held the fader and four words — `rooms canvas house signal` — and
-           * every one of the four has a better home now: rooms is in the top bar, canvas and house
-           * are at the end of the house strip, signal is the format chip in the eyebrow. What is left
-           * is the two things that are genuinely *this room's*: its running order and its volume.
-           *
-           * Two sleeves and the first title, not four sleeves with hover captions. Two is enough to
-           * read as a shelf, the title says what the shelf's first record is without a hover, and the
-           * count in the label carries the rest. The label and the text open the queue; a sleeve plays
-           * the record it shows.
+           * No transport, timeline or fader here: on a desk those are the player bar's, one set of controls
+           * under every view (see `art/Shell`). The column keeps what is this room's alone — the record's
+           * words and its running order.
            */}
           <div className="cx-stage-foot">
             {cur.hasTrack && !cur.isLive && (
@@ -882,10 +807,7 @@ export function Stage({
                 </ol>
               </div>
             )}
-            <VolumeRow cur={cur} className="cx-vol" />
           </div>
-
-          {house && <div className="cx-stage-house">{house}</div>}
         </div>
       </div>
     </div>
