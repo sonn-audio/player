@@ -465,7 +465,9 @@ export function Stage({
   /* The largest the name may be, and the smallest it may shrink to before the box clips it. */
   /* At rest the name is a label beside a record, not the subject of the page: a one-word title that
      never wraps would otherwise stay at the largest size and run off the right page. */
-  const fit = useFitText(mainTitle(cur.title), { max: resting ? 84 : 200, min: 24 });
+  /* Inside the frame the name shares the pane with a sidebar and a bar, so it stops short of the poster's
+     200px; on a bare window (the spread) it may take all of it. */
+  const fit = useFitText(mainTitle(cur.title), { max: resting ? 84 : spread ? 200 : 96, min: 24 });
 
   /*
    * A track change is a dissolve, so each line keeps the one it is replacing.

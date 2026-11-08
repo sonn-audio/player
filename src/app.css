@@ -521,6 +521,106 @@ html[data-arrived] .cx-side-mark {
   color: var(--t4);
 }
 
+/* --- one gutter for every view ---------------------------------------------------- */
+
+/*
+ * The catalogue measured its margin from the window (`6vw`), the desk and the reading from nothing in
+ * particular, and the three disagreed by half a hundred pixels: the whole left edge jumped when you went
+ * from Spotify to Rooms. One token, read by every view, so the pane has one kantlijn.
+ */
+.cx-root[data-shell] {
+  --pane-pad: 40px;
+}
+
+.cx-root[data-shell] .cx-browse-inner {
+  --browse-pad: var(--pane-pad);
+}
+
+.cx-root[data-shell] .cx-welcome {
+  padding-left: var(--pane-pad);
+  padding-right: var(--pane-pad);
+}
+
+.cx-root[data-shell] .cx-sig-band,
+.cx-root[data-shell] .cx-sig-deck {
+  padding-left: var(--pane-pad);
+  padding-right: var(--pane-pad);
+}
+
+/* --- the billboard as a card, the shelves fading into the gutter ---------------------- */
+
+/*
+ * A band from edge to edge was right on a window, where the edge was the window's. Inside a rounded
+ * pane an edge-to-edge band is a stripe through a card, so the billboard stands within the gutter as a
+ * card of its own — the record's wall inside it, corners of its own, a hairline — and a shelf that runs
+ * on past the gutter fades into it rather than being cut by the pane's corner.
+ */
+.cx-root[data-shell] .cx-bill {
+  margin: 0 0 28px;
+  padding: 28px 36px;
+  border-radius: 14px;
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 6%);
+}
+
+.cx-root[data-shell] .cx-browse-inner[data-root] .cx-bill {
+  padding: 22px 30px;
+}
+
+.cx-root[data-shell] .cx-bill-scrim {
+  background:
+    linear-gradient(90deg, rgb(16 17 20 / 72%) 0%, rgb(16 17 20 / 42%) 45%, rgb(16 17 20 / 14%) 100%),
+    linear-gradient(180deg, rgb(16 17 20 / 28%), rgb(16 17 20 / 8%) 30%, rgb(16 17 20 / 8%) 70%, rgb(16 17 20 / 40%));
+}
+
+.cx-root[data-shell] .cx-shelf-row {
+  mask-image: linear-gradient(
+    90deg,
+    #000 calc(100% - var(--pane-pad) - 56px),
+    transparent calc(100% - var(--pane-pad) + 6px)
+  );
+}
+
+/* --- one chip for every button in the pane ------------------------------------------- */
+
+/*
+ * The catalogue's actions were 40px capsules with 0.22em tracking; the bar's room and lamp are 30px chips
+ * with 0.16em. Side by side on one screen they were two generations of the same idea, so the pane takes
+ * the bar's. Play is the one filled chip — the one action here with a consequence, the same figure as
+ * the bar's play ring.
+ */
+.cx-root[data-shell] .cx-play-btn,
+.cx-root[data-shell] .cx-shuffle-btn,
+.cx-root[data-shell] .cx-bill-open,
+.cx-root[data-shell] .cx-inputs-empty-go {
+  height: 34px;
+  padding: 0 16px 0 14px;
+  gap: 9px;
+  border: 1px solid rgb(255 255 255 / 9%);
+  border-radius: 17px;
+  background: rgb(255 255 255 / 2.5%);
+  font-size: 9.5px;
+  letter-spacing: 0.16em;
+  color: var(--t3);
+}
+
+.cx-root[data-shell] .cx-shuffle-btn:hover,
+.cx-root[data-shell] .cx-bill-open:hover,
+.cx-root[data-shell] .cx-inputs-empty-go:hover {
+  border-color: rgb(255 255 255 / 20%);
+  color: var(--t1);
+}
+
+.cx-root[data-shell] .cx-play-btn {
+  border-color: transparent;
+  background: var(--t1);
+  color: #0b0b0d;
+}
+
+.cx-root[data-shell] .cx-play-btn:hover {
+  background: #fff;
+  color: #0b0b0d;
+}
+
 /* --- one head for every view: the name small in the display face, the search beside it --- */
 
 /*
@@ -622,6 +722,29 @@ html[data-arrived] .cx-side-mark {
   margin-bottom: 10px;
 }
 
+/*
+ * The column under the record has the room the transport used to take, so the rows of what is next are not
+ * rationed by the window's height or the page's width the way the bare stage rationed them: seven rows
+ * fit under a 96px name on any desk this frame is drawn on.
+ */
+.cx-root[data-shell] .cx-stage .cx-upnext-list li:nth-child(n + 2) {
+  display: list-item;
+}
+
+/* Rationed again only by height, and more generously than the bare stage: four rows on an ordinary
+   desk, two on a short one, so the name never leaves the top of the pane. */
+@media (max-height: 1040px) {
+  .cx-root[data-shell] .cx-stage .cx-upnext-list li:nth-child(n + 5) {
+    display: none;
+  }
+}
+
+@media (max-height: 820px) {
+  .cx-root[data-shell] .cx-stage .cx-upnext-list li:nth-child(n + 3) {
+    display: none;
+  }
+}
+
 /* The search field in the frame's own language: a chip, like the room and the lamp in the bar. */
 .cx-root[data-shell] .cx-search {
   flex: 0 1 280px;
@@ -638,6 +761,10 @@ html[data-arrived] .cx-side-mark {
 
 .cx-root[data-shell] .cx-search::after {
   display: none;
+}
+
+.cx-root[data-shell] .cx-search input::placeholder {
+  color: var(--t6);
 }
 
 .cx-root[data-shell] .cx-search:focus-within {
@@ -700,12 +827,12 @@ html[data-arrived] .cx-side-mark {
 }
 
 .cx-root[data-shell]:not([data-idle]) .cx-stage-inner {
-  --cx-cover-size: min(clamp(240px, 58vh, 560px), 31vw);
+  --cx-cover-size: min(clamp(260px, 62vh, 600px), 34vw);
   gap: clamp(32px, 3.6vw, 60px);
 }
 
 .cx-root[data-shell]:not([data-idle]) .cx-stage-meta {
-  width: min(640px, 36vw);
+  width: min(600px, 34vw);
 }
 
 /* --- the keyboard ------------------------------------------------------------- */
