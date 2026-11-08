@@ -24,11 +24,11 @@ import { useLocalPlayback } from '@/state/useLocalPlayback';
 import { useMediaSession } from '@/state/useMediaSession';
 import { useScenes } from '@/state/useScenes';
 import { useWakeLock } from '@/state/useWakeLock';
-import { Brand } from '@/shell/Brand';
 import { InstallHint } from '@/shell/InstallHint';
 import { Mark } from '@/components/Mark';
 import { Stage, MobileStage, greeting } from '@/art/Stage';
 import { Signal } from '@/art/Signal';
+import { PlayerBar, Sidebar } from '@/art/Shell';
 import { RoomsSheet } from '@/art/Channels';
 import { Gallery, HouseStrip, Wall } from '@/art/Wall';
 import { useRoomDrag } from '@/art/useRoomDrag';
@@ -577,13 +577,268 @@ export function ArtApp() {
     }
   }, [view.kind, cur.hasTrack]);
 
-  /* The mini bar exists for "you are looking at something else and want the music" — which is not the
-     signal view, whose own band carries the identity and the transport. */
-  const browsing = view.kind === 'browse' || view.kind === 'inputs';
+  /*
+   * The room, lit by what is playing in it — the sleeve blurred past recognition under a near-black
+   * veil, dissolving on every track change. On a phone it is the page's ground; on a desk it lights the
+   * pane inside the frame (see `app.css`), so it is made once here and placed by whichever tree renders.
+   */
+  const wash = leader?.track ? (
+    <Crossfade
+      artKey={artKey}
+      cover={zoneCoverCss(api, leader, 480)}
+      render={(slot) => (
+        <>
+          <span className="cx-bg" style={{ backgroundImage: slot.cover }} />
+          <span className="cx-bg-scrim" />
+        </>
+      )}
+    />
+  ) : null;
+
+  /* What the middle of the screen shows. One tree, placed by the phone directly and by the desk in its pane. */
+  const body = (
+    <div className="cx-body">
+      <div className="cx-main-wrap">
+        <div className="cx-content-row">
+          <main className="cx-main">
+            {/*
+             * On a desk with music in the house, the wall is the shell — and what the room is doing
+             * goes *inside* its panel.
+             *
+             * Browsing used to replace the whole screen, which put a page with a menu bar over a
+             * player that had just spent its whole design becoming a room. It also lost the one thing
+             * a browser needs to be unambiguous about: which room this is going to play in. Inside the
+             * panel, between the slivers, that question answers itself — you are looking for something
+             * *in this room*, and the rest of the house is still standing either side of it.
+             *
+             * A quiet house has no wall to put anything in, so it keeps the old shape: the welcome
+             * screen, or a listing at full width.
+             */}
+            {/*
+             * The deck stands on its own, edge to edge.
+             *
+             * Browsing goes *inside* the wall because the question it raises — which room is this
+             * going to play in — is answered by the rooms standing either side of it. The deck
+             * raises no such question: it is one room's instruments, and the only thing 152px of
+             * other rooms' spines does here is take the width the spectrum wanted. A rack is
+             * edge to edge or it is a widget.
+             */}
+            {!phone && view.kind === 'signal' && zone ? (
+              <Signal cur={cur} zone={zone} zones={zones} onLeave={leaveSignal} />
+            ) : !phone ? (
+              <Wall
+                channels={channels}
+                currentLeaderId={leaderOf(zone, zones)?.id ?? null}
+                onSelect={select}
+                drag={drag}
+                onCanvas={() => setAsked('record')}
+                onHouse={() => setAsked('house')}
+                canCanvas={cur.hasTrack}
+                /* Under the stage the rooms stand on the record's own page; the strip is for the
+                   quiet house, whose welcome has no page of its own. */
+                foot={view.kind === 'home' && houseQuiet}
+              >
+                {view.kind === 'browse' ? (
+                  <Browse
+                    zone={zone}
+                    root={view.node}
+                    onExit={goHome}
+                    onOpenRooms={() => setSheet('rooms')}
+                    // Remount on a different root so the internal path stack starts fresh rather than
+                    // keeping the last service's trail.
+                    key={view.node.id ?? 'root'}
+                  />
+                ) : view.kind === 'inputs' ? (
+                  <Sources zone={zone} onDone={goHome} />
+                ) : rest === 'house' ? (
+                  /* The house at rest: every room the same width — see `Gallery`. */
+                  <Gallery
+                    channels={channels}
+                    currentLeaderId={leaderOf(zone, zones)?.id ?? null}
+                    onSelect={select}
+                    onLeave={() => setAsked(null)}
+                  />
+                ) : houseQuiet ? (
+                  /*
+                   * A quiet house is still a house.
+                   *
+                   * With nothing playing anywhere the desk swapped in a different layout altogether —
+                   * a page of cards where the wall had been — so the one screen this product has
+                   * became two, depending on whether anybody happened to be listening. The rooms are
+                   * still there when they are silent; what changes is only what the panel between them
+                   * holds, which is now a place to start something rather than a picture of something
+                   * already started.
+                   *
+                   * `house={[]}` because the rooms are the panels on either side of this. Drawing them
+                   * again as cards inside one of them is the same list twice.
+                   */
+                  <Welcome
+                    greetingText={greeting()}
+                    rooms={zones.length}
+                    playing={zones.filter((candidate) => Boolean(candidate.track)).length}
+                    services={services}
+                    onBrowse={openBrowse}
+                    onInputs={() => setView({ kind: 'inputs' })}
+                    scenes={scenes.slice(0, 4).map((scene) => ({
+                      key: scene.id,
+                      title: scene.name,
+                      cover: scene.coverUrl,
+                      play: () => void recall(scene),
+                    }))}
+                    recents={recents.slice(0, 12).map((item) => ({
+                      key: item.source,
+                      title: item.title || item.album || item.source,
+                      cover: item.coverUrl,
+                      play: () => zone && void api.play(zone.id, item.source),
+                    }))}
+                    house={[]}
+                    favorites={favorites.slice(0, 12).map((item) => ({
+                      key: String(item.id),
+                      title: item.name,
+                      cover: item.coverUrl,
+                      play: () => zone && void api.play(zone.id, item.source),
+                    }))}
+                  />
+                ) : (
+                  <Stage
+                    cur={cur}
+                    drag={drag}
+                    spread={false}
+                    onSignal={openSignal}
+                    onLeaveCanvas={() => setAsked(null)}
+                    resting={idle}
+                    onOpenRooms={() => setSheet('rooms')}
+                    onOpenQueue={() => setSheet('queue')}
+                    onBrowse={() => openBrowse()}
+                    upNext={upNext}
+                    upNextTotal={upNextTotal}
+                    elsewhere={elsewhere}
+                    onTurn={channels.length > 1 ? turnRoom : undefined}
+                    origin={origin}
+                    onOpenOrigin={openOrigin}
+                    neighbours={
+                      channels.length > 1
+                        ? (() => {
+                            const mine = leaderOf(zone, zones)?.id ?? null;
+                            const at = channels.findIndex((channel) => channel.leader.id === mine);
+                            const n = channels.length;
+                            return {
+                              left: channels[(at - 1 + n) % n]!.leader.name,
+                              right: channels[(at + 1) % n]!.leader.name,
+                            };
+                          })()
+                        : undefined
+                    }
+                    house={
+                      channels.length > 0 ? (
+                        <HouseStrip
+                          channels={channels}
+                          currentLeaderId={leaderOf(zone, zones)?.id ?? null}
+                          onSelect={select}
+                          drag={drag}
+                          onCanvas={() => setAsked('record')}
+                          onHouse={() => setAsked('house')}
+                          canCanvas={cur.hasTrack}
+                          compact
+                        />
+                      ) : undefined
+                    }
+                    /* What this room played last, for the one thing an idle room can honestly show:
+                       the record that was on, in the dark. See `Stage`'s empty branch. */
+                    lastCover={recents[0]?.coverUrl ? `url("${recents[0].coverUrl}")` : undefined}
+                  />
+                )}
+              </Wall>
+            ) : view.kind === 'browse' ? (
+              <Browse
+                zone={zone}
+                root={view.node}
+                onExit={goHome}
+                onOpenRooms={() => setSheet('rooms')}
+                key={view.node.id ?? 'root'}
+              />
+            ) : view.kind === 'inputs' ? (
+              <Sources zone={zone} onDone={goHome} />
+            ) : view.kind === 'signal' && zone ? (
+              /* One column of instruments, read one at a time down the page — which is what a phone
+                 can honestly do with a deck, and what it never could with a whole second shell. */
+              <Signal cur={cur} zone={zone} zones={zones} onLeave={leaveSignal} />
+            ) : (
+              /*
+               * Home is where you decide what to play.
+               *
+               * On a phone that is *always* true now — the record you are listening to lives in
+               * the bar along the bottom and in the player above it — while a desk keeps the
+               * stage on home and only falls back to this when the whole house is quiet, because
+               * a desk has the width to be both at once and a wall panel should show the record.
+               */
+              <Welcome
+                greetingText={greeting()}
+                rooms={zones.length}
+                playing={zones.filter((candidate) => Boolean(candidate.track)).length}
+                services={services}
+                onBrowse={openBrowse}
+                onInputs={() => setView({ kind: 'inputs' })}
+                // A quiet house is exactly when a saved moment earns its place: scenes carry
+                // their own rooms and volumes, so they work from this screen with nothing
+                // selected — unlike the recents beside them, which need a room to land in.
+                scenes={scenes.slice(0, 4).map((scene) => ({
+                  key: scene.id,
+                  title: scene.name,
+                  cover: scene.coverUrl,
+                  play: () => void recall(scene),
+                }))}
+                recents={recents.slice(0, 12).map((item) => ({
+                  key: item.source,
+                  title: item.title || item.album || item.source,
+                  cover: item.coverUrl,
+                  play: () => zone && void api.play(zone.id, item.source),
+                }))}
+                /*
+                 * Every room, led by the one you are in. Pressing a room *selects* it — and
+                 * opens the player when it has something on, because "take me to the kitchen"
+                 * and "show me what the kitchen is playing" are the same intent from here.
+                 */
+                house={channels.map((channel) => ({
+                  key: String(channel.leader.id),
+                  name: channel.leader.name,
+                  title: channel.leader.track?.title ?? '',
+                  cover: zoneCoverCss(api, channel.leader, 480),
+                  playing: channel.playing && channel.hasTrack,
+                  current: channel.leader.id === leaderOf(zone, zones)?.id,
+                  pct:
+                    channel.hasTrack && channel.leader.duration > 0
+                      ? Math.min(100, (channel.leader.position / channel.leader.duration) * 100)
+                      : null,
+                  off: channel.leader.powerState?.power === 'off',
+                  open: () => {
+                    select(channel.leader.id);
+                    if (channel.hasTrack) {
+                      setPlayerOpen(true);
+                    }
+                  },
+                }))}
+                /* The room's saved list — the one shelf here that is a deliberate choice rather
+                   than a trace of what happened, which is why it leads. */
+                favorites={favorites.slice(0, 12).map((item) => ({
+                  key: String(item.id),
+                  title: item.name,
+                  cover: item.coverUrl,
+                  play: () => zone && void api.play(zone.id, item.source),
+                }))}
+              />
+            )}
+          </main>
+        </div>
+
+      </div>
+    </div>
+  );
 
   return (
     <div
       className="cx-root"
+      data-shell={!phone || undefined}
       data-idle={idle || undefined}
       /* Which room the wash is lighting — see `.cx-bg-scrim`: a record's colour belongs to the page
          that is showing that record, and nowhere near a wall of thirty other people's covers. */
@@ -604,18 +859,7 @@ export function ArtApp() {
        * colour away but to put it in a layer that knows how faint it has to be. The result is a black
        * page that takes the record's temperature; the covers on top of it stay their own colour.
        */}
-      {leader?.track && (
-        <Crossfade
-          artKey={artKey}
-          cover={zoneCoverCss(api, leader, 480)}
-          render={(slot) => (
-            <>
-              <span className="cx-bg" style={{ backgroundImage: slot.cover }} />
-              <span className="cx-bg-scrim" />
-            </>
-          )}
-        />
-      )}
+      {phone && wash}
 
       {/*
        * What is in the hand.
@@ -670,62 +914,6 @@ export function ArtApp() {
         </span>
       )}
 
-      {/* --- desktop chrome --- */}
-      {!phone && (
-        <header className="cx-top">
-          {/* A hidden twin, holding the space the shell's shared copy floats over — see `shell/Brand`. */}
-          <span className="cx-brand">
-            <Brand placeholder />
-          </span>
-
-          {/*
-           * Three things, where there were eight.
-           *
-           * The bar used to list every service — `LIBRARY RADIO SPOTIFY APPLE MUSIC YOUTUBE MUSIC` —
-           * which is a website menu, and it started saying the same thing twice the moment browsing
-           * moved into the room's panel: the panel already carries the service's name at poster size,
-           * and the bar was lighting up that same word in 10px. The root of the catalogue *is* the list
-           * of services, so the way in is one press and the naming happens where the looking happens.
-           *
-           * `home` appears only when you are somewhere else. A button that takes you where you already
-           * are is furniture pretending to be a control.
-           */}
-          {/*
-           * Four words, at the right, where the eye ends a line.
-           *
-           * `stage` is where the record is; `music` is the catalogue; `inputs` is what is wired in;
-           * `rooms` is the desk. The one that is on screen is lit, so the bar is also the answer to
-           * "where am I". Words, not glyphs: a 10px magnifier is a door that does not say where it
-           * goes. And nothing under the bar — the hairline that ran here drew a frame around a
-           * poster, and a poster is not framed.
-           */}
-          <div className="cx-status">
-            {/* Only when the stream is down, and only ever a dot: the numbers on this screen may be stale
-                and that is worth saying; *why* is the reading's business. */}
-            {status !== 'open' && (
-              <span className="cx-stale" title="Not in touch with the house right now" />
-            )}
-          </div>
-          <nav className="cx-nav mono">
-            <button type="button" data-on={(view.kind === 'home' && !idle) || undefined} onClick={goHome}>
-              stage
-            </button>
-            <button type="button" data-on={view.kind === 'browse' || undefined} onClick={() => openBrowse()}>
-              music
-            </button>
-            <button
-              type="button"
-              data-on={view.kind === 'inputs' || undefined}
-              onClick={() => setView({ kind: 'inputs' })}
-            >
-              inputs
-            </button>
-            <button type="button" data-on={sheet === 'rooms' || undefined} onClick={() => setSheet('rooms')}>
-              rooms{cur.grouped ? ` +${cur.groupExtra}` : ''}
-            </button>
-          </nav>
-        </header>
-      )}
 
       {/*
        * The phone header, on every screen.
@@ -752,243 +940,48 @@ export function ArtApp() {
         </header>
       )}
 
-      <div className="cx-body">
-        <div className="cx-main-wrap">
-          <div className="cx-content-row">
-            <main className="cx-main">
-              {/*
-               * On a desk with music in the house, the wall is the shell — and what the room is doing
-               * goes *inside* its panel.
-               *
-               * Browsing used to replace the whole screen, which put a page with a menu bar over a
-               * player that had just spent its whole design becoming a room. It also lost the one thing
-               * a browser needs to be unambiguous about: which room this is going to play in. Inside the
-               * panel, between the slivers, that question answers itself — you are looking for something
-               * *in this room*, and the rest of the house is still standing either side of it.
-               *
-               * A quiet house has no wall to put anything in, so it keeps the old shape: the welcome
-               * screen, or a listing at full width.
-               */}
-              {/*
-               * The deck stands on its own, edge to edge.
-               *
-               * Browsing goes *inside* the wall because the question it raises — which room is this
-               * going to play in — is answered by the rooms standing either side of it. The deck
-               * raises no such question: it is one room's instruments, and the only thing 152px of
-               * other rooms' spines does here is take the width the spectrum wanted. A rack is
-               * edge to edge or it is a widget.
-               */}
-              {!phone && view.kind === 'signal' && zone ? (
-                <Signal cur={cur} zone={zone} zones={zones} onLeave={leaveSignal} />
-              ) : !phone ? (
-                <Wall
-                  channels={channels}
-                  currentLeaderId={leaderOf(zone, zones)?.id ?? null}
-                  onSelect={select}
-                  drag={drag}
-                  onCanvas={() => setAsked('record')}
-                  onHouse={() => setAsked('house')}
-                  canCanvas={cur.hasTrack}
-                  /* Under the stage the rooms stand on the record's own page; the strip is for the
-                     quiet house, whose welcome has no page of its own. */
-                  foot={view.kind === 'home' && houseQuiet}
-                >
-                  {view.kind === 'browse' ? (
-                    <Browse
-                      zone={zone}
-                      root={view.node}
-                      onExit={goHome}
-                      onOpenRooms={() => setSheet('rooms')}
-                      // Remount on a different root so the internal path stack starts fresh rather than
-                      // keeping the last service's trail.
-                      key={view.node.id ?? 'root'}
-                    />
-                  ) : view.kind === 'inputs' ? (
-                    <Sources zone={zone} onDone={goHome} />
-                  ) : rest === 'house' ? (
-                    /* The house at rest: every room the same width — see `Gallery`. */
-                    <Gallery
-                      channels={channels}
-                      currentLeaderId={leaderOf(zone, zones)?.id ?? null}
-                      onSelect={select}
-                      onLeave={() => setAsked(null)}
-                    />
-                  ) : houseQuiet ? (
-                    /*
-                     * A quiet house is still a house.
-                     *
-                     * With nothing playing anywhere the desk swapped in a different layout altogether —
-                     * a page of cards where the wall had been — so the one screen this product has
-                     * became two, depending on whether anybody happened to be listening. The rooms are
-                     * still there when they are silent; what changes is only what the panel between them
-                     * holds, which is now a place to start something rather than a picture of something
-                     * already started.
-                     *
-                     * `house={[]}` because the rooms are the panels on either side of this. Drawing them
-                     * again as cards inside one of them is the same list twice.
-                     */
-                    <Welcome
-                      greetingText={greeting()}
-                      rooms={zones.length}
-                      playing={zones.filter((candidate) => Boolean(candidate.track)).length}
-                      services={services}
-                      onBrowse={openBrowse}
-                      onInputs={() => setView({ kind: 'inputs' })}
-                      scenes={scenes.slice(0, 4).map((scene) => ({
-                        key: scene.id,
-                        title: scene.name,
-                        cover: scene.coverUrl,
-                        play: () => void recall(scene),
-                      }))}
-                      recents={recents.slice(0, 12).map((item) => ({
-                        key: item.source,
-                        title: item.title || item.album || item.source,
-                        cover: item.coverUrl,
-                        play: () => zone && void api.play(zone.id, item.source),
-                      }))}
-                      house={[]}
-                      favorites={favorites.slice(0, 12).map((item) => ({
-                        key: String(item.id),
-                        title: item.name,
-                        cover: item.coverUrl,
-                        play: () => zone && void api.play(zone.id, item.source),
-                      }))}
-                    />
-                  ) : (
-                    <Stage
-                      cur={cur}
-                      drag={drag}
-                      onSignal={openSignal}
-                      onLeaveCanvas={() => setAsked(null)}
-                      resting={idle}
-                      onOpenRooms={() => setSheet('rooms')}
-                      onOpenQueue={() => setSheet('queue')}
-                      onBrowse={() => openBrowse()}
-                      upNext={upNext}
-                      upNextTotal={upNextTotal}
-                      elsewhere={elsewhere}
-                      onTurn={channels.length > 1 ? turnRoom : undefined}
-                      origin={origin}
-                      onOpenOrigin={openOrigin}
-                      neighbours={
-                        channels.length > 1
-                          ? (() => {
-                              const mine = leaderOf(zone, zones)?.id ?? null;
-                              const at = channels.findIndex((channel) => channel.leader.id === mine);
-                              const n = channels.length;
-                              return {
-                                left: channels[(at - 1 + n) % n]!.leader.name,
-                                right: channels[(at + 1) % n]!.leader.name,
-                              };
-                            })()
-                          : undefined
-                      }
-                      house={
-                        channels.length > 0 ? (
-                          <HouseStrip
-                            channels={channels}
-                            currentLeaderId={leaderOf(zone, zones)?.id ?? null}
-                            onSelect={select}
-                            drag={drag}
-                            onCanvas={() => setAsked('record')}
-                            onHouse={() => setAsked('house')}
-                            canCanvas={cur.hasTrack}
-                            compact
-                          />
-                        ) : undefined
-                      }
-                      /* What this room played last, for the one thing an idle room can honestly show:
-                         the record that was on, in the dark. See `Stage`'s empty branch. */
-                      lastCover={recents[0]?.coverUrl ? `url("${recents[0].coverUrl}")` : undefined}
-                    />
-                  )}
-                </Wall>
-              ) : view.kind === 'browse' ? (
-                <Browse
-                  zone={zone}
-                  root={view.node}
-                  onExit={goHome}
-                  onOpenRooms={() => setSheet('rooms')}
-                  key={view.node.id ?? 'root'}
-                />
-              ) : view.kind === 'inputs' ? (
-                <Sources zone={zone} onDone={goHome} />
-              ) : view.kind === 'signal' && zone ? (
-                /* One column of instruments, read one at a time down the page — which is what a phone
-                   can honestly do with a deck, and what it never could with a whole second shell. */
-                <Signal cur={cur} zone={zone} zones={zones} onLeave={leaveSignal} />
-              ) : (
-                /*
-                 * Home is where you decide what to play.
-                 *
-                 * On a phone that is *always* true now — the record you are listening to lives in
-                 * the bar along the bottom and in the player above it — while a desk keeps the
-                 * stage on home and only falls back to this when the whole house is quiet, because
-                 * a desk has the width to be both at once and a wall panel should show the record.
-                 */
-                <Welcome
-                  greetingText={greeting()}
-                  rooms={zones.length}
-                  playing={zones.filter((candidate) => Boolean(candidate.track)).length}
-                  services={services}
-                  onBrowse={openBrowse}
-                  onInputs={() => setView({ kind: 'inputs' })}
-                  // A quiet house is exactly when a saved moment earns its place: scenes carry
-                  // their own rooms and volumes, so they work from this screen with nothing
-                  // selected — unlike the recents beside them, which need a room to land in.
-                  scenes={scenes.slice(0, 4).map((scene) => ({
-                    key: scene.id,
-                    title: scene.name,
-                    cover: scene.coverUrl,
-                    play: () => void recall(scene),
-                  }))}
-                  recents={recents.slice(0, 12).map((item) => ({
-                    key: item.source,
-                    title: item.title || item.album || item.source,
-                    cover: item.coverUrl,
-                    play: () => zone && void api.play(zone.id, item.source),
-                  }))}
-                  /*
-                   * Every room, led by the one you are in. Pressing a room *selects* it — and
-                   * opens the player when it has something on, because "take me to the kitchen"
-                   * and "show me what the kitchen is playing" are the same intent from here.
-                   */
-                  house={channels.map((channel) => ({
-                    key: String(channel.leader.id),
-                    name: channel.leader.name,
-                    title: channel.leader.track?.title ?? '',
-                    cover: zoneCoverCss(api, channel.leader, 480),
-                    playing: channel.playing && channel.hasTrack,
-                    current: channel.leader.id === leaderOf(zone, zones)?.id,
-                    pct:
-                      channel.hasTrack && channel.leader.duration > 0
-                        ? Math.min(100, (channel.leader.position / channel.leader.duration) * 100)
-                        : null,
-                    off: channel.leader.powerState?.power === 'off',
-                    open: () => {
-                      select(channel.leader.id);
-                      if (channel.hasTrack) {
-                        setPlayerOpen(true);
-                      }
-                    },
-                  }))}
-                  /* The room's saved list — the one shelf here that is a deliberate choice rather
-                     than a trace of what happened, which is why it leads. */
-                  favorites={favorites.slice(0, 12).map((item) => ({
-                    key: String(item.id),
-                    title: item.name,
-                    cover: item.coverUrl,
-                    play: () => zone && void api.play(zone.id, item.source),
-                  }))}
-                />
-              )}
-            </main>
-
-          </div>
-
-          {!phone && browsing && leader && <MiniBar cur={cur} onOpen={goHome} />}
+      {phone ? (
+        body
+      ) : (
+        <div className="cx-shell">
+          <Sidebar
+            view={view.kind}
+            sheet={sheet}
+            services={services}
+            channels={channels}
+            currentLeaderId={leaderOf(zone, zones)?.id ?? null}
+            cur={cur}
+            onHome={goHome}
+            onBrowse={(node) => openBrowse(node ?? {})}
+            onSearch={() => {
+              openBrowse();
+              window.requestAnimationFrame(() => {
+                document.querySelector<HTMLInputElement>('.cx-search input')?.focus();
+              });
+            }}
+            onInputs={() => setView({ kind: 'inputs' })}
+            onSignal={openSignal}
+            onRooms={() => setSheet('rooms')}
+            onSelect={select}
+          />
+          <section className="cx-pane">
+            {wash}
+            {body}
+          </section>
         </div>
-      </div>
+      )}
+
+      {!phone && (
+        <PlayerBar
+          cur={cur}
+          onHome={goHome}
+          onBrowse={() => openBrowse()}
+          onSignal={openSignal}
+          onRooms={() => setSheet('rooms')}
+          onQueue={() => setSheet('queue')}
+          onCanvas={() => setAsked('record')}
+        />
+      )}
 
       {/*
        * The phone's player, over everything, and the bar that opens it.

@@ -1,0 +1,524 @@
+/*
+ * The app's frame on a desk — see `art/Shell.tsx`.
+ *
+ * A fourth sheet rather than another pass in `art.css`: everything here is *about the frame* (the sidebar,
+ * the pane, the player bar) and about what the frame asks of the views inside it, and nothing about the
+ * views themselves. Scoped under `.cx-root[data-shell]`, which the app sets on a desk and never on a phone.
+ */
+
+.cx-root[data-shell] {
+  background: #0a0a0c;
+}
+
+/* The wordmark and the admin corner are the shell's now; the floating copies stand down. */
+body:has(.cx-root[data-shell]) .brand-shared,
+body:has(.cx-root[data-shell]) .admin-link {
+  display: none;
+}
+
+/* --- the grid: sidebar | pane, with the bar under both --------------------- */
+
+.cx-shell {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: 228px minmax(0, 1fr);
+  flex: 1;
+  min-height: 0;
+  padding: 10px 10px 0 0;
+  transition:
+    grid-template-columns 0.9s var(--cx-ease),
+    padding 0.9s var(--cx-ease);
+}
+
+/* --- the sidebar ------------------------------------------------------------ */
+
+.cx-side {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-height: 0;
+  padding: 16px 12px 14px 14px;
+  overflow: hidden auto;
+  transition:
+    opacity 0.6s var(--cx-ease),
+    visibility 0.6s step-end;
+}
+
+.cx-side-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px 6px;
+  color: var(--t1);
+  text-decoration: none;
+}
+
+.cx-side-mark {
+  width: 26px;
+  height: 21px;
+  color: var(--accent);
+}
+
+.cx-side-word {
+  font-size: 15px;
+  letter-spacing: -0.02em;
+}
+
+.cx-side-brand .cx-stale {
+  margin-left: auto;
+}
+
+.cx-sgroup {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: none;
+}
+
+.cx-sgroup-foot {
+  margin-top: auto;
+}
+
+.cx-sgroup-lbl {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+  padding: 0 12px;
+  font-size: 9px;
+  letter-spacing: 0.22em;
+  color: var(--t7);
+}
+
+.cx-sgroup-go {
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: none;
+  color: var(--t6);
+  transition: color 0.18s;
+}
+
+.cx-sgroup-go:hover {
+  color: var(--t2);
+}
+
+.cx-snav {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 34px;
+  padding: 0 12px;
+  border-radius: 9px;
+  font-size: 13.5px;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  white-space: nowrap;
+  color: var(--t4);
+  text-decoration: none;
+  text-align: left;
+  transition:
+    background 0.18s,
+    color 0.18s;
+}
+
+.cx-snav svg {
+  flex: none;
+  color: var(--t6);
+  transition: color 0.18s;
+}
+
+.cx-snav:hover {
+  background: rgb(255 255 255 / 4%);
+  color: var(--t1);
+}
+
+.cx-snav[data-on] {
+  background: rgb(255 255 255 / 7%);
+  color: var(--t1);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 4%);
+}
+
+.cx-snav[data-on] svg,
+.cx-snav:hover svg {
+  color: var(--t1);
+}
+
+.cx-snav[data-quiet] {
+  color: var(--t6);
+}
+
+.cx-snav-txt {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cx-snav-extra {
+  font-style: normal;
+  font-size: 11px;
+  color: var(--t6);
+}
+
+.cx-snav-k {
+  margin-left: auto;
+  font-size: 10.5px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+  color: var(--t6);
+}
+
+/* A service, as a disc in its colour with its monogram on it. */
+.cx-sdot {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: linear-gradient(152deg, color-mix(in srgb, var(--tint) 92%, #000), color-mix(in srgb, var(--tint) 38%, #0a0a0c));
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 12%);
+  font-size: 7px;
+  font-weight: 800;
+  letter-spacing: 0;
+  color: rgb(255 255 255 / 92%);
+}
+
+/* A room's state, as a dot: lit while playing, grey while paused, off when silent. */
+.cx-sdot-state {
+  display: inline-block;
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--t8);
+  transition: background 0.3s;
+}
+
+.cx-sdot-state[data-paused] {
+  background: var(--t5);
+}
+
+.cx-sdot-state[data-playing] {
+  background: var(--accent);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--accent) 75%, transparent);
+}
+
+/* --- the pane: a lit sheet inside the dark frame ---------------------------- */
+
+.cx-pane {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  border-radius: 18px;
+  background: #101114;
+  box-shadow:
+    inset 0 0 0 1px rgb(255 255 255 / 5%),
+    0 30px 80px -40px rgb(0 0 0 / 80%);
+  isolation: isolate;
+  transition:
+    border-radius 0.9s var(--cx-ease),
+    box-shadow 0.9s var(--cx-ease);
+}
+
+/* The wash lives inside the pane now: the record lights the sheet, and the frame stays dark. */
+.cx-pane > .cx-xfade {
+  z-index: 0;
+}
+
+.cx-root[data-shell] .cx-pane .cx-bg {
+  filter: grayscale(0.55) saturate(1.1) blur(110px) brightness(0.5);
+}
+
+.cx-root[data-shell] .cx-pane .cx-bg-scrim {
+  background:
+    radial-gradient(130% 100% at 50% 40%, transparent 30%, rgb(0 0 0 / 50%) 100%),
+    linear-gradient(180deg, rgb(16 17 20 / 12%) 0%, rgb(16 17 20 / 60%) 45%, rgb(16 17 20 / 92%) 100%);
+}
+
+.cx-pane > .cx-body {
+  position: relative;
+  z-index: 1;
+}
+
+/* --- the player bar ----------------------------------------------------------- */
+
+.cx-pbar {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex: none;
+  height: 92px;
+  padding: 0 24px;
+  transition:
+    opacity 0.6s var(--cx-ease),
+    visibility 0.6s step-end;
+}
+
+.cx-pbar-np {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+  flex: 0 1 460px;
+}
+
+.cx-pbar-cov {
+  position: relative;
+  flex: none;
+  width: 58px;
+  height: 58px;
+  overflow: hidden;
+  border-radius: 8px;
+  background: var(--cx-cover);
+  box-shadow:
+    0 10px 24px -10px rgb(0 0 0 / 80%),
+    inset 0 0 0 1px rgb(255 255 255 / 10%);
+}
+
+.cx-pbar-cov[data-empty] {
+  background: rgb(255 255 255 / 3%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 6%);
+}
+
+.cx-pbar-cov-art {
+  position: absolute;
+  inset: 0;
+  background-position: center;
+  background-size: cover;
+}
+
+.cx-pbar-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.cx-pbar-title {
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--t1);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cx-pbar-sub {
+  font-size: 12px;
+  color: var(--t5);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cx-pbar-link {
+  text-align: left;
+  color: var(--t4);
+}
+
+.cx-pbar-link:hover {
+  color: var(--t1);
+}
+
+.cx-pbar-fav {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  color: var(--t5);
+  transition: color 0.18s;
+}
+
+.cx-pbar-fav:hover,
+.cx-pbar-fav[data-on] {
+  color: var(--t1);
+}
+
+.cx-pbar-wire {
+  margin-left: 4px;
+  flex: none;
+}
+
+.cx-pbar-mid {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  width: 480px;
+  translate: -50% -50%;
+}
+
+.cx-pbar-tl {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+  height: 20px;
+}
+
+.cx-pbar-tl .cx-bar {
+  flex: 1;
+}
+
+.cx-pbar-time {
+  flex: none;
+  font-size: 10.5px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+  color: var(--t6);
+}
+
+.cx-pbar-live {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 9.5px;
+  letter-spacing: 0.2em;
+  color: var(--t2);
+}
+
+.cx-pbar-live i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--g);
+  animation: cx-breathe 2s ease-in-out infinite;
+}
+
+.cx-pbar-right {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 16px;
+  flex: 0 1 460px;
+  min-width: 0;
+}
+
+.cx-pbar-vol .cx-vol-slider {
+  width: 96px;
+}
+
+.cx-pbar-room {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  height: 30px;
+  padding: 0 14px;
+  border: 1px solid rgb(255 255 255 / 9%);
+  border-radius: 15px;
+  background: rgb(255 255 255 / 2.5%);
+  font-size: 9.5px;
+  letter-spacing: 0.16em;
+  white-space: nowrap;
+  color: var(--t3);
+  transition:
+    color 0.18s,
+    border-color 0.18s;
+}
+
+.cx-pbar-room:hover {
+  color: var(--t1);
+  border-color: rgb(255 255 255 / 20%);
+}
+
+.cx-pbar-ic {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  color: var(--t5);
+  transition:
+    color 0.18s,
+    background 0.18s;
+}
+
+.cx-pbar-ic:hover {
+  color: var(--t1);
+  background: rgb(255 255 255 / 6%);
+}
+
+/* --- what the frame asks of the views inside it ------------------------------ */
+
+/*
+ * The stage keeps its record and its words; the transport, the timeline and the fader have moved to
+ * the bar, where they are the same controls for every view. Drawing them twice on one screen is two
+ * answers to "where do I press pause".
+ */
+.cx-root[data-shell] .cx-stage .cx-transport,
+.cx-root[data-shell] .cx-stage .cx-bar-wrap,
+.cx-root[data-shell] .cx-stage .cx-live,
+.cx-root[data-shell] .cx-stage .cx-stage-foot .cx-vol {
+  display: none;
+}
+
+/*
+ * The composition, sized for the pane rather than the window.
+ *
+ * The stage measures its sleeve and its column in viewport units because, on a bare window, the viewport
+ * is the page. Inside the frame the page is the pane — 228px and two gutters narrower — so the same
+ * fractions overflow it. Smaller shares of the same viewport, and the pair fits at 1280 and composes at 2560.
+ */
+.cx-root[data-shell] .cx-stage {
+  padding: 18px clamp(24px, 3vw, 48px);
+}
+
+.cx-root[data-shell] .cx-stage-inner {
+  --cx-cover-size: min(clamp(240px, 58vh, 560px), 31vw);
+  gap: clamp(32px, 3.6vw, 60px);
+}
+
+.cx-root[data-shell] .cx-stage-meta {
+  width: min(640px, 36vw);
+}
+
+/* The reading's band keeps the record's identity; its controls and its way back are the bar's and the sidebar's now. */
+.cx-root[data-shell] .cx-sig-band .cx-transport,
+.cx-root[data-shell] .cx-sig-band .cx-sig-bar,
+.cx-root[data-shell] .cx-sig-vol,
+.cx-root[data-shell] .cx-sig-back {
+  display: none;
+}
+
+/* Rooms stand in the sidebar; the page's turning edges would be a second way to the same place. */
+.cx-root[data-shell] .cx-turn {
+  display: none;
+}
+
+/* --- left alone: the frame steps back and the record has the screen -------- */
+
+.cx-root[data-shell][data-idle] .cx-shell {
+  grid-template-columns: 0 minmax(0, 1fr);
+  padding: 0;
+}
+
+.cx-root[data-shell][data-idle] .cx-side,
+.cx-root[data-shell][data-idle] .cx-pbar {
+  opacity: 0;
+  visibility: hidden;
+}
+
+.cx-root[data-shell][data-idle] .cx-pbar {
+  height: 0;
+  overflow: hidden;
+}
+
+.cx-root[data-shell][data-idle] .cx-pane {
+  border-radius: 0;
+  box-shadow: none;
+}

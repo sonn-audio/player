@@ -288,6 +288,11 @@ const TINT: Record<string, string> = {
   library: '#7f8da0',
 };
 
+/** The colour a service is known by, for anything outside this file that draws one small. */
+export function serviceTint(service: string): string | undefined {
+  return TINT[service];
+}
+
 function ServiceMark({
   item,
   index,

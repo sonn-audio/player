@@ -393,10 +393,17 @@ export function Stage({
   neighbours,
   origin,
   onOpenOrigin,
+  spread = true,
 }: {
   cur: Cur;
   /** The room gestures — the sleeve is the thing you pick up. See `useRoomDrag`. */
   drag: RoomDrag;
+  /**
+   * Whether a wide window draws the record as a two-page spread — the sleeve the whole left page, the
+   * words the right. True on a bare window; false inside the app's frame, where the pane is a sheet
+   * with a sidebar beside it and a full-bleed sleeve would be a page torn out of the frame. See `app.css`.
+   */
+  spread?: boolean;
   onOpenRooms: () => void;
   onOpenQueue: () => void;
   onBrowse: () => void;
@@ -518,7 +525,7 @@ export function Stage({
   return (
     <div
       className="cx-stage"
-      data-spread={cur.hasTrack || undefined}
+      data-spread={(cur.hasTrack && spread) || undefined}
       onClick={leave}
       onWheel={onWheel}
     >

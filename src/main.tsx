@@ -18,6 +18,7 @@ import { ServerProvider } from '@/state/ServerContext';
 import '@/styles.css';
 import '@/shell.css';
 import '@/art.css';
+import '@/app.css';
 
 /*
  * Mark the document when the app is running installed — see the note on `.face` for what that buys.
