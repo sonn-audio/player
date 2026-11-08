@@ -563,6 +563,34 @@ html[data-arrived] .cx-side-mark {
   color: var(--t5);
 }
 
+/* A service with a record put forward keeps its name as the head too: the billboard below carries the
+   record's name at display size, and the eyebrow treatment the bare window gave the service name would
+   leave this one view with a different head from every other. */
+.cx-root[data-shell] .cx-browse-inner[data-spotlight]:not([data-root]) .cx-browse-title {
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  text-transform: none;
+  color: var(--t1);
+}
+
+/* The billboard's kicker on a lit wall: the wall took the record's light and the kicker stayed in the
+   greys of a black page, which left "today · where it came from" unreadable over a bright sleeve. */
+.cx-root[data-shell] .cx-bill-kicker {
+  color: var(--t3);
+  text-shadow: 0 1px 10px rgb(0 0 0 / 55%);
+}
+
+.cx-root[data-shell] .cx-bill-from {
+  color: var(--t4);
+}
+
+.cx-root[data-shell] .cx-bill-from::before {
+  background: var(--t5);
+}
+
 /* The front has a name again: the sidebar's word is lit, and the pane says what it is showing. */
 .cx-root[data-shell] .cx-browse-inner[data-root] .cx-browse-title {
   display: block;
