@@ -792,11 +792,10 @@ html[data-arrived] .cx-side-mark {
 }
 
 .cx-deskpage-body {
-  flex: 1;
+  flex: 0 1 auto;
   min-height: 0;
-  padding-bottom: 28px;
+  padding-bottom: 8px;
   overflow-y: auto;
-  mask-image: linear-gradient(180deg, #000 calc(100% - 28px), transparent 100%);
 }
 
 .cx-sgroup-go[data-on] {
@@ -805,7 +804,7 @@ html[data-arrived] .cx-side-mark {
 
 .cx-deskpage-note {
   flex: none;
-  margin: 0;
+  margin: 18px 0 0;
   padding: 14px 0 22px;
   border-top: 1px solid var(--hair);
   font-size: 12.5px;
