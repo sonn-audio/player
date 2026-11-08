@@ -391,6 +391,7 @@ export function Stage({
   spread = true,
   upNextRows = 3,
   live,
+  lately,
 }: {
   cur: Cur;
   /** The room gestures — the sleeve is the thing you pick up. See `useRoomDrag`. */
@@ -403,6 +404,11 @@ export function Stage({
   spread?: boolean;
   /** How many of what is next to list under the record. Three on a bare window; the frame gives the column more. */
   upNextRows?: number;
+  /**
+   * What this room played lately, for a record with nothing after it: the column keeps a shelf rather
+   * than a line saying there is none. Same rows as the running order, so the eye reads one list.
+   */
+  lately?: { key: string; title: string; artist: string; cover: string | undefined; play: () => void }[] | undefined;
   /**
    * What a station has instead of a running order: the radio service's own shelves, and the stations this
    * room keeps. Drawn in the foot where the queue would be. See `ArtApp` for where it comes from.
@@ -809,13 +815,12 @@ export function Stage({
            * words and its running order.
            */}
           <div className="cx-stage-foot">
-            {cur.hasTrack && !cur.isLive && (
+            {cur.hasTrack && !cur.isLive && (upNext.length > 0 || !lately?.length) && (
               <div className="cx-upnext">
                 <button type="button" className="cx-upnext-lbl mono" onClick={onOpenQueue}>
                   up next{upNextTotal > 0 ? ` · ${upNextTotal}` : ''}
                 </button>
-                {/* Three rows, each a record: sleeve, name, who, how long. Two thumbnails and one line
-                    said less than this and took the same height. The label opens the whole queue. */}
+                {/* Rows, each a record: sleeve, name, who, how long. The label opens the whole queue. */}
                 <ol className="cx-upnext-list">
                   {upNext.slice(0, upNextRows).map((entry) => (
                     <li key={entry.key}>
@@ -835,6 +840,30 @@ export function Stage({
                     </li>
                   ))}
                   {upNext.length === 0 && <li className="cx-upnext-empty">nothing after this one</li>}
+                </ol>
+              </div>
+            )}
+            {/* Nothing after this one, but a room with a past: what it played lately, as the same rows. */}
+            {cur.hasTrack && !cur.isLive && upNext.length === 0 && lately && lately.length > 0 && (
+              <div className="cx-upnext">
+                <span className="cx-upnext-lbl mono">lately in this room</span>
+                <ol className="cx-upnext-list">
+                  {lately.slice(0, upNextRows).map((entry) => (
+                    <li key={entry.key}>
+                      <button
+                        type="button"
+                        className="cx-upnext-item"
+                        onClick={entry.play}
+                        title={`Play ${entry.title}${entry.artist ? ` — ${entry.artist}` : ''}`}
+                      >
+                        <span className="cx-upnext-art" style={{ backgroundImage: entry.cover }} aria-hidden="true" />
+                        <span className="cx-upnext-txt">
+                          <span className="cx-upnext-title">{entry.title}</span>
+                          {entry.artist && <i className="cx-upnext-artist">{entry.artist}</i>}
+                        </span>
+                      </button>
+                    </li>
+                  ))}
                 </ol>
               </div>
             )}

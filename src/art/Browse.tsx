@@ -889,10 +889,17 @@ export function Browse({
   zone,
   root,
   services = [],
+  hall = true,
   onExit,
   onOpenRooms,
 }: {
   zone: ApiZoneState | null;
+  /**
+   * Whether the front of the catalogue opens with the hall of service marks. True on a phone, whose
+   * music tab is the only door to the services; false inside the desk's frame, where the sidebar
+   * already lists them and a second row of the same five doors is a corridor.
+   */
+  hall?: boolean;
   /** What the server offers, for the notes a search leaves: which service did not answer, which cannot be asked. */
   services?: ContentService[];
   /** Where to start: a service root, or nothing for the catalogue's own root. */
@@ -1403,6 +1410,7 @@ export function Browse({
         data-search={query ? '' : undefined}
         data-root={(atRoot && !query) || undefined}
         data-spotlight={(spotlight && !query) || undefined}
+        data-depth={stack.length}
       >
         <button type="button" className="mono cx-browse-back" onClick={back}>
           <BackGlyph size={13} />
@@ -1623,7 +1631,7 @@ export function Browse({
             </div>
           )}
 
-          {doors ? (
+          {atRoot && !hall ? null : doors ? (
             /*
              * The table of contents, opened out where it can be.
              *
@@ -1936,12 +1944,14 @@ export function Sources({ zone, zones, onDone }: { zone: ApiZoneState | null; zo
 
   return (
     <div className="cx-browse">
-      <div className="cx-browse-inner">
+      {/* Depth one, like a service's front: inside the desk's frame the sidebar is the way out, so the
+          back word stands down there (see `app.css`); a phone keeps it. */}
+      <div className="cx-browse-inner" data-depth={1}>
+        <button type="button" className="mono cx-browse-back" onClick={onDone}>
+          <BackGlyph size={13} />
+          back
+        </button>
         <div className="cx-browse-head">
-          <button type="button" className="mono cx-browse-back" onClick={onDone}>
-            <BackGlyph size={13} />
-            back
-          </button>
           <h1 className="disp cx-browse-title">Inputs</h1>
         </div>
 

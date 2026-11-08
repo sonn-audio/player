@@ -521,6 +521,91 @@ html[data-arrived] .cx-side-mark {
   color: var(--t4);
 }
 
+/* --- one head for every view: the name small in the display face, the search beside it --- */
+
+/*
+ * The catalogue's head was a 54px title with a back word above it, sized for a page that had the window.
+ * Inside the frame every view opens the same way — a name at 24px, what it is beside it, the one control
+ * on the right — so Music, a service, Inputs, Rooms and Signal read as rooms of one house. The poster-size
+ * name stays for a record or an artist, where the name is the subject (see `.cx-detail`).
+ */
+.cx-root[data-shell] .cx-browse-inner {
+  padding-top: 18px;
+}
+
+.cx-root[data-shell] .cx-browse-head {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  min-height: 40px;
+  margin-bottom: 22px;
+}
+
+.cx-root[data-shell] .cx-browse-title-row {
+  flex: 1;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 14px;
+}
+
+.cx-root[data-shell] .cx-browse-title {
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cx-root[data-shell] .cx-browse-count {
+  color: var(--t5);
+}
+
+/* The front has a name again: the sidebar's word is lit, and the pane says what it is showing. */
+.cx-root[data-shell] .cx-browse-inner[data-root] .cx-browse-title {
+  display: block;
+}
+
+.cx-root[data-shell] .cx-browse-inner[data-root] .cx-browse-title-row {
+  justify-content: space-between;
+}
+
+/* The way back, only once there is somewhere to go back *to* inside this listing: from the front of a
+   service the sidebar is the way out, and a word that duplicates it is furniture. A search keeps it,
+   because backing out of a search is clearing it. */
+.cx-root[data-shell] .cx-browse-inner[data-depth='1']:not([data-search]) .cx-browse-back {
+  display: none;
+}
+
+.cx-root[data-shell] .cx-browse-back {
+  margin-bottom: 10px;
+}
+
+/* The search field in the frame's own language: a chip, like the room and the lamp in the bar. */
+.cx-root[data-shell] .cx-search {
+  flex: 0 1 280px;
+  height: 36px;
+  padding: 0 14px;
+  border: 1px solid rgb(255 255 255 / 9%);
+  border-radius: 18px;
+  background: rgb(255 255 255 / 2.5%);
+  color: var(--t6);
+  transition:
+    border-color 0.18s,
+    color 0.18s;
+}
+
+.cx-root[data-shell] .cx-search::after {
+  display: none;
+}
+
+.cx-root[data-shell] .cx-search:focus-within {
+  border-color: rgb(255 255 255 / 20%);
+  color: var(--t4);
+}
+
 /* --- the desk, as a page in the pane ------------------------------------------ */
 
 .cx-deskpage {

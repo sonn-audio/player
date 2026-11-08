@@ -704,6 +704,7 @@ export function ArtApp() {
                     zone={zone}
                     root={view.node}
                     services={services}
+                    hall={false}
                     onExit={goHome}
                     onOpenRooms={() => setSheet('rooms')}
                     // Remount on a different root so the internal path stack starts fresh rather than
@@ -769,6 +770,16 @@ export function ArtApp() {
                        record has the window, which is the spread's own argument. */
                     spread={idle}
                     upNextRows={7}
+                    lately={recents
+                      .filter((item) => item.source !== leader?.source?.id)
+                      .slice(0, 7)
+                      .map((item) => ({
+                        key: item.source,
+                        title: item.title || item.album || item.source,
+                        artist: item.artist,
+                        cover: itemCoverCss(item.coverUrl),
+                        play: () => zone && void api.play(zone.id, item.source),
+                      }))}
                     live={
                       cur.isLive
                         ? {
