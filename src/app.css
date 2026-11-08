@@ -591,6 +591,17 @@ html[data-arrived] .cx-side-mark {
   background: var(--t5);
 }
 
+/* A shelf opened out of a door inside a service (Spotify's Popular Playlists) heads itself the way the
+   server's own sections do (Apple Music's Voor jou), so one page does not carry two kinds of shelf head. */
+.cx-root[data-shell] .cx-browse-body[data-toc] .cx-doorshelf-name {
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  text-transform: none;
+  color: var(--t2);
+}
+
 /* The front has a name again: the sidebar's word is lit, and the pane says what it is showing. */
 .cx-root[data-shell] .cx-browse-inner[data-root] .cx-browse-title {
   display: block;
