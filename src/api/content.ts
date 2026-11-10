@@ -18,7 +18,7 @@
  *    so a kind is skipped rather than asked-and-ignored, and `services[].failed` says which
  *    provider let you down instead of silently returning less.
  */
-import type { ApiClient } from './client';
+import { ApiError, type ApiClient } from './client';
 
 /**
  * What a row is. Open set — the server documents `unknown` as the escape hatch, so this must
@@ -155,6 +155,9 @@ const EMPTY_LISTING: ContentListing = { container: null, items: [], start: 0, to
  * Thin on purpose: the wire shapes are already what a UI wants, so there is nothing to
  * normalise. The only judgement here is on failure — a provider timing out mid-browse should
  * leave the UI empty rather than thrown, since a browse tree is a place you navigate out of.
+ * The one exception is a service that *refused*: the server says so with `502
+ * service-unavailable`, and that goes through, because a dead Spotify token drawn as a library
+ * with nothing in it sends a person to the wrong place.
  */
 export class HttpContentSource implements ContentSource {
   readonly available = true;
@@ -168,7 +171,10 @@ export class HttpContentSource implements ContentSource {
   async browse(id?: string, offset = 0, limit = 100): Promise<ContentListing> {
     try {
       return await this.api.browse(id, offset, limit);
-    } catch {
+    } catch (error) {
+      if (error instanceof ApiError && error.code === 'service-unavailable') {
+        throw error;
+      }
       return EMPTY_LISTING;
     }
   }

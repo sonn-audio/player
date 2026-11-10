@@ -1228,3 +1228,68 @@ html[data-arrived] .cx-side-mark {
 .cx-root[data-shell] .cx-desk-strip:hover {
   transform: translateY(-2px);
 }
+
+/* --- a page with nothing on it ---------------------------------------------------------- */
+
+.cx-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  max-width: 52ch;
+  padding: 28px 0 40px;
+}
+
+.cx-empty-head {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  color: var(--t2);
+}
+
+.cx-empty-note {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--t5);
+}
+
+.cx-empty-acts {
+  display: flex;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.cx-empty-act {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 34px;
+  padding: 0 14px;
+  border: 1px solid rgb(255 255 255 / 10%);
+  border-radius: 17px;
+  background: rgb(255 255 255 / 3%);
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  text-decoration: none;
+  color: var(--t3);
+  cursor: pointer;
+  transition:
+    color 0.18s,
+    border-color 0.18s,
+    background 0.18s,
+    transform 0.22s var(--cx-ease);
+}
+
+.cx-empty-act:hover {
+  color: var(--t1);
+  border-color: rgb(255 255 255 / 18%);
+  background: rgb(255 255 255 / 6%);
+  transform: translateY(-1px);
+}
+
+.cx-empty-act:active {
+  transform: scale(0.97);
+}

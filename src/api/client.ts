@@ -49,6 +49,8 @@ export class ApiError extends Error {
     readonly status: number,
     readonly code: string,
     message?: string,
+    /** The rest of the server's body — `service-unavailable` names the service and the reason. */
+    readonly details: Record<string, unknown> = {},
   ) {
     super(message ?? code);
     this.name = 'ApiError';
@@ -582,14 +584,17 @@ export class ApiClient {
       // HTML here instead, so a failed parse must not mask the status code.
       let code = `http-${res.status}`;
       let message: string | undefined;
+      let details: Record<string, unknown> = {};
       try {
-        const payload = (await res.json()) as { error?: string; message?: string };
-        code = payload.error ?? code;
-        message = payload.message;
+        const payload = (await res.json()) as { error?: string; message?: string } & Record<string, unknown>;
+        const { error, message: said, ...rest } = payload;
+        code = error ?? code;
+        message = said;
+        details = rest;
       } catch {
         // Keep the status-derived code.
       }
-      throw new ApiError(res.status, code, message);
+      throw new ApiError(res.status, code, message, details);
     }
 
     if (res.status === 204) {

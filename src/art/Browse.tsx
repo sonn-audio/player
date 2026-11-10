@@ -24,6 +24,7 @@
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useApi, useServer } from '@/state/ServerContext';
+import { ApiError } from '@/api/client';
 import { useFavorites, useRecents } from '@/art/useCollections';
 import { captureCoverFrom, useCoverAnchor } from '@/shell/coverMorph';
 import { itemCoverCss, zoneCoverCss } from '@/art/cover';
@@ -727,6 +728,87 @@ export function Tile({
   );
 }
 
+type Refusal = { service: string; reason: string };
+
+/** The server's `502 service-unavailable`, read off the error; anything else is not a refusal. */
+function refusalOf(error: unknown): Refusal | null {
+  if (!(error instanceof ApiError) || error.code !== 'service-unavailable') {
+    return null;
+  }
+  const service = typeof error.details.service === 'string' ? error.details.service : '';
+  const reason = typeof error.details.reason === 'string' ? error.details.reason : 'error';
+  return { service, reason };
+}
+
+/**
+ * A page with nothing on it, said in a sentence.
+ *
+ * Three different things used to be the same ten letters of mono: a folder with nothing in it, a
+ * search that matched nothing, and a service that would not answer. The third is the one that
+ * matters — a Spotify account whose token has died browses as a library with nothing saved in it,
+ * and "nothing here" over four hundred records sends a person to the wrong place. Each gets its own
+ * sentence now, the refusal gets the reason and the two doors out of it: ask again, or the admin,
+ * where the account is linked.
+ */
+function Empty({
+  query,
+  name,
+  refused,
+  serviceName,
+  onRetry,
+}: {
+  query: string;
+  name: string | null;
+  refused: Refusal | null;
+  serviceName: (id: string) => string;
+  onRetry: () => void;
+}) {
+  if (refused) {
+    const who = refused.service ? serviceName(refused.service) : 'The service';
+    const why =
+      refused.reason === 'auth'
+        ? `${who} no longer accepts this account's key. Link it again in the admin.`
+        : refused.reason === 'denied'
+          ? `${who} let this account in but refused the request. Check the account in the admin.`
+          : refused.reason === 'rate-limited'
+            ? `${who} is asking for a pause. Try again in a moment.`
+            : refused.reason === 'unreachable'
+              ? `${who} could not be reached.`
+              : `${who} answered with an error.`;
+    return (
+      <div className="cx-empty" data-refused>
+        <p className="disp cx-empty-head">{who} did not answer.</p>
+        <p className="cx-empty-note">{why}</p>
+        <div className="cx-empty-acts">
+          <button type="button" className="cx-empty-act mono" onClick={onRetry}>
+            try again
+          </button>
+          {(refused.reason === 'auth' || refused.reason === 'denied') && (
+            <a className="cx-empty-act mono" href="/admin/">
+              open admin
+              <ForwardGlyph size={12} />
+            </a>
+          )}
+        </div>
+      </div>
+    );
+  }
+  if (query) {
+    return (
+      <div className="cx-empty">
+        <p className="disp cx-empty-head">Nothing for “{query}”.</p>
+        <p className="cx-empty-note">Try fewer words, or another spelling.</p>
+      </div>
+    );
+  }
+  return (
+    <div className="cx-empty">
+      <p className="disp cx-empty-head">{name ? `Nothing in ${name} yet.` : 'Nothing here yet.'}</p>
+      <p className="cx-empty-note">What goes in here will show up on this page.</p>
+    </div>
+  );
+}
+
 /**
  * What a listing looks like before it arrives.
  *
@@ -954,6 +1036,14 @@ export function Browse({
   /* The services that did not answer the last search, by id. Shown, because a result that is silently
      missing a service is a result that lies. */
   const [failed, setFailed] = useState<string[]>([]);
+  /*
+   * The service turned the listing away — a dead token, a rate limit. The server says so with a
+   * 502 rather than an empty page, and so does this: "nothing here" over a library of four hundred
+   * records is the one thing a shelf must never say.
+   */
+  const [refused, setRefused] = useState<Refusal | null>(null);
+  /* Bumped by "try again": the listing effect runs on it. */
+  const [attempt, setAttempt] = useState(0);
   const [about, setAbout] = useState<ContentAbout | null>(null);
   const field = useRef<HTMLInputElement>(null);
   /*
@@ -991,6 +1081,7 @@ export function Browse({
      * ghosts below fill the gap.
      */
     setListing(null);
+    setRefused(null);
     setPeeks({});
     cursor.current = 0;
     setDone(false);
@@ -1033,16 +1124,17 @@ export function Browse({
           setLoading(false);
         }
       })
-      .catch(() => {
+      .catch((error: unknown) => {
         if (!cancelled) {
           setListing(null);
+          setRefused(refusalOf(error));
           setLoading(false);
         }
       });
     return () => {
       cancelled = true;
     };
-  }, [content, here.id]);
+  }, [content, here.id, attempt]);
 
   /* Search, debounced. Two characters is the floor — a one-letter search asks every provider for
      everything and then throws it away. */
@@ -1544,7 +1636,13 @@ export function Browse({
           {((loading && !query) || searching) && items.length === 0 && sections.length === 0 && <Waiting />}
 
           {!loading && !searching && items.length === 0 && sections.length === 0 && (
-            <p className="cx-browse-empty mono">{query ? 'nothing found' : 'nothing here'}</p>
+            <Empty
+              query={query}
+              name={here.label ?? container?.name ?? null}
+              refused={refused}
+              serviceName={(id) => services.find((service) => service.id === id || id.startsWith(`${service.id}@`))?.name ?? id}
+              onRetry={() => setAttempt((n) => n + 1)}
+            />
           )}
 
           {sections.map((section) => (
