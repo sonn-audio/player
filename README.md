@@ -15,12 +15,25 @@ rather than a second application, so what remains is one stance towards the musi
 one press away.
 
 On a **desk** the player is an app with a frame (`art/Shell.tsx`, `app.css`): a sidebar down the left
-holding the player's places (now playing, music, search, inputs), every service the server reports,
-and every room in the house; a player bar along the foot with the record, its transport, timeline and
-fader, the room it plays in, the queue and the two rests; and between them a pane — a rounded sheet
-the record's wash lights — that shows whatever the room is showing: the stage, the catalogue, the
-inputs, the rooms, the reading. Left alone for a minute (or asked, from the bar) the frame
-steps back and the screen becomes the record, which is what a wall panel spends most of its day being.
+holding the player's places (home, now playing, music, search, inputs), every service the server
+reports with its mark, and every room in the house with the sleeve of what is on in it; a player bar
+along the foot with the record, its transport, timeline and fader, the room it plays in, the queue and
+the rests; and between them a pane — a rounded sheet — that shows whatever the room is showing: the
+house, the stage, the catalogue, the inputs, the rooms, the reading.
+
+**The record owns the room** (`art/accent.ts`). The frame is made of whatever is playing: the sleeve's
+dark becomes the frame and the pane, its most salient colour the one accent on the page (play, the
+timeline, the active row), and the ink the server reads for that dark the text ladder. A red album and
+a blue one are two rooms. Words are set in the display face; mono is for figures.
+
+**Home is the house as light** (`art/House.tsx`): every room a window, a playing room lit in the
+colour of its record, its volume the brightness, a group one light across the rooms that share it.
+Press a window to stand in that room; pull one onto another and they play together.
+
+**Left alone for a minute the panel becomes the light the record throws** (`art/Light.tsx`): a field
+of the record's colours breathing on the room's own audio analysis (`GET /zones/{id}/analysis`), the
+spectrum a contour along the bottom, the clock and the record in the corners. The record and the
+house, the two older rests, are still there from the bar.
 
 On a **phone** the frame is a bottom nav and sheets: a home you browse, a bar along the bottom that
 says what is playing, and the full player one press up from it — painted in the record's own colours
@@ -32,8 +45,9 @@ one has a pointer, a lot of width and every room on screen at once; the other ha
 and a player that must never scroll. Everything below the presentation is shared.
 
 The look is shared with the admin UI on purpose: the same two brand faces (Hanken Grotesk for
-display, JetBrains Mono for every label and measurement, both self-hosted variable fonts), the same
-near-black surfaces, the same green accent, hairlines instead of borders. Four sheets own it —
+display and for every word, JetBrains Mono for every figure, both self-hosted variable fonts), the
+same near-black surfaces until a record lights them, the green kept for verdicts, hairlines instead of
+borders. Four sheets own it —
 `styles.css` (the tokens and the instruments), `shell.css` (splash and the overlays), `art.css`
 (everything under `.cx-root`) and `app.css` (the desk's frame) — and no component carries styling of
 its own.
@@ -135,6 +149,10 @@ src/
   art/          The player
     ArtApp.tsx      Views, sheets, the two trees (desk and phone), the keys
     Shell.tsx       The desk's frame: sidebar and player bar
+    House.tsx       The house as light — the desk's home
+    Light.tsx       The rest: the record's light, breathing on the analysis
+    accent.ts       The record's palette, as the frame's custom properties
+    serviceMark.tsx A service's mark: its logo, or the library and the radio drawn
     Stage.tsx       The record on a desk and on a phone; Transport, Timeline, VolumeRow
     Browse.tsx      The catalogue, the inputs page, the mini bar
     Channels.tsx    The rooms as cards (groups, scenes, lining up)
