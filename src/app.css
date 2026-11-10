@@ -1294,6 +1294,157 @@ html[data-arrived] .cx-side-mark {
   transform: scale(0.97);
 }
 
+/* --- a quiet room ------------------------------------------------------------------------ */
+
+/* The bar's sleeve with nothing on: the mark, faint, rather than a grey square. */
+.cx-pbar-cov[data-empty] {
+  display: grid;
+  place-items: center;
+  color: rgb(255 255 255 / 16%);
+}
+
+.cx-pbar-cov-mark {
+  width: 24px;
+  height: 20px;
+}
+
+/* The house strip's quiet card, on the home screen. */
+.cx-roomcard-mark {
+  position: absolute;
+  top: 40%;
+  left: 50%;
+  width: 46px;
+  height: 38px;
+  translate: -50% -50%;
+  color: rgb(255 255 255 / 9%);
+}
+
+/* The last record, offered back. */
+.cx-cover-last {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 22px;
+  background-position: center;
+  background-size: cover;
+  text-align: left;
+  cursor: pointer;
+}
+
+.cx-cover-last-scrim {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgb(10 10 12 / 10%) 30%, rgb(10 10 12 / 82%) 100%);
+  transition: opacity 0.3s var(--cx-ease);
+}
+
+.cx-cover-last-txt {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.cx-cover-last-lbl {
+  margin-bottom: 4px;
+  font-size: 9.5px;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: rgb(255 255 255 / 60%);
+}
+
+.cx-cover-last-title {
+  overflow: hidden;
+  font-size: clamp(16px, 2.2cqw, 24px);
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  line-height: 1.15;
+  color: #fff;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-shadow: 0 2px 12px rgb(0 0 0 / 50%);
+}
+
+.cx-cover-last-artist {
+  overflow: hidden;
+  font-size: 13px;
+  color: rgb(255 255 255 / 72%);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cx-cover-last-go {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 34px;
+  padding: 0 14px;
+  border-radius: 17px;
+  background: #fff;
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #0a0a0c;
+  transition: transform 0.22s var(--cx-ease);
+}
+
+.cx-cover-last:hover .cx-cover-last-go {
+  transform: translateY(-1px);
+}
+
+.cx-cover-last:hover .cx-cover-last-scrim {
+  opacity: 0.9;
+}
+
+/* The words under `Nothing playing`, as the chips every other page uses. */
+.cx-root .cx-cta {
+  gap: 8px;
+  margin-top: 26px;
+}
+
+.cx-root .cx-cta button {
+  display: inline-flex;
+  align-items: center;
+  height: 34px;
+  padding: 0 16px;
+  border: 1px solid rgb(255 255 255 / 10%);
+  border-radius: 17px;
+  background: rgb(255 255 255 / 3%);
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--t3);
+  transition:
+    color 0.18s,
+    border-color 0.18s,
+    background 0.18s,
+    transform 0.22s var(--cx-ease);
+}
+
+.cx-root .cx-cta button:first-child {
+  border-color: transparent;
+  background: #fff;
+  color: #0a0a0c;
+}
+
+.cx-root .cx-cta button:hover {
+  color: var(--t1);
+  transform: translateY(-1px);
+}
+
+.cx-root .cx-cta button:first-child:hover {
+  color: #0a0a0c;
+}
+
+.cx-root .cx-cta button:active {
+  transform: scale(0.97);
+}
+
 /* --- the same recording, once ---------------------------------------------------------- */
 
 .cx-tnote {

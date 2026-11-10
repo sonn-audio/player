@@ -109,7 +109,9 @@ export function ArtApp() {
    * The technical face has always done this; the phone face needing it more was an oversight.
    */
   const zones = useMemo(
-    () => (local.zone ? [local.zone, ...serverZones] : serverZones),
+    /* The server numbers browsers that share a name — "This browser 2" — so a house with four tabs open
+       can tell them apart. In this tab there is only ever this one, so the number is noise. */
+    () => (local.zone ? [{ ...local.zone, name: local.zone.name.replace(/ \d+$/, '') }, ...serverZones] : serverZones),
     [local.zone, serverZones],
   );
   const { zone, zoneId, select } = useSelectedZone(zones, synced);
@@ -798,9 +800,6 @@ export function ArtApp() {
                     upNext={upNext}
                     upNextTotal={upNextTotal}
                     elsewhere={elsewhere}
-                    /* What this room played last, for the one thing an idle room can honestly show:
-                       the record that was on, in the dark. See `Stage`'s empty branch. */
-                    lastCover={recents[0]?.coverUrl ? `url("${recents[0].coverUrl}")` : undefined}
                   />
                 )}
               </Wall>
@@ -1442,9 +1441,6 @@ function Welcome({
       <span className="cx-welcome-date mono">{todayLabel()}</span>
       <h1 className="disp cx-welcome-greet">{greetingText}.</h1>
 
-      {/* Once, quietly, on the screen the app opens onto — see `InstallHint`. */}
-      <InstallHint />
-
       {/*
        * The house, first.
        *
@@ -1468,7 +1464,12 @@ function Welcome({
                 data-on={room.playing || undefined}
                 onClick={room.open}
               >
-                {room.cover && <span className="cx-roomcard-cov" style={{ backgroundImage: room.cover }} aria-hidden="true" />}
+                {room.cover ? (
+                  <span className="cx-roomcard-cov" style={{ backgroundImage: room.cover }} aria-hidden="true" />
+                ) : (
+                  /* A quiet room is not a hole in the row: the mark, faint, where its record would be. */
+                  <Mark className="cx-roomcard-mark" />
+                )}
                 <span className="cx-roomcard-txt">
                   <span className="cx-roomcard-name mono">
                     {room.playing && <i className="cx-roomcard-dot" aria-hidden="true" />}
@@ -1552,6 +1553,10 @@ function Welcome({
           </div>
         </section>
       )}
+
+      {/* Once, quietly, at the foot of the screen the app opens onto — under the music, never over
+          it. See `InstallHint`. */}
+      <InstallHint />
     </div>
   );
 }

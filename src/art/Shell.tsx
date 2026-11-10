@@ -258,7 +258,9 @@ export function PlayerBar({
             />
           </button>
         ) : (
-          <span className="cx-pbar-cov" data-empty aria-hidden="true" />
+          <span className="cx-pbar-cov" data-empty aria-hidden="true">
+            <Mark className="cx-pbar-cov-mark" />
+          </span>
         )}
         <div className="cx-pbar-meta">
           {cur.hasTrack ? (

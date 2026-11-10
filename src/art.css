@@ -1340,47 +1340,14 @@
   justify-content: center;
   gap: 14px;
   /* A hairline, not a dashed one: dashes are what a drop target wears, and this is a room at rest. */
-  border: 1px solid rgb(255 255 255 / 9%);
-  background: none;
-  box-shadow: none;
-  color: var(--t7);
+  background: radial-gradient(circle at 50% 42%, rgb(255 255 255 / 4%), transparent 62%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 8%);
+  color: rgb(255 255 255 / 14%);
 }
 
-/*
- * The room remembers.
- *
- * The last record it played, held far enough down that it reads as memory rather than as playback —
- * grayscale most of the way, a fifth of the brightness — with `nothing playing` engraved over it. It
- * is the same picture the room would show if you pressed play, which is exactly why it is the right
- * one to show while you have not.
- */
-.cx-cover-empty[data-remembers] {
-  border: 0;
-  background-position: center;
-  background-size: cover;
-}
-
-.cx-cover-empty[data-remembers]::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: inherit;
-  background-position: center;
-  background-size: cover;
-  /* Far down: at a third of the brightness a light sleeve still read as *playing*, which contradicts
-     the words beside it. A fifth, and almost colourless — the record is in the room, the lights are
-     off. */
-  filter: grayscale(0.92) brightness(0.19);
-}
-
-/* Its own hairline, since the memory has no edge of its own once it is this dark. */
-.cx-cover-empty[data-remembers] {
-  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 7%);
-}
-
-.cx-cover-empty-txt {
-  font-size: 9px;
-  letter-spacing: 0.22em;
+.cx-cover-empty-mark {
+  width: 22%;
+  height: auto;
 }
 
 .cx-cover-hover {
@@ -7221,10 +7188,9 @@
   display: flex;
   align-items: center;
   gap: 13px;
-  margin-top: 20px;
-  padding: 13px 14px;
+  margin-top: 36px;
+  padding: 12px 14px;
   border-radius: 14px;
-  background: rgb(255 255 255 / 4%);
   box-shadow: inset 0 0 0 1px rgb(255 255 255 / 6%);
   text-align: left;
 }
@@ -8666,7 +8632,6 @@
   }
 
   /* A big house gets a big desk: past eight channels a wide screen holds twelve to a row, not eight. */
-}
 }
 
 .cx-desk {

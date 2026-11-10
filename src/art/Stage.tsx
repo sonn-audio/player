@@ -27,9 +27,9 @@ import { useZoneFavorite } from '@/state/useZoneFavorite';
 import { useCoverAnchor } from '@/shell/coverMorph';
 import { useFitText } from '@/art/useFitText';
 import { useLeaving } from '@/art/Leaving';
+import { Mark } from '@/components/Mark';
 import {
   ChevronGlyph,
-  EmptyArtGlyph,
   ForwardGlyph,
   HeartGlyph,
   NextGlyph,
@@ -384,7 +384,6 @@ export function Stage({
   drag,
   upNext,
   upNextTotal,
-  lastCover,
   elsewhere,
   origin,
   onOpenOrigin,
@@ -449,12 +448,6 @@ export function Stage({
   /** The album and the artist this record belongs to, once the catalogue has answered. See `useOrigin`. */
   origin?: { album: ContentItem | null; artist: ContentItem | null } | undefined;
   onOpenOrigin?: ((item: ContentItem) => void) | undefined;
-  /**
-   * The last record this room played, as `url("…")`.
-   *
-   * The only honest picture a silent room has. See the empty branch below for what it is for.
-   */
-  lastCover?: string | undefined;
 }) {
   const api = useApi();
   const leader = cur.leader;
@@ -467,7 +460,8 @@ export function Stage({
      never wraps would otherwise stay at the largest size and run off the right page. */
   /* Inside the frame the name shares the pane with a sidebar and a bar, so it stops short of the poster's
      200px; on a bare window (the spread) it may take all of it. */
-  const fit = useFitText(mainTitle(cur.title), { max: resting ? 84 : spread ? 200 : 96, min: 24 });
+  /* `Nothing playing` is a state, not a title: it does not get the title's size. */
+  const fit = useFitText(mainTitle(cur.title), { max: !cur.hasTrack ? 64 : resting ? 84 : spread ? 200 : 96, min: 24 });
 
   /*
    * A track change is a dissolve, so each line keeps the one it is replacing.
@@ -624,26 +618,38 @@ export function Stage({
                 </span>
               </button>
             </>
-          ) : (
+          ) : lately && lately.length > 0 ? (
             /*
-             * A silent room, drawn as what it is: the record that was on, in the dark.
+             * A silent room with a past offers it back.
              *
-             * It was a dashed square with a glyph in it — a form field where the subject of the face
-             * should be, and the state most rooms are in most of the time. A room that has played
-             * something has one honest picture to show, and holding it far down says *silent* better
-             * than an outline of an absence does. Rooms that have never played anything keep a plain
-             * frame: a hairline, not a dashed one, because dashes mean "drop something here".
+             * It showed the last record in the dark — grayscale, a fifth of the brightness, `nothing
+             * playing` engraved over it — which was honest and useless: a picture you could not press.
+             * The same sleeve, lit, with the one word that makes it an offer, is the most useful thing
+             * a quiet room can show, and the first thing most people do in one.
              */
-            <div
-              className="cx-cover cx-cover-empty"
-              data-remembers={lastCover ? '' : undefined}
-              style={lastCover ? { backgroundImage: lastCover } : undefined}
+            <button
+              type="button"
+              className="cx-cover cx-cover-last"
+              style={lately[0]!.cover ? { backgroundImage: lately[0]!.cover } : undefined}
+              onClick={lately[0]!.play}
+              title={`Play ${lately[0]!.title} again`}
             >
-              {!lastCover && <EmptyArtGlyph size={52} />}
-              {/* No caption over the record: the column beside it says `Nothing playing` in 110px, and
-                  the same sentence twice is not two facts. The frame with no memory keeps its words,
-                  because a bare outline needs telling. */}
-              {!lastCover && <span className="mono cx-cover-empty-txt">nothing playing</span>}
+              <span className="cx-cover-last-scrim" aria-hidden="true" />
+              <span className="cx-cover-last-txt">
+                <span className="mono cx-cover-last-lbl">last here</span>
+                <span className="cx-cover-last-title">{lately[0]!.title}</span>
+                {lately[0]!.artist && <span className="cx-cover-last-artist">{lately[0]!.artist}</span>}
+              </span>
+              <span className="cx-cover-last-go mono">
+                <PlayGlyph size={11} />
+                play again
+              </span>
+            </button>
+          ) : (
+            /* A room that has never played anything: the mark, faint, in a frame. Not a dashed one —
+               dashes mean "drop something here". */
+            <div className="cx-cover cx-cover-empty">
+              <Mark className="cx-cover-empty-mark" />
             </div>
           )}
         </div>
@@ -845,12 +851,13 @@ export function Stage({
                 </ol>
               </div>
             )}
-            {/* Nothing after this one, but a room with a past: what it played lately, as the same rows. */}
-            {cur.hasTrack && !cur.isLive && upNext.length === 0 && lately && lately.length > 0 && (
+            {/* Nothing after this one, but a room with a past: what it played lately, as the same rows.
+                A quiet room lists them too — the first stands as the sleeve, the rest under the words. */}
+            {(cur.hasTrack ? !cur.isLive && upNext.length === 0 : true) && lately && lately.length > (cur.hasTrack ? 0 : 1) && (
               <div className="cx-upnext">
                 <span className="cx-upnext-lbl mono">lately in this room</span>
                 <ol className="cx-upnext-list">
-                  {lately.slice(0, upNextRows).map((entry) => (
+                  {lately.slice(cur.hasTrack ? 0 : 1, (cur.hasTrack ? 0 : 1) + upNextRows).map((entry) => (
                     <li key={entry.key}>
                       <button
                         type="button"
@@ -1144,8 +1151,7 @@ export function MobileStage({
           </div>
         ) : (
           <div className="cx-np-cover cx-np-cover-empty">
-            <EmptyArtGlyph size={42} />
-            <span className="mono cx-cover-empty-txt">nothing playing</span>
+            <Mark className="cx-cover-empty-mark" />
           </div>
         )}
       </div>
