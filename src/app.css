@@ -1294,6 +1294,42 @@ html[data-arrived] .cx-side-mark {
   transform: scale(0.97);
 }
 
+/* --- a view change is one movement ------------------------------------------------------- */
+
+/* The pane crosses from one page to the next; the sidebar and the bar, which did not change, hold still. */
+.cx-root[data-shell] .cx-pane {
+  view-transition-name: cx-pane;
+}
+
+.cx-root[data-shell] .cx-side {
+  view-transition-name: cx-side;
+}
+
+.cx-root[data-shell] .cx-pbar {
+  view-transition-name: cx-bar;
+}
+
+::view-transition-old(cx-pane) {
+  animation: cx-vt-out 0.16s ease-in both;
+}
+
+::view-transition-new(cx-pane) {
+  animation: cx-vt-in 0.28s var(--cx-ease) both;
+}
+
+@keyframes cx-vt-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes cx-vt-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
 /* --- a quiet room ------------------------------------------------------------------------ */
 
 /* The bar's sleeve with nothing on: the mark, faint, rather than a grey square. */

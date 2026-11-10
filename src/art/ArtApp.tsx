@@ -35,6 +35,7 @@ import { useRoomDrag } from '@/art/useRoomDrag';
 import { useEdges, useEscape } from '@/art/useEdges';
 import { QueueSheet } from '@/art/Rail';
 import { Crossfade } from '@/art/Crossfade';
+import { flushSync } from 'react-dom';
 import { Browse, MiniBar, Sources, serviceTint, type BrowseNode } from '@/art/Browse';
 import { channelsOf, leaderOf, useCur, type Channel } from '@/art/useCur';
 import { serviceOf, useResolved } from '@/art/useOrigin';
@@ -117,7 +118,23 @@ export function ArtApp() {
   const { zone, zoneId, select } = useSelectedZone(zones, synced);
   const phone = useIsPhone();
 
-  const [view, setView] = useState<View>({ kind: 'home' });
+  const [view, setViewNow] = useState<View>({ kind: 'home' });
+  /*
+   * A change of view is one movement, not a cut.
+   *
+   * The pane's old page and its new one cross in a quarter of a second — the sidebar and the bar hold
+   * still, because they did not change. The browser does the drawing (`startViewTransition`); where it
+   * cannot, or where the person has asked for less motion, the view simply changes.
+   */
+  const setView = useCallback((next: View): void => {
+    const doc = document as Document & { startViewTransition?: (update: () => void) => unknown };
+    const still = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (!doc.startViewTransition || still || window.matchMedia(`(max-width: ${PHONE_MAX}px)`).matches) {
+      setViewNow(next);
+      return;
+    }
+    doc.startViewTransition(() => flushSync(() => setViewNow(next)));
+  }, []);
   /*
    * The phone's player, as a place you go rather than the place you start.
    *
