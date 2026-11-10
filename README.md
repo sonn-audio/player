@@ -52,7 +52,7 @@ AUDIOSERVER_URL=http://192.168.1.209:7090 npm run dev   # proxy a remote server
 VITE_SERVER_ORIGIN=http://192.168.1.209:7090 npm run dev # talk to it directly (CORS is open)
 ```
 
-`npm run typecheck` · `npm run build`
+`npm run typecheck` · `npm run build` · `npm run check -- --width 390` (the page measured in a headless Chrome: sideways overflow, clipped text, and on a phone width every control's reach against 44px; `--click` and `--eval` walk to a screen first)
 
 ## What it does
 
@@ -144,6 +144,8 @@ src/
     useCur.ts       One flat object per room, with the leader/live/elapsed decisions already made
   components/   The signal path and the instruments' panels
   lib/          Formatting helpers
+tools/
+  check.mjs     The page measured: overflow, clipped text, a thumb's reach
 ```
 
 The desk and the phone share everything below the presentation: `api/`, `state/`, `useCur` and the

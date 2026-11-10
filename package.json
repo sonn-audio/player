@@ -11,7 +11,8 @@
     "dev": "vite",
     "build": "vite build",
     "typecheck": "tsc --noEmit",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "check": "node tools/check.mjs"
   },
   "dependencies": {
     "@sendspin/sendspin-js": "^3.2.1",
