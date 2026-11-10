@@ -1644,8 +1644,8 @@ html[data-arrived] .cx-side-mark {
 
   /* The billboard's name is a clamped box, which a pseudo-element cannot hang out of. */
   .cx-root .cx-bill-title {
-    padding: 5px 0;
-    margin: -5px 0;
+    padding: 9px 0;
+    margin: -9px 0;
   }
 
   /* The transport, at the size of a thumb; the gaps give back what the buttons take. */
@@ -1661,3 +1661,158 @@ html[data-arrived] .cx-side-mark {
     height: 44px;
   }
 }
+
+/* ==========================================================================================
+ * The record owns the room.
+ *
+ * The frame is made of the record: `accent.ts` reads the sleeve's dark, its colour and the ink the
+ * server chose for that dark, and puts them on `.cx-root`. The frame, the pane, the text ladder, the
+ * active row, the play button and the timeline all read from there. Nothing playing is the neutral
+ * frame these defaults draw.
+ * ========================================================================================== */
+
+.cx-root[data-shell] {
+  --rec-deep: #0a0a0c;
+  --rec-bg: #101114;
+  --rec-mid: #16171c;
+  --rec-accent: #c9cdd4;
+  --rec-ink: #f7f8fa;
+
+  /* The text ladder, as steps of the record's ink. */
+  --t1: var(--rec-ink);
+  --t2: color-mix(in srgb, var(--rec-ink) 93%, transparent);
+  --t3: color-mix(in srgb, var(--rec-ink) 78%, transparent);
+  --t4: color-mix(in srgb, var(--rec-ink) 61%, transparent);
+  --t5: color-mix(in srgb, var(--rec-ink) 52%, transparent);
+  --t6: color-mix(in srgb, var(--rec-ink) 40%, transparent);
+  --t7: color-mix(in srgb, var(--rec-ink) 28%, transparent);
+  --t8: color-mix(in srgb, var(--rec-ink) 19%, transparent);
+  --hair: color-mix(in srgb, var(--rec-ink) 8%, transparent);
+
+  background: var(--rec-deep);
+  transition: background 1.6s ease;
+}
+
+.cx-root[data-shell] .cx-pane {
+  background: var(--rec-bg);
+  transition:
+    background 1.6s ease,
+    border-radius 0.3s,
+    box-shadow 0.3s;
+}
+
+/* The active row and the play button are the one accent. */
+.cx-root[data-shell] .cx-snav[data-on] {
+  background: color-mix(in srgb, var(--rec-accent) 16%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--rec-accent) 28%, transparent);
+}
+
+.cx-root[data-shell] .cx-snav[data-on] svg {
+  color: var(--rec-accent);
+}
+
+.cx-root[data-shell] .cx-pbar .cx-tr-play {
+  background: var(--rec-accent);
+  color: var(--rec-deep);
+  box-shadow: 0 10px 30px -10px color-mix(in srgb, var(--rec-accent) 70%, transparent);
+}
+
+.cx-root[data-shell] .cx-pbar .cx-tr-play:hover {
+  background: var(--rec-ink);
+}
+
+.cx-root[data-shell] .cx-pbar-tl .cx-bar-fill,
+.cx-root[data-shell] .cx-pbar-tl .cx-bar-knob {
+  background: var(--rec-accent);
+}
+
+.cx-root[data-shell] .cx-pbar-tl .cx-bar-knob {
+  box-shadow: 0 0 0 4px var(--rec-deep);
+}
+
+/* The sidebar: the record of every room, small, where the dot was. */
+.cx-snav-cov {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  background-color: var(--cx-cover);
+  background-position: center;
+  background-size: cover;
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 10%);
+}
+
+.cx-snav-cov[data-paused] {
+  opacity: 0.55;
+  filter: saturate(0.6);
+}
+
+/* A service's mark as a disc, at any size. */
+.cx-smark {
+  position: relative;
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: var(--d, 18px);
+  height: var(--d, 18px);
+  overflow: hidden;
+  border-radius: 50%;
+  background: var(--tint);
+  color: #fff;
+}
+
+.cx-smark svg {
+  width: 70%;
+  height: 70%;
+}
+
+.cx-smark-mono {
+  font-size: calc(var(--d, 18px) * 0.42);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: #0a0a0c;
+}
+
+.cx-smark img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.cx-smark[data-logo] {
+  background: none;
+}
+
+.cx-smark[data-logo] .cx-smark-mono {
+  display: none;
+}
+
+.cx-mark-glyph {
+  position: absolute;
+  width: 50cqw;
+  height: 50cqw;
+  color: rgb(255 255 255 / 92%);
+  filter: drop-shadow(0 2px 8px rgb(0 0 0 / 35%));
+}
+
+.cx-mark-glyph svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* The poster: the title takes the column. */
+.cx-root[data-shell]:not([data-idle]) .cx-stage-meta {
+  width: min(700px, 40vw);
+}
+
+.cx-root[data-shell]:not([data-idle]) .cx-stage-inner {
+  --cx-cover-size: min(clamp(260px, 62vh, 600px), 32vw);
+}
+
+.cx-root[data-shell] .cx-title {
+  letter-spacing: -0.05em;
+  line-height: 0.88;
+}
+

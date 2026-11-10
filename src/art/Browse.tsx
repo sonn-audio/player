@@ -38,6 +38,7 @@ import { useResolved } from '@/art/useOrigin';
 import { ArtistWork, artistLine, useArtistRecords } from '@/art/Artist';
 import { LetterIndex, alphabetical } from '@/art/Index';
 import { Crate } from '@/art/Crate';
+import { serviceGlyph, serviceTint } from '@/art/serviceMark';
 import {
   BackGlyph,
   Bars,
@@ -266,35 +267,6 @@ async function records(content: ContentSource, id: string, depth: number): Promi
   return out;
 }
 
-/**
- * A service, as a mark rather than a panel.
- *
- * Five services once took the whole front of the catalogue: five tall panels with a rack of records
- * in each, which is a great deal of room spent saying *there are five services*. A service is a place
- * you go through, not a thing you look at — so it is a mark in a row, the way every music app that
- * has thought about it draws one, and the room that buys goes to music you can actually press.
- *
- * The mark is the service's own logo, from `public/icons/service-<id>.svg`. A logo is a trademark
- * and not something a player gets to draw from memory, so it is the real file or nothing: the three
- * that ship are the official app icons. A service with no file — the library, the radio shelf, both
- * of which are ours rather than anyone's brand — falls back to its monogram on its own colour, which
- * is most of what tells one of these apart at this size. `.png` is tried after `.svg`, so which kind
- * a file is never has to be configured.
- */
-const TINT: Record<string, string> = {
-  spotify: '#1db954',
-  /* Apple's own is a gradient, and it has to be one here: flat, its red and YouTube's were the same
-     disc twice in a row of five. */
-  applemusic: '#f4327a',
-  ytmusic: '#ff0000',
-  radio: '#e8b84b',
-  library: '#7f8da0',
-};
-
-/** The colour a service is known by, for anything outside this file that draws one small. */
-export function serviceTint(service: string): string | undefined {
-  return TINT[service];
-}
 
 function ServiceMark({
   item,
@@ -321,14 +293,16 @@ function ServiceMark({
       type="button"
       className="cx-mark"
       onClick={onOpen}
-      style={{ '--i': index, '--tint': TINT[service] ?? 'var(--accent)' } as React.CSSProperties}
+      style={{ '--i': index, '--tint': serviceTint(service) ?? 'var(--accent)' } as React.CSSProperties}
       title={item.name}
     >
       <span className="cx-mark-face" data-logo={shown || undefined}>
         {/* A service without a trademark of its own gets a drawing of what it is — a record for the
             library, waves for the radio — at the weight the logos have, so four marks read as four
             services and not as two services and two stand-ins. */}
-        {markGlyph(service) ?? (
+        {serviceGlyph(service) ? (
+          <span className="cx-mark-glyph">{serviceGlyph(service)}</span>
+        ) : (
           <span className="disp cx-mark-mono" aria-hidden="true">
             {initials(item.name)}
           </span>
@@ -596,29 +570,6 @@ function Billboard({
  * monogram nobody uses.
  */
 const SMALL = new Set(['and', 'the', 'of', 'de', 'van', 'der', 'y', '&', 'a', 'los', 'las', 'le', 'la']);
-
-/** What the library and the radio look like, where a logo would be. Null for a service with a logo. */
-function markGlyph(service: string): React.ReactNode | null {
-  if (service === 'library') {
-    return (
-      <svg className="cx-mark-glyph" viewBox="0 0 48 48" aria-hidden="true">
-        <circle cx="24" cy="24" r="17" fill="none" stroke="currentColor" strokeWidth="2.4" />
-        <circle cx="24" cy="24" r="10.5" fill="none" stroke="currentColor" strokeWidth="1.2" opacity="0.55" />
-        <circle cx="24" cy="24" r="3.4" fill="currentColor" />
-      </svg>
-    );
-  }
-  if (service === 'radio') {
-    return (
-      <svg className="cx-mark-glyph" viewBox="0 0 48 48" aria-hidden="true">
-        <circle cx="24" cy="26" r="3.2" fill="currentColor" />
-        <path d="M15.5 34.5a12 12 0 0 1 0-17M32.5 17.5a12 12 0 0 1 0 17" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />
-        <path d="M9.5 40.5a20.5 20.5 0 0 1 0-29M38.5 11.5a20.5 20.5 0 0 1 0 29" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" opacity="0.55" />
-      </svg>
-    );
-  }
-  return null;
-}
 
 function initials(name: string): string {
   const words = name

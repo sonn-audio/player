@@ -1,24 +1,26 @@
 /**
- * One drop of the record's colour, in the accent — and nowhere else.
+ * The record owns the room.
  *
- * The design says it in four words: *gedempt: één druppel, geen schreeuw*. The sleeve's own colour is
- * allowed to tint the small set of things that mean something — the play ring, the timeline, the live
- * mark, the glow under the artwork — and it is **damped 40% toward a neutral silver** on the way in, so
- * a red album and a blue one are the same room with a different light rather than two colour schemes.
+ * For a long time the rule here was *one drop*: the sleeve's colour was allowed to tint the play ring
+ * and the timeline, damped 40% toward silver, and nothing else — a control surface with no opinion.
+ * That made a player that was correct and interchangeable with five other correct players. The stance
+ * is the opposite now: the frame is made of the record. The sleeve's dark becomes the frame and the
+ * pane, its most salient colour becomes the one accent on the page, and the ink the server reads for
+ * text on that dark becomes the text ladder. A red album and a blue one are two rooms, and that is the
+ * point: every record makes the app its own.
  *
- * This replaced a bolder reading (the palette as a full-window wash, the product green kept as the
- * accent) that was wrong on both counts: the wash was a colour cast at any strength you could see, and
- * the art face is the one surface that should *not* carry the console's green. It has no state to report
- * and no verdict to give; it has a record playing. Silver is what a control surface is when it is not
- * saying anything.
+ * Damped still, but lightly, and capped, so a white-bordered pressing cannot bleach the type and a navy
+ * one cannot hand the accent a colour nobody can see. Nothing playing is the neutral frame.
  *
- * Four variables come out, matching the design's own names:
+ * What comes out, as custom properties on `.cx-root`:
  *
- *  - `--g`   the accent itself
- *  - `--gb`  a brighter cut for text on dark, 42% toward white
- *  - `--gon` ink for text *on* the accent, always near-black
- *  - `--cx-stage` the record's own dark, for the one surface allowed more than a drop: the
- *    phone player. See `stageOf` below for the whole argument.
+ *  - `--rec-deep`   the frame around the pane: the record's dark, most of the way to black
+ *  - `--rec-bg`     the pane itself: the record's dark, tamed
+ *  - `--rec-mid`    the record's colour as a ground, for glows
+ *  - `--rec-accent` the one accent: play, the timeline, the active row
+ *  - `--rec-ink`    the text ladder's top step, from the server's `onDark`
+ *  - `--g`, `--gb`, `--gon` the accent's older names, kept for the surfaces that read them
+ *  - `--cx-stage`   the phone player's ground; `--cx-a1`, `--cx-a2` the two colours of the wash
  */
 import type { ApiTrack } from '@/api/types';
 
@@ -27,6 +29,9 @@ const SILVER = '#c9cdd4';
 
 /** How far an album's colour is pulled toward the neutral. 0 = the raw sleeve colour, 1 = silver. */
 const DAMP = 0.4;
+
+/** The same, for the frame's own accent: lightly, so the colour is the record's and not a memory of it. */
+const REC_DAMP = 0.14;
 
 /**
  * Below this perceived lightness an accent is lifted toward white.
@@ -45,6 +50,11 @@ export type Accent = {
   /** The record's two colours as a ground: the primary and the accent the server read off the sleeve, damped. */
   '--cx-a1': string;
   '--cx-a2': string;
+  '--rec-deep': string;
+  '--rec-bg': string;
+  '--rec-mid': string;
+  '--rec-accent': string;
+  '--rec-ink': string;
 };
 
 /** The page's own near-black (`--cx-bg`), the pole every stage colour is pulled toward. */
@@ -148,6 +158,12 @@ function groundOf(rgb: readonly [number, number, number] | undefined): Rgb {
   return ground;
 }
 
+/** Pulled toward the page's black until its luminance is under `max`; a near-miss barely moves. */
+function capLum(rgb: Rgb, max: number): Rgb {
+  const lum = luminance(rgb);
+  return lum > max ? blend(rgb, STAGE_BASE, Math.min(1, (lum - max) / lum + 0.3)) : rgb;
+}
+
 export function accentOf(track: ApiTrack | null | undefined): Accent {
   const silver = parse(SILVER);
   let accent = silver;
@@ -162,7 +178,28 @@ export function accentOf(track: ApiTrack | null | undefined): Accent {
     accent = lighten(accent, MIN_LUM - 0.08 - lum * 0.5);
   }
 
+  /* The frame: the record's dark twice over, and its colour lightly damped. */
+  const dark = track?.colors?.backgroundDark;
+  const deep = dark ? capLum(blend([dark[0], dark[1], dark[2]], STAGE_BASE, 0.58), 0.08) : STAGE_BASE;
+  const bg = dark ? capLum(blend([dark[0], dark[1], dark[2]], STAGE_BASE, 0.3), 0.15) : ([16, 17, 20] as Rgb);
+  let rec = silver;
+  if (primary) {
+    rec = blend([primary[0], primary[1], primary[2]], silver, REC_DAMP);
+    const recLum = luminance(rec);
+    if (recLum < MIN_LUM) {
+      rec = lighten(rec, MIN_LUM - 0.08 - recLum * 0.5);
+    }
+  }
+  const mid = primary ? capLum(blend([primary[0], primary[1], primary[2]], bg, 0.45), 0.3) : ([22, 23, 28] as Rgb);
+  const onDark = track?.colors?.onDark;
+  const ink = onDark ? lighten([onDark[0], onDark[1], onDark[2]], 0.55) : ([247, 248, 250] as Rgb);
+
   return {
+    '--rec-deep': toHex(deep),
+    '--rec-bg': toHex(bg),
+    '--rec-mid': toHex(mid),
+    '--rec-accent': toHex(rec),
+    '--rec-ink': toHex(ink),
     '--g': toHex(accent),
     '--gb': toHex(lighten(accent, 0.42)),
     '--gon': '#0a0a0b',

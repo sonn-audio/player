@@ -19,9 +19,9 @@ import { Mark } from '@/components/Mark';
 import { Crossfade } from '@/art/Crossfade';
 import { artKeyOf } from '@/art/accent';
 import { zoneCoverCss } from '@/art/cover';
-import { serviceTint } from '@/art/Browse';
 import { Timeline, Transport, VolumeRow, wireLabel } from '@/art/Stage';
 import { HeartGlyph, QueueGlyph, SearchGlyph } from '@/art/glyphs';
+import { ServiceMark } from '@/art/serviceMark';
 import { mainTitle } from '@/lib/title';
 import type { ContentService } from '@/api/content';
 import type { Channel, Cur } from '@/art/useCur';
@@ -29,32 +29,6 @@ import type { Channel, Cur } from '@/art/useCur';
 export type ShellView = 'home' | 'browse' | 'inputs' | 'signal' | 'rooms';
 
 /** Two letters of a service's name, for a mark with no logo. Same rule as the hall's `initials`. */
-function monogram(name: string): string {
-  const words = name.split(/\s+/).filter(Boolean);
-  if (words.length >= 2) {
-    return `${words[0]![0] ?? ''}${words[1]![0] ?? ''}`.toUpperCase();
-  }
-  return name.slice(0, 2);
-}
-
-/**
- * A service, at sidebar size: its colour as a disc, its monogram on it. The official logo, where the
- * server ships one, is drawn by the hall at a size where a logo reads; at 18px a letter on the right
- * colour is the more honest mark.
- */
-function ServiceDot({ service }: { service: ContentService }) {
-  const key = service.id.split(':')[0] ?? service.id;
-  return (
-    <span
-      className="cx-sdot disp"
-      style={{ '--tint': serviceTint(key) ?? 'var(--t6)' } as React.CSSProperties}
-      aria-hidden="true"
-    >
-      {monogram(service.name)}
-    </span>
-  );
-}
-
 export function Sidebar({
   view,
   sheet,
@@ -85,6 +59,7 @@ export function Sidebar({
   onSelect: (zoneId: number) => void;
 }) {
   const { status } = useServer();
+  const api = useApi();
   return (
     <aside className="cx-side">
       <a className="cx-side-brand" href="/admin/" aria-label="Sonn">
@@ -135,7 +110,7 @@ export function Sidebar({
               key={service.id}
               onClick={() => onBrowse({ id: service.rootId, label: service.name })}
             >
-              <ServiceDot service={service} />
+              <ServiceMark id={service.id} name={service.name} size={18} />
               <span className="cx-snav-txt">{service.name}</span>
             </button>
           ))}
@@ -162,12 +137,18 @@ export function Sidebar({
                 data-quiet={(!channel.hasTrack || off) || undefined}
                 onClick={() => onSelect(channel.leader.id)}
               >
-                <span
-                  className="cx-sdot-state"
-                  data-playing={(channel.playing && channel.hasTrack) || undefined}
-                  data-paused={(!channel.playing && channel.hasTrack) || undefined}
-                  aria-hidden="true"
-                />
+                {/* The room's record, small, where the dot was: a glance down the list says what is on
+                    where. The dot stays for a room with nothing on. */}
+                {channel.hasTrack ? (
+                  <span
+                    className="cx-snav-cov"
+                    data-paused={!channel.playing || undefined}
+                    style={{ backgroundImage: zoneCoverCss(api, channel.leader, 48) }}
+                    aria-hidden="true"
+                  />
+                ) : (
+                  <span className="cx-sdot-state" aria-hidden="true" />
+                )}
                 <span className="cx-snav-txt">
                   {channel.leader.name}
                   {extra > 0 && <i className="cx-snav-extra"> +{extra}</i>}

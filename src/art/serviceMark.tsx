@@ -1,0 +1,105 @@
+/**
+ * What a service looks like, at any size.
+ *
+ * Spotify and Apple Music have trademarks, and the server ships them as files; the library and the radio
+ * have none, so they are drawn — a record and waves — at the weight the logos have. Two letters in a
+ * circle, the old stand-in, read as a placeholder beside a real logo: two services and two blanks.
+ *
+ * One component for the sidebar's dot, the home screen's chips and the hall's marks, so a service is
+ * the same thing everywhere it appears.
+ */
+import { useState } from 'react';
+
+/**
+ * A service, as a mark rather than a panel.
+ *
+ * Five services once took the whole front of the catalogue: five tall panels with a rack of records
+ * in each, which is a great deal of room spent saying *there are five services*. A service is a place
+ * you go through, not a thing you look at — so it is a mark in a row, the way every music app that
+ * has thought about it draws one, and the room that buys goes to music you can actually press.
+ *
+ * The mark is the service's own logo, from `public/icons/service-<id>.svg`. A logo is a trademark
+ * and not something a player gets to draw from memory, so it is the real file or nothing: the three
+ * that ship are the official app icons. A service with no file — the library, the radio shelf, both
+ * of which are ours rather than anyone's brand — falls back to its monogram on its own colour, which
+ * is most of what tells one of these apart at this size. `.png` is tried after `.svg`, so which kind
+ * a file is never has to be configured.
+ */
+const TINT: Record<string, string> = {
+  spotify: '#1db954',
+  /* Apple's own is a gradient, and it has to be one here: flat, its red and YouTube's were the same
+     disc twice in a row of five. */
+  applemusic: '#f4327a',
+  ytmusic: '#ff0000',
+  radio: '#e8b84b',
+  library: '#7f8da0',
+};
+
+/** The colour a service is known by, for anything outside this file that draws one small. */
+export function serviceTint(service: string): string | undefined {
+  return TINT[service];
+}
+
+/** The drawn marks: the library as a record, the radio as waves. Null for a service with a logo file. */
+export function serviceGlyph(service: string): React.ReactNode | null {
+  if (service === 'library') {
+    return (
+      <svg viewBox="0 0 48 48" aria-hidden="true">
+        <circle cx="24" cy="24" r="17" fill="none" stroke="currentColor" strokeWidth="2.6" />
+        <circle cx="24" cy="24" r="10.5" fill="none" stroke="currentColor" strokeWidth="1.2" opacity="0.55" />
+        <circle cx="24" cy="24" r="3.6" fill="currentColor" />
+      </svg>
+    );
+  }
+  if (service === 'radio') {
+    return (
+      <svg viewBox="0 0 48 48" aria-hidden="true">
+        <circle cx="24" cy="26" r="3.4" fill="currentColor" />
+        <path d="M15.5 34.5a12 12 0 0 1 0-17M32.5 17.5a12 12 0 0 1 0 17" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" />
+        <path d="M9.5 40.5a20.5 20.5 0 0 1 0-29M38.5 11.5a20.5 20.5 0 0 1 0 29" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" opacity="0.55" />
+      </svg>
+    );
+  }
+  return null;
+}
+
+function monogram(name: string): string {
+  const words = name.split(/\s+/).filter(Boolean);
+  if (words.length >= 2) {
+    return `${words[0]![0] ?? ''}${words[1]![0] ?? ''}`.toUpperCase();
+  }
+  return name.slice(0, 2);
+}
+
+/**
+ * A service's mark as a small disc: its logo where the server has one, its drawing where it is drawn,
+ * its monogram on its colour until then.
+ */
+export function ServiceMark({ id, name, size = 18, className }: { id: string; name: string; size?: number; className?: string }) {
+  const key = id.split(':')[0] ?? id;
+  const [logo, setLogo] = useState<'svg' | 'png' | null>(serviceGlyph(key) ? null : 'svg');
+  const tint = serviceTint(key) ?? 'var(--t6)';
+  const drawn = serviceGlyph(key);
+  return (
+    <span
+      className={`cx-smark${className ? ` ${className}` : ''}`}
+      style={{ '--tint': tint, '--d': `${size}px` } as React.CSSProperties}
+      data-logo={logo ? '' : undefined}
+      aria-hidden="true"
+    >
+      {drawn ?? <span className="cx-smark-mono disp">{monogram(name)}</span>}
+      {logo && (
+        <img
+          src={`${import.meta.env.BASE_URL}icons/service-${key}.${logo}`}
+          alt=""
+          onError={() => setLogo((was) => (was === 'svg' ? 'png' : null))}
+          onLoad={(event) => {
+            if (event.currentTarget.naturalWidth === 0) {
+              setLogo((was) => (was === 'svg' ? 'png' : null));
+            }
+          }}
+        />
+      )}
+    </span>
+  );
+}

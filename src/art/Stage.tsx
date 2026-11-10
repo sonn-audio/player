@@ -461,7 +461,7 @@ export function Stage({
   /* Inside the frame the name shares the pane with a sidebar and a bar, so it stops short of the poster's
      200px; on a bare window (the spread) it may take all of it. */
   /* `Nothing playing` is a state, not a title: it does not get the title's size. */
-  const fit = useFitText(mainTitle(cur.title), { max: !cur.hasTrack ? 64 : resting ? 84 : spread ? 200 : 96, min: 24 });
+  const fit = useFitText(mainTitle(cur.title), { max: !cur.hasTrack ? 64 : resting ? 84 : spread ? 200 : 150, min: 24 });
 
   /*
    * A track change is a dissolve, so each line keeps the one it is replacing.
