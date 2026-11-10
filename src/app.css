@@ -1816,3 +1816,228 @@ html[data-arrived] .cx-side-mark {
   line-height: 0.88;
 }
 
+/* ==========================================================================================
+ * Words are set in the display face. Mono is for numbers.
+ *
+ * Every label was mono capitals with wide tracking — THIS BROWSER, UP NEXT, TURN ON — and it was what
+ * made the player read as a developer's dashboard rather than a thing in a living room. A word is set
+ * in the face the headings use, small and in sentence case; what stays mono is what is read as a
+ * figure: a time, a level, a count, a bitrate, the whole of the signal reading.
+ * ========================================================================================== */
+
+.cx-root .mono:where(:not([class*='cx-sig-']):not([class*='cx-meter-']):not(.intro-word-light):not(.intro-tag):not(.server-mismatch)) {
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.005em;
+  text-transform: capitalize;
+}
+
+/* The figures. */
+.cx-root .cx-pbar-tl,
+.cx-root .cx-times,
+.cx-root .cx-time-tot,
+.cx-root .cx-tdur,
+.cx-root .cx-tidx,
+.cx-root .cx-vol-num,
+.cx-root .cx-vol-bubble,
+.cx-root .cx-snav-k,
+.cx-root .cx-np-times,
+.cx-root .cx-np-vol-num,
+.cx-root .cx-qdur,
+.cx-root .cx-qnum,
+.cx-root .cx-qrun,
+.cx-root .cx-upnext-dur,
+.cx-root .cx-desk-fader-val,
+.cx-root .cx-mini-vol-num,
+.cx-root .cx-index-count,
+.cx-root .cx-browse-count,
+.cx-root .cx-wire,
+.cx-root .cx-align-step,
+.cx-root .cx-pbar-lamp b,
+.cx-root .cx-live-txt {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: none;
+  font-variant-numeric: tabular-nums;
+}
+
+/* A name is written as it is. */
+.cx-root .cx-desk-name,
+.cx-root .cx-pbar-room,
+.cx-root .cx-roomcard-name,
+.cx-root .cx-room-btn,
+.cx-root .cx-np-roompill,
+.cx-root .cx-snav-txt,
+.cx-root .cx-win-name,
+.cx-root .cx-eyebrow *,
+.cx-root .cx-np-eyebrow *,
+.cx-root .cx-bill-kicker * {
+  text-transform: none;
+}
+
+/* Sentences keep their case; a heading is a run of words with one capital. */
+.cx-root .cx-sec-lbl,
+.cx-root .cx-hsec-lbl,
+.cx-root .cx-toc-lbl,
+.cx-root .cx-qsec-lbl,
+.cx-root .cx-qnow-lbl,
+.cx-root .cx-search-note,
+.cx-root .cx-desk-hint,
+.cx-root .cx-more-sub,
+.cx-root .cx-input-sub,
+.cx-root .cx-said,
+.cx-root .cx-welcome-date,
+.cx-root .cx-bill-kicker,
+.cx-root .cx-np-eyebrow,
+.cx-root .cx-eyebrow,
+.cx-root .cx-detail-kind,
+.cx-root .cx-sheet-tab-static,
+.cx-root .cx-sgroup-lbl,
+.cx-root .cx-upnext-lbl,
+.cx-root .cx-qnow-lbl,
+.cx-root .cx-qsec-lbl,
+.cx-root .cx-more-state,
+.cx-root .cx-more-foot,
+.cx-root .cx-cover-last-lbl {
+  text-transform: none;
+}
+
+/* `::first-letter` needs a block: these are inline-block, which a flex row treats the same. */
+.cx-root .cx-sec-lbl,
+.cx-root .cx-hsec-lbl,
+.cx-root .cx-toc-lbl,
+.cx-root .cx-qsec-lbl,
+.cx-root .cx-qnow-lbl,
+.cx-root .cx-search-note,
+.cx-root .cx-desk-hint,
+.cx-root .cx-welcome-date,
+.cx-root .cx-sgroup-lbl,
+.cx-root .cx-upnext-lbl,
+.cx-root .cx-cover-last-lbl,
+.cx-root .cx-sheet-tab-static,
+.cx-root .cx-more-state,
+.cx-root .cx-more-foot {
+  display: inline-block;
+}
+
+.cx-root .cx-sec-lbl::first-letter,
+.cx-root .cx-hsec-lbl::first-letter,
+.cx-root .cx-toc-lbl::first-letter,
+.cx-root .cx-qsec-lbl::first-letter,
+.cx-root .cx-qnow-lbl::first-letter,
+.cx-root .cx-search-note::first-letter,
+.cx-root .cx-desk-hint::first-letter,
+.cx-root .cx-welcome-date::first-letter,
+.cx-root .cx-sgroup-lbl::first-letter,
+.cx-root .cx-upnext-lbl::first-letter,
+.cx-root .cx-cover-last-lbl::first-letter,
+.cx-root .cx-sheet-tab-static::first-letter,
+.cx-root .cx-more-state::first-letter,
+.cx-root .cx-more-foot::first-letter {
+  text-transform: uppercase;
+}
+
+/* The sidebar's group label holds its link on the right; a block would lose that row, so its one word
+   is capitalised instead. The same for the labels that are one word or a figure with one. */
+.cx-root .cx-sgroup-lbl,
+.cx-root .cx-bill-kicker,
+.cx-root .cx-wire {
+  text-transform: capitalize;
+}
+
+.cx-root .cx-sgroup-lbl {
+  display: flex;
+}
+
+.cx-root .cx-hsec-right,
+.cx-root .cx-eyebrow-src,
+.cx-root .cx-np-eyebrow span,
+.cx-root .cx-eyebrow span,
+.cx-root .cx-eyebrow i,
+.cx-root .cx-eyebrow b {
+  text-transform: none;
+}
+
+/* Where a label was sized for nine-pixel capitals, the word gets its own measure. */
+.cx-root .cx-eyebrow,
+.cx-root .cx-np-eyebrow,
+.cx-root .cx-bill-kicker {
+  font-size: 12.5px;
+  color: var(--t4);
+}
+
+.cx-root .cx-sgroup-lbl {
+  font-size: 11.5px;
+  color: var(--t7);
+}
+
+.cx-root .cx-sgroup-go {
+  font-family: var(--font-display);
+  font-size: 11.5px;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.cx-root .cx-desk-name {
+  font-size: 13px;
+  letter-spacing: -0.005em;
+}
+
+.cx-root .cx-roomcard-name {
+  font-size: 12.5px;
+}
+
+.cx-root .cx-desk-word,
+.cx-root .cx-sec-more,
+.cx-root .cx-hsec-right,
+.cx-root .cx-qsec-act,
+.cx-root .cx-qadd,
+.cx-root .cx-browse-back,
+.cx-root .cx-search-note-go,
+.cx-root .cx-sig-back {
+  font-size: 12px;
+  letter-spacing: 0;
+}
+
+.cx-root .cx-play-btn,
+.cx-root .cx-shuffle-btn,
+.cx-root .cx-bill-open,
+.cx-root .cx-inputs-empty-go,
+.cx-root .cx-empty-act,
+.cx-root .cx-cta button,
+.cx-root .cx-cover-last-go,
+.cx-root .cx-pbar-room,
+.cx-root .cx-tnote,
+.cx-root .cx-install-go,
+.cx-root .cx-room-btn,
+.cx-root .cx-np-roompill,
+.cx-root .cx-np-queue,
+.cx-root .cx-onradio-chip {
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.005em;
+  text-transform: capitalize;
+}
+
+.cx-root .cx-pbar-lamp {
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+/* The phone's bottom nav: the words under the glyphs. */
+.cx-root .cx-bnav-tab {
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  text-transform: capitalize;
+}
+
