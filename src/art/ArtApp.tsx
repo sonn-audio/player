@@ -38,6 +38,7 @@ import { Crossfade } from '@/art/Crossfade';
 import { flushSync } from 'react-dom';
 import { Browse, MiniBar, Sources, type BrowseNode } from '@/art/Browse';
 import { House } from '@/art/House';
+import { Light } from '@/art/Light';
 import { serviceTint } from '@/art/serviceMark';
 import { channelsOf, leaderOf, useCur, type Channel } from '@/art/useCur';
 import { serviceOf, useResolved } from '@/art/useOrigin';
@@ -221,10 +222,12 @@ export function ArtApp() {
    * The timeout still arrives on its own and always chooses the record: a screen that dims itself is
    * answering "what is playing here", because here is where the person stopped touching it.
    */
-  const [asked, setAsked] = useState<'record' | 'house' | null>(null);
+  const [asked, setAsked] = useState<'record' | 'house' | 'light' | null>(null);
   const timedOut = useIdle(IDLE_AFTER_MS, !asked && cur.isPlaying && (view.kind === 'home' || view.kind === 'house') && sheet === null);
   const idle = asked !== null || timedOut;
-  const rest = asked ?? (timedOut ? 'record' : null);
+  /* Left alone, the panel becomes the light the record throws — see `Light`; the record and the house
+     are the two rests you ask for from the bar. */
+  const rest = asked ?? (timedOut ? 'light' : null);
 
   /*
    * Stillness, before rest.
@@ -710,7 +713,7 @@ export function ArtApp() {
                 {/* One line about the clocks: what the sync numbers on the zones say, in words. */}
                 <p className="cx-deskpage-note">{clockLine(channels)}</p>
               </div>
-            ) : !phone && view.kind === 'house' ? (
+            ) : !phone && view.kind === 'house' && !(idle && rest === 'light') ? (
               <House
                 channels={channels}
                 currentLeaderId={leaderOf(zone, zones)?.id ?? null}
@@ -766,6 +769,8 @@ export function ArtApp() {
                     onSelect={select}
                     onLeave={() => setAsked(null)}
                   />
+                ) : rest === 'light' ? (
+                  <Light cur={cur} onWake={() => setAsked(null)} />
                 ) : (
                   <Stage
                     cur={cur}
@@ -941,8 +946,9 @@ export function ArtApp() {
 
       {dropSaid && <span className="cx-said mono">{dropSaid}</span>}
 
-      {/* The dimmed screen's one readout: a panel on a wall is also a clock — and a calendar. */}
-      {idle && (
+      {/* The dimmed screen's one readout: a panel on a wall is also a clock — and a calendar. The light
+          carries its own. */}
+      {idle && rest !== 'light' && (
         <span className="cx-idle-clock disp">
           {clock.time}
           <i className="cx-idle-date mono">{clock.date}</i>
