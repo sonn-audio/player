@@ -728,6 +728,9 @@ export function Tile({
   );
 }
 
+/** Songs a search shows before "all N" — see the sections loop. */
+const SONGS_FIRST = 10;
+
 type Refusal = { service: string; reason: string };
 
 /** The server's `502 service-unavailable`, read off the error; anything else is not a refusal. */
@@ -1044,6 +1047,8 @@ export function Browse({
   const [refused, setRefused] = useState<Refusal | null>(null);
   /* Bumped by "try again": the listing effect runs on it. */
   const [attempt, setAttempt] = useState(0);
+  /* The search's song buckets opened out past their first ten, by section id. */
+  const [opened, setOpened] = useState<Set<string>>(() => new Set());
   const [about, setAbout] = useState<ContentAbout | null>(null);
   const field = useRef<HTMLInputElement>(null);
   /*
@@ -1655,13 +1660,33 @@ export function Browse({
               <div className="cx-sec-head">
                 <span className="cx-sec-lbl mono">{section.name}</span>
                 <span className="cx-sec-rule" />
+                {sections.length > 1 && section.items.every((item) => item.kind === 'track') && section.items.length > SONGS_FIRST && (
+                  /* Twenty songs in two columns filled the window and put the albums and the artists
+                     under the fold, where nobody found them. Ten, and the rest when they are wanted —
+                     the artist page's "all 60" is the same figure. */
+                  <button
+                    type="button"
+                    className="cx-sec-more mono"
+                    onClick={() =>
+                      setOpened((prev) => {
+                        const next = new Set(prev);
+                        if (next.has(section.id)) next.delete(section.id);
+                        else next.add(section.id);
+                        return next;
+                      })
+                    }
+                  >
+                    {opened.has(section.id) ? 'fewer' : `all ${section.items.length}`}
+                    <ForwardGlyph size={12} />
+                  </button>
+                )}
               </div>
               {section.items.length > 0 && section.items.every((item) => item.kind === 'track') ? (
                 /* Songs are rows. A song as a 160px tile is a sleeve with the wrong name under it —
                    the album's picture, the track's title — and eight of them in a row say nothing a
                    list does not say better, with the artist and the length beside each. */
                 <div className="cx-trows" data-cols>
-                  {section.items.map((item, index) => (
+                  {(sections.length > 1 && !opened.has(section.id) ? section.items.slice(0, SONGS_FIRST) : section.items).map((item, index) => (
                     <TrackRow
                       key={item.id}
                       item={item}
