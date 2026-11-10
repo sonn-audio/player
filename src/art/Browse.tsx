@@ -22,7 +22,7 @@
  * Playing anything hands `item.id` straight to `POST /zones/{id}/play`. The id is opaque and the
  * server resolves it — that is what lets this file contain no knowledge of providers at all.
  */
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useApi, useServer } from '@/state/ServerContext';
 import { ApiError } from '@/api/client';
 import { useFavorites, useRecents } from '@/art/useCollections';
@@ -41,6 +41,7 @@ import { Crate } from '@/art/Crate';
 import {
   BackGlyph,
   Bars,
+  ChevronGlyph,
   EmptyArtGlyph,
   ForwardGlyph,
   PauseGlyph,
@@ -324,9 +325,14 @@ function ServiceMark({
       title={item.name}
     >
       <span className="cx-mark-face" data-logo={shown || undefined}>
-        <span className="disp cx-mark-mono" aria-hidden="true">
-          {initials(item.name)}
-        </span>
+        {/* A service without a trademark of its own gets a drawing of what it is — a record for the
+            library, waves for the radio — at the weight the logos have, so four marks read as four
+            services and not as two services and two stand-ins. */}
+        {markGlyph(service) ?? (
+          <span className="disp cx-mark-mono" aria-hidden="true">
+            {initials(item.name)}
+          </span>
+        )}
         {kind && (
           <img
             className="cx-mark-logo"
@@ -591,6 +597,29 @@ function Billboard({
  */
 const SMALL = new Set(['and', 'the', 'of', 'de', 'van', 'der', 'y', '&', 'a', 'los', 'las', 'le', 'la']);
 
+/** What the library and the radio look like, where a logo would be. Null for a service with a logo. */
+function markGlyph(service: string): React.ReactNode | null {
+  if (service === 'library') {
+    return (
+      <svg className="cx-mark-glyph" viewBox="0 0 48 48" aria-hidden="true">
+        <circle cx="24" cy="24" r="17" fill="none" stroke="currentColor" strokeWidth="2.4" />
+        <circle cx="24" cy="24" r="10.5" fill="none" stroke="currentColor" strokeWidth="1.2" opacity="0.55" />
+        <circle cx="24" cy="24" r="3.4" fill="currentColor" />
+      </svg>
+    );
+  }
+  if (service === 'radio') {
+    return (
+      <svg className="cx-mark-glyph" viewBox="0 0 48 48" aria-hidden="true">
+        <circle cx="24" cy="26" r="3.2" fill="currentColor" />
+        <path d="M15.5 34.5a12 12 0 0 1 0-17M32.5 17.5a12 12 0 0 1 0 17" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />
+        <path d="M9.5 40.5a20.5 20.5 0 0 1 0-29M38.5 11.5a20.5 20.5 0 0 1 0 29" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" opacity="0.55" />
+      </svg>
+    );
+  }
+  return null;
+}
+
 function initials(name: string): string {
   const words = name
     .split(/[\s.]+/)
@@ -731,6 +760,29 @@ export function Tile({
 /** Songs a search shows before "all N" — see the sections loop. */
 const SONGS_FIRST = 10;
 
+/** The same recording, as a catalogue names it twice: the title and the artist, lower-cased, an edition in brackets aside. */
+function recordingKey(item: ContentItem): string {
+  const clean = (text: string) =>
+    text
+      .toLowerCase()
+      .replace(/\s*[([-].*$/, '')
+      .replace(/[^\p{L}\p{N}]+/gu, ' ')
+      .trim();
+  return `${clean(item.name)}|${clean(item.artist ?? '')}`;
+}
+
+/** One row per recording, in the order the first of each arrived; the rest wait under it. */
+function foldEditions(items: ContentItem[]): { lead: ContentItem; others: ContentItem[] }[] {
+  const groups = new Map<string, { lead: ContentItem; others: ContentItem[] }>();
+  for (const item of items) {
+    const key = recordingKey(item);
+    const group = groups.get(key);
+    if (group) group.others.push(item);
+    else groups.set(key, { lead: item, others: [] });
+  }
+  return [...groups.values()];
+}
+
 type Refusal = { service: string; reason: string };
 
 /** The server's `502 service-unavailable`, read off the error; anything else is not a refusal. */
@@ -858,6 +910,10 @@ export function TrackRow({
   sub,
   thumb = false,
   badge,
+  note,
+  noteOpen = false,
+  onNote,
+  edition = false,
   onPlay,
   onQueue,
 }: {
@@ -865,6 +921,12 @@ export function TrackRow({
   index: number;
   playing?: boolean;
   paused?: boolean;
+  /** A word after the row — `4 versions` — that opens what it counts. */
+  note?: string | undefined;
+  noteOpen?: boolean;
+  onNote?: (() => void) | undefined;
+  /** One of a recording's other editions, listed under the one that stands for them. */
+  edition?: boolean;
   /** The service, as a dot after the title — the same rule as `Tile`'s `badge`. */
   badge?: string | undefined;
   /** The record's own artist: a track by the same one does not say so again under its title. */
@@ -880,7 +942,7 @@ export function TrackRow({
   const sameArtist =
     Boolean(item.artist && albumArtist) && item.artist!.trim().toLowerCase() === albumArtist!.trim().toLowerCase();
   return (
-    <div className="cx-trow" data-playing={playing || undefined} data-thumb={thumb || undefined}>
+    <div className="cx-trow" data-playing={playing || undefined} data-thumb={thumb || undefined} data-edition={edition || undefined}>
       <button type="button" className="cx-trow-main" onClick={onPlay}>
         {thumb && <span className="cx-tthumb" style={{ backgroundImage: itemCoverCss(item.coverUrl) }} aria-hidden="true" />}
         <span className="cx-tidx mono">{playing ? <Bars still={paused} /> : index + 1}</span>
@@ -902,6 +964,12 @@ export function TrackRow({
           )}
         </span>
       </button>
+      {note && (
+        <button type="button" className="cx-tnote mono" onClick={onNote} data-open={noteOpen || undefined}>
+          {note}
+          <ChevronGlyph size={11} />
+        </button>
+      )}
       <button type="button" className="cx-tact" onClick={onQueue} title="Add to the queue">
         <QueueGlyph size={15} />
       </button>
@@ -1049,6 +1117,8 @@ export function Browse({
   const [attempt, setAttempt] = useState(0);
   /* The search's song buckets opened out past their first ten, by section id. */
   const [opened, setOpened] = useState<Set<string>>(() => new Set());
+  /* A recording's other editions shown under it, by the lead row's id. */
+  const [editions, setEditions] = useState<Set<string>>(() => new Set());
   const [about, setAbout] = useState<ContentAbout | null>(null);
   const field = useRef<HTMLInputElement>(null);
   /*
@@ -1660,7 +1730,7 @@ export function Browse({
               <div className="cx-sec-head">
                 <span className="cx-sec-lbl mono">{section.name}</span>
                 <span className="cx-sec-rule" />
-                {sections.length > 1 && section.items.every((item) => item.kind === 'track') && section.items.length > SONGS_FIRST && (
+                {sections.length > 1 && section.items.every((item) => item.kind === 'track') && foldEditions(section.items).length > SONGS_FIRST && (
                   /* Twenty songs in two columns filled the window and put the albums and the artists
                      under the fold, where nobody found them. Ten, and the rest when they are wanted —
                      the artist page's "all 60" is the same figure. */
@@ -1676,7 +1746,7 @@ export function Browse({
                       })
                     }
                   >
-                    {opened.has(section.id) ? 'fewer' : `all ${section.items.length}`}
+                    {opened.has(section.id) ? 'fewer' : `all ${foldEditions(section.items).length}`}
                     <ForwardGlyph size={12} />
                   </button>
                 )}
@@ -1686,19 +1756,54 @@ export function Browse({
                    the album's picture, the track's title — and eight of them in a row say nothing a
                    list does not say better, with the artist and the length beside each. */
                 <div className="cx-trows" data-cols>
-                  {(sections.length > 1 && !opened.has(section.id) ? section.items.slice(0, SONGS_FIRST) : section.items).map((item, index) => (
-                    <TrackRow
-                      key={item.id}
-                      item={item}
-                      index={index}
-                      thumb
-                      badge={mixed ? item.service : undefined}
-                      playing={nowPlaying !== '' && item.name.trim().toLowerCase() === nowPlaying}
-                      paused={zone?.state !== 'playing'}
-                      onPlay={() => play(item)}
-                      onQueue={() => queue(item)}
-                    />
-                  ))}
+                  {(() => {
+                    /* One row per recording. A catalogue knows four editions of the same song — the
+                       album, the single, the compilation, the remaster — and listed them as four rows
+                       that said the same thing; the person wanted the song. The first stands for them,
+                       with the count, and the others open under it. */
+                    const folded = foldEditions(section.items);
+                    const shown = sections.length > 1 && !opened.has(section.id) ? folded.slice(0, SONGS_FIRST) : folded;
+                    return shown.map((group, index) => (
+                      <Fragment key={group.lead.id}>
+                        <TrackRow
+                          item={group.lead}
+                          index={index}
+                          thumb
+                          badge={mixed ? group.lead.service : undefined}
+                          note={group.others.length > 0 ? `${group.others.length + 1} versions` : undefined}
+                          noteOpen={editions.has(group.lead.id)}
+                          onNote={() =>
+                            setEditions((prev) => {
+                              const next = new Set(prev);
+                              if (next.has(group.lead.id)) next.delete(group.lead.id);
+                              else next.add(group.lead.id);
+                              return next;
+                            })
+                          }
+                          playing={nowPlaying !== '' && group.lead.name.trim().toLowerCase() === nowPlaying}
+                          paused={zone?.state !== 'playing'}
+                          onPlay={() => play(group.lead)}
+                          onQueue={() => queue(group.lead)}
+                        />
+                        {editions.has(group.lead.id) &&
+                          group.others.map((other) => (
+                            <TrackRow
+                              key={other.id}
+                              item={other}
+                              index={index}
+                              thumb
+                              edition
+                              sub={other.album || other.artist}
+                              badge={mixed ? other.service : undefined}
+                              playing={false}
+                              paused={zone?.state !== 'playing'}
+                              onPlay={() => play(other)}
+                              onQueue={() => queue(other)}
+                            />
+                          ))}
+                      </Fragment>
+                    ));
+                  })()}
                 </div>
               ) : (
                 /* The mask on the right edge is what says "this row continues" without a scrollbar. */

@@ -1293,3 +1293,57 @@ html[data-arrived] .cx-side-mark {
 .cx-empty-act:active {
   transform: scale(0.97);
 }
+
+/* --- the same recording, once ---------------------------------------------------------- */
+
+.cx-tnote {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex: none;
+  height: 22px;
+  padding: 0 8px 0 9px;
+  border: 1px solid rgb(255 255 255 / 10%);
+  border-radius: 11px;
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--t5);
+  transition:
+    color 0.18s,
+    border-color 0.18s;
+}
+
+.cx-tnote svg {
+  transition: transform 0.2s var(--cx-ease);
+}
+
+.cx-tnote[data-open] svg {
+  transform: rotate(180deg);
+}
+
+.cx-tnote:hover {
+  color: var(--t1);
+  border-color: rgb(255 255 255 / 20%);
+}
+
+/* An edition, under the recording that stands for it: indented, its number withheld. */
+.cx-trow[data-edition] {
+  padding-left: 28px;
+  opacity: 0.8;
+}
+
+.cx-trow[data-edition] .cx-tidx {
+  visibility: hidden;
+}
+
+/* --- the hall's drawn marks -------------------------------------------------------------- */
+
+.cx-mark-glyph {
+  position: absolute;
+  width: 50cqw;
+  height: 50cqw;
+  color: rgb(255 255 255 / 92%);
+  filter: drop-shadow(0 2px 8px rgb(0 0 0 / 35%));
+}
+
