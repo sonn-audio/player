@@ -20,13 +20,13 @@ import { Crossfade } from '@/art/Crossfade';
 import { artKeyOf } from '@/art/accent';
 import { zoneCoverCss } from '@/art/cover';
 import { Timeline, Transport, VolumeRow, wireLabel } from '@/art/Stage';
-import { HeartGlyph, QueueGlyph, SearchGlyph } from '@/art/glyphs';
+import { HeartGlyph, HomeGlyph, QueueGlyph, SearchGlyph } from '@/art/glyphs';
 import { ServiceMark } from '@/art/serviceMark';
 import { mainTitle } from '@/lib/title';
 import type { ContentService } from '@/api/content';
 import type { Channel, Cur } from '@/art/useCur';
 
-export type ShellView = 'home' | 'browse' | 'inputs' | 'signal' | 'rooms';
+export type ShellView = 'home' | 'browse' | 'inputs' | 'signal' | 'rooms' | 'house';
 
 /** Two letters of a service's name, for a mark with no logo. Same rule as the hall's `initials`. */
 export function Sidebar({
@@ -37,6 +37,7 @@ export function Sidebar({
   currentLeaderId,
   cur,
   onHome,
+  onHouse,
   onBrowse,
   onSearch,
   onInputs,
@@ -51,6 +52,8 @@ export function Sidebar({
   currentLeaderId: number | null;
   cur: Cur;
   onHome: () => void;
+  /** The house as light — the desk's home. */
+  onHouse: () => void;
   onBrowse: (node?: { id?: string; label?: string }) => void;
   onSearch: () => void;
   onInputs: () => void;
@@ -70,6 +73,10 @@ export function Sidebar({
       </a>
 
       <nav className="cx-sgroup" aria-label="Player">
+        <button type="button" className="cx-snav" data-on={(view === 'house' && !sheet) || undefined} onClick={onHouse}>
+          <HomeGlyph size={16} />
+          Home
+        </button>
         <button type="button" className="cx-snav" data-on={(view === 'home' && !sheet) || undefined} onClick={onHome}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
             <circle cx="12" cy="12" r="8.5" />

@@ -22,7 +22,7 @@ import { useApi, useServer } from '@/state/ServerContext';
 import { useSelectedZone } from '@/state/useSelectedZone';
 import { useLocalPlayback } from '@/state/useLocalPlayback';
 import { useMediaSession } from '@/state/useMediaSession';
-import { useScenes } from '@/state/useScenes';
+import { sceneable, useScenes } from '@/state/useScenes';
 import { useWakeLock } from '@/state/useWakeLock';
 import { InstallHint } from '@/shell/InstallHint';
 import { Mark } from '@/components/Mark';
@@ -37,6 +37,7 @@ import { QueueSheet } from '@/art/Rail';
 import { Crossfade } from '@/art/Crossfade';
 import { flushSync } from 'react-dom';
 import { Browse, MiniBar, Sources, type BrowseNode } from '@/art/Browse';
+import { House } from '@/art/House';
 import { serviceTint } from '@/art/serviceMark';
 import { channelsOf, leaderOf, useCur, type Channel } from '@/art/useCur';
 import { serviceOf, useResolved } from '@/art/useOrigin';
@@ -92,7 +93,9 @@ type View =
   | { kind: 'inputs' }
   | { kind: 'signal' }
   /* The desk, as a place on a desk; on a phone the rooms stay a sheet. */
-  | { kind: 'rooms' };
+  | { kind: 'rooms' }
+  /* The house as light: every room a window — the desk's home. See `House`. */
+  | { kind: 'house' };
 
 type Sheet = null | 'rooms' | 'queue' | 'more';
 
@@ -119,7 +122,8 @@ export function ArtApp() {
   const { zone, zoneId, select } = useSelectedZone(zones, synced);
   const phone = useIsPhone();
 
-  const [view, setViewNow] = useState<View>({ kind: 'home' });
+  /* A desk opens on the house; a phone on the home it browses, with the record in the bar. */
+  const [view, setViewNow] = useState<View>(phone ? { kind: 'home' } : { kind: 'house' });
   /*
    * A change of view is one movement, not a cut.
    *
@@ -159,7 +163,7 @@ export function ArtApp() {
   const { queue } = useQueue(leader?.id ?? null, leader?.source?.id);
   const recents = useRecents(zone?.id ?? null);
   const favorites = useFavorites(zone?.id ?? null);
-  const { scenes, recall } = useScenes();
+  const { scenes, recall, save } = useScenes();
 
   // The lock screen and the media keys follow the room this face controls — the leader,
   // which is where `useCur` already says playback lives.
@@ -218,7 +222,7 @@ export function ArtApp() {
    * answering "what is playing here", because here is where the person stopped touching it.
    */
   const [asked, setAsked] = useState<'record' | 'house' | null>(null);
-  const timedOut = useIdle(IDLE_AFTER_MS, !asked && cur.isPlaying && view.kind === 'home' && sheet === null);
+  const timedOut = useIdle(IDLE_AFTER_MS, !asked && cur.isPlaying && (view.kind === 'home' || view.kind === 'house') && sheet === null);
   const idle = asked !== null || timedOut;
   const rest = asked ?? (timedOut ? 'record' : null);
 
@@ -253,7 +257,7 @@ export function ArtApp() {
    * one frame. Two conditions for one thing is how a control ends up doing nothing.
    */
   useEffect(() => {
-    if (asked && !((cur.hasTrack || asked === 'house') && view.kind === 'home' && sheet === null)) {
+    if (asked && !((cur.hasTrack || asked === 'house') && (view.kind === 'home' || view.kind === 'house') && sheet === null)) {
       setAsked(null);
     }
   }, [asked, cur.hasTrack, view.kind, sheet]);
@@ -706,6 +710,27 @@ export function ArtApp() {
                 {/* One line about the clocks: what the sync numbers on the zones say, in words. */}
                 <p className="cx-deskpage-note">{clockLine(channels)}</p>
               </div>
+            ) : !phone && view.kind === 'house' ? (
+              <House
+                channels={channels}
+                currentLeaderId={leaderOf(zone, zones)?.id ?? null}
+                drag={drag}
+                onSelect={select}
+                onOpen={(zoneId) => {
+                  select(zoneId);
+                  setView({ kind: 'home' });
+                }}
+                onSaveScene={
+                  sceneable(leaderOf(zone, zones))
+                    ? () => {
+                        const who = leaderOf(zone, zones);
+                        if (!who) return;
+                        const name = window.prompt('Name this moment', who.track?.title || who.source?.name || '');
+                        if (name?.trim()) save(who, zones, name.trim());
+                      }
+                    : undefined
+                }
+              />
             ) : !phone ? (
               <Wall
                 channels={channels}
@@ -740,47 +765,6 @@ export function ArtApp() {
                     currentLeaderId={leaderOf(zone, zones)?.id ?? null}
                     onSelect={select}
                     onLeave={() => setAsked(null)}
-                  />
-                ) : houseQuiet ? (
-                  /*
-                   * A quiet house is still a house.
-                   *
-                   * With nothing playing anywhere the desk swapped in a different layout altogether —
-                   * a page of cards where the wall had been — so the one screen this product has
-                   * became two, depending on whether anybody happened to be listening. The rooms are
-                   * still there when they are silent; what changes is only what the panel between them
-                   * holds, which is now a place to start something rather than a picture of something
-                   * already started.
-                   *
-                   * `house={[]}` because the rooms are the panels on either side of this. Drawing them
-                   * again as cards inside one of them is the same list twice.
-                   */
-                  <Welcome
-                    greetingText={greeting()}
-                    rooms={zones.length}
-                    playing={zones.filter((candidate) => Boolean(candidate.track)).length}
-                    services={services}
-                    onBrowse={openBrowse}
-                    onInputs={() => setView({ kind: 'inputs' })}
-                    scenes={scenes.slice(0, 4).map((scene) => ({
-                      key: scene.id,
-                      title: scene.name,
-                      cover: scene.coverUrl,
-                      play: () => void recall(scene),
-                    }))}
-                    recents={recents.slice(0, 12).map((item) => ({
-                      key: item.source,
-                      title: item.title || item.album || item.source,
-                      cover: item.coverUrl,
-                      play: () => zone && void api.play(zone.id, item.source),
-                    }))}
-                    house={[]}
-                    favorites={favorites.slice(0, 12).map((item) => ({
-                      key: String(item.id),
-                      title: item.name,
-                      cover: item.coverUrl,
-                      play: () => zone && void api.play(zone.id, item.source),
-                    }))}
                   />
                 ) : (
                   <Stage
@@ -1025,6 +1009,7 @@ export function ArtApp() {
             currentLeaderId={leaderOf(zone, zones)?.id ?? null}
             cur={cur}
             onHome={goHome}
+            onHouse={() => setView({ kind: 'house' })}
             onBrowse={(node) => openBrowse(node ?? {})}
             onSearch={() => {
               openBrowse();
