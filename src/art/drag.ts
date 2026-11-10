@@ -56,38 +56,3 @@ export function horizontalDrag(
     document.addEventListener('pointercancel', up);
   };
 }
-
-/**
- * The same, upwards — for the channel strip's faders, where 0 is at the bottom.
- *
- * A separate function rather than an axis flag: the inversion (`bottom - y`) is the entire
- * difference, and a boolean parameter at every call site reads worse than a name that says which way
- * is loud.
- */
-export function verticalDrag(
-  apply: (fraction: number) => void,
-  onStart?: () => void,
-  onEnd?: () => void,
-): (event: React.PointerEvent) => void {
-  return (event: React.PointerEvent) => {
-    event.preventDefault();
-    const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
-    if (rect.height <= 0) {
-      return;
-    }
-    const at = (clientY: number): number => clamp((rect.bottom - clientY) / rect.height);
-    onStart?.();
-    apply(at(event.clientY));
-
-    const move = (moved: PointerEvent): void => apply(at(moved.clientY));
-    const up = (): void => {
-      onEnd?.();
-      document.removeEventListener('pointermove', move);
-      document.removeEventListener('pointerup', up);
-      document.removeEventListener('pointercancel', up);
-    };
-    document.addEventListener('pointermove', move);
-    document.addEventListener('pointerup', up);
-    document.addEventListener('pointercancel', up);
-  };
-}

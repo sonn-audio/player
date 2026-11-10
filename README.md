@@ -19,7 +19,7 @@ holding the player's places (now playing, music, search, inputs), every service 
 and every room in the house; a player bar along the foot with the record, its transport, timeline and
 fader, the room it plays in, the queue and the two rests; and between them a pane — a rounded sheet
 the record's wash lights — that shows whatever the room is showing: the stage, the catalogue, the
-inputs, the desk of rooms, the reading. Left alone for a minute (or asked, from the bar) the frame
+inputs, the rooms, the reading. Left alone for a minute (or asked, from the bar) the frame
 steps back and the screen becomes the record, which is what a wall panel spends most of its day being.
 
 On a **phone** the frame is a bottom nav and sheets: a home you browse, a bar along the bottom that
@@ -137,7 +137,7 @@ src/
     Shell.tsx       The desk's frame: sidebar and player bar
     Stage.tsx       The record on a desk and on a phone; Transport, Timeline, VolumeRow
     Browse.tsx      The catalogue, the inputs page, the mini bar
-    Channels.tsx    The desk of rooms (strips, groups, scenes, lining up)
+    Channels.tsx    The rooms as cards (groups, scenes, lining up)
     Rail.tsx        The queue
     Wall.tsx        The house strip and the gallery rest
     Signal.tsx / Instruments.tsx   The reading

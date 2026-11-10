@@ -8666,9 +8666,7 @@
   }
 
   /* A big house gets a big desk: past eight channels a wide screen holds twelve to a row, not eight. */
-  .cx-sheet[data-desk]:has(.cx-desk[data-many]) {
-    width: min(1560px, calc(100% - 48px));
-  }
+}
 }
 
 .cx-desk {
@@ -8695,54 +8693,54 @@
 }
 
 /*
- * One console, every channel on it. The strips narrow to share the row — a desk with eight channels has
- * narrower channels, not a second desk under the first — and only wrap once a strip would be too narrow
- * to read its own name. `--cols` (strips and masters) and `--groups` come from `RoomsSheet`; a group's
- * frame costs 18px, its padding and border.
+ * The rooms, as cards.
  *
- * It used to scroll sideways with the bar hidden, which is a swipe on a phone and nothing at all under a
- * mouse wheel: seven rooms on a desk left the last two out of reach unless you knew to tab to them.
+ * A grid that takes as many across as fit; a group is a block across the whole width with its members
+ * inside it. One orientation — the level is a line under the room's name on a desk and on a phone alike —
+ * so there is one card to draw and one gesture to learn.
  */
 .cx-desk-row {
-  --gap: 12px;
-  --strip: clamp(
-    100px,
-    (100cqw - (var(--items, 1) - 1) * var(--gap) - var(--groups, 0) * 18px - 2px) / var(--cols, 1),
-    176px
-  );
-
-  container-type: inline-size;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: stretch;
-  gap: 18px var(--gap);
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(268px, 1fr));
+  gap: 12px;
   padding-bottom: 4px;
 }
 
-/* --- a strip --------------------------------------------------------------------------------- */
+/* --- a card ---------------------------------------------------------------------------------- */
 
 .cx-desk-strip {
   position: relative;
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    'hit foot'
+    'fader fader';
   align-items: center;
-  gap: 18px;
-  flex: none;
-  container-type: inline-size;
-  width: var(--strip, 176px);
-  padding: 22px 6px 16px;
-  border-radius: 6px;
+  gap: 12px 14px;
+  min-width: 0;
+  padding: 14px 16px 14px 14px;
+  border-radius: 12px;
+  background: rgb(255 255 255 / 2.5%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 6%);
   transition:
     background 0.25s var(--cx-ease),
-    box-shadow 0.25s var(--cx-ease);
+    box-shadow 0.25s var(--cx-ease),
+    transform 0.25s var(--cx-ease);
 }
 
 .cx-desk-strip[data-current] {
-  background: rgb(255 255 255 / 3%);
+  background: rgb(255 255 255 / 4.5%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 11%);
+}
+
+.cx-desk-strip[data-on] {
+  box-shadow:
+    inset 0 0 0 1px rgb(255 255 255 / 8%),
+    0 24px 50px -30px color-mix(in srgb, var(--g) 50%, transparent);
 }
 
 .cx-desk-strip[data-hot] {
-  box-shadow: inset 0 0 0 1px var(--hair);
+  box-shadow: inset 0 0 0 1px var(--hair-strong, rgb(255 255 255 / 14%));
 }
 
 .cx-desk-strip[data-over] {
@@ -8751,23 +8749,22 @@
 }
 
 .cx-desk-hit {
+  grid-area: hit;
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 16px;
-  width: 100%;
+  gap: 14px;
   min-width: 0;
   cursor: grab;
-  text-align: center;
+  text-align: left;
 }
 
 .cx-desk-cov {
   display: grid;
   place-items: center;
   flex: none;
-  width: 72px;
-  height: 72px;
-  border-radius: 3px;
+  width: 52px;
+  height: 52px;
+  border-radius: 6px;
   background-color: rgb(255 255 255 / 4%);
   background-position: center;
   background-size: cover;
@@ -8775,14 +8772,7 @@
   color: var(--t7);
   transition:
     opacity 0.3s var(--cx-ease),
-    filter 0.3s var(--cx-ease),
-    box-shadow 0.3s var(--cx-ease);
-}
-
-.cx-desk-strip[data-on] .cx-desk-cov {
-  box-shadow:
-    inset 0 0 0 1px rgb(255 255 255 / 10%),
-    0 16px 40px -14px color-mix(in srgb, var(--g) 55%, transparent);
+    filter 0.3s var(--cx-ease);
 }
 
 .cx-desk-strip[data-quiet] .cx-desk-cov:not([data-empty]),
@@ -8794,9 +8784,8 @@
 .cx-desk-txt {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 7px;
-  width: 100%;
+  align-items: flex-start;
+  gap: 5px;
   min-width: 0;
 }
 
@@ -8804,17 +8793,10 @@
   max-width: 100%;
   overflow: hidden;
   font-size: 10px;
-  letter-spacing: 0.22em;
+  letter-spacing: 0.16em;
   color: var(--t5);
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-/* A narrowed strip tightens its name before it cuts it: `THIS BROWSER` reads, `THIS BROWSE…` does not. */
-@container (max-width: 140px) {
-  .cx-desk-name {
-    letter-spacing: 0.12em;
-  }
 }
 
 .cx-desk-strip[data-on] .cx-desk-name,
@@ -8825,8 +8807,8 @@
 .cx-desk-line {
   max-width: 100%;
   overflow: hidden;
-  font-size: 12px;
-  color: var(--t6);
+  font-size: 12.5px;
+  color: var(--t5);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -8835,22 +8817,23 @@
   color: var(--t7);
 }
 
-/* --- the fader ------------------------------------------------------------------------------- */
+/* --- the level ------------------------------------------------------------------------------- */
 
 .cx-desk-fader {
+  grid-area: fader;
   display: flex;
-  flex-direction: column;
+  flex-direction: row-reverse;
   align-items: center;
-  gap: 14px;
+  gap: 12px;
   color: var(--t6);
 }
 
 .cx-desk-fader-val {
-  min-width: 2ch;
-  font-size: 13px;
+  min-width: 3ch;
+  font-size: 12px;
   letter-spacing: 0.08em;
-  color: var(--t2);
-  text-align: center;
+  color: var(--t3);
+  text-align: right;
   transition: color 0.2s;
 }
 
@@ -8860,27 +8843,25 @@
 
 .cx-desk-fader-rail {
   position: relative;
-  width: 2px;
-  height: 160px;
+  flex: 1;
+  height: 2px;
   border-radius: 2px;
   background: var(--track);
   cursor: pointer;
   touch-action: none;
 }
 
-/* A wider hit area than a 2px line: the rail's box is what the pointer is measured against. */
+/* A taller hit area than a 2px line: the rail's box is what the pointer is measured against. */
 .cx-desk-fader-rail::before {
   content: '';
   position: absolute;
-  inset: -8px -18px;
+  inset: -14px 0;
 }
 
 .cx-desk-fader-fill {
   position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: var(--pct);
+  inset: 0 auto 0 0;
+  width: var(--pct);
   border-radius: 2px;
   background: var(--t3);
   transition: background 0.3s;
@@ -8896,11 +8877,11 @@
 
 .cx-desk-fader-knob {
   position: absolute;
-  left: 50%;
-  bottom: var(--pct);
+  top: 50%;
+  left: var(--pct);
   width: 14px;
   height: 14px;
-  margin: 0 0 -7px -7px;
+  margin: -7px 0 0 -7px;
   border-radius: 50%;
   background: var(--t1);
   box-shadow: 0 0 0 3px var(--cx-surface);
@@ -8916,9 +8897,10 @@
 }
 
 .cx-desk-foot {
+  grid-area: foot;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-end;
   min-height: 18px;
 }
 
@@ -8946,10 +8928,10 @@
   position: relative;
   display: flex;
   flex-direction: column;
-  flex: none;
-  max-width: 100%;
-  padding: 14px 8px 0;
-  border-radius: 8px;
+  grid-column: 1 / -1;
+  gap: 10px;
+  padding: 12px;
+  border-radius: 14px;
   border: 1px solid color-mix(in srgb, var(--g) 32%, transparent);
   background: color-mix(in srgb, var(--g) 5%, transparent);
 }
@@ -8958,7 +8940,7 @@
   display: inline-flex;
   align-items: center;
   gap: 12px;
-  padding: 0 14px;
+  padding: 0 4px;
   font-size: 9.5px;
   letter-spacing: 0.24em;
   color: var(--g);
@@ -8970,25 +8952,28 @@
 }
 
 .cx-desk-group-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: stretch;
-}
-
-.cx-desk-group-row > .cx-desk-strip + .cx-desk-strip {
-  box-shadow: inset 1px 0 0 var(--hair);
-  border-radius: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(268px, 1fr));
+  gap: 10px;
 }
 
 .cx-desk-master {
-  width: var(--strip, 160px);
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-areas:
+    'ring hit foot'
+    'fader fader fader';
+}
+
+.cx-desk-master .cx-desk-txt {
+  grid-area: hit;
 }
 
 .cx-desk-ring {
+  grid-area: ring;
   display: grid;
   place-items: center;
-  width: 72px;
-  height: 72px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   box-shadow: inset 0 0 0 1.5px rgb(223 226 230 / 90%);
   color: var(--t1);
@@ -8999,20 +8984,14 @@
   transform: scale(0.94);
 }
 
+/* One line under the cards, not a box among them: dashes are what a drop target wears. */
 .cx-desk-hint {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  align-self: center;
-  flex: 1 1 180px;
-  min-width: 160px;
-  padding: 14px 20px;
-  border: 1px dashed var(--hair-strong, rgb(255 255 255 / 14%));
-  border-radius: 6px;
+  grid-column: 1 / -1;
+  margin: 2px 0 0;
+  padding: 0 2px;
   font-size: 9.5px;
   letter-spacing: 0.2em;
   color: var(--t7);
-  text-align: center;
 }
 
 /* --- scenes ------------------------------------------------------------------------------------ */
@@ -9077,147 +9056,12 @@
   white-space: nowrap;
 }
 
-/*
- * --- dense: more than one row ------------------------------------------------------------------
- *
- * Two or three rows of full-height strips is a sheet you scroll to find a fader in. Once the desk takes
- * a second row each strip gives up height, not width: a shorter throw, a smaller sleeve.
- */
+/* --- a phone: the same cards, one under another ------------------------------------------- */
 
-.cx-desk[data-dense] .cx-desk-strip {
-  gap: 14px;
-  padding-top: 16px;
-}
-
-.cx-desk[data-dense] .cx-desk-hit {
-  gap: 12px;
-}
-
-.cx-desk[data-dense] .cx-desk-cov {
-  width: 48px;
-  height: 48px;
-}
-
-.cx-desk[data-dense] .cx-desk-ring {
-  width: 56px;
-  height: 56px;
-}
-
-.cx-desk[data-dense] .cx-desk-fader {
-  gap: 10px;
-}
-
-.cx-desk[data-dense] .cx-desk-fader-rail {
-  height: 88px;
-}
-
-/* The hint is for a first desk. A house that needs a second row has found out how grouping works. */
-.cx-desk[data-dense] .cx-desk-hint {
-  display: none;
-}
-
-/* --- lying down: the phone ------------------------------------------------------------------- */
-
-.cx-desk[data-phone] .cx-desk-row {
-  flex-direction: column;
-  gap: 4px;
-  overflow: visible;
-}
-
-.cx-desk[data-phone] .cx-desk-strip {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  grid-template-areas:
-    'hit hit foot'
-    'fader fader fader';
-  align-items: center;
-  gap: 10px 14px;
-  width: auto;
-  padding: 12px 8px;
-}
-
-.cx-desk[data-phone] .cx-desk-hit {
-  grid-area: hit;
-  flex-direction: row;
-  gap: 14px;
-  text-align: left;
-}
-
-.cx-desk[data-phone] .cx-desk-cov {
-  width: 48px;
-  height: 48px;
-}
-
-.cx-desk[data-phone] .cx-desk-txt {
-  align-items: flex-start;
-}
-
-.cx-desk[data-phone] .cx-desk-foot {
-  grid-area: foot;
-  justify-content: flex-end;
-}
-
-.cx-desk[data-phone] .cx-desk-fader {
-  grid-area: fader;
-  flex-direction: row-reverse;
-  gap: 14px;
-  width: 100%;
-}
-
-.cx-desk[data-phone] .cx-desk-fader-rail {
-  flex: 1;
-  width: auto;
-  height: 2px;
-}
-
-.cx-desk[data-phone] .cx-desk-fader-rail::before {
-  inset: -14px 0;
-}
-
-.cx-desk[data-phone] .cx-desk-fader-fill {
-  inset: 0 auto 0 0;
-  width: var(--pct);
-  height: auto;
-}
-
-.cx-desk[data-phone] .cx-desk-fader-knob {
-  top: 50%;
-  bottom: auto;
-  left: var(--pct);
-  margin: -7px 0 0 -7px;
-}
-
-.cx-desk[data-phone] .cx-desk-fader-val {
-  text-align: right;
-}
-
-.cx-desk[data-phone] .cx-desk-group {
-  padding: 10px 8px 4px;
-}
-
+.cx-desk[data-phone] .cx-desk-row,
 .cx-desk[data-phone] .cx-desk-group-row {
-  flex-direction: column;
-}
-
-.cx-desk[data-phone] .cx-desk-group-row > .cx-desk-strip + .cx-desk-strip {
-  box-shadow: inset 0 1px 0 var(--hair);
-}
-
-.cx-desk[data-phone] .cx-desk-master {
-  width: auto;
-  grid-template-areas:
-    'ring hit foot'
-    'fader fader fader';
-}
-
-.cx-desk[data-phone] .cx-desk-master .cx-desk-ring {
-  grid-area: ring;
-  width: 44px;
-  height: 44px;
-}
-
-.cx-desk[data-phone] .cx-desk-master .cx-desk-txt {
-  grid-area: hit;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 6px;
 }
 
 .cx-desk[data-phone] .cx-desk-scene-sub {

@@ -1,26 +1,24 @@
 /**
- * The desk: every room as a channel strip, the groups as blocks of strips.
+ * The rooms: every room a card, the groups as blocks of cards.
  *
- * The rooms sheet used to be a list — a row per room with a hairline fader under it, `JOIN` at the end of
- * the rows that were not in your group, a heading over the ones that were. It said everything and showed
- * nothing: a house with three rooms and a group in it looked exactly like a settings page.
+ * It was a mixing desk — a vertical fader per room, the level above it, one word at the foot — and it
+ * looked like one: an engineer's console in a frame whose every other page is a record on a shelf. A
+ * house is not a console. Each room is a card now, the same card the home screen's house strip uses:
+ * the sleeve, the name, what it is doing, the level as a line under them, and the one decision the card
+ * offers (`join`, `leave`, `turn on`) in its corner. Rooms that play together stand in one block, drawn
+ * with the record's own colour, with a master card at the end of it — the group's transport and a fader
+ * that moves every member by the same amount, so a balance you set between two rooms survives turning
+ * the evening down. Drag a card onto another and they play together.
  *
- * A mixing desk is the picture this is actually of. Each room is a strip: its sleeve, its name, what it
- * is doing, a vertical fader with the level above it, and one word at the foot for the one decision the
- * strip offers (`join`, `leave`, `turn on`). Rooms that play together stand in one block, drawn with the
- * record's own colour, with a master strip at the end of it — the group's transport and a fader that
- * moves every member by the same amount, so a balance you set between two rooms survives turning the
- * evening down. Drag a strip onto another and they play together.
- *
- * On a phone the same strips lie down: a row each, the fader running under the name, the block the same.
- * One component, two orientations; `phone` picks the drag axis and the stylesheet does the rest.
+ * One orientation. On a desk the cards fill a grid; on a phone they stand in a column. `phone` is only
+ * the drag axis for the room gesture and a hook for the stylesheet.
  */
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useApi } from '@/state/ServerContext';
 import { DELAY_MAX_MS, DELAY_NUDGE_MS, useOutputDelay } from '@/state/useOutputDelay';
 import { sceneable, useScenes } from '@/state/useScenes';
 import { itemCoverCss, zoneCoverCss } from '@/art/cover';
-import { clamp, horizontalDrag, verticalDrag } from '@/art/drag';
+import { clamp, horizontalDrag } from '@/art/drag';
 import { useVolumeControl } from '@/art/volume';
 import { EmptyArtGlyph, PauseGlyph, PlayGlyph, PowerGlyph, SpeakerGlyph } from '@/art/glyphs';
 import type { Channel } from '@/art/useCur';
@@ -44,8 +42,8 @@ function stateLabel(zone: ApiZoneState): string {
 // --- one strip ----------------------------------------------------------------
 
 /**
- * A fader, either way up. The value sits above a vertical one and at the end of a horizontal one; the
- * pointer maths comes from `drag.ts`, which is what the stage's own faders use.
+ * The level, as a line under the room with the number at its end; the pointer maths comes from `drag.ts`,
+ * which is what the stage's own faders use.
  */
 function Fader({
   pct,
@@ -81,7 +79,6 @@ function Strip({
   channel,
   role,
   current,
-  phone,
   onSelect,
   drag,
   action,
@@ -90,7 +87,6 @@ function Strip({
   channel: Channel;
   role: 'solo' | 'leader' | 'follower';
   current: boolean;
-  phone: boolean;
   onSelect: () => void;
   drag: RoomDrag;
   /** The one word at the foot, or nothing. */
@@ -140,7 +136,7 @@ function Strip({
         pct={control.pct}
         value={control.value}
         active={control.active}
-        onPointerDown={phone ? control.onPointerDownH : control.onPointerDownV}
+        onPointerDown={control.onPointerDownH}
         lit={playing}
         muted={off}
       />
@@ -173,11 +169,9 @@ function Strip({
  */
 function Master({
   channel,
-  phone,
   onUngroup,
 }: {
   channel: Channel;
-  phone: boolean;
   onUngroup: () => void;
 }) {
   const api = useApi();
@@ -219,10 +213,10 @@ function Master({
     settle.current = setTimeout(() => setDragging(null), SETTLE_MS);
   };
   const onPointerDown = useMemo(
-    () => (phone ? horizontalDrag(write, begin, end) : verticalDrag(write, begin, end)),
+    () => horizontalDrag(write, begin, end),
     // The handlers close over the latest members through `channel`; rebuilt when it changes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [phone, channel],
+    [channel],
   );
 
   return (
@@ -303,45 +297,6 @@ function AlignRow({ zone, leader }: { zone: ApiZoneState; leader: boolean }) {
 
 // --- the sheet ------------------------------------------------------------------
 
-/** The narrowest a strip gets before the desk takes another row. Matches `.cx-desk-row`. */
-const DESK_MIN_STRIP = 100;
-const DESK_GAP = 12;
-
-/**
- * How the desk lays out: how many rows, and what one row has to share its width between.
- *
- * A house runs to two dozen rooms, and once they do not fit on one row they are dealt out evenly — eight
- * and eight and eight, never twenty-two and an orphan of two. CSS can wrap but it cannot balance, so the
- * row's width is measured here and the CSS is told how many columns *one row* has to hold. A group is
- * its members and a master, and it is not split across rows, so the split is close rather than exact.
- */
-function useDeskLayout(channels: Channel[], phone: boolean) {
-  const ref = useRef<HTMLDivElement>(null);
-  const [width, setWidth] = useState(0);
-
-  useEffect(() => {
-    const row = ref.current;
-    if (!row || phone) {
-      return undefined;
-    }
-    const observer = new ResizeObserver(() => setWidth(row.clientWidth));
-    observer.observe(row);
-    return () => observer.disconnect();
-  }, [phone]);
-
-  const groups = channels.filter((channel) => channel.members.length > 1).length;
-  const cols = channels.length + channels.reduce((sum, channel) => sum + (channel.members.length > 1 ? channel.members.length : 0), 0);
-  const perRow = width > 0 ? Math.max(1, Math.floor((width + DESK_GAP) / (DESK_MIN_STRIP + DESK_GAP))) : cols;
-  const rows = Math.ceil(cols / perRow);
-  const style = {
-    '--cols': Math.ceil(cols / rows),
-    '--items': Math.ceil(channels.length / rows),
-    '--groups': Math.ceil(groups / rows),
-  } as React.CSSProperties;
-
-  return { ref, rows, many: cols > 8, style };
-}
-
 export function RoomsSheet({
   zones,
   channels,
@@ -365,7 +320,6 @@ export function RoomsSheet({
   const { scenes, save, recall, forget } = useScenes();
 
   const mine = channels.find((channel) => channel.members.some((member) => member.id === selectedId)) ?? null;
-  const desk = useDeskLayout(channels, phone);
   const [alignOpen, setAlignOpen] = useState(false);
 
   const said = (result: { rejected: Array<{ id: number; reason: string }> }): void => {
@@ -432,13 +386,8 @@ export function RoomsSheet({
   };
 
   return (
-    <div
-      className="cx-desk"
-      data-phone={phone || undefined}
-      data-dense={(!phone && desk.rows > 1) || undefined}
-      data-many={(!phone && desk.many) || undefined}
-    >
-      <div className="cx-desk-row" ref={desk.ref} style={desk.style}>
+    <div className="cx-desk" data-phone={phone || undefined}>
+      <div className="cx-desk-row">
         {channels.map((channel) =>
           channel.members.length > 1 ? (
             <div
@@ -460,14 +409,13 @@ export function RoomsSheet({
                       channel={channel}
                       role={role}
                       current={member.id === selectedId}
-                      phone={phone}
                       onSelect={() => onSelect(member.id)}
                       drag={drag}
                       action={actionFor(channel, member, role)}
                     />
                   );
                 })}
-                <Master channel={channel} phone={phone} onUngroup={() => ungroup(channel)} />
+                <Master channel={channel} onUngroup={() => ungroup(channel)} />
               </div>
             </div>
           ) : (
@@ -477,7 +425,6 @@ export function RoomsSheet({
               channel={channel}
               role="solo"
               current={channel.leader.id === selectedId}
-              phone={phone}
               onSelect={() => onSelect(channel.leader.id)}
               drag={drag}
               action={actionFor(channel, channel.leader, 'solo')}
@@ -485,9 +432,9 @@ export function RoomsSheet({
           ),
         )}
 
-        {/* Said once, where the empty desk space is, and only while there is something to drag. */}
+        {/* Said once, under the cards, and only while there is something to drag. */}
         {channels.length > 1 && !phone && (
-          <div className="cx-desk-hint mono">drag a room onto another to group them</div>
+          <p className="cx-desk-hint mono">drag a room onto another to play them together</p>
         )}
       </div>
 

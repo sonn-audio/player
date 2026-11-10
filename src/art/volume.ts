@@ -17,7 +17,7 @@
  */
 import { useEffect, useRef, useState } from 'react';
 import { useApi } from '@/state/ServerContext';
-import { horizontalDrag, verticalDrag } from '@/art/drag';
+import { horizontalDrag } from '@/art/drag';
 import type { ApiZoneState } from '@/api/types';
 
 /** How long the dragged value survives release, so it does not flick back to a stale report. */
@@ -32,8 +32,6 @@ export type VolumeControl = {
   active: boolean;
   /** Attach to a horizontal rail (stage, phone, mini bar, room rows). */
   onPointerDownH: (event: React.PointerEvent) => void;
-  /** Attach to a vertical fader (the channel strip). */
-  onPointerDownV: (event: React.PointerEvent) => void;
 };
 
 export function useVolumeControl(zone: ApiZoneState | null): VolumeControl {
@@ -67,6 +65,5 @@ export function useVolumeControl(zone: ApiZoneState | null): VolumeControl {
     pct: `${max > 0 ? (value / max) * 100 : 0}%`,
     active,
     onPointerDownH: horizontalDrag(write, () => setActive(true), end),
-    onPointerDownV: verticalDrag(write, () => setActive(true), end),
   };
 }
