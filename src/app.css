@@ -1534,3 +1534,130 @@ html[data-arrived] .cx-side-mark {
   filter: drop-shadow(0 2px 8px rgb(0 0 0 / 35%));
 }
 
+/* --- a thumb's worth of target --------------------------------------------------------- */
+
+/*
+ * A chip looks 34px tall and is 44px to the thumb. The visible pill stays what it is; the element's
+ * reach grows on every side to what the hand measures. A row that scrolls clips its children, so the
+ * two rows that do (the ways in on home, a service's contents) carry the reach as their own padding.
+ * The transport's own buttons are drawn at 44px: they are the controls a thumb finds in the dark.
+ */
+@media (max-width: 979px) {
+  .cx-root .cx-play-btn,
+  .cx-root .cx-shuffle-btn,
+  .cx-root .cx-bill-open,
+  .cx-root .cx-bill-title,
+  .cx-root .cx-inputs-empty-go,
+  .cx-root .cx-sec-more,
+  .cx-root .cx-welcome-shortcuts button,
+  .cx-root .cx-empty-act,
+  .cx-root .cx-cta button,
+  .cx-root .cx-tnote,
+  .cx-root .cx-tact,
+  .cx-root .cx-desk-word,
+  .cx-root .cx-toc-item,
+  .cx-root .cx-hsec-right,
+  .cx-root .cx-upnext-lbl,
+  .cx-root .cx-search-note-go,
+  .cx-root .cx-browse-back,
+  .cx-root .cx-room-btn,
+  .cx-root .cx-np-queue,
+  .cx-root .cx-np-artist,
+  .cx-root .cx-np-album,
+  .cx-root .cx-wire,
+  .cx-root .cx-mini-play,
+  .cx-root .cx-mini-track,
+  .cx-root .cx-install-go,
+  .cx-root .cx-install-close {
+    position: relative;
+  }
+
+  .cx-root .cx-play-btn::after,
+  .cx-root .cx-shuffle-btn::after,
+  .cx-root .cx-bill-open::after,
+  .cx-root .cx-bill-title::after,
+  .cx-root .cx-inputs-empty-go::after,
+  .cx-root .cx-sec-more::after,
+  .cx-root .cx-welcome-shortcuts button::after,
+  .cx-root .cx-empty-act::after,
+  .cx-root .cx-cta button::after,
+  .cx-root .cx-tnote::after,
+  .cx-root .cx-tact::after,
+  .cx-root .cx-toc-item::after,
+  .cx-root .cx-room-btn::after,
+  .cx-root .cx-np-roompill::after,
+  .cx-root .cx-np-close::after,
+  .cx-root .cx-np-queue::after,
+  .cx-root .cx-np-artist::after,
+  .cx-root .cx-wire::after,
+  .cx-root .cx-mini-play::after,
+  .cx-root .cx-mini-track::after,
+  .cx-root .cx-install-go::after,
+  .cx-root .cx-install-close::after {
+    content: '';
+    position: absolute;
+    inset: -8px -6px;
+  }
+
+  /* A line of type as a button: the reach is most of a row above and below it. */
+  .cx-root .cx-desk-word::after,
+  .cx-root .cx-hsec-right::after,
+  .cx-root .cx-upnext-lbl::after,
+  .cx-root .cx-search-note-go::after,
+  .cx-root .cx-browse-back::after,
+  .cx-root .cx-np-album::after {
+    content: '';
+    position: absolute;
+    inset: -14px -8px;
+  }
+
+  /* The rows that scroll carry the reach themselves, since they clip what hangs past their edge. */
+  .cx-root .cx-welcome-shortcuts {
+    margin-top: 12px;
+    padding: 8px 22px 10px;
+  }
+
+  .cx-root .cx-toc {
+    padding: 4px 0 14px;
+  }
+
+  /* A line of type that clips its own overflow clips its reach as well: these are simply 44px tall. */
+  .cx-root .cx-toc-item,
+  .cx-root .cx-room-btn,
+  .cx-root .cx-np-artist,
+  .cx-root .cx-np-album,
+  .cx-root .cx-np-queue,
+  .cx-root .cx-desk-word,
+  .cx-root .cx-hsec-right,
+  .cx-root .cx-upnext-lbl,
+  .cx-root .cx-browse-back,
+  .cx-root .cx-search-note-go {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+  }
+
+  .cx-root .cx-np-artist,
+  .cx-root .cx-np-album {
+    margin-block: -7px;
+  }
+
+  /* The billboard's name is a clamped box, which a pseudo-element cannot hang out of. */
+  .cx-root .cx-bill-title {
+    padding: 5px 0;
+    margin: -5px 0;
+  }
+
+  /* The transport, at the size of a thumb; the gaps give back what the buttons take. */
+  .cx-root .cx-transport[data-size='phone'] {
+    gap: 16px;
+  }
+
+  .cx-root .cx-transport[data-size='phone'] .cx-tr-skip,
+  .cx-root .cx-transport[data-size='phone'] .cx-tr-side {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+  }
+}
