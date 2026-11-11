@@ -993,17 +993,10 @@ export function Browse({
   zone,
   root,
   services = [],
-  hall = true,
   onExit,
   onOpenRooms,
 }: {
   zone: ApiZoneState | null;
-  /**
-   * Whether the front of the catalogue opens with the hall of service marks. True on a phone, whose
-   * music tab is the only door to the services; false inside the desk's frame, where the sidebar
-   * already lists them and a second row of the same five doors is a corridor.
-   */
-  hall?: boolean;
   /** What the server offers, for the notes a search leaves: which service did not answer, which cannot be asked. */
   services?: ContentService[];
   /** Where to start: a service root, or nothing for the catalogue's own root. */
@@ -1810,7 +1803,7 @@ export function Browse({
             </div>
           )}
 
-          {atRoot && !hall ? null : doors ? (
+          {doors ? (
             /*
              * The table of contents, opened out where it can be.
              *

@@ -27,7 +27,8 @@ export type CrateItem = {
 const REACH = 3;
 
 export function Crate({ items, room }: { items: CrateItem[]; room: string }) {
-  const [at, setAt] = useState(0);
+  /* Open in the middle of the crate, so records stand on both sides of the one in front. */
+  const [at, setAt] = useState(() => Math.min(REACH, Math.floor((items.length - 1) / 2)));
   const centre = Math.min(at, Math.max(0, items.length - 1));
   const lead = items[centre];
   if (!lead) {
