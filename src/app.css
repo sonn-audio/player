@@ -1677,8 +1677,9 @@ html[data-arrived] .cx-side-mark {
 }
 
 .cx-home-row {
+  --tile: clamp(128px, 12.4vw, 190px);
   display: flex;
-  gap: 22px;
+  gap: clamp(20px, 1.8vw, 28px);
   margin: 0 calc(var(--pane-pad) * -1);
   padding: 0 var(--pane-pad) 6px;
   overflow-x: auto;
@@ -1695,7 +1696,7 @@ html[data-arrived] .cx-side-mark {
   flex-direction: column;
   flex: none;
   gap: 3px;
-  width: 128px;
+  width: var(--tile);
   text-align: left;
   cursor: pointer;
 }
@@ -1703,9 +1704,9 @@ html[data-arrived] .cx-side-mark {
 .cx-home-tile-cov {
   position: relative;
   display: block;
-  width: 128px;
-  height: 128px;
-  margin-bottom: 9px;
+  width: var(--tile);
+  height: var(--tile);
+  margin-bottom: 11px;
   border-radius: 3px;
   background-color: var(--cx-cover);
   background-position: center;
