@@ -525,216 +525,6 @@
   color: var(--t3);
 }
 
-.cx-sliver {
-  position: relative;
-  flex: 0 0 clamp(58px, 4.6vw, 92px);
-  min-width: 0;
-  overflow: hidden;
-  /* A panel, even with the lights off. Without this a silent room is indistinguishable from the page
-     behind it and the wall reads as two dark margins rather than as the house. */
-  background: rgb(255 255 255 / 1.6%);
-  transition:
-    flex-basis 0.55s var(--cx-ease),
-    background 0.4s var(--cx-ease);
-}
-
-.cx-sliver:hover {
-  background: rgb(255 255 255 / 3.4%);
-}
-
-/* Leaning out under the pointer — the record coming forward before you have pulled it. */
-.cx-sliver:hover {
-  flex-basis: clamp(88px, 6.4vw, 128px);
-}
-
-/*
- * The artwork, edge-on.
- *
- * Cropped to a vertical band and held down hard: recognisable as *that* record from across the room and
- * never in competition with the one that is playing here. A silent room keeps its picture but loses its
- * colour and most of its light, which is what a room with the music off looks like from the doorway.
- */
-.cx-sliver-art {
-  position: absolute;
-  inset: 0;
-  /*
-   * The sleeve itself, small, near the top — not a vertical slice through the middle of it.
-   *
-   * `cover` on a 79px-wide column of a square picture is a 79x1026 band cut out of its centre, which is
-   * a nose, or a prism, or an abstract smudge. It reads as texture rather than as *that record*, and the
-   * whole argument for this wall is that you can see what is on in the other rooms. Sized to the panel's
-   * width instead, the artwork lands as a square the width of the sliver and the panel below it stays
-   * dark for the name — a record standing on a shelf with its spine facing you.
-   */
-  background-repeat: no-repeat;
-  background-position: center 22%;
-  background-size: 100% auto;
-  filter: grayscale(0.4) brightness(0.52) saturate(0.95);
-  scale: 1.02;
-  transition:
-    filter 0.55s var(--cx-ease),
-    scale 0.7s var(--cx-ease);
-}
-
-.cx-sliver:hover .cx-sliver-art {
-  filter: grayscale(0) brightness(0.86) saturate(1);
-  scale: 1.03;
-}
-
-.cx-sliver[data-activity='silent'] .cx-sliver-art {
-  filter: grayscale(1) brightness(0.16);
-}
-
-/* Dark at both ends so the name has something to stand on and the top never fights the header. */
-/*
- * The spine's own colour, down the whole panel.
- *
- * A sliver was a small square of artwork at the top, a rotated name at the foot, and seven hundred
- * pixels of black between them on a tall window — a shelf slot with a record in it and nothing to say
- * that the record is *there*. This is the same picture stretched down the panel and blurred past
- * recognition: not a second copy of the artwork but the colour it throws, which is what you actually
- * see of a record standing edge-on in a dark room. Each room gets its own hue, and a silent room with
- * no artwork stays black — which is what an empty slot looks like.
- */
-.cx-sliver-spine {
-  position: absolute;
-  inset: 0;
-  background-position: center;
-  background-size: 260% 130%;
-  filter: grayscale(0.35) saturate(1.1) blur(26px) brightness(0.42);
-  opacity: 0.55;
-  pointer-events: none;
-  transition:
-    opacity 0.5s var(--cx-ease),
-    filter 0.5s var(--cx-ease);
-}
-
-.cx-sliver:hover .cx-sliver-spine {
-  opacity: 0.72;
-  filter: grayscale(0.2) saturate(1.15) blur(26px) brightness(0.5);
-}
-
-.cx-sliver-veil {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background: linear-gradient(
-    180deg,
-    rgb(10 10 12 / 55%) 0%,
-    rgb(10 10 12 / 6%) 24%,
-    rgb(10 10 12 / 62%) 62%,
-    rgb(10 10 12 / 94%) 100%
-  );
-}
-
-/* Centred, because that is where the label on a record's spine is — at the foot it read as a caption
-   under an empty panel. */
-.cx-sliver-hit {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding-bottom: 0;
-}
-
-/* Read from the foot of the panel upward, the way a spine is read on a shelf. */
-.cx-sliver-name {
-  max-height: 64%;
-  font-size: 10.5px;
-  letter-spacing: 0.22em;
-  color: var(--t5);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  writing-mode: vertical-rl;
-  rotate: 180deg;
-  transition: color 0.3s;
-}
-
-.cx-sliver:hover .cx-sliver-name {
-  color: var(--t2);
-}
-
-.cx-sliver[data-activity='silent'] .cx-sliver-name {
-  color: var(--t6);
-}
-
-/* A room with music has a light at its foot. Nothing else marks it — a picture and a light is enough. */
-.cx-sliver-lit {
-  position: absolute;
-  right: 14px;
-  bottom: 0;
-  left: 14px;
-  height: 2px;
-  background: var(--g);
-  opacity: 0.75;
-}
-
-/*
- * The level, on the inner edge, under the pointer only.
- *
- * The wall is also the mixing desk — but a drag and a click cannot share one element without becoming a
- * lottery, so the fader is its own strip and the rest of the panel selects. Same split the dock made
- * between a name you press and a fader you pull.
- */
-.cx-sliver-fader {
-  position: absolute;
-  top: 16%;
-  right: 0;
-  bottom: 20%;
-  width: 16px;
-  opacity: 0;
-  cursor: ns-resize;
-  touch-action: none;
-  transition: opacity 0.3s var(--cx-ease);
-}
-
-.cx-sliver:hover .cx-sliver-fader {
-  opacity: 1;
-}
-
-.cx-sliver-fader::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  right: 7px;
-  bottom: 0;
-  width: 2px;
-  background: rgb(255 255 255 / 13%);
-}
-
-.cx-sliver-fader-fill {
-  position: absolute;
-  right: 7px;
-  bottom: 0;
-  width: 2px;
-  background: var(--t3);
-}
-
-.cx-sliver-fader-ro {
-  position: absolute;
-  right: 15px;
-  bottom: -2px;
-  font-size: 9px;
-  color: var(--t3);
-  opacity: 0;
-  transition: opacity 0.2s;
-}
-
-.cx-sliver-fader-ro[data-show] {
-  opacity: 1;
-}
-
-/* Resting on the record, the house withdraws: the picture in the middle is the whole screen. */
-.cx-root[data-rest='record'] .cx-sliver {
-  flex-basis: 0;
-  opacity: 0;
-  transition:
-    flex-basis 1.4s var(--cx-ease),
-    opacity 1.2s var(--cx-ease);
-}
-
 /*
  * Resting on the house: every room the same width, each showing what is playing in it.
  *
@@ -743,61 +533,9 @@
  * allowed to be a picture rather than a spine. For a panel in a hallway this is the useful question:
  * not *what is this* but *what is the house doing*.
  */
-.cx-root[data-rest='house'] .cx-sliver,
 .cx-root[data-rest='house'] .cx-wall-room {
   flex: 1 1 0;
   transition: flex-grow 1.4s var(--cx-ease);
-}
-
-.cx-root[data-rest='house'] .cx-sliver {
-  background: none;
-}
-
-/*
- * Centred as a pair with its caption, the same way the room's own panel centres its sleeve and label.
- *
- * The sleeve used to sit at 28% of whatever height was left over, which is a different line on every
- * window and a different line again from the one the room panel lands on — so the gallery's captions
- * came out at four different heights. Centring both and lifting by half the caption is what makes the
- * row one set of pictures.
- */
-.cx-root[data-rest='house'] .cx-sliver-art {
-  top: 50%;
-  bottom: auto;
-  height: min(72%, 320px);
-  margin-top: -28px;
-  background-repeat: no-repeat;
-  background-position: center;
-  background-size: contain;
-  filter: grayscale(0) brightness(0.82) saturate(1);
-  scale: 1;
-  translate: 0 -50%;
-}
-
-.cx-root[data-rest='house'] .cx-sliver-veil {
-  background: linear-gradient(180deg, rgb(10 10 12 / 30%), rgb(10 10 12 / 6%) 30%, rgb(10 10 12 / 72%));
-}
-
-/* Names come off their side and sit under the record, the way a caption does. */
-.cx-root[data-rest='house'] .cx-sliver-hit {
-  align-items: center;
-  padding-bottom: 0;
-  /* Vertically centred with the picture above it: the padding is what pushes the pair's midpoint down
-     by half a sleeve, so the caption lands just under the art at any panel height. */
-  padding-top: calc(min(72%, 320px) + 16px);
-}
-
-.cx-root[data-rest='house'] .cx-sliver-name {
-  max-height: none;
-  color: var(--t4);
-  writing-mode: horizontal-tb;
-  rotate: none;
-}
-
-/* The fader and the foot-light are controls, and the house at rest is not being operated. */
-.cx-root[data-rest='house'] .cx-sliver-fader,
-.cx-root[data-rest='house'] .cx-sliver-lit {
-  opacity: 0;
 }
 
 /*
@@ -893,24 +631,6 @@
 /* The record is in the air, so the place it came from says so. */
 .cx-root[data-dragging='record'] .cx-cover {
   opacity: 0.5;
-}
-
-/* Where it can land. Nothing shouts: the panels that will take it simply come up a little. */
-.cx-sliver[data-hot] {
-  background: rgb(255 255 255 / 4.5%);
-}
-
-.cx-sliver[data-over] {
-  flex-basis: clamp(118px, 8.6vw, 184px);
-  background: rgb(255 255 255 / 9%);
-}
-
-.cx-sliver[data-over] .cx-sliver-art {
-  filter: grayscale(0) brightness(0.92) saturate(1);
-}
-
-.cx-sliver[data-over] .cx-sliver-name {
-  color: var(--t1);
 }
 
 /*
@@ -1526,83 +1246,6 @@
   color: #d8a08a;
 }
 
-/*
- * What is next, as the whole of the queue on this screen.
- *
- * It was a static line under the title; it is now the door to the queue sheet, which is what let a
- * 240px permanent column go. Aligned to the baseline so the 9.5px mono label sits on the same line as
- * the 13px title beside it rather than being centred against it, and the arrow only appears on hover —
- * the line reads as information first and as a control second, which is the right order for something
- * that is on screen all the time.
- */
-.cx-next {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 12px;
-  max-width: 100%;
-  margin-top: clamp(16px, 3.4vh, 32px);
-  padding: 7px 12px 7px 0;
-  border-radius: var(--r-sm, 8px);
-  text-align: left;
-  transition: color 0.18s var(--cx-ease);
-}
-
-.cx-next-lbl {
-  flex: none;
-  font-size: 9.5px;
-  letter-spacing: 0.18em;
-  color: var(--t7);
-  transition: color 0.18s;
-}
-
-.cx-next:hover .cx-next-lbl {
-  color: var(--g);
-}
-
-.cx-next-txt {
-  font-size: 13px;
-  color: var(--t4);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  transition: color 0.18s;
-}
-
-.cx-next:hover .cx-next-txt {
-  color: var(--t2);
-}
-
-/* The artist, in the same line and a step quieter — one line of two facts, not two lines. */
-.cx-next-artist {
-  font-style: normal;
-  color: var(--t6);
-}
-
-/* The arrow, on hover only. `::after` rather than a glyph: it is punctuation, not an icon. */
-.cx-next::after {
-  content: '→';
-  flex: none;
-  font-size: 12px;
-  color: var(--t7);
-  opacity: 0;
-  translate: -4px 0;
-  transition:
-    opacity 0.18s var(--cx-ease),
-    translate 0.18s var(--cx-ease);
-}
-
-.cx-next:hover::after,
-.cx-next:focus-visible::after {
-  opacity: 1;
-  translate: 0 0;
-}
-
-/* Holding the line's height without drawing it — see `NextUp`'s `reserve`. */
-.cx-next[data-empty] {
-  visibility: hidden;
-  pointer-events: none;
-}
-
 .cx-cta {
   display: inline-flex;
   gap: 28px;
@@ -1676,13 +1319,6 @@
 
 .cx-upnext-lbl:hover {
   color: var(--t3);
-}
-
-.cx-upnext-row {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  min-width: 0;
 }
 
 .cx-upnext-art {
@@ -1919,12 +1555,6 @@
   transition: none;
 }
 
-/* Elapsed at one end, remaining at the other — which needs the row to be as wide as what it is measuring,
-   not as wide as the six characters in it. */
-.cx-mstage-controls .cx-times {
-  width: 100%;
-}
-
 .cx-times {
   display: flex;
   justify-content: space-between;
@@ -2015,45 +1645,11 @@
   min-height: var(--cx-cover-size);
 }
 
-/*
- * The room's own controls, at the foot of the column.
- *
- * A fader, a divider and three mode words sat between the transport and the shelf of what is coming —
- * the busiest line on a page whose subject is a record, right in the middle of it. Pushed to the foot
- * (`margin-top: auto`) it stands where the record's own bottom edge is: the column then reads
- * identity, progress, transport, what is next … and the room's settings last, which is the order you
- * actually use them in.
- */
-.cx-volrow {
-  display: flex;
-  align-items: center;
-  gap: 34px;
-  /*
-   * Last in the column, whatever the column's height.
-   *
-   * `order` rather than a change to the markup: what is coming belongs directly under the transport
-   * (they are both about the music), and the room's own settings belong at the foot on the record's
-   * bottom edge. The auto margin then has the whole gap to push into, and it pushes only this row
-   * because nothing follows it.
-   */
-  order: 2;
-  margin-top: auto;
-  padding-top: clamp(18px, 4vh, 44px);
-}
-
-.cx-vol,
-.cx-mvol {
+.cx-vol {
   display: inline-flex;
   align-items: center;
   gap: 12px;
   color: var(--t6);
-}
-
-.cx-mvol {
-  width: 100%;
-  max-width: 340px;
-  gap: 14px;
-  margin-top: clamp(12px, 2.4vh, 22px);
 }
 
 .cx-vol-slider {
@@ -2063,12 +1659,6 @@
   height: 22px;
   cursor: pointer;
   touch-action: none;
-}
-
-.cx-mvol .cx-vol-slider {
-  flex: 1;
-  width: auto;
-  height: 28px;
 }
 
 .cx-vol-rail {
@@ -2112,36 +1702,6 @@
   translate: -50% 0;
   pointer-events: none;
   transition: opacity 0.15s;
-}
-
-/*
- * The divider and the rooms button beside the master volume.
- *
- * These went away when the top bar carried a room name, and came back when that corner became the switch
- * to the other face. The dock along the bottom *selects* a room; this opens the sheet where rooms are
- * joined into one, which is a decision rather than a selection and the only door to it on this screen.
- */
-.cx-volrow-div {
-  width: 1px;
-  height: 16px;
-  flex: none;
-  background: var(--track);
-}
-
-.cx-rooms-btn {
-  flex: none;
-  font-size: 10.5px;
-  letter-spacing: 0.2em;
-  color: var(--t5);
-  transition: color 0.18s;
-}
-
-.cx-rooms-btn:hover {
-  color: var(--t1);
-}
-
-.cx-rooms-btn[data-on] {
-  color: var(--g);
 }
 
 /* --- stage (phone) -------------------------------------------------------- */
@@ -2214,101 +1774,6 @@
 }
 
 /*
- * The room name, floating on the artwork.
- *
- * The header bar is gone from this screen while music is playing: 54px carrying a logo and a chevron is
- * 54px the sleeve could have had, and the one thing on it that mattered was which room this is. Centred
- * over the canvas with a shadow under it, so it reads over a white sleeve as well as a black one.
- */
-.cx-mroom {
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: max(10px, env(safe-area-inset-top));
-  z-index: 6;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 12px;
-  font-size: 10px;
-  letter-spacing: 0.26em;
-  color: var(--t1);
-  text-shadow: 0 1px 16px rgb(0 0 0 / 70%);
-}
-
-.cx-mroom:active {
-  scale: 0.97;
-}
-
-.cx-mroom-plus {
-  font-style: normal;
-  color: var(--g);
-}
-
-/* --- the canvas ----------------------------------------------------------- */
-
-/*
- * The sleeve, hung edge to edge.
- *
- * `min(100vw, 48vh)` — full width, and deliberately *not* square: on a tall phone it is a band with the
- * player underneath, and on a short one the 48vh cap is what keeps the controls on screen. It was an inset
- * card with a 4px radius and a drop shadow, which made the artwork a component *on* the screen; full-bleed
- * with its bottom third dissolving into the page's own black makes the screen the artwork's.
- */
-.cx-doek {
-  position: relative;
-  z-index: 1;
-  flex: none;
-  width: 100%;
-  height: min(100vw, 48vh);
-  background: var(--cx-cover);
-}
-
-.cx-doek-art {
-  position: absolute;
-  inset: 0;
-  overflow: hidden;
-  background-position: center 22%;
-  background-size: cover;
-  touch-action: none;
-  cursor: grab;
-  /*
-   * `translate` and `scale` as their own properties, never inside `transform`.
-   *
-   * The swipe sets a translate and the drag a scale; as one `transform` they would overwrite each other.
-   * The longhands compose, which is what is wanted: a sleeve being dragged is both.
-   */
-  transition:
-    translate 0.42s var(--cx-ease),
-    scale 0.42s var(--cx-ease);
-}
-
-/* While the finger is down the sleeve must keep up with it — a 420ms ease during a drag is the sleeve
-   arriving where the finger *was*, which feels like lag because it is. */
-.cx-doek-art[data-dragging] {
-  transition: scale 0.2s var(--cx-ease);
-}
-
-/* Contrast for the room name, and nothing more: transparent by a quarter of the way down. */
-.cx-doek-top {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background: linear-gradient(180deg, color-mix(in srgb, var(--cx-stage) 55%, transparent), transparent 24%);
-}
-
-/* How the canvas stops. Not an edge — a dissolve into the page, over the bottom third. The page
-   under a phone canvas is the record's own dark (see `.cx-mstage-scrim`), so it melts into that. */
-.cx-doek-fade {
-  position: absolute;
-  inset: auto 0 0;
-  height: 36%;
-  pointer-events: none;
-  background: linear-gradient(180deg, transparent, color-mix(in srgb, var(--cx-stage) 55%, transparent) 55%, var(--cx-stage));
-}
-
-/*
  * The play glyph, on a paused sleeve only.
  *
  * A play button over playing artwork is a button that lies, and this face has a transport of its own two
@@ -2335,100 +1800,6 @@
   color: #fff;
 }
 
-/*
- * The timeline rides the canvas's bottom edge, half on and half off.
- *
- * `bottom: -10px` on a 24px hit area, so the 2px line sits exactly on the boundary between artwork and
- * page. That is the whole reason it is inside the canvas and not in the player below it: it is the seam.
- */
-.cx-doek .cx-bar {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: -10px;
-  z-index: 3;
-  height: 24px;
-}
-
-.cx-doek .cx-bar-rail {
-  width: 100%;
-}
-
-/*
- * The envelope, where the plain bar would be (see `ArtWave`).
- *
- * Same edge, same gesture, more truth: the bars are the record's own dynamics, in this face's
- * voice — soft, rounded, low contrast, the played part in the sleeve's accent. It stands half on
- * the artwork and half on the page like the bar it replaces, so the bottom of the canvas stays
- * the seam where the picture becomes the player.
- */
-.cx-doek .cx-wave {
-  position: absolute;
-  left: 18px;
-  right: 18px;
-  bottom: -14px;
-  z-index: 3;
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  height: 34px;
-  cursor: pointer;
-  touch-action: none;
-}
-
-.cx-wave i {
-  flex: 1;
-  min-width: 1px;
-  height: var(--h, 8%);
-  min-height: 3px;
-  border-radius: 1.5px;
-  background: rgb(255 255 255 / 24%);
-  /* Legible on the artwork's bottom edge without a scrim of its own: each bar carries a whisper
-     of shadow, the way the room name at the top does. */
-  box-shadow: 0 1px 5px rgb(0 0 0 / 35%);
-  transition:
-    background-color 0.35s,
-    height 0.5s var(--cx-ease);
-}
-
-.cx-wave i[data-played] {
-  background: var(--g);
-}
-
-/* While the finger is down nothing may lag it — the same rule every fader here follows. */
-.cx-wave[data-scrub] i {
-  transition: background-color 0.1s;
-}
-
-.cx-doek-empty {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 14px;
-  color: var(--t7);
-}
-
-/*
- * Everything under the canvas, centred in whatever height is left.
- *
- * `flex: 1` with `justify-content: center`, so on a tall phone the player sits in the middle of the space
- * below the artwork instead of hugging it, and on a short one it simply has less middle to sit in. The
- * canvas is `flex: none` and takes its height first — this is what gives way.
- */
-.cx-mstage-controls {
-  position: relative;
-  z-index: 2;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  flex: 1;
-  min-height: 0;
-  width: 100%;
-  padding: 16px 24px 12px;
-}
-
 @keyframes cx-title-swap {
   from {
     opacity: 0;
@@ -2440,62 +1811,8 @@
   }
 }
 
-/*
- * The rise the desk's lines used to run on a keyed remount. It is now half of a dissolve rather
- * than the whole of a fade-in — see `.cx-in` / `.cx-out` at the foot of this file.
- */
-
-/*
- * Title and artist, left-aligned under the artwork.
- *
- * One axis is the whole point: centring them puts three different centre lines on a phone screen
- * (cover, title, transport) and the eye has to find each one. The crossfade on room switch is the
- * only motion here, and it is feedback for a tap that otherwise changes nothing visible.
- */
-.cx-mstage-meta {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  width: 100%;
-  flex: none;
-  margin-top: clamp(14px, 3vh, 28px);
-  text-align: left;
-  animation: cx-title-swap 0.45s var(--cx-ease) both;
-}
-
-.cx-mstage-titles {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  flex: 1;
-  min-width: 0;
-}
-
-.cx-mtitle {
-  font-size: clamp(26px, 8vw, 42px);
-  line-height: 1.08;
-  letter-spacing: -0.03em;
-  color: var(--t1);
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
-  overflow: hidden;
-}
-
-.cx-martist {
-  font-size: 15px;
-  color: var(--t5);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 .cx-mstage .cx-bar-wrap,
 .cx-mstage .cx-transport,
-.cx-mstage .cx-mvol,
-.cx-mstage .cx-chips,
-.cx-mstage .cx-next,
 .cx-mstage .cx-live,
 .cx-mstage .cx-cta {
   flex: none;
@@ -2509,79 +1826,6 @@
 
 .cx-mstage .cx-live {
   margin-top: clamp(16px, 3vh, 26px);
-}
-
-/* The room switcher: short names, and a breathing dot on the ones that are playing. */
-.cx-chips {
-  display: flex;
-  /* Room names are whatever the installer typed — "Audio Player 1" and "Audio Player 2" share
-     thirteen characters, so the shortener cannot shorten them and two chips run together at a 2px
-     gap. The gap is what keeps a long-named house readable. */
-  gap: 10px;
-  width: calc(100% + 48px);
-  margin-top: clamp(6px, 1.4vh, 12px);
-  padding: 0 24px;
-  overflow-x: auto;
-  justify-content: safe center;
-}
-
-.cx-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  flex: none;
-  padding: 11px;
-  border-radius: 6px;
-  font-size: 9px;
-  letter-spacing: 0.14em;
-  color: var(--t4);
-  transition: color 0.2s;
-}
-
-.cx-chip[data-current] {
-  color: var(--t1);
-}
-
-.cx-chip:active {
-  background: rgb(255 255 255 / 5%);
-}
-
-.cx-chip-dot {
-  width: 4px;
-  height: 4px;
-  border-radius: 50%;
-  background: var(--g);
-  animation: cx-breathe 1.4s ease-in-out infinite;
-}
-
-/*
- * The `ROOMS ——— QUEUE 12` row is gone, and the next-up line stands where it did.
- *
- * Both of its buttons were already reachable — rooms is the chip in the header *and* a tab in the nav,
- * the queue is now a tab too — and removing it takes a whole row of chrome out from between the transport
- * and the tab bar, which is the row the artwork gets back on a short phone.
- */
-.cx-mstage .cx-next {
-  align-self: flex-start;
-  max-width: 100%;
-  margin-top: clamp(10px, 2.2vh, 18px);
-  padding-right: 0;
-}
-
-/* --- the queue and recents lists (in the sheet) --------------------------- */
-
-/*
- * The 240px rail these lived in is gone — see `Rail.tsx` for why. What is left is the two lists
- * themselves, which now appear at full contrast inside a sheet instead of at 62% down the side of the
- * stage. The `.cx-rail-*` names stayed: they are what the sheet's rows are called everywhere they are
- * referenced, and renaming a working selector to match a container that no longer exists is churn.
- */
-
-.cx-rail-empty {
-  font-size: 10px;
-  line-height: 1.6;
-  letter-spacing: 0.06em;
-  color: var(--t7);
 }
 
 .cx-rail-sec {
@@ -2765,157 +2009,6 @@
   --cx-fade: 0.65s ease;
 }
 
-/* --- channels strip (the dock, unfolded) ---------------------------------- */
-
-/*
- * Cells stretch rather than sitting at a fixed width, capped at 170px: three rooms then fill the bar
- * evenly instead of huddling in the middle of it, and fifteen scroll horizontally rather than shrinking
- * into slivers.
- */
-.cx-strip {
-  display: flex;
-  align-items: stretch;
-  justify-content: safe center;
-  /* Room names are whatever the installer typed. `Audio Player 1` and `Audio Player 2` are 14 characters
-     of tracked mono each, and at the design's 2px cell padding they ran into one another — the gap is what
-     keeps a long-named house readable. */
-  gap: 10px;
-  padding: 10px 44px 14px;
-  overflow-x: auto;
-  transition: padding var(--cx-fold);
-}
-
-.cx-dock[data-open] .cx-strip {
-  padding: 24px 44px 18px;
-}
-
-@media (hover: none) {
-  .cx-strip {
-    padding: 22px 44px 14px;
-  }
-}
-
-/*
- * `flex: 0 1 auto`, so the strip *centres* rather than distributes.
- *
- * The cells inside grow (`1 0 84px`, capped at 170px) but these wrappers must not, or a house with two
- * rooms puts one name at each end of a 1600px bar with a thousand pixels of nothing between them. Growing
- * the cells and not their groups is what fills a seven-room bar evenly and keeps a two-room one together.
- */
-.cx-ch-group,
-.cx-ch-solo {
-  display: flex;
-  align-items: stretch;
-  flex: 0 1 auto;
-  min-width: 0;
-}
-
-/* A group reads as one object: a faint enclosure around its run of cells rather than a bracket drawn
-   under them, which would need measuring to place. */
-.cx-ch-group {
-  padding: 0 6px;
-  border-radius: 16px;
-  background: rgb(255 255 255 / 3.5%);
-  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 5%);
-}
-
-.cx-ch {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 10px;
-  flex: 1 0 84px;
-  max-width: 170px;
-  min-width: 0;
-  padding: 6px 8px;
-  border-radius: 12px;
-  transition:
-    background 0.18s,
-    transform 0.25s var(--cx-ease);
-}
-
-.cx-dock[data-open] .cx-ch:hover {
-  background: rgb(255 255 255 / 2.5%);
-  transform: translateY(-2px);
-}
-
-/* --- the fader, which is 0px tall until you reach for it ------------------ */
-
-.cx-fader {
-  position: relative;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  width: 34px;
-  height: 0;
-  overflow: hidden;
-  opacity: 0;
-  cursor: ns-resize;
-  touch-action: none;
-  transition:
-    height var(--cx-fold),
-    opacity var(--cx-fade);
-}
-
-.cx-dock[data-open] .cx-fader {
-  height: 100px;
-  opacity: 1;
-}
-
-.cx-fader-ro {
-  position: absolute;
-  left: 50%;
-  top: 3px;
-  font-size: 10px;
-  font-weight: 800;
-  font-variant-numeric: tabular-nums;
-  color: var(--gb);
-  opacity: 0;
-  translate: -50% 0;
-  pointer-events: none;
-  transition: opacity 0.15s;
-}
-
-.cx-fader:hover .cx-fader-ro,
-.cx-fader-ro[data-show] {
-  opacity: 1;
-}
-
-/*
- * Activity sets the height of the track.
- *
- * A playing room gets a taller one, a paused one less, a silent one least. This is the strip's whole
- * information design: what is happening in the house is legible from the *shape* of it before any label
- * is read.
- */
-.cx-fader-track {
-  position: relative;
-  width: 2px;
-  height: 60px;
-  background: var(--track);
-  transition: height 0.35s var(--cx-ease);
-}
-
-.cx-ch[data-activity='paused'] .cx-fader-track {
-  height: 76px;
-}
-
-.cx-ch[data-activity='playing'] .cx-fader-track {
-  height: 88px;
-}
-
-.cx-fader-fill {
-  position: absolute;
-  inset: auto 0 0;
-  background: var(--t7);
-  transition: background 0.3s;
-}
-
-.cx-ch[data-activity='playing'] .cx-fader-fill {
-  background: var(--t3);
-}
-
 /* The VU shimmer at the top of a playing fill: audio is moving through this room. */
 @keyframes cx-vu {
   0% {
@@ -2935,131 +2028,6 @@
   }
 }
 
-.cx-fader-vu {
-  position: absolute;
-  inset: 0 0 auto;
-  height: 16px;
-  transform-origin: top;
-  background: linear-gradient(180deg, var(--g), transparent);
-  animation: cx-vu 1.6s ease-in-out infinite;
-}
-
-.cx-fader-cap {
-  position: absolute;
-  top: 0;
-  left: 50%;
-  width: 7px;
-  height: 7px;
-  margin: -3.5px 0 0 -3.5px;
-  border-radius: 50%;
-  background: var(--t4);
-}
-
-.cx-ch[data-activity='playing'] .cx-fader-cap {
-  background: var(--g);
-}
-
-/* --- the name, which is the whole cell when folded ------------------------ */
-
-.cx-ch-name {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  max-width: 100%;
-  font-size: 10.5px;
-  letter-spacing: 0.16em;
-  color: var(--t7);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  transition: color 0.25s;
-}
-
-/* A room with music is legible; a quiet one recedes; the one you are looking at is the brightest name in
-   the row, which is how every selection in this face is expressed. */
-.cx-ch[data-activity='paused'] .cx-ch-name,
-.cx-ch[data-activity='playing'] .cx-ch-name {
-  color: var(--t4);
-}
-
-.cx-ch[data-current] .cx-ch-name {
-  color: var(--t1);
-}
-
-.cx-ch-dot {
-  width: 4px;
-  height: 4px;
-  flex: none;
-  border-radius: 50%;
-  background: var(--g);
-  animation: cx-breathe 2.8s ease-in-out infinite;
-}
-
-/* --- the sleeve chip, which grows under the name -------------------------- */
-
-.cx-ch-chip-wrap {
-  display: block;
-  max-height: 0;
-  overflow: hidden;
-  opacity: 0;
-  scale: 0.6;
-  /* Grows upward out of the name below it. */
-  transform-origin: center bottom;
-  transition:
-    max-height var(--cx-fold),
-    opacity var(--cx-fade),
-    scale var(--cx-fold);
-}
-
-.cx-dock[data-open] .cx-ch-chip-wrap {
-  max-height: 70px;
-  opacity: 1;
-  scale: 1;
-}
-
-.cx-ch-chip {
-  position: relative;
-  display: block;
-  width: 29px;
-  height: 29px;
-  overflow: hidden;
-  border-radius: 4px;
-  background-color: var(--cx-cover);
-  background-position: center;
-  background-size: cover;
-  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 10%);
-  transition:
-    width 0.35s var(--cx-ease),
-    height 0.35s var(--cx-ease);
-}
-
-.cx-ch[data-activity='paused'] .cx-ch-chip {
-  width: 35px;
-  height: 35px;
-}
-
-.cx-ch[data-activity='playing'] .cx-ch-chip {
-  width: 40px;
-  height: 40px;
-}
-
-.cx-ch-chip-empty {
-  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 6%);
-  background: none;
-}
-
-.cx-ch-prog {
-  position: absolute;
-  inset: auto 0 0;
-  height: 2px;
-  background: rgb(0 0 0 / 45%);
-}
-
-.cx-ch-prog i {
-  display: block;
-  height: 100%;
-  background: var(--t2);
-}
 /* --- sheets --------------------------------------------------------------- */
 
 .cx-scrim {
@@ -3155,46 +2123,6 @@
   mask-image: linear-gradient(180deg, transparent 0, #000 14px, #000 calc(100% - 26px), transparent 100%);
 }
 
-/*
- * The sheet's own tabs — queue and recent.
- *
- * The same two the permanent rail carried, at full contrast now that they are behind a door instead of
- * beside a 94px title. Drawn as labels rather than as a segmented control: a pill group would be the
- * only filled, bordered widget in this face. They live *in* the head now, on the far side of its rule,
- * where they used to be a second header row underneath it — two rows of chrome above a list of twelve
- * things is one row too many, and the sheet's title already says what the list is.
- */
-.cx-sheet-tabs {
-  display: flex;
-  flex: none;
-  gap: 18px;
-}
-
-.cx-sheet-tabs button {
-  position: relative;
-  padding-bottom: 4px;
-  font-size: 9.5px;
-  letter-spacing: 0.18em;
-  color: var(--t7);
-  transition: color 0.18s;
-}
-
-.cx-sheet-tabs button:hover {
-  color: var(--t3);
-}
-
-.cx-sheet-tabs button[data-on] {
-  color: var(--t1);
-}
-
-.cx-sheet-tabs button[data-on]::after {
-  content: '';
-  position: absolute;
-  inset: auto 0 0;
-  height: 1px;
-  background: var(--g);
-}
-
 /* A source with no queue has one list and therefore no choice to offer: the label, not a tab. */
 .cx-sheet-tab-static {
   font-size: 9.5px;
@@ -3262,254 +2190,6 @@
   background: var(--hair);
 }
 
-/* --- rooms sheet ---------------------------------------------------------- */
-
-/*
- * The house, as type.
- *
- * Every room here used to be a rounded, filled card with a slider widget inside it — nine boxed things
- * in a face whose first rule is that nothing is boxed. What is left is a name, a line saying what the
- * room is doing, and a rule underneath; the rule is the volume, and it is also the separator between
- * this room and the next. See `RoomRow` for the whole argument.
- */
-.cx-rooms {
-  display: flex;
-  flex-direction: column;
-}
-
-.cx-rooms-head {
-  margin: 30px 0 12px;
-}
-
-.cx-rooms-head:first-child {
-  margin-top: 0;
-}
-
-.cx-disband {
-  flex: none;
-  font-size: 9px;
-  letter-spacing: 0.16em;
-  color: var(--t6);
-}
-
-.cx-disband:hover {
-  color: var(--t1);
-}
-
-/* A group is one object: a bracket down its left edge, and the rooms indented behind it. */
-.cx-room-set[data-grouped] {
-  padding-left: 15px;
-  box-shadow: inset 1px 0 0 color-mix(in srgb, var(--g) 55%, transparent);
-}
-
-.cx-room {
-  position: relative;
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  align-items: center;
-  column-gap: 14px;
-  padding: 13px 0 0;
-}
-
-/* The row's own hit target, under everything: see `RoomRow` for why it is a sibling and not a wrapper. */
-.cx-room-hit {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-}
-
-.cx-room-art,
-.cx-room-name,
-.cx-room-state,
-.cx-room-num {
-  pointer-events: none;
-}
-
-.cx-room-act,
-.cx-room-vol {
-  position: relative;
-  z-index: 1;
-}
-
-.cx-room-art {
-  grid-column: 1;
-  grid-row: 1 / span 2;
-  display: grid;
-  place-items: center;
-  width: 42px;
-  height: 42px;
-  border-radius: 3px;
-  background-color: var(--cx-cover);
-  background-position: center;
-  background-size: cover;
-  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 8%);
-  color: var(--t8);
-  opacity: 0.78;
-  transition: opacity 0.2s;
-}
-
-/* A silent room gets an outline where its sleeve would be, so the column of names stays a column. */
-.cx-room-art[data-empty] {
-  background: none;
-  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 6%);
-}
-
-.cx-room[data-selected] .cx-room-art,
-.cx-room:hover .cx-room-art {
-  opacity: 1;
-}
-
-.cx-room-name {
-  grid-column: 2;
-  grid-row: 1;
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  min-width: 0;
-  font-size: 15px;
-  font-weight: 600;
-  letter-spacing: -0.01em;
-  color: var(--t4);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  transition: color 0.22s;
-}
-
-/* The room you are in is the brightest text in the sheet. That is the whole selection state. */
-.cx-room[data-selected] .cx-room-name {
-  color: var(--t1);
-}
-
-.cx-room:hover .cx-room-name {
-  color: var(--t2);
-}
-
-.cx-room-bars {
-  flex: none;
-}
-
-.cx-room-state {
-  grid-column: 2;
-  grid-row: 2;
-  min-width: 0;
-  margin-top: 3px;
-  font-size: 11.5px;
-  color: var(--t6);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.cx-room-num {
-  grid-column: 3;
-  grid-row: 1;
-  font-size: 10px;
-  font-variant-numeric: tabular-nums;
-  color: var(--t7);
-  transition: color 0.2s;
-}
-
-.cx-room[data-selected] .cx-room-num,
-.cx-room-num[data-active] {
-  color: var(--t3);
-}
-
-.cx-room-act {
-  grid-column: 3;
-  grid-row: 2;
-  margin-top: 3px;
-  text-align: right;
-}
-
-/* `join` and `release`: words, because that is what they are. */
-.cx-room-link {
-  font-size: 9px;
-  letter-spacing: 0.16em;
-  color: var(--t7);
-  transition: color 0.18s;
-}
-
-.cx-room-link[data-accent] {
-  color: color-mix(in srgb, var(--gb) 72%, transparent);
-}
-
-.cx-room-link:hover {
-  color: var(--t1);
-}
-
-/*
- * The volume, which is also the line between this room and the next.
- *
- * 20px of hit area with a 1px rule through the middle of it, so the whole bottom edge of the row is
- * draggable. The rail is at hairline weight until you touch it — a stack of eight 2px tracks reads as a
- * form, a stack of eight hairlines reads as a list.
- */
-.cx-room-vol {
-  grid-column: 1 / -1;
-  grid-row: 3;
-  display: flex;
-  align-items: center;
-  height: 20px;
-  margin-top: 9px;
-  cursor: pointer;
-  touch-action: none;
-}
-
-.cx-room-rail {
-  position: relative;
-  width: 100%;
-  height: 1px;
-  background: var(--hair);
-  transition: height 0.18s var(--cx-ease);
-}
-
-.cx-room-vol:hover .cx-room-rail,
-.cx-room-vol[data-active] .cx-room-rail {
-  height: 2px;
-}
-
-.cx-room-fill {
-  position: absolute;
-  inset: 0 auto 0 0;
-  background: var(--t7);
-  transition: background 0.2s;
-}
-
-.cx-room[data-selected] .cx-room-fill {
-  background: var(--t5);
-}
-
-.cx-room-vol:hover .cx-room-fill,
-.cx-room-vol[data-active] .cx-room-fill {
-  background: var(--t3);
-}
-
-.cx-room-knob {
-  position: absolute;
-  top: 50%;
-  width: 7px;
-  height: 7px;
-  margin-left: -3.5px;
-  border-radius: 50%;
-  background: var(--t6);
-  box-shadow: 0 0 0 3px var(--cx-surface);
-  translate: 0 -50%;
-  transition:
-    background 0.2s,
-    scale 0.18s var(--cx-ease);
-}
-
-.cx-room[data-selected] .cx-room-knob {
-  background: var(--t3);
-}
-
-.cx-room-vol:hover .cx-room-knob,
-.cx-room-vol[data-active] .cx-room-knob {
-  background: var(--t1);
-  scale: 1.25;
-}
-
 .cx-rooms-note {
   display: flex;
   flex-direction: column;
@@ -3518,70 +2198,6 @@
   font-size: 11px;
   line-height: 1.5;
   color: #d8a08a;
-}
-
-/*
- * --- scenes ----------------------------------------------------------------
- *
- * Rows in the same voice as the rooms above them: a sleeve, a name, a line saying what it does,
- * and words for actions. No card, no border — the rule underneath is the boundary, exactly as it
- * is for the rooms and the more-sheet rows.
- */
-.cx-scene {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  align-items: center;
-  column-gap: 14px;
-  padding: 12px 0;
-  border-bottom: 1px solid var(--hair-soft);
-}
-
-.cx-scene-art {
-  grid-column: 1;
-  grid-row: 1 / span 2;
-  display: grid;
-  place-items: center;
-  width: 42px;
-  height: 42px;
-  border-radius: 3px;
-  background-color: var(--cx-cover);
-  background-position: center;
-  background-size: cover;
-}
-
-.cx-scene-art[data-empty] {
-  color: var(--t7);
-}
-
-.cx-scene-name {
-  grid-column: 2;
-  grid-row: 1;
-  overflow: hidden;
-  font-size: 14px;
-  font-weight: 600;
-  letter-spacing: -0.01em;
-  color: var(--t3);
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.cx-scene-sub {
-  grid-column: 2;
-  grid-row: 2;
-  overflow: hidden;
-  margin-top: 3px;
-  font-size: 8.5px;
-  letter-spacing: 0.16em;
-  color: var(--t6);
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.cx-scene-act {
-  grid-column: 3;
-  grid-row: 1 / span 2;
-  display: inline-flex;
-  gap: 16px;
 }
 
 /* --- more sheet ----------------------------------------------------------- */
@@ -3687,24 +2303,10 @@
   animation: cx-view-in 0.4s var(--cx-ease) both;
 }
 
-/*
- * The mark is drawn once, by the shell, at the top-left of every screen — so a second one in the middle of
- * this one is the brand twice on a page whose whole subject is that there is nothing to show. Gone.
- */
-.cx-welcome-mark {
-  display: none;
-}
-
 .cx-welcome-greet {
   font-size: clamp(34px, 6vh, 72px);
   line-height: 1.02;
   color: var(--t1);
-}
-
-.cx-welcome-sub {
-  font-size: 9.5px;
-  letter-spacing: 0.26em;
-  color: var(--t6);
 }
 
 .cx-welcome-shortcuts {
@@ -3724,20 +2326,6 @@
 
 .cx-welcome-shortcuts button:hover {
   color: var(--t1);
-}
-
-.cx-welcome-recents {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 14px;
-  margin-top: clamp(14px, 3.6vh, 30px);
-}
-
-.cx-welcome-recents-lbl {
-  font-size: 9px;
-  letter-spacing: 0.24em;
-  color: var(--t7);
 }
 
 .cx-welcome-recents-row {
@@ -4236,11 +2824,6 @@
     letter-spacing: -0.035em;
   }
 
-  .cx-welcome-sub {
-    margin-top: 7px;
-    color: var(--t7);
-  }
-
   /* The services, as a row that scrolls rather than a paragraph of words that wraps. */
   .cx-welcome-shortcuts {
     display: flex;
@@ -4264,17 +2847,6 @@
     background: rgb(255 255 255 / 6%);
     color: var(--t2);
     font-size: 9.5px;
-  }
-
-  .cx-welcome-recents {
-    align-items: stretch;
-    gap: 12px;
-    margin-top: 30px;
-  }
-
-  .cx-welcome-recents-lbl {
-    padding-inline: var(--home-pad, 22px);
-    text-align: left;
   }
 
   /* The shelf: one row, cut by the window, the first sleeve on the page's own margin. */
@@ -5933,12 +4505,6 @@
   margin-top: auto;
 }
 
-/* The strip's own seam and padding come from the tile it now sits in. */
-.cx-sig-chain {
-  padding-top: 0;
-  border-top: 0;
-}
-
 /*
  * The hero: the verdict, the two caps, and the rail between them.
  *
@@ -6470,14 +5036,6 @@
   mask-composite: intersect;
 }
 
-.cx-meter-rule {
-  position: absolute;
-  left: 0;
-  right: 0;
-  height: 1px;
-  background: rgb(255 255 255 / 6%);
-}
-
 /*
  * Dim mass, bright mark — the same language the spectrum speaks.
  *
@@ -6675,12 +5233,6 @@
   color: #e4584f;
 }
 
-.cx-sig-quiet {
-  font-size: 11px;
-  letter-spacing: 0.04em;
-  color: var(--t6);
-}
-
 /*
  * The foot: the machine, under everything the machine is doing.
  *
@@ -6758,28 +5310,6 @@
      of its own — the columns are the one thing here that is worth nothing at 60px. */
   .cx-meter {
     min-height: 190px;
-  }
-
-  /*
-   * Eight stations, two to a line.
-   *
-   * Across a desk they are one rail with the light running along it; in the hand that rail is 50px a
-   * station, which is a row of truncated words. Wrapped they are a table of eight readings, which is
-   * the same information doing the job the width allows — and the connector goes with the rail it was
-   * drawing, because a dashed line that wraps is a line pointing at the wrong neighbour.
-   */
-  .cx-sig-chain .signal-path .signal-stages {
-    flex-wrap: wrap;
-    row-gap: 16px;
-  }
-
-  .cx-sig-chain .signal-stage {
-    flex: 1 1 42%;
-  }
-
-  .cx-sig-chain .signal-stage:not(:last-child)::before,
-  .cx-sig-chain .signal-stages[data-live]::after {
-    display: none;
   }
 
   .cx-sig-foot {
@@ -7044,7 +5574,6 @@
   margin-top: clamp(20px, 3.8vh, 34px);
 }
 
-.cx-np-room,
 .cx-np-queue {
   display: inline-flex;
   align-items: center;
@@ -7052,17 +5581,6 @@
   padding: 8px 2px;
   font-size: 15px;
   transition: transform 0.15s var(--cx-ease);
-}
-
-.cx-np-room {
-  font-weight: 600;
-  color: var(--t1);
-  min-width: 0;
-}
-
-.cx-np-room svg {
-  color: var(--t4);
-  flex: none;
 }
 
 .cx-np-plus {
@@ -7084,7 +5602,6 @@
   color: var(--t1);
 }
 
-.cx-np-room:active,
 .cx-np-queue:active {
   transform: scale(0.96);
 }
@@ -7373,29 +5890,6 @@
  * content is also a whole tab in the nav two rows below it.
  */
 @media (max-height: 620px) {
-  /* The canvas keeps most of its share and the controls give up theirs — see the rule order below. */
-  .cx-doek {
-    height: min(100vw, 44vh);
-  }
-
-  .cx-mstage-controls {
-    padding: 10px 18px 6px;
-  }
-
-  .cx-mstage-meta {
-    gap: 10px;
-    margin-top: 8px;
-  }
-
-  .cx-mtitle {
-    font-size: clamp(22px, 6.4vw, 28px);
-    -webkit-line-clamp: 1;
-    line-clamp: 1;
-  }
-
-  .cx-martist {
-    font-size: 13px;
-  }
 
   .cx-fav-round {
     width: 40px;
@@ -7416,22 +5910,6 @@
     height: 50px;
   }
 
-  .cx-mvol {
-    margin-top: 10px;
-  }
-
-  .cx-chips {
-    margin-top: 4px;
-  }
-
-  .cx-chip {
-    padding: 8px 9px;
-  }
-
-  /* The queue is a tab in the nav; the line that previews it is the one row here that repeats itself. */
-  .cx-mstage .cx-next {
-    display: none;
-  }
 }
 
 /* --- a phone on its side -------------------------------------------------- */
@@ -7457,22 +5935,6 @@
     align-items: stretch;
   }
 
-  /* A square as tall as the window, and no wider than it needs to be. */
-  .cx-doek {
-    width: auto;
-    height: 100%;
-    aspect-ratio: 1;
-    flex: 0 0 auto;
-  }
-
-  /* Sideways the canvas meets the player on its *right* edge, so that is where it has to dissolve. */
-  .cx-doek-fade {
-    inset: 0 0 0 auto;
-    width: 30%;
-    height: auto;
-    background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--cx-stage) 55%, transparent) 55%, var(--cx-stage));
-  }
-
   /*
    * The timeline stays horizontal, on the canvas's bottom edge.
    *
@@ -7482,63 +5944,11 @@
    * on the canvas's edge, which is the whole idea.
    */
 
-  .cx-mstage-controls {
-    flex: 1 1 0;
-    align-items: stretch;
-    justify-content: center;
-    padding: 10px clamp(14px, 3vw, 26px) 6px;
-  }
-
-  /*
-   * Cap the column, or the heart ends up in a different postcode from the title.
-   *
-   * The controls fill the half of the window the canvas is not using, which on a 932px phone is 470px of
-   * row for a title, and `.cx-mstage-meta` puts the heart at the far end of whatever it is given. 560px is
-   * about as wide as a title-plus-heart wants to be at any size.
-   */
-  .cx-mstage-controls > * {
-    max-width: 560px;
-    width: 100%;
-  }
-
-  /* The name belongs over the canvas, which is now only the left part of the screen. */
-  .cx-mroom {
-    right: auto;
-    width: min(100%, 46vw);
-  }
-
-  /* Left-aligned in a column of its own: centring a title against a cover beside it reads as neither. */
-  .cx-mstage-meta {
-    margin-top: 0;
-  }
-
-  /* Width is what this orientation has, so the title gets some of it back from the short-viewport rule
-     above — which was sized for a 390px-wide phone standing up. */
-  .cx-mtitle {
-    font-size: clamp(24px, 3.4vw, 34px);
-  }
-
   .cx-transport[data-size='phone'] {
     justify-content: flex-start;
     gap: clamp(18px, 3vw, 30px);
   }
 
-  .cx-chips,
-  .cx-mvol {
-    width: 100%;
-    max-width: none;
-    padding: 0;
-  }
-
-  .cx-chips {
-    justify-content: flex-start;
-  }
-
-  /* Two rows earn their place here and the rest do not: there is no room, and both are one tap away in
-     the nav along the bottom. */
-  .cx-mstage .cx-next {
-    display: none;
-  }
 }
 
 /* --- artwork that moves --------------------------------------------------- */
@@ -7595,19 +6005,13 @@
  * The artwork *grows* as the chrome leaves, which is the whole gesture: the record taking the room.
  */
 .cx-root[data-idle] .cx-mhead,
-.cx-root[data-idle] .cx-mroom,
 .cx-root[data-idle] .cx-bnav,
 .cx-root[data-idle] .cx-transport,
 .cx-root[data-idle] .cx-bar-wrap,
-.cx-root[data-idle] .cx-doek .cx-bar,
-.cx-root[data-idle] .cx-doek .cx-wave,
 .cx-root[data-idle] .cx-times,
 .cx-root[data-idle] .cx-stage-foot,
 .cx-root[data-idle] .cx-house,
 .cx-root[data-idle] .cx-wire,
-.cx-root[data-idle] .cx-mvol,
-.cx-root[data-idle] .cx-chips,
-.cx-root[data-idle] .cx-next,
 .cx-root[data-idle] .cx-fav,
 .cx-root[data-idle] .cx-fav-round {
   opacity: 0;
@@ -7638,10 +6042,7 @@
 .cx-root[data-idle] .cx-bar-wrap,
 .cx-root[data-idle] .cx-times,
 .cx-root[data-idle] .cx-stage-foot,
-.cx-root[data-idle] .cx-house,
-.cx-root[data-idle] .cx-mvol,
-.cx-root[data-idle] .cx-chips,
-.cx-root[data-idle] .cx-next {
+.cx-root[data-idle] .cx-house {
   max-height: 0;
   margin-top: 0;
   margin-bottom: 0;
@@ -7655,8 +6056,7 @@
  * everything else on the screen. At rest there *is* nothing else on the screen, and `Natural Blues
  * (feat. Gregory Porter &…` truncated is the one thing on a poster that should never be truncated.
  */
-.cx-root[data-idle] .cx-title,
-.cx-root[data-idle] .cx-mtitle {
+.cx-root[data-idle] .cx-title {
   -webkit-line-clamp: 3;
   line-clamp: 3;
 }
@@ -7671,8 +6071,7 @@
   transition: gap 1.4s var(--cx-ease);
 }
 
-.cx-root[data-idle] .cx-cover,
-.cx-root[data-idle] .cx-doek-art {
+.cx-root[data-idle] .cx-cover {
   scale: 1.06;
   transition: scale 1.8s var(--cx-ease);
 }
@@ -7900,9 +6299,7 @@
  * nothing: the wander is `transform`-only, and the ramp back happens inside the same 1.4s the
  * chrome takes to return.
  */
-.cx-root[data-idle] .cx-stage-inner,
-.cx-root[data-idle] .cx-doek,
-.cx-root[data-idle] .cx-mstage-controls {
+.cx-root[data-idle] .cx-stage-inner {
   animation: cx-wander 240s ease-in-out infinite;
 }
 
@@ -7975,7 +6372,7 @@
  * "this room is selected", and there is no static way to say it. Everything else stops.
  */
 @media (prefers-reduced-motion: reduce) {
-  .cx-root *:not(.cx-live-dot):not(.cx-chip-dot):not(.cx-dchip-dot):not(.cx-stale) {
+  .cx-root *:not(.cx-live-dot):not(.cx-stale) {
     animation-duration: 1ms !important;
     transition-duration: 1ms !important;
   }

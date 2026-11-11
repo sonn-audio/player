@@ -733,10 +733,6 @@ html[data-arrived] .cx-side-mark {
   overflow-y: auto;
 }
 
-.cx-sgroup-go[data-on] {
-  color: var(--t1);
-}
-
 .cx-deskpage-note {
   flex: none;
   margin: 18px 0 0;
@@ -776,7 +772,6 @@ html[data-arrived] .cx-side-mark {
 .cx-pbar-fav:focus-visible,
 .cx-pbar-room:focus-visible,
 .cx-pbar-cov:focus-visible,
-.cx-sgroup-go:focus-visible,
 .cx-side-brand:focus-visible {
   outline: 1.5px solid color-mix(in srgb, var(--accent) 70%, transparent);
   outline-offset: 2px;
@@ -2222,8 +2217,7 @@ html[data-arrived] .cx-side-mark {
 
 /* A row's name is set at a reading weight; the playing one is the white one. */
 .cx-root .cx-ttitle,
-.cx-root .cx-upnext-title,
-.cx-root .cx-tile-name {
+.cx-root .cx-upnext-title {
   font-weight: 450;
 }
 
