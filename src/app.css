@@ -1547,14 +1547,9 @@ html[data-arrived] .cx-side-mark {
   order: 0;
 }
 
-.cx-root[data-shell]:not([data-idle]) .cx-stage-meta > .cx-titlebox {
+.cx-root[data-shell] .cx-stage-meta > .cx-titlebox {
   order: 1;
-  height: auto;
   margin-top: 22px;
-}
-
-.cx-root[data-shell]:not([data-idle]) .cx-titlebox .cx-title {
-  height: auto;
 }
 
 /* No coloured light under the sleeve: its shadow is black, and it is the only colour there is. */
@@ -1567,12 +1562,15 @@ html[data-arrived] .cx-side-mark {
   margin-top: 14px;
 }
 
-.cx-root[data-shell] .cx-stage-meta > .cx-title-tags {
+/* The edition's row is kept whether or not it has anything to say, so it stands last: empty, it is
+   nothing under the record's name rather than a gap above it. */
+.cx-root[data-shell] .cx-stage-meta > .cx-albumrow {
   order: 3;
 }
 
-.cx-root[data-shell] .cx-stage-meta > .cx-albumrow {
+.cx-root[data-shell] .cx-stage-meta > .cx-title-tags {
   order: 4;
+  margin-top: 10px;
 }
 
 .cx-root[data-shell] .cx-stage-meta > .cx-error,

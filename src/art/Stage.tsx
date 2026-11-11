@@ -474,18 +474,12 @@ export function Stage({
   /* What "the artwork changed" means — the same handle the page's wash dissolves on. */
   const artKey = artKeyOf(leader?.track);
 
-  /* The largest the name may be, and the smallest it may shrink to before the box clips it. */
-  /* At rest the name is a label beside a record, not the subject of the page: a one-word title that
-     never wraps would otherwise stay at the largest size and run off the right page. */
-  /* Inside the frame the name shares the pane with a sidebar and a bar, so it stops short of the poster's
-     200px; on a bare window (the spread) it may take all of it. */
-  /* `Nothing playing` is a state, not a title: it does not get the title's size. */
-  /* In the frame the name is a nameplate, not a poster: three sizes by its length, so a long title
-     steps down rather than filling the column. */
-  const plate = !cur.hasTrack ? 56 : mainTitle(cur.title).length > 30 ? 44 : mainTitle(cur.title).length > 16 ? 56 : 72;
-  const fitted = useFitText(mainTitle(cur.title), { max: resting ? 84 : 200, min: 24 });
-  /* Only the rests measure the name against a box; in the frame the plate's size is the size. */
-  const fit = resting || spread ? fitted : { ref: undefined, size: plate };
+  /* The name is a nameplate, not a poster: three sizes by its length, so a long title steps down
+     rather than filling the column. `Nothing playing` is a state, not a title, and is set smaller. */
+  const letters = mainTitle(cur.title).length;
+  const plate = !cur.hasTrack ? 56 : letters > 30 ? 44 : letters > 16 ? 56 : 72;
+  /* At rest the name is read from across the room, so the same three sizes stand a third larger. */
+  const fit = { ref: undefined, size: resting || spread ? Math.round(plate * 1.34) : plate };
 
   /*
    * A track change is a dissolve, so each line keeps the one it is replacing.
