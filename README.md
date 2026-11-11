@@ -29,18 +29,22 @@ engraved; titles are set light; figures are mono. Nothing is boxed that a line c
 for what is on the wire, and what comes next.
 
 **Signal is the instrument** (`art/Signal.tsx`, `art/Vu.tsx`): the one place the player shows what it
-is made of. Two VU meters on a lit scale follow the room's left and right levels off the analysis
-stream (0 VU at −18 dBFS, a VU's 300 ms); under them the peak meter, the spectrum, loudness, the
-stereo field and the scope; above them the verdict and the path from file to amplifier.
+is made of. The page opens on the answer — the verdict with its lamp, and why in a sentence — then two
+VU meters on a lit scale that follow the room's left and right levels off the analysis stream (0 VU at
+−18 dBFS, a VU's 300 ms), the spectrum, four figures (integrated loudness, range, true peak,
+correlation), and down the right the path from file to amplifier, a point for every stage. Under the
+fold: the loudness history, the stereo field, the scope, the peaks, the clock. The instruments draw in
+silver; the lamp is the only green.
 
 **Home** (`art/House.tsx`) is the house as the records that are on in it: a sleeve per room with
 music, the quiet rooms as lines of type, and what this room played lately. **Rooms** is a ruled list:
 a line, a dot and a figure per room, and one line down the left of rooms that play together.
 
-On a **phone** the frame is a bottom nav and sheets: a home you browse, a bar along the bottom that
-says what is playing, and the full player one press up from it — painted in the record's own colours
-(`track.colors.backgroundDark`, damped), with the sleeve answering the thumb: swipe sideways for the
-next track, up for the queue, a haptic tick at each commit.
+On a **phone** it is the same component in the hand: a home that lists the house as ruled lines, a
+strip above the tabs that says what is playing, and the full player one press up from it — a head, a
+square sleeve, the name, the lamp, a hairline clock, the transport, a fader. The sleeve answers the
+thumb: swipe sideways for the next track, up for the queue, down to put it away, a haptic tick at each
+commit.
 
 Desktop and phone get different component trees, split at 980px, because they are different products:
 one has a pointer, a lot of width and every room on screen at once; the other has a thumb, one column
@@ -51,7 +55,7 @@ display and for every word, JetBrains Mono for every figure, both self-hosted va
 same near-black surfaces until a record lights them, the green kept for verdicts, hairlines instead of
 borders. Four sheets own it —
 `styles.css` (the tokens and the instruments), `shell.css` (splash and the overlays), `art.css`
-(everything under `.cx-root`) and `app.css` (the desk's frame) — and no component carries styling of
+(everything under `.cx-root`) and `app.css` (the frame, and each part as it stands now: the phone's player and bars, home, the rooms, Signal) — and no component carries styling of
 its own.
 
 ## Running it
@@ -153,8 +157,8 @@ src/
     Shell.tsx       The desk's frame: sidebar and player bar
     House.tsx       Home: a sleeve per room with music, the quiet rooms, lately
     Vu.tsx          The VU meters on the Signal deck
-    accent.ts       One drop of the record's colour, for the few things that are the record's
-    serviceMark.tsx A service's colour, and the library and the radio drawn
+    artKey.ts       When the artwork changed: the key every dissolve hangs on
+    serviceMark.tsx A service's two capitals, and the library and the radio drawn
     Stage.tsx       The record on a desk and on a phone; Transport, Timeline, VolumeRow
     Browse.tsx      The catalogue, the inputs page, the mini bar
     Channels.tsx    The rooms as cards (groups, scenes, lining up)
