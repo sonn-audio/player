@@ -471,11 +471,6 @@ html[data-arrived] .cx-side-mark {
   --browse-pad: var(--pane-pad);
 }
 
-.cx-root[data-shell] .cx-welcome {
-  padding-left: var(--pane-pad);
-  padding-right: var(--pane-pad);
-}
-
 .cx-root[data-shell] .cx-sig-band,
 .cx-root[data-shell] .cx-sig-deck {
   padding-left: var(--pane-pad);
@@ -1026,21 +1021,6 @@ html[data-arrived] .cx-side-mark {
     vertical-align: middle;
   }
 
-  /* Four marks across a hand's width, and no second row for the fourth. */
-  .cx-root .cx-hall {
-    gap: 12px;
-    justify-content: space-between;
-  }
-
-  .cx-root .cx-mark {
-    width: 72px;
-  }
-
-  /* The shortcut row scrolls under a fade, like a shelf, rather than ending in a cut word. */
-  .cx-root .cx-welcome-shortcuts {
-    mask-image: linear-gradient(90deg, #000 calc(100% - 36px), transparent 100%);
-  }
-
   .cx-root .cx-bill-title {
     font-size: 30px;
   }
@@ -1061,29 +1041,6 @@ html[data-arrived] .cx-side-mark {
     font-size: 22px;
   }
 
-  /* The ways in, as chips with the service's colour on them — the sidebar's row, lying down. */
-  .cx-welcome-shortcuts {
-    gap: 8px;
-  }
-
-  .cx-welcome-shortcuts button {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    height: 32px;
-    padding: 0 12px 0 8px;
-    border: 1px solid rgb(255 255 255 / 9%);
-    border-radius: 16px;
-    background: rgb(255 255 255 / 2.5%);
-    font-size: 9.5px;
-    letter-spacing: 0.16em;
-    color: var(--t3);
-    white-space: nowrap;
-  }
-
-  .cx-welcome-shortcuts button:hover {
-    color: var(--t1);
-  }
 }
 
 /* --- motion: the small answers a control gives a hand ----------------------------------- */
@@ -1095,8 +1052,7 @@ html[data-arrived] .cx-side-mark {
 .cx-pbar-room,
 .cx-pbar-ic,
 .cx-pbar-fav,
-.cx-snav,
-.cx-onradio-chip {
+.cx-snav {
   transition:
     color 0.18s,
     border-color 0.18s,
@@ -1108,8 +1064,7 @@ html[data-arrived] .cx-side-mark {
 .cx-root .cx-shuffle-btn:hover,
 .cx-root .cx-bill-open:hover,
 .cx-root .cx-inputs-empty-go:hover,
-.cx-pbar-room:hover,
-.cx-onradio-chip:hover {
+.cx-pbar-room:hover {
   transform: translateY(-1px);
 }
 
@@ -1118,8 +1073,7 @@ html[data-arrived] .cx-side-mark {
 .cx-root .cx-bill-open:active,
 .cx-pbar-room:active,
 .cx-pbar-ic:active,
-.cx-snav:active,
-.cx-onradio-chip:active {
+.cx-snav:active {
   transform: scale(0.97);
 }
 
@@ -1145,18 +1099,6 @@ html[data-arrived] .cx-side-mark {
 
 .cx-crate-lp[data-centre]:hover {
   transform: translateZ(18px);
-}
-
-/* The desk's strips lift the same way a tile does. */
-.cx-root[data-shell] .cx-desk-strip {
-  transition:
-    background 0.25s var(--cx-ease),
-    box-shadow 0.25s var(--cx-ease),
-    transform 0.25s var(--cx-ease);
-}
-
-.cx-root[data-shell] .cx-desk-strip:hover {
-  transform: translateY(-2px);
 }
 
 /* --- a page with nothing on it ---------------------------------------------------------- */
@@ -1272,17 +1214,6 @@ html[data-arrived] .cx-side-mark {
 .cx-pbar-cov-mark {
   width: 24px;
   height: 20px;
-}
-
-/* The house strip's quiet card, on the home screen. */
-.cx-roomcard-mark {
-  position: absolute;
-  top: 40%;
-  left: 50%;
-  width: 46px;
-  height: 38px;
-  translate: -50% -50%;
-  color: rgb(255 255 255 / 9%);
 }
 
 /* The last record, offered back. */
@@ -1454,16 +1385,6 @@ html[data-arrived] .cx-side-mark {
   visibility: hidden;
 }
 
-/* --- the hall's drawn marks -------------------------------------------------------------- */
-
-.cx-mark-glyph {
-  position: absolute;
-  width: 50cqw;
-  height: 50cqw;
-  color: rgb(255 255 255 / 92%);
-  filter: drop-shadow(0 2px 8px rgb(0 0 0 / 35%));
-}
-
 /* --- a thumb's worth of target --------------------------------------------------------- */
 
 /*
@@ -1479,26 +1400,16 @@ html[data-arrived] .cx-side-mark {
   .cx-root .cx-bill-title,
   .cx-root .cx-inputs-empty-go,
   .cx-root .cx-sec-more,
-  .cx-root .cx-welcome-shortcuts button,
   .cx-root .cx-empty-act,
   .cx-root .cx-cta button,
   .cx-root .cx-tnote,
   .cx-root .cx-tact,
-  .cx-root .cx-desk-word,
   .cx-root .cx-toc-item,
   .cx-root .cx-hsec-right,
   .cx-root .cx-upnext-lbl,
   .cx-root .cx-search-note-go,
   .cx-root .cx-browse-back,
-  .cx-root .cx-room-btn,
-  .cx-root .cx-np-queue,
-  .cx-root .cx-np-artist,
-  .cx-root .cx-np-album,
-  .cx-root .cx-wire,
-  .cx-root .cx-mini-play,
-  .cx-root .cx-mini-track,
-  .cx-root .cx-install-go,
-  .cx-root .cx-install-close {
+  .cx-root .cx-install-go {
     position: relative;
   }
 
@@ -1508,43 +1419,25 @@ html[data-arrived] .cx-side-mark {
   .cx-root .cx-bill-title::after,
   .cx-root .cx-inputs-empty-go::after,
   .cx-root .cx-sec-more::after,
-  .cx-root .cx-welcome-shortcuts button::after,
   .cx-root .cx-empty-act::after,
   .cx-root .cx-cta button::after,
   .cx-root .cx-tnote::after,
   .cx-root .cx-tact::after,
   .cx-root .cx-toc-item::after,
-  .cx-root .cx-room-btn::after,
-  .cx-root .cx-np-roompill::after,
-  .cx-root .cx-np-close::after,
-  .cx-root .cx-np-queue::after,
-  .cx-root .cx-np-artist::after,
-  .cx-root .cx-wire::after,
-  .cx-root .cx-mini-play::after,
-  .cx-root .cx-mini-track::after,
-  .cx-root .cx-install-go::after,
-  .cx-root .cx-install-close::after {
+  .cx-root .cx-install-go::after {
     content: '';
     position: absolute;
     inset: -8px -6px;
   }
 
   /* A line of type as a button: the reach is most of a row above and below it. */
-  .cx-root .cx-desk-word::after,
   .cx-root .cx-hsec-right::after,
   .cx-root .cx-upnext-lbl::after,
   .cx-root .cx-search-note-go::after,
-  .cx-root .cx-browse-back::after,
-  .cx-root .cx-np-album::after {
+  .cx-root .cx-browse-back::after {
     content: '';
     position: absolute;
     inset: -14px -8px;
-  }
-
-  /* The rows that scroll carry the reach themselves, since they clip what hangs past their edge. */
-  .cx-root .cx-welcome-shortcuts {
-    margin-top: 12px;
-    padding: 8px 22px 10px;
   }
 
   .cx-root .cx-toc {
@@ -1553,11 +1446,6 @@ html[data-arrived] .cx-side-mark {
 
   /* A line of type that clips its own overflow clips its reach as well: these are simply 44px tall. */
   .cx-root .cx-toc-item,
-  .cx-root .cx-room-btn,
-  .cx-root .cx-np-artist,
-  .cx-root .cx-np-album,
-  .cx-root .cx-np-queue,
-  .cx-root .cx-desk-word,
   .cx-root .cx-hsec-right,
   .cx-root .cx-upnext-lbl,
   .cx-root .cx-browse-back,
@@ -1565,11 +1453,6 @@ html[data-arrived] .cx-side-mark {
     display: inline-flex;
     align-items: center;
     min-height: 44px;
-  }
-
-  .cx-root .cx-np-artist,
-  .cx-root .cx-np-album {
-    margin-block: -7px;
   }
 
   /* The billboard's name is a clamped box, which a pseudo-element cannot hang out of. */
@@ -1720,34 +1603,6 @@ html[data-arrived] .cx-side-mark {
   font-weight: 400;
   letter-spacing: -0.01em;
   color: var(--t3);
-}
-
-/* The lamp: what is on the wire, and — when the server says so — the verdict, in green. */
-.cx-root .cx-wire {
-  gap: 9px;
-  height: 28px;
-  padding: 0 11px 0 12px;
-  border: 1px solid rgb(255 255 255 / 12%);
-  border-radius: 14px;
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.16em;
-  color: var(--t3);
-}
-
-.cx-root .cx-wire b {
-  font-weight: 400;
-  letter-spacing: 0.04em;
-  text-transform: none;
-  color: var(--t5);
-}
-
-.cx-wire-lamp {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--accent);
-  box-shadow: 0 0 8px var(--accent);
 }
 
 /* --- home — see `House` ------------------------------------------------------------- */
@@ -2071,101 +1926,6 @@ html[data-arrived] .cx-side-mark {
   padding: 44px 56px 0;
 }
 
-.cx-root[data-shell] .cx-desk-row,
-.cx-root[data-shell] .cx-desk-group-row {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-}
-
-.cx-root[data-shell] .cx-desk-row {
-  border-top: 1px solid rgb(255 255 255 / 7%);
-}
-
-.cx-root[data-shell] .cx-desk-strip {
-  grid-template-columns: 340px minmax(0, 1fr) 96px;
-  grid-template-areas: 'hit fader foot';
-  gap: 0 28px;
-  height: 76px;
-  padding: 0;
-  border-bottom: 1px solid rgb(255 255 255 / 7%);
-  border-radius: 0;
-  background: none;
-  box-shadow: none;
-}
-
-.cx-root[data-shell] .cx-desk-strip:hover {
-  transform: none;
-}
-
-.cx-root[data-shell] .cx-desk-strip[data-over] {
-  background: rgb(255 255 255 / 4%);
-}
-
-.cx-root[data-shell] .cx-desk-cov {
-  width: 44px;
-  height: 44px;
-  border-radius: 3px;
-}
-
-.cx-root .cx-desk-name {
-  font-family: var(--font-display);
-  font-size: 16px;
-  font-weight: 400;
-  letter-spacing: 0;
-  text-transform: none;
-  color: var(--t3);
-}
-
-.cx-root .cx-desk-strip[data-on] .cx-desk-name,
-.cx-root .cx-desk-strip[data-current] .cx-desk-name {
-  color: var(--t1);
-}
-
-/* The level: a line, a dot, and the figure. */
-.cx-root .cx-desk-fader-rail {
-  height: 1px;
-  background: rgb(255 255 255 / 12%);
-}
-
-.cx-root .cx-desk-fader-fill,
-.cx-root .cx-desk-fader[data-lit] .cx-desk-fader-fill {
-  background: var(--t2);
-}
-
-.cx-root .cx-desk-fader-knob {
-  width: 11px;
-  height: 11px;
-  margin: -5px 0 0 -5px;
-  box-shadow: 0 0 0 4px #09090a;
-}
-
-.cx-root[data-shell] .cx-desk-group {
-  position: relative;
-  padding: 0 0 0 26px;
-  border: 0;
-  border-radius: 0;
-  background: none;
-}
-
-/* Rooms that play together: one line down their left edge. */
-.cx-root[data-shell] .cx-desk-group::before {
-  content: '';
-  position: absolute;
-  top: 14px;
-  bottom: 14px;
-  left: 0;
-  width: 1px;
-  background: var(--t1);
-}
-
-.cx-root[data-shell] .cx-desk-group-lbl {
-  height: 44px;
-  padding: 0;
-  border-bottom: 1px solid rgb(255 255 255 / 7%);
-  color: var(--t2);
-}
-
 /* --- the meters — see `VuPair` ---------------------------------------------------- */
 
 .cx-vu {
@@ -2209,12 +1969,6 @@ html[data-arrived] .cx-side-mark {
   font-family: var(--font-mono);
 }
 
-/* The hall's drawn marks fill the disc they are drawn on. */
-.cx-mark-glyph svg {
-  width: 100%;
-  height: 100%;
-}
-
 /* A row's name is set at a reading weight; the playing one is the white one. */
 .cx-root .cx-ttitle,
 .cx-root .cx-upnext-title {
@@ -2226,4 +1980,1376 @@ html[data-arrived] .cx-side-mark {
 .cx-root[data-shell][data-still] .cx-stage .cx-stage-foot,
 .cx-root[data-shell][data-still] .cx-stage .cx-fav {
   opacity: 0.55;
+}
+
+/* --- what is on the line: a lamp, a figure, the door to the reading ---------------------- */
+
+.cx-root .cx-wire {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 28px;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--t3);
+}
+
+.cx-root .cx-wire b {
+  font-weight: 400;
+  letter-spacing: 0.06em;
+  text-transform: none;
+  color: var(--t4);
+}
+
+.cx-root .cx-wire svg {
+  color: var(--t7);
+  transition: color 0.18s, translate 0.18s;
+}
+
+.cx-root .cx-wire:hover svg,
+.cx-root .cx-wire:focus-visible svg {
+  color: var(--t1);
+  translate: 2px 0;
+}
+
+/* Grey for a fact, green for the one verdict. */
+.cx-wire-lamp {
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--t7);
+}
+
+.cx-wire[data-ok] .cx-wire-lamp {
+  background: var(--accent);
+  box-shadow: 0 0 8px var(--accent);
+}
+
+/* --- the phone's player — see `MobileStage` ---------------------------------------------- */
+
+.cx-player-sheet {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: #09090a;
+  animation: cx-player-up 0.44s var(--cx-ease);
+}
+
+@keyframes cx-player-up {
+  from {
+    translate: 0 100%;
+  }
+}
+
+.cx-np {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: max(10px, env(safe-area-inset-top)) 28px max(20px, env(safe-area-inset-bottom));
+}
+
+/* The head: down, the room, what follows. Three 44px reaches on one line. */
+.cx-np-top {
+  display: grid;
+  grid-template-columns: 44px 1fr 44px;
+  flex: none;
+  align-items: center;
+  height: 44px;
+  margin: 0 -12px;
+}
+
+.cx-np-close,
+.cx-np-queue {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  width: 44px;
+  height: 44px;
+  color: var(--t4);
+}
+
+.cx-np-queue {
+  grid-column: 3;
+}
+
+.cx-np-queue b {
+  font-size: 10px;
+  font-weight: 400;
+  color: var(--t5);
+}
+
+.cx-np-room {
+  display: inline-flex;
+  grid-column: 2;
+  align-items: center;
+  justify-self: center;
+  gap: 8px;
+  max-width: 100%;
+  min-height: 44px;
+  padding: 0 12px;
+  overflow: hidden;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--t2);
+}
+
+.cx-np-room i {
+  font-style: normal;
+  color: var(--t5);
+}
+
+/* The sleeve takes every spare pixel and is the first thing to give them back. */
+.cx-np-art {
+  container-type: size;
+  display: grid;
+  flex: 1 1 0;
+  place-items: center;
+  min-height: 96px;
+  margin-top: 14px;
+}
+
+.cx-np-cover {
+  position: relative;
+  width: min(100cqw, 100cqh);
+  aspect-ratio: 1;
+  overflow: hidden;
+  border-radius: 3px;
+  background: var(--cx-cover);
+  box-shadow:
+    0 0 0 1px rgb(255 255 255 / 6%),
+    0 34px 60px -34px #000;
+  touch-action: none;
+  transition:
+    translate 0.36s var(--cx-ease),
+    scale 0.2s var(--cx-ease);
+}
+
+.cx-np-cover[data-dragging] {
+  transition: scale 0.2s var(--cx-ease);
+}
+
+.cx-np-cover-art {
+  position: absolute;
+  inset: 0;
+  background-position: center;
+  background-size: cover;
+}
+
+.cx-np-cover-empty {
+  display: grid;
+  place-items: center;
+  box-shadow: 0 0 0 1px var(--hair);
+  background: none;
+}
+
+.cx-np-cover-empty .cx-cover-empty-mark {
+  width: 30%;
+  opacity: 0.16;
+}
+
+.cx-np-meta {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  padding-top: 30px;
+}
+
+/* The label: the name measured into one fixed box, so nothing under it moves from track to track. */
+.cx-np-titles {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.cx-np-titlebox {
+  display: block;
+  height: 44px;
+}
+
+.cx-root .cx-np-title {
+  display: block;
+  height: 100%;
+  overflow: hidden;
+  font-size: 36px;
+  font-weight: 300;
+  letter-spacing: -0.02em;
+  line-height: 1.16;
+  color: var(--t1);
+}
+
+.cx-np-tags {
+  margin-top: 6px;
+  font-size: 9.5px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--t5);
+}
+
+.cx-np-artist,
+.cx-np-album {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cx-np-artist {
+  min-height: 34px;
+  margin-top: 4px;
+  font-size: 17px;
+  color: var(--t3);
+}
+
+.cx-np-album {
+  min-height: 26px;
+  font-size: 13px;
+  color: var(--t5);
+}
+
+/* The label that is leaving: a still of the whole block, on top of the one arriving. */
+.cx-np-ghost {
+  position: absolute;
+  inset: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  pointer-events: none;
+}
+
+.cx-np-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 44px;
+  margin-top: 8px;
+}
+
+.cx-np-line .cx-wire {
+  min-height: 44px;
+}
+
+.cx-np-line .cx-fav {
+  width: 44px;
+  height: 44px;
+  margin-right: -13px;
+}
+
+/* The clock: a hairline between its two figures. */
+.cx-np-prog {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 10px;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  color: var(--t5);
+  font-variant-numeric: tabular-nums;
+}
+
+.cx-np-prog .cx-bar {
+  flex: 1;
+  height: 32px;
+}
+
+.cx-np-prog .cx-bar-rail {
+  height: 1px;
+  background: rgb(255 255 255 / 14%);
+}
+
+.cx-np-prog .cx-bar-knob {
+  width: 7px;
+  height: 7px;
+  margin-left: -3.5px;
+  box-shadow: none;
+}
+
+.cx-np .cx-live {
+  min-height: 32px;
+  margin-top: 10px;
+}
+
+.cx-np .cx-transport {
+  justify-content: space-between;
+  margin: 14px -8px 0;
+}
+
+.cx-np .cx-transport .cx-tr-play {
+  width: 68px;
+  height: 68px;
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 70%);
+}
+
+.cx-np .cx-cta {
+  margin-top: 18px;
+}
+
+/* The fader along the foot: a line, a point, a figure. */
+.cx-np-vol {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  height: 44px;
+  margin-top: 22px;
+  color: var(--t5);
+}
+
+.cx-np-vol .cx-vol-slider {
+  flex: 1;
+}
+
+.cx-np-vol-num {
+  min-width: 22px;
+  font-size: 12px;
+  text-align: right;
+  color: var(--t2);
+  font-variant-numeric: tabular-nums;
+}
+
+/* A short window: the sleeve has already given what it can, so the rows close up. */
+@media (max-height: 700px) {
+  .cx-np-meta {
+    padding-top: 16px;
+  }
+
+  .cx-np-album {
+    display: none;
+  }
+
+  .cx-np .cx-transport {
+    margin-top: 4px;
+  }
+
+  .cx-np .cx-transport .cx-tr-play {
+    width: 56px;
+    height: 56px;
+  }
+
+  .cx-np-vol {
+    margin-top: 6px;
+  }
+}
+
+/* --- the services, as marks on the panel — see `Mark` in `Browse` ------------------------- */
+
+.cx-hall {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0;
+  margin-bottom: clamp(30px, 4.4vh, 54px);
+  border-top: 1px solid var(--hair);
+  border-bottom: 1px solid var(--hair);
+}
+
+/* A plate per service: a ring, a name, a rule between it and the next. */
+.cx-root .cx-mark {
+  display: flex;
+  flex: 1 1 0;
+  align-items: center;
+  gap: 16px;
+  min-width: 168px;
+  height: 84px;
+  padding: 0 22px 0 0;
+  cursor: pointer;
+  animation: cx-door-in 0.5s var(--cx-ease) backwards;
+  animation-delay: calc(var(--i, 0) * 60ms);
+}
+
+.cx-root .cx-mark + .cx-mark {
+  padding-left: 22px;
+  border-left: 1px solid var(--hair);
+}
+
+.cx-mark-face {
+  position: relative;
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  overflow: hidden;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 16%);
+  color: var(--t3);
+  transition:
+    box-shadow 0.25s var(--cx-ease),
+    color 0.25s var(--cx-ease);
+}
+
+.cx-mark-glyph {
+  width: 22px;
+  height: 22px;
+}
+
+.cx-mark-glyph svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.cx-mark-mono {
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+}
+
+/* A real logo sits in the ring in grey, and takes its own colour when it is pointed at. */
+.cx-mark-logo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  filter: grayscale(1) brightness(0.82);
+  transition:
+    opacity 0.3s var(--cx-ease),
+    filter 0.3s var(--cx-ease);
+}
+
+.cx-mark-face[data-logo] .cx-mark-logo {
+  opacity: 1;
+}
+
+.cx-mark-face[data-logo] .cx-mark-mono,
+.cx-mark-face[data-logo] .cx-mark-glyph {
+  display: none;
+}
+
+.cx-root .cx-mark-name {
+  min-width: 0;
+  overflow: hidden;
+  font-size: 17px;
+  font-weight: 300;
+  letter-spacing: -0.01em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--t3);
+  transition: color 0.2s var(--cx-ease);
+}
+
+.cx-mark:hover .cx-mark-face,
+.cx-mark:focus-visible .cx-mark-face {
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 60%);
+  color: var(--t1);
+}
+
+.cx-mark:hover .cx-mark-logo,
+.cx-mark:focus-visible .cx-mark-logo {
+  filter: none;
+}
+
+.cx-mark:hover .cx-mark-name,
+.cx-mark:focus-visible .cx-mark-name {
+  color: var(--t1);
+}
+
+/* On a phone the plates stack: one service to a line. */
+@media (max-width: 640px) {
+  .cx-root .cx-mark {
+    flex: 1 1 100%;
+    height: 64px;
+    padding: 0;
+  }
+
+  .cx-root .cx-mark + .cx-mark {
+    padding-left: 0;
+    border-top: 1px solid var(--hair);
+    border-left: 0;
+  }
+}
+
+/* Where a row came from, when a page mixes services: two capitals, not a colour. */
+.cx-svc {
+  font-size: 8.5px;
+  font-style: normal;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  color: var(--t6);
+}
+
+.cx-tile-svc {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  padding: 3px 5px 3px 6px;
+  border-radius: 2px;
+  background: rgb(9 9 10 / 72%);
+  color: var(--t2);
+}
+
+.cx-trow-svc {
+  margin-left: 10px;
+  vertical-align: 1px;
+}
+
+/* --- a station has no running order; it has the dial ------------------------------------- */
+
+.cx-onradio {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.cx-onradio-doors {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 18px;
+}
+
+.cx-onradio-door {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 44px;
+  border-bottom: 1px solid var(--hair);
+  font-size: 14px;
+  text-align: left;
+  color: var(--t3);
+  transition: color 0.18s;
+}
+
+.cx-onradio-door svg {
+  flex: none;
+  color: var(--t7);
+  transition: color 0.18s, translate 0.18s;
+}
+
+.cx-onradio-door:hover,
+.cx-onradio-door:focus-visible {
+  color: var(--t1);
+}
+
+.cx-onradio-door:hover svg,
+.cx-onradio-door:focus-visible svg {
+  color: var(--t1);
+  translate: 2px 0;
+}
+
+.cx-onradio-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cx-onradio-kept {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.cx-onradio-chip {
+  height: 32px;
+  padding: 0 14px;
+  border: 1px solid var(--hair);
+  border-radius: 16px;
+  font-size: 12.5px;
+  color: var(--t3);
+  transition: border-color 0.18s, color 0.18s;
+}
+
+.cx-onradio-chip:hover,
+.cx-onradio-chip:focus-visible {
+  border-color: rgb(255 255 255 / 40%);
+  color: var(--t1);
+}
+
+/* A record with no picture is a white label: a plain sleeve, a rule, the name typed on it. */
+.cx-crate-label {
+  position: absolute;
+  inset: auto 14% 14%;
+  padding-top: 10px;
+  border-top: 1px solid rgb(255 255 255 / 16%);
+  overflow: hidden;
+  font-size: 9px;
+  letter-spacing: 0.18em;
+  line-height: 1.6;
+  text-align: left;
+  text-transform: uppercase;
+  color: var(--t5);
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
+.cx-crate-lp[data-centre] .cx-crate-label {
+  color: var(--t3);
+}
+
+/* --- the phone's three bars: the head, what is playing, the tabs -------------------------- */
+
+/* The head holds the notch's inset, so nothing on any screen runs under the status bar. */
+.cx-mhead {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: space-between;
+  padding: calc(env(safe-area-inset-top) + 8px) 22px 0;
+}
+
+.cx-brand {
+  display: grid;
+  place-items: center;
+  height: 44px;
+  color: var(--t3);
+}
+
+.cx-brand-mark {
+  width: 26px;
+  height: auto;
+}
+
+/* Which room the controls are for, and the way to the others. */
+.cx-root .cx-room-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--t2);
+}
+
+.cx-root .cx-room-btn svg {
+  color: var(--t5);
+}
+
+/* Pinned to the viewport, not stacked at the end of a column: the window's own bottom edge is the
+   only one an installed app can trust. The column pads itself to clear them. */
+.cx-bnav,
+.cx-mini {
+  position: fixed;
+  right: 0;
+  left: 0;
+  background: #09090a;
+}
+
+.cx-bnav {
+  bottom: 0;
+  z-index: 55;
+  display: flex;
+  height: var(--nav-h);
+  padding-bottom: env(safe-area-inset-bottom);
+  border-top: 1px solid var(--hair);
+}
+
+.cx-bnav-tab {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  color: var(--t6);
+  transition: color 0.2s;
+}
+
+.cx-bnav-tab span {
+  font-size: 8.5px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
+.cx-bnav-tab[data-on] {
+  color: var(--t1);
+}
+
+/* What is playing: the position as the strip's own top edge, the sleeve, the name, a ring. */
+.cx-mini {
+  bottom: var(--nav-h);
+  z-index: 54;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: var(--mini-h);
+  padding: 0 14px 0 22px;
+  border-top: 1px solid var(--hair);
+}
+
+.cx-mini-prog {
+  position: absolute;
+  inset: -1px 0 auto;
+  height: 1px;
+}
+
+.cx-mini-prog i {
+  display: block;
+  height: 100%;
+  background: var(--t2);
+  transition: width 0.92s linear;
+}
+
+.cx-mini-track {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+  height: 100%;
+  text-align: left;
+}
+
+.cx-mini-cov {
+  position: relative;
+  flex: none;
+  width: 40px;
+  height: 40px;
+  overflow: hidden;
+  border-radius: 2px;
+  background: var(--cx-cover);
+}
+
+.cx-mini-cov-art {
+  position: absolute;
+  inset: 0;
+  background-position: center;
+  background-size: cover;
+}
+
+.cx-mini-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.cx-mini-titlebox {
+  position: relative;
+  display: block;
+}
+
+.cx-mini-title,
+.cx-mini-sub {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cx-mini-title {
+  font-size: 14px;
+  font-weight: 450;
+  color: var(--t1);
+}
+
+.cx-mini-title.cx-out {
+  position: absolute;
+  inset: 0;
+}
+
+.cx-mini-sub {
+  font-size: 12px;
+  color: var(--t5);
+}
+
+.cx-mini-play {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  color: var(--t1);
+}
+
+.cx-mini-play svg {
+  box-sizing: content-box;
+  padding: 10px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 55%);
+}
+
+.cx-root:has(.cx-mini) .cx-body {
+  padding-bottom: calc(var(--nav-h) + var(--mini-h));
+}
+
+/* The reading is an instrument: no tabs under it. */
+.cx-root[data-view='signal'] .cx-bnav {
+  display: none;
+}
+
+/* At rest the chrome leaves. */
+.cx-root[data-idle] .cx-mhead,
+.cx-root[data-idle] .cx-bnav,
+.cx-root[data-idle] .cx-mini {
+  display: none;
+}
+
+/* --- home, where the app opens — see `Welcome` ------------------------------------------- */
+
+.cx-welcome {
+  --pad: 22px;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 14px var(--pad) 40px;
+}
+
+.cx-root[data-shell] .cx-welcome {
+  --pad: var(--pane-pad);
+  max-width: none;
+  padding-top: clamp(40px, 9vh, 96px);
+}
+
+.cx-welcome-date {
+  font-size: 10px;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  color: var(--t6);
+}
+
+.cx-root .cx-welcome-greet {
+  margin-top: 12px;
+  font-size: clamp(30px, 4.2vw, 52px);
+  font-weight: 300;
+  letter-spacing: -0.025em;
+  line-height: 1.1;
+  color: var(--t1);
+}
+
+/* The house: a ruled list, one room to a line. */
+.cx-hrooms {
+  display: flex;
+  flex-direction: column;
+  max-width: 640px;
+  margin-top: -16px;
+}
+
+.cx-hroom {
+  position: relative;
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 16px;
+  min-height: 76px;
+  border-bottom: 1px solid var(--hair);
+  text-align: left;
+  color: var(--t3);
+}
+
+.cx-hroom[data-quiet] {
+  min-height: 52px;
+}
+
+.cx-hroom-cov {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 2px;
+  background-position: center;
+  background-size: cover;
+  box-shadow: 0 0 0 1px rgb(255 255 255 / 6%);
+}
+
+.cx-hroom[data-quiet] .cx-hroom-cov {
+  height: 20px;
+  box-shadow: none;
+}
+
+.cx-hroom-txt {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.cx-hroom[data-quiet] .cx-hroom-txt {
+  flex-direction: row;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.cx-hroom-name {
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--t4);
+}
+
+.cx-hroom[data-current] .cx-hroom-name {
+  color: var(--t1);
+}
+
+.cx-hroom-track {
+  overflow: hidden;
+  font-size: 15px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--t2);
+}
+
+.cx-hroom[data-quiet] .cx-hroom-track {
+  font-size: 12px;
+  color: var(--t6);
+}
+
+/* How far along the room is, drawn on the rule under it. */
+.cx-hroom-prog {
+  position: absolute;
+  inset: auto 0 -1px;
+  height: 1px;
+}
+
+.cx-hroom-prog i {
+  display: block;
+  height: 100%;
+  background: var(--t3);
+  transition: width 0.92s linear;
+}
+
+/* The ways in, as words in a line. */
+.cx-welcome-shortcuts {
+  display: flex;
+  gap: 8px;
+  margin: 22px calc(var(--pad) * -1) 0;
+  padding: 0 var(--pad);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.cx-welcome-shortcuts button {
+  flex: none;
+  height: 44px;
+  padding: 0 16px;
+  border: 1px solid var(--hair);
+  border-radius: 22px;
+  font-size: 9.5px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--t3);
+  transition: border-color 0.18s, color 0.18s;
+}
+
+.cx-welcome-shortcuts button:hover,
+.cx-welcome-shortcuts button:focus-visible {
+  border-color: rgb(255 255 255 / 40%);
+  color: var(--t1);
+}
+
+/* A shelf runs past the page's edge, so the window visibly cuts it: keep going. */
+.cx-shelf {
+  display: flex;
+  gap: 14px;
+  margin: 0 calc(var(--pad) * -1);
+  padding: 0 var(--pad) 4px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.cx-shelf-item {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  gap: 10px;
+  width: clamp(124px, 12vw, 164px);
+  text-align: left;
+}
+
+.cx-shelf-cov {
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 3px;
+  background: var(--cx-cover) center / cover;
+  box-shadow: 0 0 0 1px rgb(255 255 255 / 6%);
+  transition: box-shadow 0.2s;
+}
+
+.cx-shelf-item:hover .cx-shelf-cov,
+.cx-shelf-item:focus-visible .cx-shelf-cov {
+  box-shadow: 0 0 0 1px rgb(255 255 255 / 34%);
+}
+
+.cx-shelf-title {
+  overflow: hidden;
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--t3);
+}
+
+/* --- the rooms: a ruled list, one room to a line — see `Channels` ------------------------- */
+
+.cx-desk {
+  display: flex;
+  flex-direction: column;
+  gap: 34px;
+}
+
+.cx-desk-row,
+.cx-desk-group-row {
+  display: flex;
+  flex-direction: column;
+}
+
+.cx-desk-row {
+  border-top: 1px solid var(--hair);
+}
+
+/* A room: its sleeve and name, a line with a point on it, one word. */
+.cx-desk-strip {
+  display: grid;
+  grid-template-columns: 340px minmax(120px, 1fr) 96px;
+  grid-template-areas: 'hit fader foot';
+  align-items: center;
+  min-height: 76px;
+  border-bottom: 1px solid var(--hair);
+  transition: background 0.2s;
+}
+
+.cx-desk-strip[data-over] {
+  background: rgb(255 255 255 / 4%);
+}
+
+/* The sleeve and the name are the handle: press to stand in the room, pull to move it. */
+.cx-desk-hit {
+  display: flex;
+  grid-area: hit;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+  height: 100%;
+  text-align: left;
+  cursor: grab;
+}
+
+.cx-desk-cov {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 3px;
+  background-position: center;
+  background-size: cover;
+  box-shadow: 0 0 0 1px rgb(255 255 255 / 6%);
+  color: var(--t7);
+  transition: box-shadow 0.2s;
+}
+
+.cx-desk-cov[data-empty] {
+  box-shadow: inset 0 0 0 1px var(--hair);
+}
+
+/* While a room is in the hand, the others show where it can land. */
+.cx-desk-strip[data-hot] .cx-desk-cov {
+  box-shadow: 0 0 0 1px rgb(255 255 255 / 34%);
+}
+
+.cx-desk-txt {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.cx-root .cx-desk-name {
+  overflow: hidden;
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-overflow: ellipsis;
+  text-transform: none;
+  white-space: nowrap;
+  color: var(--t3);
+}
+
+.cx-root .cx-desk-strip[data-on] .cx-desk-name,
+.cx-root .cx-desk-strip[data-current] .cx-desk-name {
+  color: var(--t1);
+}
+
+.cx-desk-line {
+  overflow: hidden;
+  font-size: 12.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--t5);
+}
+
+/* The fader: the speaker, the line, the figure. */
+.cx-desk-fader {
+  display: flex;
+  grid-area: fader;
+  align-items: center;
+  gap: 14px;
+  margin: 0 28px;
+  color: var(--t6);
+}
+
+.cx-desk-fader[data-muted] {
+  opacity: 0.45;
+}
+
+.cx-desk-fader-rail {
+  position: relative;
+  flex: 1;
+  order: 1;
+  height: 44px;
+  cursor: pointer;
+  touch-action: none;
+}
+
+.cx-desk-fader-rail::before,
+.cx-desk-fader-fill {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  height: 1px;
+}
+
+.cx-desk-fader-rail::before {
+  right: 0;
+  background: rgb(255 255 255 / 14%);
+}
+
+.cx-desk-fader-fill {
+  width: var(--pct);
+  background: var(--t2);
+}
+
+.cx-desk-fader-knob {
+  position: absolute;
+  top: 50%;
+  left: var(--pct);
+  width: 9px;
+  height: 9px;
+  margin: -4px 0 0 -4.5px;
+  border-radius: 50%;
+  background: var(--t1);
+  transition: scale 0.15s var(--cx-ease);
+}
+
+.cx-desk-fader[data-active] .cx-desk-fader-knob {
+  scale: 1.35;
+}
+
+.cx-desk-fader-val {
+  order: 2;
+  min-width: 24px;
+  font-size: 12px;
+  text-align: right;
+  color: var(--t2);
+  font-variant-numeric: tabular-nums;
+}
+
+.cx-desk-foot {
+  display: flex;
+  grid-area: foot;
+  justify-content: flex-end;
+}
+
+.cx-root .cx-desk-word {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 7px;
+  min-width: 44px;
+  min-height: 44px;
+  font-size: 9.5px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--t4);
+  transition: color 0.18s;
+}
+
+.cx-root button.cx-desk-word:hover,
+.cx-root button.cx-desk-word:focus-visible {
+  color: var(--t1);
+}
+
+.cx-root .cx-desk-word[data-quiet] {
+  color: var(--t7);
+}
+
+/* A group: its rooms held by one line down the left, and a master under them. */
+.cx-desk-group {
+  position: relative;
+  padding-left: 26px;
+}
+
+.cx-desk-group::before {
+  content: '';
+  position: absolute;
+  top: 14px;
+  bottom: 14px;
+  left: 0;
+  width: 1px;
+  background: var(--t1);
+}
+
+.cx-desk-group-lbl {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  height: 44px;
+  border-bottom: 1px solid var(--hair);
+  font-size: 9.5px;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--t2);
+}
+
+.cx-desk-group-lbl i {
+  font-style: normal;
+  color: var(--t6);
+}
+
+.cx-desk-master {
+  grid-template-columns: 60px 280px minmax(120px, 1fr) 96px;
+  grid-template-areas: 'ring txt fader foot';
+}
+
+.cx-desk-master .cx-desk-txt {
+  grid-area: txt;
+}
+
+.cx-desk-ring {
+  display: grid;
+  grid-area: ring;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 55%);
+  color: var(--t1);
+}
+
+.cx-desk-ring svg {
+  width: 15px;
+  height: 15px;
+}
+
+.cx-desk-hint {
+  margin-top: 16px;
+  font-size: 9.5px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--t7);
+}
+
+.cx-root .cx-desk-toggle {
+  color: var(--t4);
+}
+
+.cx-root .cx-desk-toggle:hover,
+.cx-root .cx-desk-toggle:focus-visible {
+  color: var(--t1);
+}
+
+/* A scene: a moment the house was in, kept as a line. */
+.cx-desk-scenes {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 0 40px;
+  margin-top: 6px;
+}
+
+.cx-desk-scene {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  min-height: 60px;
+  border-bottom: 1px solid var(--hair);
+}
+
+.cx-desk-scene-hit {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+  text-align: left;
+}
+
+.cx-desk-scene-art {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 2px;
+  background-position: center;
+  background-size: cover;
+  box-shadow: 0 0 0 1px rgb(255 255 255 / 6%);
+  color: var(--t7);
+}
+
+.cx-desk-scene-txt {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.cx-desk-scene-name {
+  overflow: hidden;
+  font-size: 9.5px;
+  letter-spacing: 0.22em;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--t2);
+}
+
+.cx-desk-scene-sub {
+  overflow: hidden;
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--t5);
+}
+
+/* In the hand: the name and the word on one line, the fader on the next. */
+.cx-desk[data-phone] .cx-desk-strip {
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    'hit foot'
+    'fader fader';
+  padding-top: 10px;
+}
+
+.cx-desk[data-phone] .cx-desk-hit {
+  height: 48px;
+}
+
+.cx-desk[data-phone] .cx-desk-fader {
+  margin: 0;
+}
+
+.cx-desk[data-phone] .cx-desk-master {
+  grid-template-columns: 60px minmax(0, 1fr) auto;
+  grid-template-areas:
+    'ring txt foot'
+    'fader fader fader';
+}
+
+.cx-desk[data-phone] .cx-desk-group {
+  padding-left: 16px;
 }

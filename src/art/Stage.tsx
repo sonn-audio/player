@@ -20,7 +20,7 @@ import { zoneCoverCss } from '@/art/cover';
 import { horizontalDrag } from '@/art/drag';
 import { useVolumeControl } from '@/art/volume';
 import { Crossfade } from '@/art/Crossfade';
-import { artKeyOf } from '@/art/accent';
+import { artKeyOf } from '@/art/artKey';
 import type { RoomDrag } from '@/art/useRoomDrag';
 import { Motion } from '@/art/Motion';
 import { useZoneFavorite } from '@/state/useZoneFavorite';
@@ -30,6 +30,7 @@ import { useLeaving } from '@/art/Leaving';
 import { Mark } from '@/components/Mark';
 import {
   ChevronGlyph,
+  QueueGlyph,
   ForwardGlyph,
   HeartGlyph,
   NextGlyph,
@@ -215,7 +216,25 @@ function Live() {
  * so favouriting from it would save nothing. The favourite still lands on the room you are looking
  * at, which is what "favourite of where" means here.
  */
-function Favourite({ cur, round = false }: { cur: Cur; round?: boolean }) {
+/**
+ * What is on the line, as a lamp and a figure, and the door to the reading.
+ *
+ * The lamp is always there and is lit for one thing only: a signal that reached the room untouched.
+ * Anything else is a grey dot and the figure — a fact, not a warning.
+ */
+function Wire({ cur, onSignal }: { cur: Cur; onSignal: () => void }) {
+  const ok = Boolean(cur.leader?.format?.bitPerfect);
+  return (
+    <button type="button" className="cx-wire mono" data-ok={ok || undefined} onClick={onSignal} title="What is happening to the audio">
+      <i className="cx-wire-lamp" aria-hidden="true" />
+      {ok && 'Bit-perfect'}
+      <b>{wireLabel(cur)}</b>
+      <ForwardGlyph size={11} />
+    </button>
+  );
+}
+
+function Favourite({ cur }: { cur: Cur }) {
   const { available, saved, toggle } = useZoneFavorite(cur.leader);
 
   if (!available) {
@@ -224,12 +243,12 @@ function Favourite({ cur, round = false }: { cur: Cur; round?: boolean }) {
   return (
     <button
       type="button"
-      className={round ? 'cx-fav-round' : 'cx-fav'}
+      className="cx-fav"
       data-on={saved ? '' : undefined}
       aria-label={saved ? 'Remove from favourites' : 'Add to favourites'}
       onClick={toggle}
     >
-      <HeartGlyph size={round ? 18 : 17} filled={Boolean(saved)} />
+      <HeartGlyph size={17} filled={Boolean(saved)} />
     </button>
   );
 }
@@ -680,22 +699,7 @@ export function Stage({
              * a chip that says what it is about is a door that says where it goes.
              */}
             {cur.hasTrack && (
-              <button
-                type="button"
-                className="cx-wire mono"
-                data-ok={leader?.format?.bitPerfect || undefined}
-                onClick={onSignal}
-                title="What is happening to the audio"
-              >
-                {leader?.format?.bitPerfect && (
-                  <>
-                    <i className="cx-wire-lamp" aria-hidden="true" />
-                    Bit-perfect
-                  </>
-                )}
-                <b>{wireLabel(cur)}</b>
-                <ForwardGlyph size={11} />
-              </button>
+<Wire cur={cur} onSignal={onSignal} />
             )}
           </span>
 
@@ -903,10 +907,8 @@ export function Stage({
                     <div className="cx-onradio-doors">
                       {live.doors.map((door) => (
                         <button type="button" className="cx-onradio-door" key={door.id} onClick={() => live.onOpen(door)}>
-                          <span className="cx-onradio-mark disp" aria-hidden="true">
-                            {door.name.slice(0, 2)}
-                          </span>
                           <span className="cx-onradio-name">{door.name}</span>
+                          <ForwardGlyph size={11} />
                         </button>
                       ))}
                     </div>
@@ -1094,36 +1096,25 @@ export function MobileStage({
   };
 
   return (
-    <div className="cx-mstage" data-quiet={!cur.hasTrack || undefined}>
-      {/* The room, lit by the record: the sleeve blurred to a wall behind everything. This is the whole
-          background of the phone player — there is no other surface. */}
-      {cur.hasTrack && (
-        <Crossfade
-          artKey={artKey}
-          cover={zoneCoverCss(api, leader)}
-          render={(slot) => (
-            <>
-              <span className="cx-mstage-bg" style={{ backgroundImage: slot.cover }} />
-              <span className="cx-mstage-scrim" />
-            </>
-          )}
-        />
-      )}
-
-      {/* The way back down, where the mockup puts it: top-left, a chevron, nothing else. */}
-      {onDismiss && (
-        <button type="button" className="cx-np-close" onClick={onDismiss} aria-label="Close the player">
-          <ChevronGlyph size={26} />
+    <div className="cx-np" data-quiet={!cur.hasTrack || undefined}>
+      {/* The head: the way back down, which room this is, and what follows. */}
+      <div className="cx-np-top">
+        {onDismiss && (
+          <button type="button" className="cx-np-close" onClick={onDismiss} aria-label="Close the player">
+            <ChevronGlyph size={22} />
+          </button>
+        )}
+        <button type="button" className="cx-np-room mono" onClick={onOpenRooms}>
+          {cur.name || 'rooms'}
+          {cur.grouped && <i>+{cur.groupExtra}</i>}
         </button>
-      )}
-
-      {/* Which room this is, over the sleeve's top edge, and the way to the others. It stood in the
-          foot beside the queue; up here it is the header a full-screen player has anyway. */}
-      <button type="button" className="cx-np-roompill mono" onClick={onOpenRooms}>
-        {cur.name || 'rooms'}
-        {cur.grouped && <i className="cx-np-plus">+{cur.groupExtra}</i>}
-        <ChevronGlyph size={12} />
-      </button>
+        {!cur.isLive && cur.hasTrack && (
+          <button type="button" className="cx-np-queue mono" onClick={onOpenQueue} aria-label="Up next">
+            {upNextTotal > 0 && <b>{upNextTotal}</b>}
+            <QueueGlyph size={18} />
+          </button>
+        )}
+      </div>
 
       {/*
        * The sleeve as a square, inset, with corners.
@@ -1158,8 +1149,6 @@ export function MobileStage({
               render={(slot) => <span className="cx-np-cover-art" style={{ backgroundImage: slot.cover }} />}
             />
             <Motion src={cur.motion} />
-            {/* The printed gloss, the same breath the desk's sleeve carries. */}
-            <span className="cx-np-gloss" aria-hidden="true" />
             {!cur.isPlaying && (
               <span className="cx-doek-play" aria-hidden="true">
                 <PlayGlyph size={20} />
@@ -1174,20 +1163,6 @@ export function MobileStage({
       </div>
 
       <div className="cx-np-meta">
-        {/*
-         * Provenance and the one measurement, on a line of their own above the title — the same
-         * eyebrow the desk has. The chip is the door to the reading; on a phone it is the only one.
-         */}
-        {cur.hasTrack && (
-          <div className="cx-np-eyebrow mono">
-            {cur.source && <span>{cur.source}</span>}
-            <button type="button" className="cx-wire mono" onClick={onSignal} title="What is happening to the audio">
-              {wireLabel(cur)}
-              <ForwardGlyph size={11} />
-            </button>
-          </div>
-        )}
-
         {/*
          * The label, as one object that is replaced rather than four lines that blink.
          *
@@ -1244,8 +1219,15 @@ export function MobileStage({
               />
             )}
           </span>
-          {cur.hasTrack && <Favourite cur={cur} round />}
         </div>
+
+        {/* What is on the line, and the heart: one quiet row between the label and the clock. */}
+        {cur.hasTrack && (
+          <div className="cx-np-line">
+            <Wire cur={cur} onSignal={onSignal} />
+            <Favourite cur={cur} />
+          </div>
+        )}
 
         {cur.error && <p className="cx-error">{cur.error}</p>}
 
@@ -1265,36 +1247,17 @@ export function MobileStage({
          * A scanned envelope belongs to the desk — at this size it was texture rather than shape.
          */}
         {cur.showBar && (
-          <div className="cx-np-prog">
+          <div className="cx-np-prog mono">
+            <span>{cur.elapsed}</span>
             <Timeline cur={cur} bare />
-            <div className="cx-np-times mono">
-              <span>{cur.elapsed}</span>
-              <span>{cur.remain}</span>
-            </div>
+            <span>{cur.remain}</span>
           </div>
         )}
         {cur.isLive && <Live />}
 
         <Transport cur={cur} size="phone" />
 
-        {/*
-         * The room on the left, the running order on the right.
-         *
-         * This row replaces the strip of room chips. Chips put every room on screen at all times
-         * and asked the thumb to aim at 60px words; the room you are in is one press from the
-         * sheet that shows all of them properly, and the space buys the queue a way in that the
-         * player screen never had.
-         */}
-        <div className="cx-np-foot">
-          <PhoneVolume cur={cur} />
-          {!cur.isLive && cur.hasTrack && (
-            <button type="button" className="cx-np-queue mono" onClick={onOpenQueue}>
-              up next
-              {upNextTotal > 0 && <b>{upNextTotal}</b>}
-              <ChevronGlyph size={14} className="cx-np-queue-up" />
-            </button>
-          )}
-        </div>
+        <PhoneVolume cur={cur} />
       </div>
     </div>
   );

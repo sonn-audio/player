@@ -1,35 +1,30 @@
 /**
- * What a service is known by: its colour, and — for the two without a trademark — its drawing.
- * The library is a record and the radio is waves, at the weight the real logos have.
- */
-/**
  * A service, as a mark rather than a panel.
  *
  * Five services once took the whole front of the catalogue: five tall panels with a rack of records
  * in each, which is a great deal of room spent saying *there are five services*. A service is a place
  * you go through, not a thing you look at — so it is a mark in a row, the way every music app that
  * has thought about it draws one, and the room that buys goes to music you can actually press.
+ * It is a ring on the panel, in silver like everything else that is not a sleeve: a logo sits in it
+ * in grey and takes its own colour when it is pointed at.
  *
  * The mark is the service's own logo, from `public/icons/service-<id>.svg`. A logo is a trademark
  * and not something a player gets to draw from memory, so it is the real file or nothing: the three
  * that ship are the official app icons. A service with no file — the library, the radio shelf, both
- * of which are ours rather than anyone's brand — falls back to its monogram on its own colour, which
- * is most of what tells one of these apart at this size. `.png` is tried after `.svg`, so which kind
+ * of which are ours rather than anyone's brand — falls back to a drawing of what it is, or its monogram. `.png` is tried after `.svg`, so which kind
  * a file is never has to be configured.
  */
-const TINT: Record<string, string> = {
-  spotify: '#1db954',
-  /* Apple's own is a gradient, and it has to be one here: flat, its red and YouTube's were the same
-     disc twice in a row of five. */
-  applemusic: '#f4327a',
-  ytmusic: '#ff0000',
-  radio: '#e8b84b',
-  library: '#7f8da0',
+const TAG: Record<string, string> = {
+  spotify: 'SP',
+  applemusic: 'AM',
+  ytmusic: 'YT',
+  radio: 'RA',
+  library: 'LIB',
 };
 
-/** The colour a service is known by, for anything outside this file that draws one small. */
-export function serviceTint(service: string): string | undefined {
-  return TINT[service];
+/** Two or three capitals for a service, for a row that has to say where it came from. */
+export function serviceTag(service: string): string {
+  return TAG[service] ?? service.slice(0, 2).toUpperCase();
 }
 
 /** The drawn marks: the library as a record, the radio as waves. Null for a service with a logo file. */

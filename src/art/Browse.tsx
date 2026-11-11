@@ -28,17 +28,16 @@ import { ApiError } from '@/api/client';
 import { useFavorites, useRecents } from '@/art/useCollections';
 import { captureCoverFrom, useCoverAnchor } from '@/shell/coverMorph';
 import { itemCoverCss, zoneCoverCss } from '@/art/cover';
-import { useVolumeControl } from '@/art/volume';
 import { Motion } from '@/art/Motion';
 import { Crossfade } from '@/art/Crossfade';
-import { artKeyOf } from '@/art/accent';
+import { artKeyOf } from '@/art/artKey';
 import { useLeaving } from '@/art/Leaving';
 import { Origin, titleStep } from '@/art/Stage';
 import { useResolved } from '@/art/useOrigin';
 import { ArtistWork, artistLine, useArtistRecords } from '@/art/Artist';
 import { LetterIndex, alphabetical } from '@/art/Index';
 import { Crate } from '@/art/Crate';
-import { serviceGlyph, serviceTint } from '@/art/serviceMark';
+import { serviceGlyph, serviceTag } from '@/art/serviceMark';
 import {
   BackGlyph,
   Bars,
@@ -293,7 +292,7 @@ function ServiceMark({
       type="button"
       className="cx-mark"
       onClick={onOpen}
-      style={{ '--i': index, '--tint': serviceTint(service) ?? 'var(--accent)' } as React.CSSProperties}
+      style={{ '--i': index } as React.CSSProperties}
       title={item.name}
     >
       <span className="cx-mark-face" data-logo={shown || undefined}>
@@ -680,11 +679,9 @@ export function Tile({
         <Motion src={item.animatedCoverUrl} active={hovered} />
         <span className="cx-tile-ov" />
         {badge && (
-          <span
-            className="cx-svc-dot cx-tile-svc"
-            style={{ '--tint': serviceTint(badge.split(':')[0] ?? badge) ?? 'var(--t6)' } as React.CSSProperties}
-            aria-hidden="true"
-          />
+          <span className="cx-svc cx-tile-svc mono" aria-hidden="true">
+            {serviceTag(badge.split(':')[0] ?? badge)}
+          </span>
         )}
         {item.playable && (
           <span
@@ -901,11 +898,9 @@ export function TrackRow({
           <span className="cx-ttitle">
             {item.name}
             {badge && (
-              <i
-                className="cx-svc-dot cx-trow-svc"
-                style={{ '--tint': serviceTint(badge.split(':')[0] ?? badge) ?? 'var(--t6)' } as React.CSSProperties}
-                aria-hidden="true"
-              />
+              <i className="cx-svc cx-trow-svc mono" aria-hidden="true">
+                {serviceTag(badge.split(':')[0] ?? badge)}
+              </i>
             )}
           </span>
           {sub ? (
@@ -2217,14 +2212,12 @@ export function Sources({ zone, zones, onDone }: { zone: ApiZoneState | null; zo
 /**
  * The mini bar: what is playing, while you are looking at something else.
  *
- * Desktop only, and only while browsing — on the phone the bottom nav carries the way back to the
- * player, and stacking a mini bar above a five-tab nav leaves a listing two rows tall. Its
- * background is the artwork, blurred and desaturated, which is what keeps it feeling like part of
- * the page rather than a toolbar dropped on it.
+ * The phone's, above its tabs; the desk has the strip along the foot of the frame. A hairline that is
+ * the track's position, the sleeve, the name and the room, and a ring to stop it. Pressing anywhere
+ * but the ring opens the player.
  */
 export function MiniBar({ cur, onOpen }: { cur: Cur; onOpen: () => void }) {
   const api = useApi();
-  const control = useVolumeControl(cur.zone);
   const leader = cur.leader;
   /* The bar is on screen through every track change while you are reading the catalogue, so it
      dissolves like everything else that carries a record. */
@@ -2238,17 +2231,6 @@ export function MiniBar({ cur, onOpen }: { cur: Cur; onOpen: () => void }) {
 
   return (
     <div className="cx-mini">
-      {cur.hasTrack && (
-        <>
-          <Crossfade
-            artKey={artKey}
-            cover={zoneCoverCss(api, leader, 240)}
-            ms={1400}
-            render={(slot) => <span className="cx-mini-bg" style={{ backgroundImage: slot.cover }} />}
-          />
-          <span className="cx-mini-scrim" />
-        </>
-      )}
       <span className="cx-mini-prog">
         <i style={{ width: cur.pct }} key={`${cur.title}|${cur.durationSec}`} />
       </span>
@@ -2273,31 +2255,18 @@ export function MiniBar({ cur, onOpen }: { cur: Cur; onOpen: () => void }) {
               {title}
             </span>
           </span>
-          <span className="cx-mini-sub mono">{cur.name}</span>
+          <span className="cx-mini-sub">{cur.artist || cur.name}</span>
         </span>
       </button>
 
-      <div className="cx-mini-transport">
-        <button
-          type="button"
-          className="cx-mini-play"
-          aria-label={cur.isPlaying ? 'Pause' : 'Play'}
-          onClick={() => void (cur.isPlaying ? api.pause(leader.id) : api.play(leader.id))}
-        >
-          {cur.isPlaying ? <PauseGlyph size={17} /> : <PlayGlyph size={18} />}
-        </button>
-      </div>
-
-      <span className="cx-mini-vol">
-        <SpeakerGlyph size={15} />
-        <span className="cx-vol-slider" onPointerDown={control.onPointerDownH}>
-          <span className="cx-vol-rail">
-            <span className="cx-vol-fill" style={{ width: control.pct }} />
-            <span className="cx-vol-knob" style={{ left: control.pct }} />
-          </span>
-        </span>
-        <span className="cx-mini-vol-num mono">{control.value}</span>
-      </span>
+      <button
+        type="button"
+        className="cx-mini-play"
+        aria-label={cur.isPlaying ? 'Pause' : 'Play'}
+        onClick={() => void (cur.isPlaying ? api.pause(leader.id) : api.play(leader.id))}
+      >
+        {cur.isPlaying ? <PauseGlyph size={15} /> : <PlayGlyph size={15} />}
+      </button>
     </div>
   );
 }

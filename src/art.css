@@ -18,27 +18,6 @@
  */
 
 /*
- * The accent, registered so it can glide.
- *
- * `--g` is set per track from the sleeve (see `accent.ts`) and a plain custom property does not
- * interpolate — it would pop from one album's tint to the next while the wash behind it takes 1.9s to
- * dissolve. Registering it as a `<color>` is what makes `transition: --g` legal, and it is the only
- * reason this is here rather than in the token block below. `inherits: true` because everything from the
- * play ring to the timeline reads it from `.cx-root`.
- */
-@property --g {
-  syntax: '<color>';
-  inherits: true;
-  initial-value: #c9cdd4;
-}
-
-@property --gb {
-  syntax: '<color>';
-  inherits: true;
-  initial-value: #dfe2e6;
-}
-
-/*
  * The sleeve's size, registered so the desk can *grow into* the picture instead of cutting to it.
  *
  * A plain custom property does not interpolate, so `--cx-cover-size` jumping from the composition's
@@ -53,31 +32,12 @@
   initial-value: 0px;
 }
 
-/* The phone stage's ground — the record's own dark, damped (see `stageOf`). Registered for the
-   same reason as the accent: the room should change temperature on a dissolve, not on a cut. */
-@property --cx-stage {
-  syntax: '<color>';
-  inherits: true;
-  initial-value: #0a0a0c;
-}
-
 .cx-root {
-  /*
-   * Silver, or the record's own colour damped 40% toward it — never the console's green.
-   *
-   * The green belongs to the surface that has verdicts to give. This one has a record playing: it
-   * reports nothing, so its accent is what a control surface is when it is not saying anything. The
-   * inline style from `accent.ts` overrides these; they are the value for a room playing nothing.
-   */
-  --g: #c9cdd4;
-  --gb: #dfe2e6;
+  /* Silver: what a control surface is when it is not saying anything. The sleeve is the only colour
+     on this face, and green is only ever a verdict. */
+  --g: #d4d6da;
+  --gb: #e6e7ea;
   --gon: #0a0a0b;
-  --cx-stage: #0a0a0c;
-
-  transition:
-    --g 1.9s ease,
-    --gb 1.9s ease,
-    --cx-stage 1.9s ease;
 
   /* the only surface */
   --cx-bg: #0a0a0c;
@@ -198,12 +158,6 @@
   opacity: 1;
 }
 
-/* The phone player's own ground drifts, slowly: light in a room is never still. */
-.cx-mstage-bg {
-  animation: cx-wash-drift 90s ease-in-out infinite alternate;
-  will-change: transform;
-}
-
 @keyframes cx-wash-drift {
   from {
     transform: scale(1) translate(0, 0);
@@ -238,15 +192,6 @@
   mix-blend-mode: overlay;
 }
 
-/* --- the marks the phone header keeps -------------------------------------- */
-
-/* The mark is the accent, here as everywhere: the drawing is the brand and the brand has one colour. */
-.cx-brand-mark {
-  width: 30px;
-  height: 24px;
-  color: var(--accent);
-}
-
 /*
  * Out of touch with the house, as a dot.
  *
@@ -261,46 +206,6 @@
   border-radius: 50%;
   background: var(--warn);
   animation: cx-breathe 2.4s ease-in-out infinite;
-}
-
-.cx-room-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  padding: 7px 9px;
-  border-radius: 6px;
-  font-size: 10px;
-  letter-spacing: 0.18em;
-  color: var(--t2);
-  transition: background 0.18s;
-}
-
-.cx-room-btn:hover {
-  background: rgb(255 255 255 / 4%);
-}
-
-/* --- phone header --------------------------------------------------------- */
-
-.cx-mhead {
-  position: relative;
-  z-index: 3;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex: none;
-  height: 54px;
-  padding: max(6px, env(safe-area-inset-top)) 16px 0;
-}
-
-.cx-brand {
-  display: inline-flex;
-  align-items: center;
-  flex: none;
-}
-
-.cx-mhead .cx-brand-mark {
-  width: 26px;
-  height: 21px;
 }
 
 /* --- body ----------------------------------------------------------------- */
@@ -1060,32 +965,6 @@
   background: var(--t8);
 }
 
-/*
- * The format chip — the one boxed thing on the poster, because it is the one thing on the poster that
- * is about the technology. Pushed to the far end of the eyebrow; opens the reading.
- */
-.cx-wire {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  margin-left: auto;
-  padding: 5px 9px 5px 10px;
-  border: 1px solid rgb(255 255 255 / 14%);
-  border-radius: 3px;
-  font-size: 9.5px;
-  letter-spacing: 0.18em;
-  color: var(--t4);
-  white-space: nowrap;
-  transition:
-    color 0.18s,
-    border-color 0.18s;
-}
-
-.cx-wire:hover {
-  color: var(--t1);
-  border-color: rgb(255 255 255 / 28%);
-}
-
 .cx-title {
   /* The name above it owns the space now — see `.cx-artistrow`. */
   margin-top: 0;
@@ -1200,8 +1079,7 @@
   white-space: nowrap;
 }
 
-.cx-fav,
-.cx-fav-round {
+.cx-fav {
   display: grid;
   place-items: center;
   flex: none;
@@ -1216,27 +1094,11 @@
   height: 32px;
 }
 
-/*
- * The phone's favourite, unboxed.
- *
- * It was a filled 46px disc beside the title — the only solid control on a screen where the transport is
- * an outlined ring, the volume is a hairline and the room switcher is two words. A grey circle is what a
- * button looks like when nothing around it has decided; everything around this one had. The touch target
- * stays 46px, which is the only thing the disc was actually contributing.
- */
-.cx-fav-round {
-  width: 46px;
-  height: 46px;
-  color: var(--t6);
-}
-
-.cx-fav[data-on],
-.cx-fav-round[data-on] {
+.cx-fav[data-on] {
   color: var(--g);
 }
 
-.cx-fav:active,
-.cx-fav-round:active {
+.cx-fav:active {
   transform: scale(0.9);
 }
 
@@ -1704,75 +1566,6 @@
   transition: opacity 0.15s;
 }
 
-/* --- stage (phone) -------------------------------------------------------- */
-
-/*
- * The phone player never scrolls, and the artwork is what it protects.
- *
- * `.cx-doek` is `flex: none` and takes its height first; `.cx-mstage-controls` below it is `flex: 1` and is
- * what gives way. That is the opposite of the earlier arrangement, where the artwork was the only flexible
- * row and therefore the only thing that shrank — at 390×620 the sleeve had been squeezed to a 195px
- * thumbnail while a two-line title and a 60px play button kept every pixel they had. On the one screen whose
- * subject is a record, the record is the last thing that should give. The compact rules further down are
- * how everything else gets smaller instead.
- */
-.cx-mstage {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  /*
-   * Stretch, not centre.
-   *
-   * Centring was right when the children were a full-bleed canvas and a controls block that sized
-   * themselves; the sleeve and the type below it want the column's own width to measure against —
-   * centred, they collapsed to their content and `min(100% - 36px, …)` resolved against 16px of
-   * padding, so the cover computed to zero and simply was not there.
-   */
-  align-items: stretch;
-  flex: 1;
-  min-height: 0;
-  /*
-   * No padding at all, on either axis.
-   *
-   * The canvas is edge to edge and everything that is *not* the canvas pads itself — a 24px gutter here
-   * inset the artwork by 24px on both sides, which is the whole difference between a hung canvas and a
-   * picture in a mount. And no bottom reserve for the tab bar either: it is a flex sibling in the shell,
-   * not a fixed overlay, so it already has its own height.
-   */
-  padding: 0;
-  overflow: hidden;
-  animation: cx-view-in 0.3s var(--cx-ease) both;
-}
-
-.cx-mstage-bg {
-  position: absolute;
-  inset: -14%;
-  pointer-events: none;
-  background-position: center 30%;
-  background-size: cover;
-  filter: grayscale(1) blur(90px) brightness(0.58);
-}
-
-/*
- * The scrim is where the record paints the room.
- *
- * Its stops used to be the page's fixed near-black; they are now `--cx-stage` — the sleeve's own
- * `backgroundDark`, damped in `accent.ts` — so the whole phone player takes the record's
- * temperature the way an inner sleeve does, while the blurred artwork behind it stays the
- * grayscale light source it always was. The var glides (see its `@property`), so a track change
- * re-tempers the room over the same beat as the artwork's dissolve.
- */
-.cx-mstage-scrim {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--cx-stage) 30%, transparent),
-    color-mix(in srgb, var(--cx-stage) 85%, transparent)
-  );
-}
-
 /*
  * The play glyph, on a paused sleeve only.
  *
@@ -1809,23 +1602,6 @@
     opacity: 1;
     translate: none;
   }
-}
-
-.cx-mstage .cx-bar-wrap,
-.cx-mstage .cx-transport,
-.cx-mstage .cx-live,
-.cx-mstage .cx-cta {
-  flex: none;
-}
-
-.cx-mstage .cx-bar-wrap {
-  width: 100%;
-  max-width: none;
-  margin-top: clamp(14px, 3vh, 26px);
-}
-
-.cx-mstage .cx-live {
-  margin-top: clamp(16px, 3vh, 26px);
 }
 
 .cx-rail-sec {
@@ -2287,122 +2063,6 @@
   color: var(--t7);
 }
 
-/* --- welcome -------------------------------------------------------------- */
-
-.cx-welcome {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: safe center;
-  gap: clamp(10px, 2.4vh, 20px);
-  flex: 1;
-  min-height: 0;
-  padding: 30px clamp(24px, 5vw, 80px);
-  overflow-y: auto;
-  text-align: center;
-  animation: cx-view-in 0.4s var(--cx-ease) both;
-}
-
-.cx-welcome-greet {
-  font-size: clamp(34px, 6vh, 72px);
-  line-height: 1.02;
-  color: var(--t1);
-}
-
-.cx-welcome-shortcuts {
-  display: inline-flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 26px;
-  margin-top: 10px;
-}
-
-.cx-welcome-shortcuts button {
-  font-size: 10px;
-  letter-spacing: 0.2em;
-  color: var(--g);
-  transition: color 0.18s;
-}
-
-.cx-welcome-shortcuts button:hover {
-  color: var(--t1);
-}
-
-.cx-welcome-recents-row {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: clamp(20px, 2.4vw, 34px);
-}
-
-/*
- * The way back in, as records rather than as a list of names.
- *
- * This is the screen a wall panel sits on all day with nothing playing, and the only thing on it worth
- * looking at is the artwork of what was played here last. At 84px those were thumbnails beside a caption;
- * at 150px they are the four records on the shelf by the door, and the caption is the small part.
- */
-.cx-welcome-recent {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-  width: clamp(112px, 12vw, 168px);
-  transition: transform 0.3s var(--cx-ease);
-}
-
-.cx-welcome-recent:hover {
-  transform: translateY(-5px);
-}
-
-.cx-welcome-recent-cov {
-  position: relative;
-  width: 100%;
-  aspect-ratio: 1;
-  border-radius: 4px;
-  background-color: var(--cx-cover);
-  background-position: center;
-  background-size: cover;
-  box-shadow:
-    0 26px 50px -28px rgb(0 0 0 / 90%),
-    inset 0 0 0 1px rgb(255 255 255 / 12%);
-  transition: box-shadow 0.3s var(--cx-ease);
-}
-
-/* Each one lights its own patch of the wall on approach — the same idea as the stage's bloom, at the size
-   a shelf can afford. */
-.cx-welcome-recent-cov::after {
-  content: '';
-  position: absolute;
-  inset: 8%;
-  z-index: -1;
-  border-radius: 50%;
-  background: inherit;
-  background-size: cover;
-  filter: blur(28px) saturate(1.3);
-  opacity: 0;
-  transition: opacity 0.4s var(--cx-ease);
-}
-
-.cx-welcome-recent:hover .cx-welcome-recent-cov::after {
-  opacity: 0.7;
-}
-
-.cx-welcome-recent-title {
-  max-width: 100%;
-  font-size: 12.5px;
-  font-weight: 600;
-  color: var(--t3);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  transition: color 0.2s;
-}
-
-.cx-welcome-recent:hover .cx-welcome-recent-title {
-  color: var(--t1);
-}
-
 /* --- browse --------------------------------------------------------------- */
 
 .cx-browse {
@@ -2778,178 +2438,6 @@
 /* At the end of the page, the shelf needs air above it that a mid-page shelf does not. */
 .cx-similar {
   margin-top: 38px;
-}
-
-/*
- * On a phone, the record opens.
- *
- * The desk shows a sleeve beside a list — a catalogue's composition, and the right one where there
- * is width to compose in. A phone has one column and a thumb, and the page for one album should be
- * what the player already taught: the artwork edge to edge, melting into the page over its bottom
- * third, the words standing on the fade — the *doek*, again, because a record you are looking at
- * and a record that is playing are the same kind of object. The bloom layer stands down here; a
- * full-bleed picture does not need its own halo behind it.
- */
-/*
- * Home, on a phone: a page you read, not a statement you look at.
- *
- * The desk version of this screen exists for a quiet house — one greeting, centred, everything
- * else small under it. A phone opens onto it every time, so it has to work as a *daily* home: the
- * greeting steps down to a heading, the type goes left where reading starts, and everything below
- * becomes a shelf that runs off the right edge the way browsing's do.
- */
-@media (max-width: 979px) {
-  .cx-welcome {
-    align-items: stretch;
-    justify-content: flex-start;
-    gap: 0;
-    /* A belt beside the header's braces: if this screen is ever shown without the bar above it,
-       the greeting still clears the notch rather than being drawn under it. */
-    padding: max(22px, env(safe-area-inset-top)) 0 26px;
-    text-align: left;
-  }
-
-  /* Nothing on a scrolling page may be squeezed to make room: the column scrolls instead. Without
-     this the chips row — a flex item like any other — shrank to a band of clipped pills. */
-  .cx-welcome > * {
-    flex: none;
-  }
-
-  .cx-welcome > *:not(.cx-welcome-recents) {
-    padding-inline: var(--home-pad, 22px);
-  }
-
-  .cx-welcome-greet {
-    font-size: clamp(30px, 8vw, 40px);
-    letter-spacing: -0.035em;
-  }
-
-  /* The services, as a row that scrolls rather than a paragraph of words that wraps. */
-  .cx-welcome-shortcuts {
-    display: flex;
-    flex-wrap: nowrap;
-    justify-content: flex-start;
-    gap: 10px;
-    margin-top: 20px;
-    padding-bottom: 4px;
-    overflow-x: auto;
-    scrollbar-width: none;
-  }
-
-  .cx-welcome-shortcuts::-webkit-scrollbar {
-    display: none;
-  }
-
-  .cx-welcome-shortcuts button {
-    flex: none;
-    padding: 9px 15px;
-    border-radius: var(--r-pill, 999px);
-    background: rgb(255 255 255 / 6%);
-    color: var(--t2);
-    font-size: 9.5px;
-  }
-
-  /* The shelf: one row, cut by the window, the first sleeve on the page's own margin. */
-  .cx-welcome-recents-row {
-    flex-wrap: nowrap;
-    justify-content: flex-start;
-    gap: 14px;
-    padding: 2px var(--home-pad, 22px) 6px;
-    overflow-x: auto;
-    scroll-snap-type: x proximity;
-    scrollbar-width: none;
-  }
-
-  .cx-welcome-recents-row::-webkit-scrollbar {
-    display: none;
-  }
-
-  .cx-welcome-recent {
-    flex: none;
-    width: 132px;
-    scroll-snap-align: start;
-  }
-
-  /*
-   * The house, as a shelf of rooms.
-   *
-   * Wider and shorter than a record card, because a room is not a record: the sleeve is evidence
-   * of what is on rather than the subject, so it is a thumbnail beside two lines of type. The one
-   * you are in carries a hairline; a quiet room keeps its place and says `quiet`, because a room
-   * with nothing on is an answer rather than an absence.
-   */
-  .cx-rooms-row .cx-roomcard {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 9px;
-    flex: none;
-    width: 152px;
-    padding: 11px;
-    border-radius: 12px;
-    background: rgb(255 255 255 / 4%);
-    text-align: left;
-    scroll-snap-align: start;
-  }
-
-  .cx-rooms-row .cx-roomcard[data-current] {
-    background: rgb(255 255 255 / 8%);
-    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 14%);
-  }
-
-  .cx-roomcard-cov {
-    position: relative;
-    width: 46px;
-    height: 46px;
-    flex: none;
-    border-radius: 7px;
-    background-color: var(--cx-cover);
-    background-position: center;
-    background-size: cover;
-    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 10%);
-  }
-
-  /* The same breathing dot the chips used, on the corner of the sleeve. */
-  .cx-roomcard-dot {
-    position: absolute;
-    right: -3px;
-    bottom: -3px;
-    width: 9px;
-    height: 9px;
-    border-radius: 50%;
-    background: var(--g);
-    box-shadow: 0 0 0 3px var(--cx-stage);
-    animation: cx-breathe 2.8s ease-in-out infinite;
-  }
-
-  .cx-roomcard-name {
-    font-size: 9px;
-    letter-spacing: 0.18em;
-    color: var(--t6);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    max-width: 100%;
-  }
-
-  .cx-roomcard[data-current] .cx-roomcard-name {
-    color: var(--g);
-  }
-
-  .cx-roomcard-track {
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--t2);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    max-width: 100%;
-  }
-
-  .cx-roomcard[data-quiet] .cx-roomcard-track {
-    font-weight: 500;
-    color: var(--t7);
-  }
 }
 
 @media (max-width: 979px) {
@@ -3957,143 +3445,6 @@
   color: var(--t6);
 }
 
-/* --- mini bar ------------------------------------------------------------- */
-
-.cx-mini {
-  position: relative;
-  display: flex;
-  align-items: center;
-  gap: 26px;
-  flex: none;
-  isolation: isolate;
-  overflow: hidden;
-  padding: 12px 30px;
-  border-top: 1px solid var(--hair);
-}
-
-.cx-mini-bg {
-  position: absolute;
-  inset: 0;
-  z-index: -2;
-  background-position: center;
-  background-size: cover;
-  filter: grayscale(1) blur(44px) brightness(0.4);
-  transform: scale(1.9);
-  opacity: 0.5;
-}
-
-.cx-mini-scrim {
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  background: linear-gradient(90deg, rgb(10 10 12 / 50%), rgb(10 10 12 / 82%));
-}
-
-.cx-mini-prog {
-  position: absolute;
-  inset: -1px 0 auto;
-  height: 1px;
-}
-
-.cx-mini-prog i {
-  display: block;
-  height: 100%;
-  background: var(--g);
-  transition: width 0.92s linear;
-}
-
-.cx-mini-track {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  flex: 1;
-  min-width: 0;
-  text-align: left;
-}
-
-.cx-mini-track:hover {
-  opacity: 0.85;
-}
-
-.cx-mini-cov {
-  flex: none;
-  width: 40px;
-  height: 40px;
-  border-radius: 3px;
-  background-color: var(--cx-cover);
-  background-position: center;
-  background-size: cover;
-  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 12%);
-}
-
-.cx-mini-meta {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
-
-.cx-mini-title {
-  font-size: 14px;
-  font-weight: 650;
-  color: var(--t1);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.cx-mini-sub {
-  font-size: 9px;
-  letter-spacing: 0.14em;
-  color: var(--t6);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.cx-mini-transport {
-  display: flex;
-  align-items: center;
-  gap: 22px;
-  flex: none;
-}
-
-.cx-mini-play {
-  display: grid;
-  place-items: center;
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  box-shadow: inset 0 0 0 1.5px rgb(255 255 255 / 80%);
-  color: #fff;
-  transition:
-    background 0.18s,
-    color 0.18s;
-}
-
-.cx-mini-play:hover {
-  background: #fff;
-  color: #0a0a0b;
-}
-
-.cx-mini-vol {
-  display: inline-flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 12px;
-  flex: 1;
-  color: var(--t6);
-}
-
-.cx-mini-vol .cx-vol-slider {
-  width: 110px;
-}
-
-.cx-mini-vol-num {
-  font-size: 10.5px;
-  font-variant-numeric: tabular-nums;
-  color: var(--t4);
-}
-
 /* --- lining the rooms up -------------------------------------------------- */
 
 /*
@@ -4259,7 +3610,7 @@
  *    is boxed.
  *  - **The green.** `.cx-root` sets the accent to silver on purpose — a stage has a record playing and
  *    reports nothing. This surface has verdicts to give, so it takes the product's green back, and it
- *    has to be set here rather than on the root because `accent.ts` writes `--g` inline per track.
+ *    has to be set here rather than on the root, which keeps it silver.
  */
 .cx-sig {
   --g: var(--accent);
@@ -5322,294 +4673,11 @@
   }
 }
 
-/* --- phone nav ------------------------------------------------------------ */
-
-/*
- * The phone's player, as a layer over the app — all of it.
- *
- * It stopped short of the tab bar for a while, on the argument that leaving the nav reachable makes
- * the player a place you are rather than a modal you are trapped in. In the hand that argument is
- * wrong twice over: the record is the whole subject of this screen and a strip of navigation under
- * it says otherwise, and the way out is already the most learned gesture a phone has — the chevron
- * where a sheet's handle sits, and a downward swipe on the sleeve. So it covers everything, which
- * is what the design draws.
- */
-.cx-player-sheet {
-  position: fixed;
-  inset: 0;
-  z-index: 60;
-  display: flex;
-  flex-direction: column;
-  background: var(--cx-stage);
-  animation: cx-player-up 0.34s var(--cx-ease);
-}
-
 @keyframes cx-player-up {
   from {
     transform: translateY(14%);
     opacity: 0;
   }
-}
-
-/* The stage fills the layer; its own scrolling rules are unchanged. */
-.cx-player-sheet .cx-mstage {
-  flex: 1;
-  min-height: 0;
-}
-
-/*
- * The phone's now-playing screen, to the handoff's own drawing.
- *
- * What it replaces: a landscape crop of the sleeve bleeding to all four edges, its bottom third
- * melting into black, with the type stacked underneath and a strip of room chips at the foot. That
- * composition was built when this screen *was* home and the record had to be the room. As a place
- * you go to look at one record it reads as a picture that has been cut — so the sleeve is a square
- * with margins and corners again, the type starts on a clean edge under it, and the foot carries
- * the two things a player needs a way to: the room, and the running order.
- */
-/*
- * The player screen is black, not the room's colour.
- *
- * Everywhere else in this face the record lights the surface it sits on, and on the old phone home
- * that was the whole argument — the sleeve *was* the screen. Here the sleeve is a square object on
- * a page, and the same wash at full strength turned the page the album's colour, so the artwork sat
- * on a field of its own light and stopped being the brightest thing on screen. Held right down: a
- * whisper of the record's temperature, no more, which is what the design asks for.
- */
-.cx-player-sheet .cx-mstage-bg {
-  opacity: 0.34;
-}
-
-.cx-player-sheet .cx-mstage-scrim {
-  background: linear-gradient(180deg, rgb(10 10 11 / 62%), rgb(10 10 11 / 88%));
-}
-
-.cx-np-close {
-  position: absolute;
-  top: calc(env(safe-area-inset-top) + 12px);
-  left: 14px;
-  z-index: 8;
-  display: grid;
-  place-items: center;
-  width: 42px;
-  height: 42px;
-  color: var(--t2);
-  opacity: 0.9;
-  transition: transform 0.15s var(--cx-ease);
-}
-
-.cx-np-close:active {
-  transform: scale(0.88);
-}
-
-.cx-np-art {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex: 1 1 auto;
-  min-height: 0;
-  padding: calc(env(safe-area-inset-top) + 48px) 8px 0;
-}
-
-.cx-np-cover {
-  position: relative;
-  width: min(100% - 36px, 560px, 58vh);
-  aspect-ratio: 1;
-  overflow: hidden;
-  border-radius: 12px;
-  background-color: var(--cx-cover);
-  background-position: center;
-  background-size: cover;
-  box-shadow: 0 26px 70px -32px rgb(0 0 0 / 90%);
-  touch-action: pan-y;
-  transition:
-    translate 0.32s var(--cx-ease),
-    scale 0.32s var(--cx-ease);
-}
-
-/* While the finger is on it nothing may lag: the sleeve follows the drag exactly. */
-.cx-np-cover[data-dragging] {
-  transition: none;
-}
-
-.cx-np-gloss {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background: linear-gradient(
-    125deg,
-    rgb(255 255 255 / 14%) 0%,
-    rgb(255 255 255 / 3%) 18%,
-    transparent 42%,
-    transparent 78%,
-    rgb(0 0 0 / 16%)
-  );
-  mix-blend-mode: soft-light;
-}
-
-.cx-np-cover-empty {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 14px;
-  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 8%);
-  color: var(--t7);
-}
-
-.cx-np-meta {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  flex-direction: column;
-  flex: none;
-  padding: 0 26px calc(env(safe-area-inset-bottom) + 22px);
-}
-
-.cx-np-head {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  margin-top: clamp(12px, 2.4vh, 22px);
-}
-
-.cx-np-titles {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  min-width: 0;
-}
-
-.cx-np-title {
-  font-size: clamp(26px, 7vw, 32px);
-  font-weight: 800;
-  letter-spacing: -0.025em;
-  line-height: 1.14;
-  color: var(--t1);
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
-  overflow: hidden;
-}
-
-.cx-np-artist {
-  margin-top: 5px;
-  font-size: 16.5px;
-  font-weight: 500;
-  color: var(--t4);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-/* The heart, as a filled disc — the one solid control on this screen, and the design asks for it. */
-.cx-np-head .cx-fav-round {
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
-  background: rgb(255 255 255 / 8%);
-  color: var(--t3);
-}
-
-.cx-np-prog {
-  margin-top: clamp(18px, 3.4vh, 30px);
-}
-
-/* The bar is the shared `Timeline` in its `bare` form; here it is a 3px rail with no knob. */
-.cx-np-prog .cx-bar {
-  height: 14px;
-}
-
-.cx-np-prog .cx-bar-rail {
-  height: 3px;
-  border-radius: 999px;
-  background: rgb(255 255 255 / 10%);
-}
-
-.cx-np-prog .cx-bar-fill {
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--g) 60%, rgb(245 244 242 / 90%));
-}
-
-.cx-np-prog .cx-bar-knob {
-  display: none;
-}
-
-.cx-np-times {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 10px;
-  font-size: 11px;
-  letter-spacing: 0.02em;
-  font-variant-numeric: tabular-nums;
-  color: var(--t6);
-}
-
-/* Five controls, spread, with the one anyone is reaching for solid and white in the middle. */
-.cx-np-meta .cx-transport[data-size='phone'] {
-  justify-content: space-between;
-  gap: 0;
-  padding: 0 6px;
-  margin-top: clamp(14px, 2.8vh, 24px);
-}
-
-.cx-np-meta .cx-transport[data-size='phone'] .cx-tr-play {
-  width: 74px;
-  height: 74px;
-  background: #fff;
-  box-shadow: 0 12px 30px -12px rgb(0 0 0 / 70%);
-  color: #0a0a0b;
-}
-
-.cx-np-meta .cx-transport[data-size='phone'] .cx-tr-play:active {
-  transform: scale(0.93);
-}
-
-.cx-np-foot {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 14px;
-  margin-top: clamp(20px, 3.8vh, 34px);
-}
-
-.cx-np-queue {
-  display: inline-flex;
-  align-items: center;
-  gap: 9px;
-  padding: 8px 2px;
-  font-size: 15px;
-  transition: transform 0.15s var(--cx-ease);
-}
-
-.cx-np-plus {
-  font-style: normal;
-  font-weight: 800;
-  font-size: 13px;
-  color: var(--g);
-}
-
-.cx-np-queue {
-  gap: 10px;
-  flex: none;
-  color: var(--t4);
-}
-
-.cx-np-queue b {
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-  color: var(--t1);
-}
-
-.cx-np-queue:active {
-  transform: scale(0.96);
-}
-
-/* On a phone the bar is the player's doorway, so it sits on the nav rather than in the page. */
-.cx-mini {
-  position: relative;
-  z-index: 3;
 }
 
 /*
@@ -5679,8 +4747,9 @@
   display: grid;
   place-items: center;
   flex: none;
-  width: 30px;
-  height: 30px;
+  width: 44px;
+  height: 44px;
+  margin-right: -10px;
   color: var(--t7);
 }
 
@@ -5698,51 +4767,6 @@
  * furniture underneath is furniture.
  */
 @media (max-width: 979px) {
-  .cx-root .cx-mini {
-    gap: 12px;
-    padding: 9px 14px;
-    background: var(--cx-bg);
-    border-top: 1px solid var(--hair);
-  }
-
-  /* No album wash down here — see the note above. */
-  .cx-mini-bg,
-  .cx-mini-scrim {
-    display: none;
-  }
-
-  /* The played part of the track, as the plate's own top edge. Neutral: this is the one line on
-     the screen that is furniture and information at once, and it should not shout either. */
-  .cx-mini-prog {
-    inset: 0 0 auto;
-    height: 2px;
-  }
-
-  .cx-mini-prog i {
-    background: rgb(255 255 255 / 42%);
-  }
-
-  .cx-mini-cov {
-    box-shadow:
-      0 6px 16px -8px rgb(0 0 0 / 90%),
-      inset 0 0 0 1px rgb(255 255 255 / 12%);
-  }
-
-  /*
-   * Opaque and untinted: the blur was what let the record's colour through.
-   *
-   * Scoped through `.cx-root` on purpose — these overrides sit above the base definitions in this
-   * file, and at equal specificity the later rule would win.
-   */
-  .cx-root .cx-bnav {
-    background: var(--cx-bg);
-    backdrop-filter: none;
-  }
-
-  /* One line above the pair, not one between them. */
-  .cx-root .cx-mini + .cx-bnav {
-    border-top: 0;
-  }
 
   /*
    * The two bars are pinned to the viewport, not stacked at the end of a column.
@@ -5768,112 +4792,10 @@
     --mini-h: 60px;
   }
 
-  .cx-root .cx-bnav {
-    position: fixed;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    z-index: 55;
-    height: var(--nav-h);
-  }
-
-  .cx-root .cx-mini {
-    position: fixed;
-    left: 0;
-    right: 0;
-    bottom: var(--nav-h);
-    z-index: 54;
-    height: var(--mini-h);
-  }
-
   .cx-root .cx-body {
     padding-bottom: var(--nav-h);
   }
 
-  /* Only when the bar is actually there — an always-reserved strip is a gap on a quiet house. */
-  .cx-root:has(.cx-mini) .cx-body {
-    padding-bottom: calc(var(--nav-h) + var(--mini-h));
-  }
-
-  .cx-mini-vol {
-    display: none;
-  }
-
-  .cx-mini-transport {
-    gap: 10px;
-  }
-
-  .cx-mini-play {
-    width: 38px;
-    height: 38px;
-  }
-
-  .cx-mini-cov {
-    width: 42px;
-    height: 42px;
-    border-radius: 4px;
-  }
-
-  .cx-mini-title {
-    font-size: 13.5px;
-  }
-
-  /*
-   * The nav's own type, quieter and further apart.
-   *
-   * Five labels at 8px with the icons right on top of them read as a dense little keyboard. A step
-   * of air between glyph and word, a step down in weight for the word, and the live one goes white
-   * — no accent, because the accent here is the record's and this row is not about the record.
-   */
-  .cx-root .cx-bnav-tab {
-    gap: 6px;
-    color: var(--t7);
-  }
-
-  .cx-root .cx-bnav-tab span {
-    font-size: 8.5px;
-    letter-spacing: 0.18em;
-  }
-
-  .cx-root .cx-bnav-tab[data-on] {
-    color: var(--t1);
-  }
-}
-
-.cx-bnav {
-  /* Above the wash, for the same reason the strip is. */
-  position: relative;
-  z-index: 3;
-  display: flex;
-  align-items: stretch;
-  flex: none;
-  height: calc(56px + env(safe-area-inset-bottom));
-  padding-bottom: env(safe-area-inset-bottom);
-  border-top: 1px solid var(--hair);
-  /* The record's dark, not the page's: the nav stands on the stage it belongs to, and a fixed
-     near-black strip under a warm room was the one part of the screen refusing the light. */
-  background: color-mix(in srgb, var(--cx-stage) 92%, transparent);
-  backdrop-filter: blur(14px);
-}
-
-.cx-bnav-tab {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  flex: 1;
-  color: var(--t7);
-  transition: color 0.18s;
-}
-
-.cx-bnav-tab span {
-  font-size: 8px;
-  letter-spacing: 0.16em;
-}
-
-.cx-bnav-tab[data-on] {
-  color: var(--t1);
 }
 
 /* --- a short phone -------------------------------------------------------- */
@@ -5890,15 +4812,6 @@
  * content is also a whole tab in the nav two rows below it.
  */
 @media (max-height: 620px) {
-
-  .cx-fav-round {
-    width: 40px;
-    height: 40px;
-  }
-
-  .cx-mstage .cx-bar-wrap {
-    margin-top: 10px;
-  }
 
   .cx-transport[data-size='phone'] {
     gap: 24px;
@@ -5929,11 +4842,6 @@
  * necessary is the shape of the window, not how big it is: a tall 390px-wide phone must not get it.
  */
 @media (max-width: 979px) and (max-height: 520px) and (orientation: landscape) {
-  /* The whole stage turns: canvas on the left, player on the right. */
-  .cx-mstage {
-    flex-direction: row;
-    align-items: stretch;
-  }
 
   /*
    * The timeline stays horizontal, on the canvas's bottom edge.
@@ -6004,16 +4912,12 @@
  *
  * The artwork *grows* as the chrome leaves, which is the whole gesture: the record taking the room.
  */
-.cx-root[data-idle] .cx-mhead,
-.cx-root[data-idle] .cx-bnav,
 .cx-root[data-idle] .cx-transport,
 .cx-root[data-idle] .cx-bar-wrap,
 .cx-root[data-idle] .cx-times,
 .cx-root[data-idle] .cx-stage-foot,
 .cx-root[data-idle] .cx-house,
-.cx-root[data-idle] .cx-wire,
-.cx-root[data-idle] .cx-fav,
-.cx-root[data-idle] .cx-fav-round {
+.cx-root[data-idle] .cx-fav {
   opacity: 0;
   visibility: hidden;
   transition:
@@ -6036,8 +4940,6 @@
  * desktop stage grows into the 58px it gives up, so the sleeve ends the transition genuinely centred in
  * the window rather than centred above a bar that is no longer there.
  */
-.cx-root[data-idle] .cx-mhead,
-.cx-root[data-idle] .cx-bnav,
 .cx-root[data-idle] .cx-transport,
 .cx-root[data-idle] .cx-bar-wrap,
 .cx-root[data-idle] .cx-times,
@@ -6196,12 +5098,6 @@
   .cx-root[data-idle] .cx-cover-hover {
     opacity: 0;
   }
-}
-
-/* The wash comes up as the chrome goes down — the room gets darker and more coloured at once. */
-.cx-root[data-idle] .cx-mstage-scrim {
-  opacity: 0.55;
-  transition: opacity 1.4s var(--cx-ease);
 }
 
 /*
@@ -6389,262 +5285,6 @@
   }
 }
 
-/* ==========================================================================================
- * The phone, as the concept has it: the sleeve to the edges, the record's colour on the ring, the
- * house as posters, four tabs. Appended so it reads as one pass and wins on source order.
- * ========================================================================================== */
-
-/* --- the player --------------------------------------------------------------------------- */
-
-/*
- * The sleeve runs to both edges, and it is the thing that gives.
- *
- * It used to cap at `52vh` so the column below it would still fit, which was the right idea measured
- * against the wrong thing. A phone's viewport is not the room the player gets: a status bar takes
- * about sixty pixels off the top and the home indicator another thirty off the foot, and `vh` knows
- * nothing about either. On an iPhone the arithmetic came out seventy pixels short and the fader
- * walked off the bottom of the screen — present, laid out, and below the glass.
- *
- * So nothing is capped against the viewport any more. The column below states what it needs, the
- * sleeve takes what is left, and the order of giving is the one the rest of this player already
- * keeps: the picture yields, the controls never do. A sleeve with a margin either side of it on a
- * tight screen is still a whole sleeve; a fader you cannot reach is not a fader.
- */
-.cx-np-art {
-  position: relative;
-  /* May shrink, never grows: its base is the square it would like to be. */
-  flex: 0 1 auto;
-  min-height: 0;
-  align-items: flex-start;
-  justify-content: center;
-  padding: 0;
-}
-
-.cx-np-cover {
-  /*
-   * Height-driven, with the width left to the square. An explicit width and a height cap would
-   * squash the sleeve out of square; with `width: auto` the aspect ratio sends the clamp back the
-   * other way, so the picture stays a picture and simply gets smaller. The stated height is what it
-   * would like to be, and `max-height` is the room it actually got.
-   */
-  height: min(52vh, 100vw);
-  max-height: 100%;
-  width: auto;
-  max-width: 100%;
-  border-radius: 0;
-  box-shadow: none;
-}
-
-/* The ground rises into the sleeve's lower edge, so the picture sits in the room rather than on it. */
-.cx-np-art::after {
-  content: '';
-  position: absolute;
-  inset: auto 0 -1px;
-  height: 34%;
-  background: linear-gradient(to bottom, transparent, var(--cx-stage));
-  pointer-events: none;
-}
-
-.cx-np-gloss {
-  display: none;
-}
-
-.cx-np-roompill {
-  position: absolute;
-  top: calc(env(safe-area-inset-top) + 18px);
-  right: 14px;
-  z-index: 8;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 7px 10px 7px 12px;
-  border-radius: 20px;
-  background: rgb(10 10 12 / 38%);
-  backdrop-filter: blur(10px);
-  font-size: 10px;
-  letter-spacing: 0.2em;
-  color: rgb(255 255 255 / 90%);
-}
-
-.cx-np-roompill .cx-np-plus {
-  font-size: 10px;
-  color: var(--g);
-}
-
-/*
- * Grows into whatever is spare, never shrinks below what it says.
- *
- * It was `flex: 1`, which is `1 1 0%` — a basis of nothing, so the column never asked for the height
- * its own contents needed and simply spilled past the bottom of the screen when there was not enough.
- * With a basis of `auto` it states its size, the sleeve above it absorbs the shortfall, and the foot
- * stays on the glass.
- */
-.cx-np-meta {
-  flex: 1 0 auto;
-  min-height: 0;
-  padding: 0 24px calc(env(safe-area-inset-bottom) + 18px);
-}
-
-.cx-np-eyebrow {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-top: 18px;
-  font-size: 10px;
-  letter-spacing: 0.24em;
-  color: var(--t6);
-}
-
-.cx-np-eyebrow .cx-wire {
-  margin-left: auto;
-  color: var(--t5);
-}
-
-.cx-np-head {
-  margin-top: 14px;
-}
-
-.cx-np-title {
-  font-size: clamp(28px, 9vw, 36px);
-  letter-spacing: -0.04em;
-  line-height: 1;
-}
-
-.cx-np-artist {
-  margin-top: 10px;
-  font-size: 17px;
-  font-weight: 400;
-  color: var(--t3);
-}
-
-.cx-np-album {
-  margin-top: 6px;
-  font-size: 13px;
-  color: var(--t5);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.cx-np-prog {
-  margin-top: clamp(20px, 3.6vh, 32px);
-}
-
-.cx-np-meta .cx-bar-knob {
-  background: var(--t1);
-}
-
-/* The ring in the record's colour, no disc: a white 74px plate under a full-bleed sleeve was the one
-   thing on the phone player brighter than the artwork. */
-.cx-np-meta .cx-transport[data-size='phone'] {
-  justify-content: center;
-  gap: 30px;
-  padding: 0;
-  margin-top: clamp(16px, 3vh, 26px);
-}
-
-.cx-np-meta .cx-transport[data-size='phone'] .cx-tr-play {
-  width: 76px;
-  height: 76px;
-  background: none;
-  box-shadow: inset 0 0 0 1.5px var(--g);
-  color: var(--t1);
-  transition:
-    box-shadow 0.9s ease,
-    transform 0.15s;
-}
-
-.cx-np-meta .cx-transport[data-size='phone'] .cx-tr-skip {
-  color: var(--t2);
-}
-
-.cx-np-meta .cx-transport[data-size='phone'] .cx-tr-side {
-  color: var(--t6);
-}
-
-.cx-np-foot {
-  margin-top: auto;
-  padding-top: clamp(16px, 3vh, 28px);
-}
-
-.cx-np-vol {
-  display: inline-flex;
-  align-items: center;
-  gap: 12px;
-  color: var(--t6);
-}
-
-.cx-np-vol .cx-vol-slider {
-  width: 110px;
-  height: 28px;
-}
-
-.cx-np-vol-num {
-  min-width: 2ch;
-  font-size: 12px;
-  letter-spacing: 0.1em;
-  color: var(--t3);
-}
-
-.cx-np-queue {
-  gap: 10px;
-  padding: 8px 0;
-  font-size: 10px;
-  letter-spacing: 0.22em;
-  color: var(--t5);
-}
-
-.cx-np-queue b {
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--t2);
-}
-
-.cx-np-queue-up {
-  rotate: 180deg;
-}
-
-/* --- the mini bar, as a well above the tabs ----------------------------------------------- */
-
-@media (max-width: 979px) {
-  .cx-root .cx-mini {
-    left: 12px;
-    right: 12px;
-    bottom: calc(var(--nav-h) + 8px);
-    border-top: 0;
-    border-radius: 8px;
-    background: rgb(22 22 26);
-    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 5%);
-  }
-
-  .cx-mini-prog {
-    inset: auto 0 0;
-    height: 2px;
-    overflow: hidden;
-    border-radius: 0 0 8px 8px;
-  }
-
-  .cx-mini-prog i {
-    background: var(--g);
-  }
-
-  .cx-root .cx-bnav {
-    background: var(--cx-bg);
-  }
-}
-
-/* --- home ----------------------------------------------------------------------------------- */
-
-.cx-welcome-date {
-  font-size: 10px;
-  letter-spacing: 0.26em;
-  color: var(--t6);
-}
-
-.cx-welcome-greet {
-  margin-top: 12px;
-}
-
 .cx-hsec {
   display: flex;
   flex-direction: column;
@@ -6678,264 +5318,6 @@
   color: var(--t7);
 }
 
-/* The shortcut row is words, not pills: a row of six filled capsules was the loudest thing on home. */
-.cx-welcome-shortcuts {
-  gap: 26px;
-  margin-top: 22px;
-}
-
-.cx-welcome-shortcuts button {
-  font-size: 10px;
-  letter-spacing: 0.22em;
-  color: var(--t5);
-  transition: color 0.18s;
-}
-
-.cx-welcome-shortcuts button:hover {
-  color: var(--t1);
-}
-
-/* The house as posters: the sleeve fills the tile, the words stand on its foot. */
-.cx-rooms-row .cx-roomcard {
-  position: relative;
-  display: block;
-  flex: none;
-  width: clamp(210px, 22vw, 300px);
-  height: clamp(236px, 22vw, 300px);
-  padding: 0;
-  overflow: hidden;
-  border-radius: 6px;
-  background: rgb(255 255 255 / 3%);
-  text-align: left;
-  scroll-snap-align: start;
-  box-shadow: none;
-  transition: box-shadow 0.3s var(--cx-ease);
-}
-
-.cx-rooms-row .cx-roomcard[data-on] {
-  box-shadow: 0 30px 70px -30px color-mix(in srgb, var(--g) 45%, transparent);
-}
-
-.cx-rooms-row .cx-roomcard[data-current] {
-  background: rgb(255 255 255 / 3%);
-  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 10%);
-}
-
-.cx-rooms-row .cx-roomcard[data-current][data-on] {
-  box-shadow:
-    inset 0 0 0 1px rgb(255 255 255 / 10%),
-    0 30px 70px -30px color-mix(in srgb, var(--g) 45%, transparent);
-}
-
-.cx-rooms-row .cx-roomcard-cov {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  border-radius: 0;
-  box-shadow: none;
-}
-
-.cx-rooms-row .cx-roomcard[data-quiet] .cx-roomcard-cov {
-  opacity: 0.22;
-  filter: saturate(0.6);
-}
-
-/* The words stand on a dark foot the sleeve fades into. */
-.cx-rooms-row .cx-roomcard::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(to top, rgb(10 10 12 / 92%) 0%, rgb(10 10 12 / 35%) 45%, transparent 70%);
-  pointer-events: none;
-}
-
-.cx-rooms-row .cx-roomcard-txt {
-  position: absolute;
-  left: 18px;
-  right: 18px;
-  bottom: 16px;
-  z-index: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.cx-rooms-row .cx-roomcard-name {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 10px;
-  letter-spacing: 0.24em;
-  color: var(--t5);
-}
-
-.cx-rooms-row .cx-roomcard[data-on] .cx-roomcard-name,
-.cx-rooms-row .cx-roomcard[data-current] .cx-roomcard-name {
-  color: var(--t2);
-}
-
-.cx-rooms-row .cx-roomcard-dot {
-  position: static;
-  width: 5px;
-  height: 5px;
-  box-shadow: none;
-  animation: none;
-}
-
-.cx-rooms-row .cx-roomcard-track {
-  font-size: 17px;
-  font-weight: 600;
-  color: var(--t1);
-}
-
-.cx-rooms-row .cx-roomcard[data-quiet] .cx-roomcard-track {
-  font-size: 14px;
-  font-weight: 400;
-  color: var(--t7);
-}
-
-.cx-rooms-row .cx-roomcard-prog {
-  display: block;
-  height: 2px;
-  margin-top: 4px;
-  overflow: hidden;
-  border-radius: 2px;
-  background: rgb(255 255 255 / 16%);
-}
-
-.cx-rooms-row .cx-roomcard-prog i {
-  display: block;
-  height: 100%;
-  background: var(--g);
-  transition: width 0.92s linear;
-}
-
-/* Tiles: a little smaller, a touch quieter, the title in the body face. */
-.cx-welcome-recent-cov {
-  border-radius: 3px;
-  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 10%);
-}
-
-.cx-welcome-recent-title {
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--t2);
-}
-
-@media (max-width: 979px) {
-  .cx-welcome {
-    padding-top: max(18px, env(safe-area-inset-top));
-  }
-
-  .cx-welcome > .cx-hsec {
-    padding-inline: 0;
-  }
-
-  .cx-hsec-head {
-    padding-inline: var(--home-pad, 22px);
-  }
-
-  .cx-welcome-shortcuts {
-    gap: 22px;
-    padding-bottom: 0;
-  }
-
-  .cx-welcome-shortcuts button {
-    padding: 6px 0;
-    background: none;
-    color: var(--t5);
-  }
-
-  .cx-welcome-recents-row {
-    gap: 12px;
-  }
-
-  .cx-welcome-recent {
-    width: 120px;
-  }
-
-  .cx-rooms-row .cx-roomcard {
-    width: 210px;
-    height: 236px;
-  }
-}
-
-@media (min-width: 980px) {
-  .cx-welcome {
-    align-items: stretch;
-    justify-content: flex-start;
-    padding: 40px clamp(32px, 6vw, 96px) 30px;
-    text-align: left;
-  }
-
-  .cx-welcome-recents-row {
-    flex-wrap: nowrap;
-    justify-content: flex-start;
-    gap: 18px;
-    overflow-x: auto;
-    scrollbar-width: none;
-  }
-
-  .cx-welcome-recents-row::-webkit-scrollbar {
-    display: none;
-  }
-
-  .cx-welcome-recent {
-    flex: none;
-    width: 150px;
-  }
-}
-
-/* A short phone (an SE, a browser with its bars up): the sleeve gives up height first, then the type,
-   so the foot — the fader and what is next — stays on screen. */
-@media (max-width: 979px) and (max-height: 700px) {
-  /* Height-driven like the rule it tightens, or the square comes out a rectangle. */
-  .cx-np-cover {
-    height: min(44vh, 100vw);
-    width: auto;
-  }
-
-  .cx-np-eyebrow {
-    margin-top: 12px;
-  }
-
-  .cx-np-head {
-    margin-top: 10px;
-  }
-
-  .cx-np-title {
-    font-size: 28px;
-  }
-
-  .cx-np-artist {
-    margin-top: 6px;
-    font-size: 15px;
-  }
-
-  .cx-np-album {
-    margin-top: 4px;
-    font-size: 12px;
-  }
-
-  .cx-np-prog {
-    margin-top: 14px;
-  }
-
-  .cx-np-meta .cx-transport[data-size='phone'] {
-    margin-top: 12px;
-  }
-
-  .cx-np-meta .cx-transport[data-size='phone'] .cx-tr-play {
-    width: 64px;
-    height: 64px;
-  }
-
-  .cx-np-foot {
-    padding-top: 10px;
-  }
-}
-
 /* ==========================================================================================
  * The desk: rooms as channel strips, groups as blocks. See `Channels.tsx`.
  * ========================================================================================== */
@@ -6946,405 +5328,6 @@
   }
 
   /* A big house gets a big desk: past eight channels a wide screen holds twelve to a row, not eight. */
-}
-
-.cx-desk {
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-}
-
-.cx-desk-head {
-  margin-top: 10px;
-}
-
-.cx-desk-head:first-child {
-  margin-top: 0;
-}
-
-.cx-desk-toggle {
-  color: var(--t5);
-  transition: color 0.18s;
-}
-
-.cx-desk-toggle:hover {
-  color: var(--t1);
-}
-
-/*
- * The rooms, as cards.
- *
- * A grid that takes as many across as fit; a group is a block across the whole width with its members
- * inside it. One orientation — the level is a line under the room's name on a desk and on a phone alike —
- * so there is one card to draw and one gesture to learn.
- */
-.cx-desk-row {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(268px, 1fr));
-  gap: 12px;
-  padding-bottom: 4px;
-}
-
-/* --- a card ---------------------------------------------------------------------------------- */
-
-.cx-desk-strip {
-  position: relative;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  grid-template-areas:
-    'hit foot'
-    'fader fader';
-  align-items: center;
-  gap: 12px 14px;
-  min-width: 0;
-  padding: 14px 16px 14px 14px;
-  border-radius: 12px;
-  background: rgb(255 255 255 / 2.5%);
-  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 6%);
-  transition:
-    background 0.25s var(--cx-ease),
-    box-shadow 0.25s var(--cx-ease),
-    transform 0.25s var(--cx-ease);
-}
-
-.cx-desk-strip[data-current] {
-  background: rgb(255 255 255 / 4.5%);
-  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 11%);
-}
-
-.cx-desk-strip[data-on] {
-  box-shadow:
-    inset 0 0 0 1px rgb(255 255 255 / 8%),
-    0 24px 50px -30px color-mix(in srgb, var(--g) 50%, transparent);
-}
-
-.cx-desk-strip[data-hot] {
-  box-shadow: inset 0 0 0 1px var(--hair-strong, rgb(255 255 255 / 14%));
-}
-
-.cx-desk-strip[data-over] {
-  background: rgb(255 255 255 / 8%);
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--g) 60%, transparent);
-}
-
-.cx-desk-hit {
-  grid-area: hit;
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  min-width: 0;
-  cursor: grab;
-  text-align: left;
-}
-
-.cx-desk-cov {
-  display: grid;
-  place-items: center;
-  flex: none;
-  width: 52px;
-  height: 52px;
-  border-radius: 6px;
-  background-color: rgb(255 255 255 / 4%);
-  background-position: center;
-  background-size: cover;
-  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 10%);
-  color: var(--t7);
-  transition:
-    opacity 0.3s var(--cx-ease),
-    filter 0.3s var(--cx-ease);
-}
-
-.cx-desk-strip[data-quiet] .cx-desk-cov:not([data-empty]),
-.cx-desk-strip[data-role='follower'] .cx-desk-cov {
-  opacity: 0.45;
-  filter: saturate(0.6);
-}
-
-.cx-desk-txt {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 5px;
-  min-width: 0;
-}
-
-.cx-desk-name {
-  max-width: 100%;
-  overflow: hidden;
-  font-size: 10px;
-  letter-spacing: 0.16em;
-  color: var(--t5);
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.cx-desk-strip[data-on] .cx-desk-name,
-.cx-desk-strip[data-current] .cx-desk-name {
-  color: var(--t2);
-}
-
-.cx-desk-line {
-  max-width: 100%;
-  overflow: hidden;
-  font-size: 12.5px;
-  color: var(--t5);
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.cx-desk-strip[data-quiet] .cx-desk-line {
-  color: var(--t7);
-}
-
-/* --- the level ------------------------------------------------------------------------------- */
-
-.cx-desk-fader {
-  grid-area: fader;
-  display: flex;
-  flex-direction: row-reverse;
-  align-items: center;
-  gap: 12px;
-  color: var(--t6);
-}
-
-.cx-desk-fader-val {
-  min-width: 3ch;
-  font-size: 12px;
-  letter-spacing: 0.08em;
-  color: var(--t3);
-  text-align: right;
-  transition: color 0.2s;
-}
-
-.cx-desk-fader[data-muted] .cx-desk-fader-val {
-  color: var(--t7);
-}
-
-.cx-desk-fader-rail {
-  position: relative;
-  flex: 1;
-  height: 2px;
-  border-radius: 2px;
-  background: var(--track);
-  cursor: pointer;
-  touch-action: none;
-}
-
-/* A taller hit area than a 2px line: the rail's box is what the pointer is measured against. */
-.cx-desk-fader-rail::before {
-  content: '';
-  position: absolute;
-  inset: -14px 0;
-}
-
-.cx-desk-fader-fill {
-  position: absolute;
-  inset: 0 auto 0 0;
-  width: var(--pct);
-  border-radius: 2px;
-  background: var(--t3);
-  transition: background 0.3s;
-}
-
-.cx-desk-fader[data-lit] .cx-desk-fader-fill {
-  background: var(--g);
-}
-
-.cx-desk-fader[data-muted] .cx-desk-fader-fill {
-  background: var(--t7);
-}
-
-.cx-desk-fader-knob {
-  position: absolute;
-  top: 50%;
-  left: var(--pct);
-  width: 14px;
-  height: 14px;
-  margin: -7px 0 0 -7px;
-  border-radius: 50%;
-  background: var(--t1);
-  box-shadow: 0 0 0 3px var(--cx-surface);
-  transition: scale 0.18s var(--cx-ease);
-}
-
-.cx-desk-fader[data-active] .cx-desk-fader-knob {
-  scale: 1.25;
-}
-
-.cx-desk-fader[data-muted] .cx-desk-fader-knob {
-  background: var(--t6);
-}
-
-.cx-desk-foot {
-  grid-area: foot;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  min-height: 18px;
-}
-
-.cx-desk-word {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 9.5px;
-  letter-spacing: 0.2em;
-  color: var(--t6);
-  transition: color 0.18s;
-}
-
-.cx-desk-word:hover {
-  color: var(--t1);
-}
-
-.cx-desk-word[data-quiet] {
-  color: var(--t8);
-}
-
-/* --- a group ----------------------------------------------------------------------------------- */
-
-.cx-desk-group {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  grid-column: 1 / -1;
-  gap: 10px;
-  padding: 12px;
-  border-radius: 14px;
-  border: 1px solid color-mix(in srgb, var(--g) 32%, transparent);
-  background: color-mix(in srgb, var(--g) 5%, transparent);
-}
-
-.cx-desk-group-lbl {
-  display: inline-flex;
-  align-items: center;
-  gap: 12px;
-  padding: 0 4px;
-  font-size: 9.5px;
-  letter-spacing: 0.24em;
-  color: var(--g);
-}
-
-.cx-desk-group-lbl i {
-  font-style: normal;
-  color: var(--t6);
-}
-
-.cx-desk-group-row {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(268px, 1fr));
-  gap: 10px;
-}
-
-.cx-desk-master {
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  grid-template-areas:
-    'ring hit foot'
-    'fader fader fader';
-}
-
-.cx-desk-master .cx-desk-txt {
-  grid-area: hit;
-}
-
-.cx-desk-ring {
-  grid-area: ring;
-  display: grid;
-  place-items: center;
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  box-shadow: inset 0 0 0 1.5px rgb(223 226 230 / 90%);
-  color: var(--t1);
-  transition: transform 0.15s var(--cx-ease);
-}
-
-.cx-desk-ring:active {
-  transform: scale(0.94);
-}
-
-/* One line under the cards, not a box among them: dashes are what a drop target wears. */
-.cx-desk-hint {
-  grid-column: 1 / -1;
-  margin: 2px 0 0;
-  padding: 0 2px;
-  font-size: 9.5px;
-  letter-spacing: 0.2em;
-  color: var(--t7);
-}
-
-/* --- scenes ------------------------------------------------------------------------------------ */
-
-.cx-desk-scenes {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-}
-
-.cx-desk-scene {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  height: 44px;
-  padding: 0 14px 0 6px;
-  border-radius: 22px;
-  border: 1px solid rgb(255 255 255 / 14%);
-}
-
-.cx-desk-scene-hit {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  min-width: 0;
-  text-align: left;
-}
-
-.cx-desk-scene-art {
-  display: grid;
-  place-items: center;
-  flex: none;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background-color: rgb(255 255 255 / 5%);
-  background-position: center;
-  background-size: cover;
-  color: var(--t7);
-}
-
-.cx-desk-scene-txt {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  min-width: 0;
-}
-
-.cx-desk-scene-name {
-  font-size: 10px;
-  letter-spacing: 0.2em;
-  color: var(--t3);
-  white-space: nowrap;
-}
-
-.cx-desk-scene-sub {
-  max-width: 260px;
-  overflow: hidden;
-  font-size: 11px;
-  color: var(--t6);
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-/* --- a phone: the same cards, one under another ------------------------------------------- */
-
-.cx-desk[data-phone] .cx-desk-row,
-.cx-desk[data-phone] .cx-desk-group-row {
-  grid-template-columns: minmax(0, 1fr);
-  gap: 6px;
-}
-
-.cx-desk[data-phone] .cx-desk-scene-sub {
-  max-width: 180px;
 }
 
 /* ==========================================================================================
@@ -7495,15 +5478,6 @@
   color: var(--t6);
 }
 
-/* --- home on a phone: the shortcut row scrolls, and the cut edge says so rather than clipping a word --- */
-
-@media (max-width: 979px) {
-  .cx-welcome-shortcuts {
-    mask-image: linear-gradient(to right, #000 86%, transparent);
-    padding-right: 40px;
-  }
-}
-
 /* --- the queue: rows at the concept's height, sleeves at 44px --- */
 
 .cx-qrow {
@@ -7524,9 +5498,6 @@
 /* --- the reading on a phone: the band in three rows, no tab bar under an instrument --- */
 
 @media (max-width: 979px) {
-  .cx-root[data-view='signal'] .cx-bnav {
-    display: none;
-  }
 
   .cx-root[data-view='signal'] .cx-body {
     padding-bottom: 0 !important;
@@ -7895,44 +5866,6 @@
   color: var(--t1);
 }
 
-/* ==========================================================================================
- * Fourth pass: the record's two colours as the room, the strip alive, the title at poster size.
- * ========================================================================================== */
-
-@property --cx-a1 {
-  syntax: '<color>';
-  inherits: true;
-  initial-value: #0a0a0c;
-}
-
-@property --cx-a2 {
-  syntax: '<color>';
-  inherits: true;
-  initial-value: #0a0a0c;
-}
-
-.cx-root {
-  --cx-a1: #0a0a0c;
-  --cx-a2: #0a0a0c;
-  transition:
-    --g 1.9s ease,
-    --gb 1.9s ease,
-    --cx-stage 1.9s ease,
-    --cx-a1 2.4s ease,
-    --cx-a2 2.4s ease;
-}
-
-/* The phone player: the same two colours, the accent rising from the foot where the controls are. */
-.cx-mstage-scrim {
-  background:
-    radial-gradient(120% 60% at 50% 100%, color-mix(in srgb, var(--cx-a2) 55%, transparent) 0%, transparent 70%),
-    linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--cx-stage) 30%, transparent),
-      color-mix(in srgb, var(--cx-stage) 85%, transparent)
-    );
-}
-
 /* The title, at poster size on a wide window: the ladder's cap goes from 76 to 96. */
 @media (min-width: 1500px) {
   .cx-title {
@@ -8110,20 +6043,6 @@
   }
 }
 
-/* ==========================================================================================
- * Browse, again: the front is a hall of doors, a service's front is its record.
- * ========================================================================================== */
-
-/* --- the hall: every service a tall panel, the covers its wall --- */
-
-.cx-hall {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 14px;
-  /* The panels take the height that is left under the billboard: a hall, not a list. */
-  min-height: clamp(360px, 52vh, 620px);
-}
-
 /* At the front there is no page title: the word MUSIC is lit in the bar. The search stays. */
 .cx-browse-inner[data-root] .cx-browse-title {
   display: none;
@@ -8181,14 +6100,6 @@
   font-size: clamp(34px, 4.8vw, 68px);
 }
 
-@media (max-width: 979px) {
-  .cx-hall {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 10px;
-    min-height: 0;
-  }
-}
-
 /* The front's billboard is a band, not a page: the hall under it is the picture. */
 .cx-browse-inner[data-root] .cx-bill {
   padding-top: clamp(14px, 2vh, 24px);
@@ -8216,12 +6127,6 @@
   padding-top: 14px;
 }
 
-/* The hall fits under the band: on a 900px window that is ~420px of door, on a 1150px one ~600. */
-.cx-hall {
-  min-height: 0;
-  height: clamp(320px, calc(100vh - 470px), 620px);
-}
-
 /* A service's front: the way back, the service's name and the search share one line. */
 .cx-browse-inner[data-spotlight]:not([data-root]) {
   padding-top: 18px;
@@ -8229,32 +6134,6 @@
 
 .cx-browse-inner[data-spotlight]:not([data-root]) .cx-browse-back {
   margin-bottom: 12px;
-}
-
-@media (max-width: 979px) {
-  .cx-hall {
-    height: auto;
-  }
-}
-
-/* ==========================================================================================
- * The hall, again: one service or eight, and the sleeves whole.
- * ========================================================================================== */
-
-/* Panels of a fixed range of widths that wrap: one service is one poster, eight are two rows. */
-.cx-hall {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 14px;
-  height: auto;
-  min-height: 0;
-}
-
-@media (max-width: 979px) {
-  .cx-hall {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
 }
 
 /* ==========================================================================================
@@ -8563,10 +6442,6 @@
   color: var(--t6);
 }
 
-.cx-browse-room .cx-wire {
-  margin-left: 0;
-}
-
 /* The time on the right is a button; it looks like the number it is. */
 .cx-time-tot {
   font-size: inherit;
@@ -8764,17 +6639,6 @@
 
 .cx-title-tags + .cx-albumrow {
   margin-top: 8px;
-}
-
-.cx-np-tags {
-  display: block;
-  margin-top: 8px;
-  font-size: 9.5px;
-  letter-spacing: 0.22em;
-  color: var(--t5);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 /* On a wide window the controls grow with it. */
@@ -9001,12 +6865,6 @@
     /* Never scrollable: this is a page, not a panel. What is on it is sized to fit it — the name into
        its own box (`useFitText`), the rest by the short-window rules below. */
     overflow: hidden;
-    background:
-      linear-gradient(90deg, rgb(0 0 0 / 28%), transparent 14%),
-      radial-gradient(120% 90% at 0% 30%, color-mix(in srgb, var(--cx-a1) 92%, transparent) 0%, transparent 70%),
-      radial-gradient(90% 80% at 100% 100%, color-mix(in srgb, var(--cx-a2) 88%, transparent) 0%, transparent 66%),
-      #0a0a0c;
-    transition: background 1.9s ease;
   }
 
   .cx-stage[data-spread] .cx-stage-meta > * {
@@ -9023,10 +6881,6 @@
   .cx-stage[data-spread] .cx-stage-foot {
     margin-top: auto;
     padding-top: clamp(22px, 3.6vh, 44px);
-  }
-
-  .cx-stage[data-spread] .cx-eyebrow .cx-wire {
-    margin-left: auto;
   }
 
   /* The page's text keeps a reading measure on a very wide window. */
@@ -9156,9 +7010,6 @@
   .cx-root[data-idle] .cx-stage[data-spread] .cx-stage-meta {
     justify-content: flex-end;
     padding-bottom: clamp(44px, 7vh, 96px);
-    background:
-      radial-gradient(120% 90% at 0% 30%, color-mix(in srgb, var(--cx-a1) 45%, transparent) 0%, transparent 70%),
-      #0a0a0c;
   }
 
   .cx-root[data-idle] .cx-stage[data-spread] .cx-title {
@@ -9272,17 +7123,6 @@
 
   .cx-browse-inner[data-detail]:has(.cx-detail) .cx-about {
     max-width: 760px;
-  }
-}
-
-/* The phone player takes the same pairing: a light artist line under the heavy name. */
-@media (max-width: 979px) {
-  .cx-np-artist {
-    font-family: var(--font-display);
-    font-size: 20px;
-    font-weight: 300;
-    letter-spacing: -0.01em;
-    color: var(--t2);
   }
 }
 
@@ -9466,12 +7306,6 @@
   margin-top: 0;
 }
 
-/* On the phone the two lines stack, so each door sits on its own row already. */
-.cx-np-artist.cx-origin,
-.cx-np-album.cx-origin {
-  align-self: flex-start;
-}
-
 /* A record's own page names its artist too: the same door, in the light line under the title. */
 .cx-root .cx-detail-sub.cx-origin {
   align-self: flex-start;
@@ -9558,31 +7392,6 @@
 @media (min-width: 1500px) {
   .cx-albumrow {
     font-size: 14px;
-  }
-}
-
-/* The phone's name gets the same box: two lines of the largest size it may take (38px at 0.96), in
-   pixels rather than `lh`, which would resolve against the box's own inherited line and not the
-   title's. */
-.cx-np-titlebox {
-  display: block;
-  height: 74px;
-  overflow: hidden;
-}
-
-.cx-np-titlebox .cx-np-title {
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-}
-
-@media (max-width: 979px) and (max-height: 700px) {
-  .cx-np-titlebox {
-    height: 62px;
   }
 }
 
@@ -9754,9 +7563,7 @@
 .cx-artistrow,
 .cx-titlebox,
 .cx-title-tags,
-.cx-albumrow,
-.cx-np-titles,
-.cx-mini-titlebox {
+.cx-albumrow {
   position: relative;
 }
 
@@ -9767,37 +7574,6 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-/* The phone's label leaves as one still: the lines under the name come and go from track to track,
-   and a per-line copy would hang beside lines that had already closed up. */
-.cx-np-ghost {
-  position: absolute;
-  top: 0;
-  left: 0;
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  pointer-events: none;
-}
-
-/* Two slots for the phone's sleeve and for the bar's, the same as the desk's. */
-.cx-np-cover-art,
-.cx-mini-cov-art {
-  position: absolute;
-  inset: 0;
-  background-position: center;
-  background-size: cover;
-}
-
-.cx-mini-cov {
-  position: relative;
-  overflow: hidden;
-}
-
-.cx-mini-titlebox {
-  display: block;
-  min-width: 0;
 }
 
 /*
@@ -10093,63 +7869,6 @@
   color: var(--t6);
 }
 
-/* ==========================================================================================
- * The sleeve keeps both edges; the column makes the room.
- *
- * A phone hands the page about seventy pixels less than its screen is tall — a status bar and a home
- * indicator — and the first fix let the sleeve absorb the difference. It did keep the fader on the
- * glass, and it cost the thing the screen is for: a sleeve edge to edge became a square with margins
- * either side of it.
- *
- * So the order of giving changes once more, and this is the right way round for a phone. The picture
- * runs to both edges because that is the composition; the column under it steps down instead —
- * smaller name, tighter rhythm, a smaller ring around the play button, all of which a phone can wear
- * and none of which anyone has to reach for. The sleeve giving way is still there behind it, as the
- * thing that catches a screen too short for even this; it just stops being the first answer.
- * ========================================================================================== */
-
-/* Bounded below at 701 so a short phone keeps the one treatment written for it, and no screen is
-   asked to wear two. */
-@media (max-width: 979px) and (max-height: 830px) and (min-height: 701px) {
-  /* The name's box, which is measured into rather than filled — see `useFitText`. */
-  .cx-np-titlebox {
-    height: 58px;
-  }
-
-  .cx-np-eyebrow {
-    margin-top: 10px;
-  }
-
-  .cx-np-head {
-    margin-top: 8px;
-  }
-
-  .cx-np-artist {
-    margin-top: 7px;
-  }
-
-  .cx-np-album {
-    margin-top: 4px;
-  }
-
-  .cx-np-prog {
-    margin-top: 16px;
-  }
-
-  .cx-np-meta .cx-transport[data-size='phone'] {
-    margin-top: 14px;
-  }
-
-  .cx-np-meta .cx-transport[data-size='phone'] .cx-tr-play {
-    width: 62px;
-    height: 62px;
-  }
-
-  .cx-np-foot {
-    padding-top: 14px;
-  }
-}
-
 /*
  * The hall stands in the middle of what is left, not at the top of it.
  *
@@ -10172,139 +7891,6 @@
     min-height: 0;
   }
 
-  .cx-browse-inner[data-root] > .cx-browse-body > .cx-hall {
-    margin-block: auto;
-  }
-}
-
-/* ==========================================================================================
- * The front of the catalogue: the services as marks, and then the music.
- *
- * Five services used to take the whole page — five tall panels with a rack of records in each, which
- * is a great deal of room spent saying *there are five services*. A service is a place you go
- * through, not a thing you look at. So it is a mark in a row, and the room that buys goes to the two
- * shelves anybody actually reaches for: what this room played lately, and what it has been told to
- * keep. A sleeve you can press beats a panel you have to open.
- * ========================================================================================== */
-
-.cx-hall {
-  display: flex;
-  flex-wrap: wrap;
-  gap: clamp(18px, 2.4vw, 38px);
-  height: auto;
-  min-height: 0;
-  margin-bottom: clamp(30px, 4.4vh, 54px);
-  padding: 4px 0 0;
-}
-
-.cx-root .cx-mark {
-  display: flex;
-  flex: none;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-  width: clamp(76px, 7vw, 104px);
-  max-width: none;
-  height: auto;
-  padding: 0;
-  background: none;
-  cursor: pointer;
-  animation: cx-door-in 0.5s var(--cx-ease) backwards;
-  animation-delay: calc(var(--i, 0) * 60ms);
-}
-
-/*
- * The mark: the service's own logo where the server has one, its own artwork until then. A ring in
- * the service's colour, because at this size colour is most of what tells one from another.
- */
-.cx-mark-face {
-  position: relative;
-  container-type: inline-size;
-  display: grid;
-  place-items: center;
-  width: 100%;
-  aspect-ratio: 1;
-  overflow: hidden;
-  border-radius: 50%;
-  background: linear-gradient(
-    152deg,
-    color-mix(in srgb, var(--tint) 92%, #000),
-    color-mix(in srgb, var(--tint) 38%, #0a0a0c)
-  );
-  box-shadow:
-    inset 0 0 0 1px rgb(255 255 255 / 12%),
-    0 18px 36px -20px rgb(0 0 0 / 90%);
-  transition:
-    box-shadow 0.3s var(--cx-ease),
-    transform 0.3s var(--cx-ease);
-}
-
-/*
- * Until the real logo is there: the service's monogram on its own colour.
- *
- * A logo is a trademark and not something a player gets to draw from memory, and a record sleeve
- * cropped into a 96px circle says nothing about whose circle it is. A letter on the right colour
- * says it at a glance and looks like it was meant.
- */
-.cx-mark-mono {
-  position: absolute;
-  font-size: 30cqw;
-  font-weight: 700;
-  letter-spacing: 0.01em;
-  line-height: 1;
-  color: rgb(255 255 255 / 92%);
-  text-shadow: 0 2px 10px rgb(0 0 0 / 35%);
-}
-
-.cx-mark:hover .cx-mark-face,
-.cx-mark:focus-visible .cx-mark-face {
-  transform: translateY(-3px);
-  box-shadow:
-    inset 0 0 0 1px color-mix(in srgb, var(--tint) 70%, transparent),
-    0 0 0 3px color-mix(in srgb, var(--tint) 26%, transparent),
-    0 22px 44px -20px rgb(0 0 0 / 95%);
-}
-
-/*
- * A real logo is the mark, not a badge on one: it fills the disc, and the colour, the artwork and the
- * monogram underneath it step aside. The official icons are already round or a rounded square whose
- * corners are solid, so a circle takes them without cutting anything that carries meaning.
- */
-.cx-mark-logo {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  opacity: 0;
-  transition: opacity 0.3s var(--cx-ease);
-}
-
-.cx-mark-face[data-logo] {
-  background: none;
-}
-
-.cx-mark-face[data-logo] .cx-mark-logo {
-  opacity: 1;
-}
-
-.cx-mark-face[data-logo] .cx-mark-mono {
-  display: none;
-}
-
-.cx-mark-name {
-  font-size: clamp(13px, 1vw, 15px);
-  font-weight: 600;
-  letter-spacing: -0.01em;
-  line-height: 1.15;
-  color: var(--t3);
-  text-align: center;
-  transition: color 0.2s var(--cx-ease);
-}
-
-.cx-mark:hover .cx-mark-name,
-.cx-mark:focus-visible .cx-mark-name {
-  color: var(--t1);
 }
 
 /* The two shelves under the marks, in the browse page's own section rhythm. */
@@ -10517,34 +8103,6 @@
   background: var(--t2);
 }
 
-/* --- whose record: a dot in the service's colour, only where services mix --- */
-
-.cx-svc-dot {
-  display: inline-block;
-  border-radius: 50%;
-  background: linear-gradient(152deg, color-mix(in srgb, var(--tint) 92%, #000), color-mix(in srgb, var(--tint) 38%, #0a0a0c));
-  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 12%);
-}
-
-.cx-tile-svc {
-  position: absolute;
-  right: 7px;
-  bottom: 7px;
-  z-index: 2;
-  width: 16px;
-  height: 16px;
-  box-shadow:
-    0 0 0 2px rgb(10 10 12 / 75%),
-    inset 0 0 0 1px rgb(255 255 255 / 12%);
-}
-
-.cx-trow-svc {
-  width: 8px;
-  height: 8px;
-  margin-left: 8px;
-  vertical-align: 1px;
-}
-
 /* --- what a search cannot say for itself --- */
 
 .cx-search-notes {
@@ -10570,89 +8128,5 @@
 
 .cx-search-note-go:hover {
   color: var(--t1);
-}
-
-/* --- the dial: the radio's shelves and the kept stations, where a queue would stand --- */
-
-.cx-onradio {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  min-width: 0;
-}
-
-.cx-onradio-doors {
-  display: flex;
-  gap: 6px;
-  margin: 0 -6px 8px;
-}
-
-.cx-onradio-door {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 9px;
-  width: 104px;
-  padding: 12px 6px 10px;
-  border-radius: 12px;
-  font-size: 12px;
-  text-align: center;
-  color: var(--t4);
-  transition:
-    background 0.18s,
-    color 0.18s;
-}
-
-.cx-onradio-door:hover {
-  background: rgb(255 255 255 / 3.5%);
-  color: var(--t1);
-}
-
-.cx-onradio-mark {
-  display: grid;
-  place-items: center;
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  background: linear-gradient(152deg, color-mix(in srgb, #e8b84b 92%, #000), color-mix(in srgb, #e8b84b 38%, #0a0a0c));
-  box-shadow:
-    inset 0 0 0 1px rgb(255 255 255 / 12%),
-    0 10px 24px -10px rgb(0 0 0 / 80%);
-  font-size: 15px;
-  font-weight: 800;
-  letter-spacing: 0;
-  color: rgb(255 255 255 / 92%);
-}
-
-.cx-onradio-name {
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.cx-onradio-kept {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.cx-onradio-chip {
-  display: inline-flex;
-  align-items: center;
-  height: 30px;
-  padding: 0 13px;
-  border: 1px solid rgb(255 255 255 / 10%);
-  border-radius: 15px;
-  font-size: 12.5px;
-  color: var(--t3);
-  transition:
-    color 0.18s,
-    border-color 0.18s;
-}
-
-.cx-onradio-chip:hover {
-  color: var(--t1);
-  border-color: rgb(255 255 255 / 22%);
 }
 

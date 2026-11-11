@@ -53,7 +53,10 @@ export function Crate({ items, room }: { items: CrateItem[]; room: string }) {
               data-centre={d === 0 || undefined}
               aria-label={d === 0 ? `Play ${item.title}` : item.title}
               onClick={() => (d === 0 ? item.play() : setAt(index))}
-            />
+            >
+              {/* No picture: a white label, with the name typed on it. */}
+              {!item.cover && <span className="cx-crate-label mono">{item.title}</span>}
+            </button>
           );
         })}
       </div>

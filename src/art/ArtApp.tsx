@@ -37,15 +37,15 @@ import { QueueSheet } from '@/art/Rail';
 import { flushSync } from 'react-dom';
 import { Browse, MiniBar, Sources, type BrowseNode } from '@/art/Browse';
 import { House } from '@/art/House';
-import { serviceTint } from '@/art/serviceMark';
 import { channelsOf, leaderOf, useCur, type Channel } from '@/art/useCur';
 import { serviceOf, useResolved } from '@/art/useOrigin';
 import { useFavorites, useQueue, useRecents } from '@/art/useCollections';
-import { accentOf, artKeyOf } from '@/art/accent';
+import { artKeyOf } from '@/art/artKey';
 import { useClock, useIdle } from '@/art/useIdle';
 import { captureCover } from '@/shell/coverMorph';
 import { zoneCoverCss, itemCoverCss } from '@/art/cover';
 import {
+  Bars,
   ChevronGlyph,
   ForwardGlyph,
   GridGlyph,
@@ -176,14 +176,7 @@ export function ArtApp() {
    */
   useWakeLock(cur.isPlaying);
 
-  /*
-   * One drop of the record's colour, and the handle that says when the artwork changed.
-   *
-   * The accent lands on `.cx-root` as three custom properties and everything downstream reads it from
-   * there — the play ring, the timeline, the live mark, the glow under the sleeve. Derived once here so
-   * the wash's dissolve and the accent's glide are keyed off the same moment.
-   */
-  const accent = useMemo(() => accentOf(leader?.track), [leader?.track]);
+  /* The handle that says when the artwork changed: every dissolve is keyed off it. */
   const artKey = artKeyOf(leader?.track);
 
   /*
@@ -900,7 +893,6 @@ export function ArtApp() {
       data-rest={rest ?? undefined}
       data-still={still || undefined}
       data-turn={turn?.dir}
-      style={accent as React.CSSProperties}
     >
 
       {/*
@@ -1428,64 +1420,46 @@ function Welcome({
       <h1 className="disp cx-welcome-greet">{greetingText}.</h1>
 
       {/*
-       * The house, first.
-       *
-       * This is the shelf no other music app has: every room as a poster of what is on in it — the
-       * sleeve filling the tile, the name and the record over its foot, a hairline of how far along it
-       * is. A quiet room shows its tile dark with the name; a room that is off says so with the power
-       * glyph. The room you are in leads. Pressing a room stands you in it, and opens the player when
-       * it has something on.
+       * The house, first: every room on a line of its own. A room with a record shows its sleeve, the
+       * record's name and how far along it is as the rule under the row; a quiet one is a dot and its
+       * name. Pressing a room stands you in it, and opens the player when it has something on.
        */}
       {house.length > 1 && (
         <section className="cx-hsec">
           <HomeSec label="the house" right={`${playing} of ${rooms} playing`} />
-          <div className="cx-welcome-recents-row cx-rooms-row">
+          <div className="cx-hrooms">
             {house.map((room) => (
               <button
                 type="button"
-                className="cx-roomcard"
+                className="cx-hroom"
                 key={room.key}
                 data-current={room.current || undefined}
                 data-quiet={!room.title || undefined}
-                data-on={room.playing || undefined}
                 onClick={room.open}
               >
-                {room.cover ? (
-                  <span className="cx-roomcard-cov" style={{ backgroundImage: room.cover }} aria-hidden="true" />
-                ) : (
-                  /* A quiet room is not a hole in the row: the mark, faint, where its record would be. */
-                  <Mark className="cx-roomcard-mark" />
-                )}
-                <span className="cx-roomcard-txt">
-                  <span className="cx-roomcard-name mono">
-                    {room.playing && <i className="cx-roomcard-dot" aria-hidden="true" />}
-                    {room.name}
-                  </span>
-                  <span className="cx-roomcard-track">{room.title || (room.off ? 'off' : 'quiet')}</span>
-                  {room.pct !== null && (
-                    <span className="cx-roomcard-prog" aria-hidden="true">
-                      <i style={{ width: `${room.pct}%` }} />
-                    </span>
-                  )}
+                <span className="cx-hroom-cov" style={{ backgroundImage: room.cover }} aria-hidden="true">
+                  {!room.cover && <i className="cx-sdot-state" data-playing={room.playing || undefined} />}
                 </span>
+                <span className="cx-hroom-txt">
+                  <span className="cx-hroom-name mono">{room.name}</span>
+                  <span className="cx-hroom-track">{room.title || (room.off ? 'off' : 'quiet')}</span>
+                </span>
+                {room.playing && <Bars />}
+                {room.pct !== null && (
+                  <span className="cx-hroom-prog" aria-hidden="true">
+                    <i style={{ width: `${room.pct}%` }} />
+                  </span>
+                )}
               </button>
             ))}
           </div>
         </section>
       )}
 
-      {/* The ways in, as words. On a desk with a quiet house this is the whole point of the screen; on a
-          phone it is the shortcut row under the greeting. */}
+      {/* The ways in, as words. */}
       <div className="cx-welcome-shortcuts mono">
         {services.map((service) => (
           <button type="button" key={service.id} onClick={() => onBrowse({ id: service.rootId, label: service.name })}>
-            <span
-              className="cx-sdot disp"
-              style={{ '--tint': serviceTint(service.id.split(':')[0] ?? service.id) ?? 'var(--t6)' } as React.CSSProperties}
-              aria-hidden="true"
-            >
-              {service.name.slice(0, 2)}
-            </span>
             {service.name}
           </button>
         ))}
@@ -1494,56 +1468,38 @@ function Welcome({
         </button>
       </div>
 
-      {favorites.length > 0 && (
-        <section className="cx-hsec">
-          <HomeSec label="favourites" />
-          <div className="cx-welcome-recents-row">
-            {favorites.map((item) => (
-              <button type="button" className="cx-welcome-recent" key={item.key} onClick={item.play}>
-                <span className="cx-welcome-recent-cov" style={{ backgroundImage: itemCoverCss(item.cover) }} />
-                <span className="cx-welcome-recent-title">{item.title}</span>
-              </button>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/*
-        Scenes before recents, because they are the stronger promise: a recent needs a room to be
-        selected to land anywhere, a scene brings its own rooms and volumes with it.
-      */}
-      {scenes.length > 0 && (
-        <section className="cx-hsec">
-          <HomeSec label="set the scene" />
-          <div className="cx-welcome-recents-row">
-            {scenes.map((item) => (
-              <button type="button" className="cx-welcome-recent" key={item.key} onClick={item.play}>
-                <span className="cx-welcome-recent-cov" style={{ backgroundImage: itemCoverCss(item.cover) }} />
-                <span className="cx-welcome-recent-title">{item.title}</span>
-              </button>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {recents.length > 0 && (
-        <section className="cx-hsec">
-          <HomeSec label="pick up where you left off" />
-          <div className="cx-welcome-recents-row">
-            {recents.map((item) => (
-              <button type="button" className="cx-welcome-recent" key={item.key} onClick={item.play}>
-                <span className="cx-welcome-recent-cov" style={{ backgroundImage: itemCoverCss(item.cover) }} />
-                <span className="cx-welcome-recent-title">{item.title}</span>
-              </button>
-            ))}
-          </div>
-        </section>
-      )}
+      {/* Scenes before recents, because they are the stronger promise: a recent needs a room to be
+          selected to land anywhere, a scene brings its own rooms and volumes with it. */}
+      <Shelf label="favourites" items={favorites} />
+      <Shelf label="set the scene" items={scenes} />
+      <Shelf label="pick up where you left off" items={recents} />
 
       {/* Once, quietly, at the foot of the screen the app opens onto — under the music, never over
           it. See `InstallHint`. */}
       <InstallHint />
     </div>
+  );
+}
+
+/** A shelf of things to put on. One with no picture is a white label with its name typed on it. */
+function Shelf({ label, items }: { label: string; items: Array<{ key: string; title: string; cover: string; play: () => void }> }) {
+  if (items.length === 0) {
+    return null;
+  }
+  return (
+    <section className="cx-hsec">
+      <HomeSec label={label} />
+      <div className="cx-shelf">
+        {items.map((item) => (
+          <button type="button" className="cx-shelf-item" key={item.key} onClick={item.play}>
+            <span className="cx-shelf-cov" style={{ backgroundImage: itemCoverCss(item.cover) }}>
+              {!item.cover && <span className="cx-crate-label mono">{item.title}</span>}
+            </span>
+            {item.cover && <span className="cx-shelf-title">{item.title}</span>}
+          </button>
+        ))}
+      </div>
+    </section>
   );
 }
 

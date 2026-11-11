@@ -17,7 +17,7 @@ import { useApi, useServer } from '@/state/ServerContext';
 import { useZoneFavorite } from '@/state/useZoneFavorite';
 import { Mark } from '@/components/Mark';
 import { Crossfade } from '@/art/Crossfade';
-import { artKeyOf } from '@/art/accent';
+import { artKeyOf } from '@/art/artKey';
 import { zoneCoverCss } from '@/art/cover';
 import { Timeline, Transport, VolumeRow } from '@/art/Stage';
 import { HeartGlyph, QueueGlyph } from '@/art/glyphs';
