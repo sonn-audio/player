@@ -461,7 +461,12 @@ export function Stage({
   /* Inside the frame the name shares the pane with a sidebar and a bar, so it stops short of the poster's
      200px; on a bare window (the spread) it may take all of it. */
   /* `Nothing playing` is a state, not a title: it does not get the title's size. */
-  const fit = useFitText(mainTitle(cur.title), { max: !cur.hasTrack ? 64 : resting ? 84 : spread ? 200 : 150, min: 24 });
+  /* In the frame the name is a nameplate, not a poster: three sizes by its length, so a long title
+     steps down rather than filling the column. */
+  const plate = !cur.hasTrack ? 56 : mainTitle(cur.title).length > 30 ? 44 : mainTitle(cur.title).length > 16 ? 56 : 72;
+  const fitted = useFitText(mainTitle(cur.title), { max: resting ? 84 : 200, min: 24 });
+  /* Only the rests measure the name against a box; in the frame the plate's size is the size. */
+  const fit = resting || spread ? fitted : { ref: undefined, size: plate };
 
   /*
    * A track change is a dissolve, so each line keeps the one it is replacing.
@@ -675,8 +680,20 @@ export function Stage({
              * a chip that says what it is about is a door that says where it goes.
              */}
             {cur.hasTrack && (
-              <button type="button" className="cx-wire mono" onClick={onSignal} title="What is happening to the audio">
-                {wireLabel(cur)}
+              <button
+                type="button"
+                className="cx-wire mono"
+                data-ok={leader?.format?.bitPerfect || undefined}
+                onClick={onSignal}
+                title="What is happening to the audio"
+              >
+                {leader?.format?.bitPerfect && (
+                  <>
+                    <i className="cx-wire-lamp" aria-hidden="true" />
+                    Bit-perfect
+                  </>
+                )}
+                <b>{wireLabel(cur)}</b>
                 <ForwardGlyph size={11} />
               </button>
             )}

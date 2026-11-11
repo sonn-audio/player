@@ -1,15 +1,7 @@
 /**
- * What a service looks like, at any size.
- *
- * Spotify and Apple Music have trademarks, and the server ships them as files; the library and the radio
- * have none, so they are drawn — a record and waves — at the weight the logos have. Two letters in a
- * circle, the old stand-in, read as a placeholder beside a real logo: two services and two blanks.
- *
- * One component for the sidebar's dot, the home screen's chips and the hall's marks, so a service is
- * the same thing everywhere it appears.
+ * What a service is known by: its colour, and — for the two without a trademark — its drawing.
+ * The library is a record and the radio is waves, at the weight the real logos have.
  */
-import { useState } from 'react';
-
 /**
  * A service, as a mark rather than a panel.
  *
@@ -61,45 +53,4 @@ export function serviceGlyph(service: string): React.ReactNode | null {
     );
   }
   return null;
-}
-
-function monogram(name: string): string {
-  const words = name.split(/\s+/).filter(Boolean);
-  if (words.length >= 2) {
-    return `${words[0]![0] ?? ''}${words[1]![0] ?? ''}`.toUpperCase();
-  }
-  return name.slice(0, 2);
-}
-
-/**
- * A service's mark as a small disc: its logo where the server has one, its drawing where it is drawn,
- * its monogram on its colour until then.
- */
-export function ServiceMark({ id, name, size = 18, className }: { id: string; name: string; size?: number; className?: string }) {
-  const key = id.split(':')[0] ?? id;
-  const [logo, setLogo] = useState<'svg' | 'png' | null>(serviceGlyph(key) ? null : 'svg');
-  const tint = serviceTint(key) ?? 'var(--t6)';
-  const drawn = serviceGlyph(key);
-  return (
-    <span
-      className={`cx-smark${className ? ` ${className}` : ''}`}
-      style={{ '--tint': tint, '--d': `${size}px` } as React.CSSProperties}
-      data-logo={logo ? '' : undefined}
-      aria-hidden="true"
-    >
-      {drawn ?? <span className="cx-smark-mono disp">{monogram(name)}</span>}
-      {logo && (
-        <img
-          src={`${import.meta.env.BASE_URL}icons/service-${key}.${logo}`}
-          alt=""
-          onError={() => setLogo((was) => (was === 'svg' ? 'png' : null))}
-          onLoad={(event) => {
-            if (event.currentTarget.naturalWidth === 0) {
-              setLogo((was) => (was === 'svg' ? 'png' : null));
-            }
-          }}
-        />
-      )}
-    </span>
-  );
 }

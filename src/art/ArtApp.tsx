@@ -37,14 +37,11 @@ import { QueueSheet } from '@/art/Rail';
 import { flushSync } from 'react-dom';
 import { Browse, MiniBar, Sources, type BrowseNode } from '@/art/Browse';
 import { House } from '@/art/House';
-import { Light } from '@/art/Light';
 import { serviceTint } from '@/art/serviceMark';
 import { channelsOf, leaderOf, useCur, type Channel } from '@/art/useCur';
 import { serviceOf, useResolved } from '@/art/useOrigin';
 import { useFavorites, useQueue, useRecents } from '@/art/useCollections';
 import { accentOf, artKeyOf } from '@/art/accent';
-import { Ground } from '@/art/Ground';
-import { paletteOf, type Palette } from '@/art/palette';
 import { useClock, useIdle } from '@/art/useIdle';
 import { captureCover } from '@/shell/coverMorph';
 import { zoneCoverCss, itemCoverCss } from '@/art/cover';
@@ -124,8 +121,7 @@ export function ArtApp() {
   const { zone, zoneId, select } = useSelectedZone(zones, synced);
   const phone = useIsPhone();
 
-  /* A desk opens on the house; a phone on the home it browses, with the record in the bar. */
-  const [view, setViewNow] = useState<View>(phone ? { kind: 'home' } : { kind: 'house' });
+  const [view, setViewNow] = useState<View>({ kind: 'home' });
   /*
    * A change of view is one movement, not a cut.
    *
@@ -187,34 +183,7 @@ export function ArtApp() {
    * there — the play ring, the timeline, the live mark, the glow under the sleeve. Derived once here so
    * the wash's dissolve and the accent's glide are keyed off the same moment.
    */
-  /*
-   * The record's own colours, read off the sleeve — see `palette.ts`. A room with nothing on is lit by
-   * the last record it played, held lower (`data-memory`): the room remembers, and a quiet house opens
-   * on a colour rather than on a void.
-   */
-  const paletteUrl = leader?.track
-    ? api.coverUrl(leader.id, { size: 96, cacheKey: leader.track.coverUrl })
-    : (recents[0]?.coverUrl ?? null);
-  const [palette, setPalette] = useState<Palette | null>(null);
-  useEffect(() => {
-    if (!paletteUrl) {
-      setPalette(null);
-      return undefined;
-    }
-    let live = true;
-    void paletteOf(paletteUrl).then((read) => live && setPalette(read));
-    return () => {
-      live = false;
-    };
-  }, [paletteUrl]);
-
-  const accent = useMemo(() => {
-    const base = accentOf(leader?.track);
-    /* Where the sleeve could be read, its own colours are the frame; the server's two are the fallback. */
-    return palette
-      ? { ...base, '--rec-deep': palette.deep, '--rec-accent': palette.accent, '--rec-ink': palette.ink }
-      : base;
-  }, [leader?.track, palette]);
+  const accent = useMemo(() => accentOf(leader?.track), [leader?.track]);
   const artKey = artKeyOf(leader?.track);
 
   /*
@@ -250,12 +219,10 @@ export function ArtApp() {
    * The timeout still arrives on its own and always chooses the record: a screen that dims itself is
    * answering "what is playing here", because here is where the person stopped touching it.
    */
-  const [asked, setAsked] = useState<'record' | 'house' | 'light' | null>(null);
+  const [asked, setAsked] = useState<'record' | 'house' | null>(null);
   const timedOut = useIdle(IDLE_AFTER_MS, !asked && cur.isPlaying && (view.kind === 'home' || view.kind === 'house') && sheet === null);
   const idle = asked !== null || timedOut;
-  /* Left alone, the panel becomes the light the record throws — see `Light`; the record and the house
-     are the two rests you ask for from the bar. */
-  const rest = asked ?? (timedOut ? 'light' : null);
+  const rest = asked ?? (timedOut ? 'record' : null);
 
   /*
    * Stillness, before rest.
@@ -723,7 +690,7 @@ export function ArtApp() {
                 {/* One line about the clocks: what the sync numbers on the zones say, in words. */}
                 <p className="cx-deskpage-note">{clockLine(channels)}</p>
               </div>
-            ) : !phone && view.kind === 'house' && !(idle && rest === 'light') ? (
+            ) : !phone && view.kind === 'house' && !idle ? (
               <House
                 channels={channels}
                 currentLeaderId={leaderOf(zone, zones)?.id ?? null}
@@ -734,20 +701,6 @@ export function ArtApp() {
                   sub: item.artist,
                   cover: item.coverUrl,
                   play: () => zone && void api.play(zone.id, item.source),
-                }))}
-                favorites={favorites
-                  .filter((item) => item.coverUrl)
-                  .slice(0, 14)
-                  .map((item) => ({
-                    key: String(item.id),
-                    title: item.name,
-                    cover: item.coverUrl,
-                    play: () => zone && void api.play(zone.id, item.source),
-                  }))}
-                services={services.map((service) => ({
-                  id: service.id,
-                  name: service.name,
-                  open: () => openBrowse({ id: service.rootId, label: service.name }),
                 }))}
                 scenes={scenes.slice(0, 8).map((scene) => ({
                   key: scene.id,
@@ -807,8 +760,6 @@ export function ArtApp() {
                     onSelect={select}
                     onLeave={() => setAsked(null)}
                   />
-                ) : rest === 'light' ? (
-                  <Light cur={cur} onWake={() => setAsked(null)} />
                 ) : (
                   <Stage
                     cur={cur}
@@ -948,12 +899,9 @@ export function ArtApp() {
       data-dragging={drag.active?.kind}
       data-rest={rest ?? undefined}
       data-still={still || undefined}
-      data-memory={(!leader?.track && palette !== null) || undefined}
       data-turn={turn?.dir}
       style={accent as React.CSSProperties}
     >
-      {/* The room, lit by the record: one layer under everything, on a desk and in a hand. See `Ground`. */}
-      <Ground palette={palette} zoneId={leader?.id ?? null} listening={idle && rest === 'light' && cur.isPlaying} />
 
       {/*
        * What is in the hand.
@@ -978,9 +926,8 @@ export function ArtApp() {
 
       {dropSaid && <span className="cx-said mono">{dropSaid}</span>}
 
-      {/* The dimmed screen's one readout: a panel on a wall is also a clock — and a calendar. The light
-          carries its own. */}
-      {idle && rest !== 'light' && (
+      {/* The dimmed screen's one readout: a panel on a wall is also a clock — and a calendar. */}
+      {idle && (
         <span className="cx-idle-clock disp">
           {clock.time}
           <i className="cx-idle-date mono">{clock.date}</i>
@@ -1071,7 +1018,6 @@ export function ArtApp() {
           cur={cur}
           onHome={goHome}
           onBrowse={() => openBrowse()}
-          onSignal={openSignal}
           onRooms={openRooms}
           onQueue={() => setSheet('queue')}
           onCanvas={() => setAsked('record')}

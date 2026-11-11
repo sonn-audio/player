@@ -19,9 +19,8 @@ import { Mark } from '@/components/Mark';
 import { Crossfade } from '@/art/Crossfade';
 import { artKeyOf } from '@/art/accent';
 import { zoneCoverCss } from '@/art/cover';
-import { Timeline, Transport, VolumeRow, wireLabel } from '@/art/Stage';
-import { HeartGlyph, HomeGlyph, QueueGlyph, SearchGlyph } from '@/art/glyphs';
-import { ServiceMark } from '@/art/serviceMark';
+import { Timeline, Transport, VolumeRow } from '@/art/Stage';
+import { HeartGlyph, QueueGlyph } from '@/art/glyphs';
 import { mainTitle } from '@/lib/title';
 import type { ContentService } from '@/api/content';
 import type { Channel, Cur } from '@/art/useCur';
@@ -62,7 +61,6 @@ export function Sidebar({
   onSelect: (zoneId: number) => void;
 }) {
   const { status } = useServer();
-  const api = useApi();
   return (
     <aside className="cx-side">
       <a className="cx-side-brand" href="/admin/" aria-label="Sonn">
@@ -73,65 +71,44 @@ export function Sidebar({
       </a>
 
       <nav className="cx-sgroup" aria-label="Player">
-        <button type="button" className="cx-snav" data-on={(view === 'house' && !sheet) || undefined} onClick={onHouse}>
-          <HomeGlyph size={16} />
-          Home
-        </button>
         <button type="button" className="cx-snav" data-on={(view === 'home' && !sheet) || undefined} onClick={onHome}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
-            <circle cx="12" cy="12" r="8.5" />
-            <circle cx="12" cy="12" r="2.2" />
-          </svg>
           Now playing
         </button>
+        <button type="button" className="cx-snav" data-on={(view === 'house' && !sheet) || undefined} onClick={onHouse}>
+          Home
+        </button>
         <button type="button" className="cx-snav" data-on={view === 'browse' || undefined} onClick={() => onBrowse()}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <path d="M9 18V6l10-2v12" />
-            <circle cx="6.5" cy="18" r="2.5" />
-            <circle cx="16.5" cy="16" r="2.5" />
-          </svg>
           Music
         </button>
         <button type="button" className="cx-snav" onClick={onSearch}>
-          <SearchGlyph size={16} />
           Search
           <span className="cx-snav-k mono">/</span>
         </button>
+        <button type="button" className="cx-snav" data-on={view === 'rooms' || undefined} onClick={onRooms}>
+          Rooms
+        </button>
+      </nav>
+
+      <nav className="cx-sgroup" aria-label="Sources">
+        <span className="cx-sgroup-lbl mono">sources</span>
+        {services.map((service) => (
+          <button
+            type="button"
+            className="cx-snav"
+            key={service.id}
+            onClick={() => onBrowse({ id: service.rootId, label: service.name })}
+          >
+            <span className="cx-snav-txt">{service.name}</span>
+          </button>
+        ))}
         <button type="button" className="cx-snav" data-on={view === 'inputs' || undefined} onClick={onInputs}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
-            <path d="M4 7h10M4 12h16M4 17h7" />
-            <circle cx="17" cy="7" r="2" />
-            <circle cx="14" cy="17" r="2" />
-          </svg>
           Inputs
         </button>
       </nav>
 
-      {services.length > 0 && (
-        <nav className="cx-sgroup" aria-label="Services">
-          <span className="cx-sgroup-lbl mono">services</span>
-          {services.map((service) => (
-            <button
-              type="button"
-              className="cx-snav"
-              key={service.id}
-              onClick={() => onBrowse({ id: service.rootId, label: service.name })}
-            >
-              <ServiceMark id={service.id} name={service.name} size={18} />
-              <span className="cx-snav-txt">{service.name}</span>
-            </button>
-          ))}
-        </nav>
-      )}
-
       {channels.length > 0 && (
         <nav className="cx-sgroup" aria-label="Rooms">
-          <span className="cx-sgroup-lbl mono">
-            rooms
-            <button type="button" className="cx-sgroup-go" data-on={view === 'rooms' || undefined} onClick={onRooms}>
-              desk ›
-            </button>
-          </span>
+          <span className="cx-sgroup-lbl mono">rooms</span>
           {channels.map((channel) => {
             const extra = channel.members.length - 1;
             const off = channel.leader.powerState?.power === 'off';
@@ -144,18 +121,12 @@ export function Sidebar({
                 data-quiet={(!channel.hasTrack || off) || undefined}
                 onClick={() => onSelect(channel.leader.id)}
               >
-                {/* The room's record, small, where the dot was: a glance down the list says what is on
-                    where. The dot stays for a room with nothing on. */}
-                {channel.hasTrack ? (
-                  <span
-                    className="cx-snav-cov"
-                    data-paused={!channel.playing || undefined}
-                    style={{ backgroundImage: zoneCoverCss(api, channel.leader, 48) }}
-                    aria-hidden="true"
-                  />
-                ) : (
-                  <span className="cx-sdot-state" aria-hidden="true" />
-                )}
+                <span
+                  className="cx-sdot-state"
+                  data-playing={(channel.playing && channel.hasTrack) || undefined}
+                  data-paused={(!channel.playing && channel.hasTrack) || undefined}
+                  aria-hidden="true"
+                />
                 <span className="cx-snav-txt">
                   {channel.leader.name}
                   {extra > 0 && <i className="cx-snav-extra"> +{extra}</i>}
@@ -167,21 +138,17 @@ export function Sidebar({
         </nav>
       )}
 
+      {/* The foot: the instrument, and the way to the console. The lamp is the verdict — green only when
+          the server says the file's own samples reach the room. */}
       <div className="cx-sgroup cx-sgroup-foot">
         {cur.hasTrack && (
           <button type="button" className="cx-snav" data-on={view === 'signal' || undefined} onClick={onSignal}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <path d="M3 13h3l2.5-7 4 13 3-9 1.5 3H21" />
-            </svg>
+            <span className="cx-sdot-state" data-ok={cur.leader?.format?.bitPerfect || undefined} aria-hidden="true" />
             Signal
-            <span className="cx-sdot-state" data-playing={cur.isPlaying || undefined} style={{ marginLeft: 'auto' }} aria-hidden="true" />
+            {cur.leader?.format?.bitPerfect && <span className="cx-snav-k mono">bit-perfect</span>}
           </button>
         )}
-        <a className="cx-snav" href="/admin/">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <path d="M14 4h6v6M20 4l-9 9" />
-            <path d="M19 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h5" />
-          </svg>
+        <a className="cx-snav" href="/admin/" data-quiet>
           Admin
         </a>
       </div>
@@ -212,7 +179,6 @@ export function PlayerBar({
   cur,
   onHome,
   onBrowse,
-  onSignal,
   onRooms,
   onQueue,
   onCanvas,
@@ -221,7 +187,6 @@ export function PlayerBar({
   cur: Cur;
   onHome: () => void;
   onBrowse: () => void;
-  onSignal: () => void;
   onRooms: () => void;
   onQueue: () => void;
   /** The record alone, full screen — the canvas rest, asked for. */
@@ -268,20 +233,6 @@ export function PlayerBar({
           )}
         </div>
         {cur.hasTrack && <BarFavourite cur={cur} />}
-        {/* The verdict, when the server gives one: the file's own samples reach the room. The one green
-            thing in the bar, because it is the one thing in the bar that is a judgement. */}
-        {cur.hasTrack &&
-          (leader?.format?.bitPerfect ? (
-            <button type="button" className="cx-pbar-lamp mono" onClick={onSignal} title="What is happening to the audio">
-              <i aria-hidden="true" />
-              Bit-perfect
-              <b>{wireLabel(cur)}</b>
-            </button>
-          ) : (
-            <button type="button" className="cx-wire mono cx-pbar-wire" onClick={onSignal} title="What is happening to the audio">
-              {wireLabel(cur)}
-            </button>
-          ))}
       </div>
 
       <div className="cx-pbar-mid">

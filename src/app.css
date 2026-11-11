@@ -1,13 +1,25 @@
 /*
- * The app's frame on a desk — see `art/Shell.tsx`.
+ * The app's frame on a desk — see `art/Shell.tsx` — and the look every view inside it shares.
  *
- * A fourth sheet rather than another pass in `art.css`: everything here is *about the frame* (the sidebar,
- * the pane, the player bar) and about what the frame asks of the views inside it, and nothing about the
- * views themselves. Scoped under `.cx-root[data-shell]`, which the app sets on a desk and never on a phone.
+ * A hi-fi component, not an app: black, silver and hairlines. The sleeve is the only colour on the
+ * screen and green is only ever a verdict. Labels are small spaced capitals, the way a faceplate is
+ * engraved; titles are set light; figures are mono. Nothing is boxed that a line can separate.
+ *
+ * Scoped under `.cx-root[data-shell]` where it is the frame's own, which the app sets on a desk and
+ * never on a phone.
  */
 
 .cx-root[data-shell] {
-  background: #0a0a0c;
+  background: #09090a;
+}
+
+/* The faintest lift behind the middle of the page: a black with depth rather than a void. */
+.cx-root[data-shell]::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(120% 90% at 56% 38%, rgb(255 255 255 / 2.6%), transparent 60%);
+  pointer-events: none;
 }
 
 /* Once the splash has left, the sidebar's mark is the one that flies to the console — see `Root`. */
@@ -15,30 +27,28 @@ html[data-arrived] .cx-side-mark {
   view-transition-name: sonn-mark;
 }
 
-/* --- the grid: sidebar | pane, with the bar under both --------------------- */
+/* --- the grid: sidebar | pane, with the bar under the pane ------------------- */
 
 .cx-shell {
   position: relative;
   z-index: 2;
   display: grid;
-  grid-template-columns: 228px minmax(0, 1fr);
+  grid-template-columns: 232px minmax(0, 1fr);
   flex: 1;
   min-height: 0;
-  padding: 10px 10px 0 0;
-  transition:
-    grid-template-columns 0.9s var(--cx-ease),
-    padding 0.9s var(--cx-ease);
+  transition: grid-template-columns 0.9s var(--cx-ease);
 }
 
-/* --- the sidebar ------------------------------------------------------------ */
+/* --- the sidebar: an index, in type ------------------------------------------- */
 
 .cx-side {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 30px;
   min-height: 0;
-  padding: 16px 12px 14px 14px;
+  padding: 30px 26px 22px 30px;
   overflow: hidden auto;
+  border-right: 1px solid rgb(255 255 255 / 7%);
   transition:
     opacity 0.6s var(--cx-ease),
     visibility 0.6s step-end;
@@ -47,8 +57,7 @@ html[data-arrived] .cx-side-mark {
 .cx-side-brand {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 8px 10px 6px;
+  gap: 11px;
   color: var(--t1);
   text-decoration: none;
 }
@@ -56,12 +65,13 @@ html[data-arrived] .cx-side-mark {
 .cx-side-mark {
   width: 26px;
   height: 21px;
-  color: var(--accent);
+  color: var(--t1);
 }
 
-.cx-side-word {
+.cx-root .cx-side-word {
   font-size: 15px;
-  letter-spacing: -0.02em;
+  font-weight: 600;
+  letter-spacing: 0.01em;
 }
 
 .cx-side-brand .cx-stale {
@@ -80,67 +90,45 @@ html[data-arrived] .cx-side-mark {
 }
 
 .cx-sgroup-lbl {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 6px;
-  padding: 0 12px;
-  font-size: 9px;
-  letter-spacing: 0.22em;
-  color: var(--t7);
-}
-
-.cx-sgroup-go {
-  font-size: 9px;
-  letter-spacing: 0.1em;
-  text-transform: none;
+  margin-bottom: 10px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
   color: var(--t6);
-  transition: color 0.18s;
-}
-
-.cx-sgroup-go:hover {
-  color: var(--t2);
 }
 
 .cx-snav {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 12px;
-  height: 34px;
-  padding: 0 12px;
-  border-radius: 9px;
+  height: 32px;
   font-size: 13.5px;
-  font-weight: 500;
-  letter-spacing: -0.005em;
+  font-weight: 400;
   white-space: nowrap;
   color: var(--t4);
   text-decoration: none;
   text-align: left;
-  transition:
-    background 0.18s,
-    color 0.18s;
-}
-
-.cx-snav svg {
-  flex: none;
-  color: var(--t6);
   transition: color 0.18s;
 }
 
 .cx-snav:hover {
-  background: rgb(255 255 255 / 4%);
   color: var(--t1);
 }
 
+/* Where you are: the word in white and a line at the window's edge. No box. */
 .cx-snav[data-on] {
-  background: rgb(255 255 255 / 7%);
   color: var(--t1);
-  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 4%);
 }
 
-.cx-snav[data-on] svg,
-.cx-snav:hover svg {
-  color: var(--t1);
+.cx-snav[data-on]::before {
+  content: '';
+  position: absolute;
+  top: 8px;
+  bottom: 8px;
+  left: -30px;
+  width: 2px;
+  background: var(--t1);
 }
 
 .cx-snav[data-quiet] {
@@ -155,41 +143,25 @@ html[data-arrived] .cx-side-mark {
 
 .cx-snav-extra {
   font-style: normal;
-  font-size: 11px;
   color: var(--t6);
 }
 
 .cx-snav-k {
   margin-left: auto;
   font-size: 10.5px;
-  font-weight: 500;
+  font-weight: 400;
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.04em;
+  text-transform: none;
   color: var(--t6);
 }
 
-/* A service, as a disc in its colour with its monogram on it. */
-.cx-sdot {
-  display: inline-grid;
-  flex: none;
-  place-items: center;
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  background: linear-gradient(152deg, color-mix(in srgb, var(--tint) 92%, #000), color-mix(in srgb, var(--tint) 38%, #0a0a0c));
-  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 12%);
-  font-size: 7px;
-  font-weight: 800;
-  letter-spacing: 0;
-  color: rgb(255 255 255 / 92%);
-}
-
-/* A room's state, as a dot: lit while playing, grey while paused, off when silent. */
+/* A room's state, as a dot: white while playing, grey while paused, dark when silent. */
 .cx-sdot-state {
   display: inline-block;
   flex: none;
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
   border-radius: 50%;
   background: var(--t8);
   transition: background 0.3s;
@@ -200,11 +172,17 @@ html[data-arrived] .cx-side-mark {
 }
 
 .cx-sdot-state[data-playing] {
-  background: var(--accent);
-  box-shadow: 0 0 8px color-mix(in srgb, var(--accent) 75%, transparent);
+  background: var(--t1);
+  box-shadow: 0 0 8px rgb(255 255 255 / 60%);
 }
 
-/* --- the pane: a lit sheet inside the dark frame ---------------------------- */
+/* The verdict, and the only green in the frame. */
+.cx-sdot-state[data-ok] {
+  background: var(--accent);
+  box-shadow: 0 0 8px var(--accent);
+}
+
+/* --- the pane: the page itself, beside the index -------------------------------- */
 
 .cx-pane {
   position: relative;
@@ -213,15 +191,7 @@ html[data-arrived] .cx-side-mark {
   min-width: 0;
   min-height: 0;
   overflow: hidden;
-  border-radius: 18px;
-  background: #101114;
-  box-shadow:
-    inset 0 0 0 1px rgb(255 255 255 / 5%),
-    0 30px 80px -40px rgb(0 0 0 / 80%);
   isolation: isolate;
-  transition:
-    border-radius 0.9s var(--cx-ease),
-    box-shadow 0.9s var(--cx-ease);
 }
 
 .cx-pane > .cx-body {
@@ -229,7 +199,7 @@ html[data-arrived] .cx-side-mark {
   z-index: 1;
 }
 
-/* --- the player bar ----------------------------------------------------------- */
+/* --- the player bar: a strip under a hairline ----------------------------------- */
 
 .cx-pbar {
   position: relative;
@@ -238,11 +208,25 @@ html[data-arrived] .cx-side-mark {
   align-items: center;
   justify-content: space-between;
   flex: none;
-  height: 92px;
-  padding: 0 24px;
+  height: 84px;
+  margin-left: 232px;
+  padding: 0 30px;
+  border-top: 1px solid rgb(255 255 255 / 7%);
   transition:
     opacity 0.6s var(--cx-ease),
     visibility 0.6s step-end;
+}
+
+/* The sidebar's rule runs the height of the window, past the bar. */
+.cx-root[data-shell]:not([data-idle])::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 231px;
+  z-index: 3;
+  width: 1px;
+  height: 84px;
+  background: rgb(255 255 255 / 7%);
 }
 
 .cx-pbar-np {
@@ -250,25 +234,31 @@ html[data-arrived] .cx-side-mark {
   align-items: center;
   gap: 14px;
   min-width: 0;
-  flex: 0 1 460px;
+  flex: 0 1 400px;
 }
 
 .cx-pbar-cov {
   position: relative;
+  display: grid;
   flex: none;
-  width: 58px;
-  height: 58px;
+  place-items: center;
+  width: 46px;
+  height: 46px;
   overflow: hidden;
-  border-radius: 8px;
+  border-radius: 3px;
   background: var(--cx-cover);
-  box-shadow:
-    0 10px 24px -10px rgb(0 0 0 / 80%),
-    inset 0 0 0 1px rgb(255 255 255 / 10%);
+  box-shadow: 0 0 0 1px rgb(255 255 255 / 12%);
+  color: rgb(255 255 255 / 16%);
 }
 
 .cx-pbar-cov[data-empty] {
-  background: rgb(255 255 255 / 3%);
-  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 6%);
+  background: none;
+  box-shadow: 0 0 0 1px rgb(255 255 255 / 7%);
+}
+
+.cx-pbar-cov-mark {
+  width: 22px;
+  height: 18px;
 }
 
 .cx-pbar-cov-art {
@@ -286,26 +276,25 @@ html[data-arrived] .cx-side-mark {
 }
 
 .cx-pbar-title {
-  font-size: 14px;
-  font-weight: 600;
-  letter-spacing: -0.01em;
-  color: var(--t1);
   overflow: hidden;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--t1);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .cx-pbar-sub {
-  font-size: 12px;
-  color: var(--t5);
   overflow: hidden;
+  font-size: 12px;
+  color: var(--t6);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .cx-pbar-link {
   text-align: left;
-  color: var(--t4);
+  color: var(--t5);
 }
 
 .cx-pbar-link:hover {
@@ -318,8 +307,7 @@ html[data-arrived] .cx-side-mark {
   place-items: center;
   width: 32px;
   height: 32px;
-  border-radius: 8px;
-  color: var(--t5);
+  color: var(--t6);
   transition: color 0.18s;
 }
 
@@ -328,20 +316,15 @@ html[data-arrived] .cx-side-mark {
   color: var(--t1);
 }
 
-.cx-pbar-wire {
-  margin-left: 4px;
-  flex: none;
-}
-
 .cx-pbar-mid {
   position: absolute;
-  left: 50%;
   top: 50%;
+  left: 50%;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
-  width: 480px;
+  gap: 5px;
+  width: 440px;
   translate: -50% -50%;
 }
 
@@ -349,19 +332,24 @@ html[data-arrived] .cx-side-mark {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
+  gap: 14px;
   width: 100%;
-  height: 20px;
+  height: 18px;
 }
 
 .cx-pbar-tl .cx-bar {
   flex: 1;
 }
 
+.cx-pbar-tl .cx-bar-rail {
+  height: 1px;
+  background: rgb(255 255 255 / 12%);
+}
+
 .cx-pbar-time {
   flex: none;
   font-size: 10.5px;
-  font-weight: 500;
+  font-weight: 400;
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.04em;
   color: var(--t6);
@@ -373,15 +361,22 @@ html[data-arrived] .cx-side-mark {
   gap: 8px;
   font-size: 9.5px;
   letter-spacing: 0.2em;
-  color: var(--t2);
+  color: var(--t3);
 }
 
 .cx-pbar-live i {
-  width: 7px;
-  height: 7px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
-  background: var(--g);
+  background: var(--t1);
   animation: cx-breathe 2s ease-in-out infinite;
+}
+
+/* The bar's play button is a ring, like the instrument it sits on. */
+.cx-pbar .cx-tr-play {
+  width: 40px;
+  height: 40px;
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 55%);
 }
 
 .cx-pbar-right {
@@ -389,7 +384,7 @@ html[data-arrived] .cx-side-mark {
   align-items: center;
   justify-content: flex-end;
   gap: 16px;
-  flex: 0 1 460px;
+  flex: 0 1 400px;
   min-width: 0;
 }
 
@@ -397,27 +392,23 @@ html[data-arrived] .cx-side-mark {
   width: 96px;
 }
 
-.cx-pbar-room {
+.cx-root .cx-pbar-room {
   display: inline-flex;
   align-items: center;
   gap: 9px;
+  font-family: var(--font-display);
   height: 30px;
-  padding: 0 14px;
-  border: 1px solid rgb(255 255 255 / 9%);
-  border-radius: 15px;
-  background: rgb(255 255 255 / 2.5%);
-  font-size: 9.5px;
-  letter-spacing: 0.16em;
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
   white-space: nowrap;
   color: var(--t3);
-  transition:
-    color 0.18s,
-    border-color 0.18s;
+  transition: color 0.18s;
 }
 
 .cx-pbar-room:hover {
   color: var(--t1);
-  border-color: rgb(255 255 255 / 20%);
 }
 
 .cx-pbar-ic {
@@ -425,53 +416,12 @@ html[data-arrived] .cx-side-mark {
   place-items: center;
   width: 32px;
   height: 32px;
-  border-radius: 8px;
-  color: var(--t5);
-  transition:
-    color 0.18s,
-    background 0.18s;
+  color: var(--t6);
+  transition: color 0.18s;
 }
 
 .cx-pbar-ic:hover {
   color: var(--t1);
-  background: rgb(255 255 255 / 6%);
-}
-
-/* The verdict, as a lamp. Green because it is a judgement, and the only one the bar makes. */
-.cx-pbar-lamp {
-  display: inline-flex;
-  align-items: center;
-  gap: 9px;
-  height: 28px;
-  margin-left: 4px;
-  padding: 0 12px 0 10px;
-  border: 1px solid color-mix(in srgb, var(--accent) 22%, transparent);
-  border-radius: 14px;
-  background: color-mix(in srgb, var(--accent) 5%, transparent);
-  font-size: 9px;
-  letter-spacing: 0.16em;
-  white-space: nowrap;
-  color: var(--t2);
-  transition: border-color 0.18s;
-}
-
-.cx-pbar-lamp:hover {
-  border-color: color-mix(in srgb, var(--accent) 45%, transparent);
-}
-
-.cx-pbar-lamp i {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--accent);
-  box-shadow: 0 0 10px color-mix(in srgb, var(--accent) 85%, transparent);
-}
-
-.cx-pbar-lamp b {
-  font-weight: 500;
-  letter-spacing: 0.06em;
-  text-transform: none;
-  color: var(--t5);
 }
 
 /* --- section heads in the display face: the catalogue's labels read as headings, counts stay mono --- */
@@ -1648,356 +1598,42 @@ html[data-arrived] .cx-side-mark {
 }
 
 /* ==========================================================================================
- * The record owns the room.
- *
- * The frame is made of the record: `accent.ts` reads the sleeve's dark, its colour and the ink the
- * server chose for that dark, and puts them on `.cx-root`. The frame, the pane, the text ladder, the
- * active row, the play button and the timeline all read from there. Nothing playing is the neutral
- * frame these defaults draw.
+ * The look, shared by every view: light titles, engraved labels, the sleeve as an object.
  * ========================================================================================== */
 
-.cx-root[data-shell] {
-  --rec-deep: #0a0a0c;
-  --rec-bg: #101114;
-  --rec-mid: #16171c;
-  --rec-accent: #c9cdd4;
-  --rec-ink: #f7f8fa;
-
-  /* The text ladder, as steps of the record's ink. */
-  --t1: var(--rec-ink);
-  --t2: color-mix(in srgb, var(--rec-ink) 93%, transparent);
-  --t3: color-mix(in srgb, var(--rec-ink) 78%, transparent);
-  --t4: color-mix(in srgb, var(--rec-ink) 61%, transparent);
-  --t5: color-mix(in srgb, var(--rec-ink) 52%, transparent);
-  --t6: color-mix(in srgb, var(--rec-ink) 40%, transparent);
-  --t7: color-mix(in srgb, var(--rec-ink) 28%, transparent);
-  --t8: color-mix(in srgb, var(--rec-ink) 19%, transparent);
-  --hair: color-mix(in srgb, var(--rec-ink) 8%, transparent);
-
-  background: none;
+/* Titles are set light. A name at 300 on black reads as a nameplate; at 800 it reads as a poster. */
+.cx-root .disp {
+  font-weight: 300;
+  letter-spacing: -0.03em;
 }
 
-/* The pane is glass over the ground: clearer where the record is the subject, darker under a listing,
-   where thirty other sleeves stand on it and each wants its own colour. */
-.cx-root[data-shell] .cx-pane {
-  --pane-tint: 58%;
-
-  background: color-mix(in srgb, var(--rec-deep) var(--pane-tint), transparent);
-  box-shadow:
-    inset 0 0 0 1px rgb(255 255 255 / 7%),
-    inset 0 1px 0 rgb(255 255 255 / 7%),
-    0 30px 80px -40px rgb(0 0 0 / 70%);
-  transition:
-    background 0.6s ease,
-    border-radius 0.3s,
-    box-shadow 0.3s;
-}
-
-.cx-root[data-shell][data-view='home'] .cx-pane,
-.cx-root[data-shell][data-view='house'] .cx-pane {
-  --pane-tint: 14%;
-}
-
-/* The active row and the play button are the one accent. */
-.cx-root[data-shell] .cx-snav[data-on] {
-  background: color-mix(in srgb, var(--rec-accent) 16%, transparent);
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--rec-accent) 28%, transparent);
-}
-
-.cx-root[data-shell] .cx-snav[data-on] svg {
-  color: var(--rec-accent);
-}
-
-.cx-root[data-shell] .cx-pbar .cx-tr-play {
-  background: var(--rec-accent);
-  color: var(--rec-deep);
-  box-shadow: 0 10px 30px -10px color-mix(in srgb, var(--rec-accent) 70%, transparent);
-}
-
-.cx-root[data-shell] .cx-pbar .cx-tr-play:hover {
-  background: var(--rec-ink);
-}
-
-.cx-root[data-shell] .cx-pbar-tl .cx-bar-fill,
-.cx-root[data-shell] .cx-pbar-tl .cx-bar-knob {
-  background: var(--rec-accent);
-}
-
-.cx-root[data-shell] .cx-pbar-tl .cx-bar-knob {
-  box-shadow: 0 0 0 4px var(--rec-deep);
-}
-
-/* The sidebar: the record of every room, small, where the dot was. */
-.cx-snav-cov {
-  flex: none;
-  width: 18px;
-  height: 18px;
-  border-radius: 4px;
-  background-color: var(--cx-cover);
-  background-position: center;
-  background-size: cover;
-  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 10%);
-}
-
-.cx-snav-cov[data-paused] {
-  opacity: 0.55;
-  filter: saturate(0.6);
-}
-
-/* A service's mark as a disc, at any size. */
-.cx-smark {
-  position: relative;
-  display: inline-grid;
-  flex: none;
-  place-items: center;
-  width: var(--d, 18px);
-  height: var(--d, 18px);
-  overflow: hidden;
-  border-radius: 50%;
-  background: var(--tint);
-  color: #fff;
-}
-
-.cx-smark svg {
-  width: 70%;
-  height: 70%;
-}
-
-.cx-smark-mono {
-  font-size: calc(var(--d, 18px) * 0.42);
-  font-weight: 800;
-  letter-spacing: -0.02em;
-  color: #0a0a0c;
-}
-
-.cx-smark img {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.cx-smark[data-logo] {
-  background: none;
-}
-
-.cx-smark[data-logo] .cx-smark-mono {
-  display: none;
-}
-
-.cx-mark-glyph {
-  position: absolute;
-  width: 50cqw;
-  height: 50cqw;
-  color: rgb(255 255 255 / 92%);
-  filter: drop-shadow(0 2px 8px rgb(0 0 0 / 35%));
-}
-
-.cx-mark-glyph svg {
-  width: 100%;
-  height: 100%;
-}
-
-/* The poster: the title takes the column. */
-.cx-root[data-shell]:not([data-idle]) .cx-stage-meta {
-  width: min(700px, 40vw);
-}
-
-.cx-root[data-shell]:not([data-idle]) .cx-stage-inner {
-  --cx-cover-size: min(clamp(260px, 62vh, 600px), 32vw);
-}
-
-.cx-root[data-shell] .cx-title {
-  letter-spacing: -0.05em;
-  line-height: 0.88;
-}
-
-/* ==========================================================================================
- * Words are set in the display face. Mono is for numbers.
- *
- * Every label was mono capitals with wide tracking — THIS BROWSER, UP NEXT, TURN ON — and it was what
- * made the player read as a developer's dashboard rather than a thing in a living room. A word is set
- * in the face the headings use, small and in sentence case; what stays mono is what is read as a
- * figure: a time, a level, a count, a bitrate, the whole of the signal reading.
- * ========================================================================================== */
-
-.cx-root .mono:where(:not([class*='cx-sig-']):not([class*='cx-meter-']):not(.intro-word-light):not(.intro-tag):not(.server-mismatch)) {
-  font-family: var(--font-display);
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.005em;
-  text-transform: capitalize;
-}
-
-/* The figures. */
-.cx-root .cx-pbar-tl,
-.cx-root .cx-times,
-.cx-root .cx-time-tot,
-.cx-root .cx-tdur,
-.cx-root .cx-tidx,
-.cx-root .cx-vol-num,
-.cx-root .cx-vol-bubble,
-.cx-root .cx-snav-k,
-.cx-root .cx-np-times,
-.cx-root .cx-np-vol-num,
-.cx-root .cx-qdur,
-.cx-root .cx-qnum,
-.cx-root .cx-qrun,
-.cx-root .cx-upnext-dur,
-.cx-root .cx-desk-fader-val,
-.cx-root .cx-mini-vol-num,
-.cx-root .cx-index-count,
-.cx-root .cx-browse-count,
-.cx-root .cx-wire,
-.cx-root .cx-align-step,
-.cx-root .cx-pbar-lamp b,
-.cx-root .cx-live-txt {
+.cx-root .cx-sec-lbl.mono,
+.cx-root .cx-hsec-lbl.mono,
+.cx-root .cx-upnext-lbl.mono,
+.cx-root .cx-toc-lbl.mono,
+.cx-root .cx-browse-body[data-toc] .cx-doorshelf-name {
   font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.04em;
-  text-transform: none;
-  font-variant-numeric: tabular-nums;
-}
-
-/* A name is written as it is. */
-.cx-root .cx-desk-name,
-.cx-root .cx-pbar-room,
-.cx-root .cx-roomcard-name,
-.cx-root .cx-room-btn,
-.cx-root .cx-np-roompill,
-.cx-root .cx-snav-txt,
-.cx-root .cx-win-name,
-.cx-root .cx-eyebrow *,
-.cx-root .cx-np-eyebrow *,
-.cx-root .cx-bill-kicker * {
-  text-transform: none;
-}
-
-/* Sentences keep their case; a heading is a run of words with one capital. */
-.cx-root .cx-sec-lbl,
-.cx-root .cx-hsec-lbl,
-.cx-root .cx-toc-lbl,
-.cx-root .cx-qsec-lbl,
-.cx-root .cx-qnow-lbl,
-.cx-root .cx-search-note,
-.cx-root .cx-desk-hint,
-.cx-root .cx-more-sub,
-.cx-root .cx-input-sub,
-.cx-root .cx-said,
-.cx-root .cx-welcome-date,
-.cx-root .cx-bill-kicker,
-.cx-root .cx-np-eyebrow,
-.cx-root .cx-eyebrow,
-.cx-root .cx-detail-kind,
-.cx-root .cx-sheet-tab-static,
-.cx-root .cx-sgroup-lbl,
-.cx-root .cx-upnext-lbl,
-.cx-root .cx-qnow-lbl,
-.cx-root .cx-qsec-lbl,
-.cx-root .cx-more-state,
-.cx-root .cx-more-foot,
-.cx-root .cx-cover-last-lbl {
-  text-transform: none;
-}
-
-/* `::first-letter` needs a block: these are inline-block, which a flex row treats the same. */
-.cx-root .cx-sec-lbl,
-.cx-root .cx-hsec-lbl,
-.cx-root .cx-toc-lbl,
-.cx-root .cx-qsec-lbl,
-.cx-root .cx-qnow-lbl,
-.cx-root .cx-search-note,
-.cx-root .cx-desk-hint,
-.cx-root .cx-welcome-date,
-.cx-root .cx-sgroup-lbl,
-.cx-root .cx-upnext-lbl,
-.cx-root .cx-cover-last-lbl,
-.cx-root .cx-sheet-tab-static,
-.cx-root .cx-more-state,
-.cx-root .cx-more-foot {
-  display: inline-block;
-}
-
-.cx-root .cx-sec-lbl::first-letter,
-.cx-root .cx-hsec-lbl::first-letter,
-.cx-root .cx-toc-lbl::first-letter,
-.cx-root .cx-qsec-lbl::first-letter,
-.cx-root .cx-qnow-lbl::first-letter,
-.cx-root .cx-search-note::first-letter,
-.cx-root .cx-desk-hint::first-letter,
-.cx-root .cx-welcome-date::first-letter,
-.cx-root .cx-sgroup-lbl::first-letter,
-.cx-root .cx-upnext-lbl::first-letter,
-.cx-root .cx-cover-last-lbl::first-letter,
-.cx-root .cx-sheet-tab-static::first-letter,
-.cx-root .cx-more-state::first-letter,
-.cx-root .cx-more-foot::first-letter {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
   text-transform: uppercase;
+  color: var(--t5);
 }
 
-/* The sidebar's group label holds its link on the right; a block would lose that row, so its one word
-   is capitalised instead. The same for the labels that are one word or a figure with one. */
-.cx-root .cx-sgroup-lbl,
-.cx-root .cx-bill-kicker,
-.cx-root .cx-wire {
-  text-transform: capitalize;
+.cx-root .cx-browse-title,
+.cx-root .cx-browse-inner[data-spotlight]:not([data-root]) .cx-browse-title {
+  font-weight: 300;
+  letter-spacing: -0.03em;
 }
 
-.cx-root .cx-sgroup-lbl {
-  display: flex;
-}
-
-.cx-root .cx-hsec-right,
-.cx-root .cx-eyebrow-src,
-.cx-root .cx-np-eyebrow span,
-.cx-root .cx-eyebrow span,
-.cx-root .cx-eyebrow i,
-.cx-root .cx-eyebrow b {
-  text-transform: none;
-}
-
-/* Where a label was sized for nine-pixel capitals, the word gets its own measure. */
-.cx-root .cx-eyebrow,
-.cx-root .cx-np-eyebrow,
-.cx-root .cx-bill-kicker {
-  font-size: 12.5px;
-  color: var(--t4);
-}
-
-.cx-root .cx-sgroup-lbl {
-  font-size: 11.5px;
-  color: var(--t7);
-}
-
-.cx-root .cx-sgroup-go {
-  font-family: var(--font-display);
-  font-size: 11.5px;
-  font-weight: 500;
-  letter-spacing: 0;
-  text-transform: none;
-}
-
-.cx-root .cx-desk-name {
-  font-size: 13px;
-  letter-spacing: -0.005em;
-}
-
-.cx-root .cx-roomcard-name {
-  font-size: 12.5px;
-}
-
-.cx-root .cx-desk-word,
-.cx-root .cx-sec-more,
-.cx-root .cx-hsec-right,
-.cx-root .cx-qsec-act,
-.cx-root .cx-qadd,
-.cx-root .cx-browse-back,
-.cx-root .cx-search-note-go,
-.cx-root .cx-sig-back {
-  font-size: 12px;
-  letter-spacing: 0;
+/* A sleeve has the corners of a sleeve, and an edge. */
+.cx-root .cx-cover,
+.cx-root .cx-tile-cov,
+.cx-root .cx-bill-cover,
+.cx-root .cx-upnext-art,
+.cx-root .cx-tthumb,
+.cx-root[data-shell] .cx-browse-inner[data-detail]:has(.cx-detail) .cx-detail-cover {
+  border-radius: 3px;
 }
 
 .cx-root .cx-play-btn,
@@ -2006,145 +1642,128 @@ html[data-arrived] .cx-side-mark {
 .cx-root .cx-inputs-empty-go,
 .cx-root .cx-empty-act,
 .cx-root .cx-cta button,
-.cx-root .cx-cover-last-go,
-.cx-root .cx-pbar-room,
-.cx-root .cx-tnote,
-.cx-root .cx-install-go,
-.cx-root .cx-room-btn,
-.cx-root .cx-np-roompill,
-.cx-root .cx-np-queue,
-.cx-root .cx-onradio-chip {
-  font-family: var(--font-display);
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.005em;
-  text-transform: capitalize;
+.cx-root .cx-cover-last-go {
+  font-size: 10px;
+  letter-spacing: 0.16em;
 }
 
-.cx-root .cx-pbar-lamp {
-  font-family: var(--font-display);
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0;
-  text-transform: none;
+.cx-root .cx-bill {
+  border-radius: 6px;
 }
 
-/* The phone's bottom nav: the words under the glyphs. */
-.cx-root .cx-bnav-tab {
-  font-family: var(--font-display);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.01em;
-  text-transform: capitalize;
+/* --- the stage: one record, and room around it ---------------------------------------- */
+
+.cx-root[data-shell]:not([data-idle]) .cx-stage-inner {
+  --cx-cover-size: min(480px, 34vw, 62vh);
+
+  gap: clamp(48px, 6vw, 88px);
 }
 
-/* ==========================================================================================
- * The ground — see `Ground`.
- *
- * One layer under the whole window: the record's colours as drifting light. The frame is glass on it.
- * ========================================================================================== */
-
-.cx-root {
-  isolation: isolate;
+.cx-root[data-shell]:not([data-idle]) .cx-stage-meta {
+  width: min(520px, 36vw);
 }
 
-.cx-ground {
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  overflow: hidden;
-  background: var(--rec-deep, #0a0a0c);
-  pointer-events: none;
-  transition: background 1.6s ease;
-}
-
-.cx-ground-canvas {
-  position: absolute;
-  inset: -14%;
-  width: 128%;
-  height: 128%;
-  filter: blur(54px) saturate(1.3);
-  opacity: 0.4;
-  transition: opacity 1.4s var(--cx-ease);
-}
-
-/* How much of the light each place lets through. */
-.cx-root[data-shell] .cx-ground-canvas {
-  opacity: 0.7;
-}
-
-.cx-root[data-shell][data-view='home'] .cx-ground-canvas,
-.cx-root[data-shell][data-view='house'] .cx-ground-canvas {
-  opacity: 1;
-}
-
-/* A room with nothing on is lit by what it played last, lower: a memory, not a performance. */
-.cx-root[data-shell][data-memory] .cx-ground-canvas {
-  opacity: 0.6;
-}
-
-.cx-root[data-shell][data-rest='light'] .cx-ground-canvas {
-  opacity: 1;
-}
-
-.cx-ground-scrim {
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(130% 110% at 50% 40%, transparent 46%, rgb(0 0 0 / 34%) 100%),
-    linear-gradient(180deg, rgb(0 0 0 / 0%) 60%, rgb(0 0 0 / 30%) 100%);
-}
-
-.cx-ground-grain {
-  position: absolute;
-  inset: 0;
-  opacity: 0.13;
-  mix-blend-mode: overlay;
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .7 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
-}
-
-/* The sleeve, as an object in that light: a shadow in the record's own colour under the dark one. */
 .cx-root[data-shell]:not([data-idle]) .cx-stage .cx-cover {
-  border-radius: 10px;
   box-shadow:
-    0 60px 110px -44px rgb(0 0 0 / 92%),
-    0 34px 90px -30px color-mix(in srgb, var(--rec-accent) 38%, transparent),
-    inset 0 0 0 1px rgb(255 255 255 / 10%);
+    0 0 0 1px rgb(255 255 255 / 9%),
+    0 50px 90px -40px #000,
+    0 24px 40px -24px rgb(0 0 0 / 80%);
+}
+
+/* The name first, then who: the column reads title, artist, record. */
+.cx-root[data-shell] .cx-stage-meta > .cx-eyebrow {
+  order: 0;
+}
+
+.cx-root[data-shell]:not([data-idle]) .cx-stage-meta > .cx-titlebox {
+  order: 1;
+  height: auto;
+  margin-top: 22px;
+}
+
+.cx-root[data-shell]:not([data-idle]) .cx-titlebox .cx-title {
+  height: auto;
+}
+
+/* No coloured light under the sleeve: its shadow is black, and it is the only colour there is. */
+.cx-root[data-shell] .cx-stage .cx-bloom {
+  display: none;
+}
+
+.cx-root[data-shell] .cx-stage-meta > .cx-artistrow {
+  order: 2;
+  margin-top: 14px;
+}
+
+.cx-root[data-shell] .cx-stage-meta > .cx-title-tags {
+  order: 3;
+}
+
+.cx-root[data-shell] .cx-stage-meta > .cx-albumrow {
+  order: 4;
+}
+
+.cx-root[data-shell] .cx-stage-meta > .cx-error,
+.cx-root[data-shell] .cx-stage-meta > .cx-cta,
+.cx-root[data-shell] .cx-stage-meta > .cx-else {
+  order: 5;
+}
+
+.cx-root[data-shell] .cx-stage-meta > .cx-stage-foot {
+  order: 6;
+  margin-top: 44px;
 }
 
 .cx-root[data-shell] .cx-title {
-  text-shadow: 0 2px 40px rgb(0 0 0 / 35%);
+  font-weight: 300;
+  letter-spacing: -0.035em;
+  line-height: 1.02;
 }
 
-/* One sleeve, in one place at a time: it flies between the bar, the stage and the home's poster. */
-.cx-root[data-shell][data-view='home'] .cx-stage .cx-cover {
-  view-transition-name: cx-sleeve;
+.cx-root[data-shell] .cx-artist {
+  font-size: 19px;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  color: var(--t3);
 }
 
-.cx-root[data-shell][data-view='house'] .cx-poster[data-current] .cx-poster-art {
-  view-transition-name: cx-sleeve;
+/* The lamp: what is on the wire, and — when the server says so — the verdict, in green. */
+.cx-root .cx-wire {
+  gap: 9px;
+  height: 28px;
+  padding: 0 11px 0 12px;
+  border: 1px solid rgb(255 255 255 / 12%);
+  border-radius: 14px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  color: var(--t3);
 }
 
-.cx-root[data-shell]:not([data-view='home']):not([data-view='house']) .cx-pbar-cov:not([data-empty]) {
-  view-transition-name: cx-sleeve;
+.cx-root .cx-wire b {
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  text-transform: none;
+  color: var(--t5);
 }
 
-::view-transition-group(cx-sleeve) {
-  animation-duration: 0.42s;
-  animation-timing-function: cubic-bezier(0.2, 0.8, 0.2, 1);
+.cx-wire-lamp {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 8px var(--accent);
 }
 
-/* ==========================================================================================
- * Home — see `House`.
- * ========================================================================================== */
+/* --- home — see `House` ------------------------------------------------------------- */
 
 .cx-home {
   display: flex;
   flex-direction: column;
-  gap: 26px;
+  gap: 44px;
   height: 100%;
   min-height: 0;
-  padding: 30px var(--pane-pad) 34px;
+  padding: 44px 56px 40px;
   overflow-y: auto;
   scrollbar-width: none;
 }
@@ -2155,409 +1774,252 @@ html[data-arrived] .cx-side-mark {
 
 .cx-home-head {
   display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 24px;
+  flex-direction: column;
+  gap: 14px;
   flex: none;
 }
 
-.cx-home-day {
-  display: block;
-  margin-bottom: 6px;
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--t4);
+.cx-root .cx-home-lbl {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  color: var(--t5);
+}
+
+.cx-root .cx-home-lbl[data-dim] {
+  color: var(--t7);
+}
+
+.cx-root .cx-home-lbl[data-act] {
+  color: var(--t3);
+  transition: color 0.18s;
+}
+
+.cx-root .cx-home-lbl[data-act]:hover {
+  color: var(--t1);
 }
 
 .cx-home-greet {
   margin: 0;
-  font-size: clamp(40px, 4.4vw, 60px);
-  font-weight: 800;
-  letter-spacing: -0.045em;
-  line-height: 0.95;
+  font-family: var(--font-display);
+  font-size: 40px;
+  font-weight: 300;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
   color: var(--t1);
 }
-
-.cx-home-now {
-  padding-bottom: 6px;
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--t3);
-  white-space: nowrap;
-}
-
-/* --- the rooms with music: posters --- */
-
-.cx-posters {
-  display: grid;
-  grid-template-columns: repeat(var(--n, 1), minmax(0, 1fr));
-  gap: 16px;
-  flex: none;
-  height: clamp(280px, 44vh, 440px);
-}
-
-.cx-posters[data-n='1'] {
-  --n: 1;
-}
-
-.cx-posters[data-n='2'] {
-  --n: 2;
-}
-
-.cx-posters[data-n='3'] {
-  --n: 3;
-}
-
-.cx-posters[data-n='4'] {
-  --n: 4;
-}
-
-.cx-poster {
-  position: relative;
-  container-type: size;
-  overflow: hidden;
-  border-radius: 20px;
-  background: #0c0c0e;
-  box-shadow:
-    inset 0 0 0 1px rgb(255 255 255 / 9%),
-    0 40px 90px -40px color-mix(in srgb, var(--c) 55%, transparent),
-    0 30px 60px -36px rgb(0 0 0 / 90%);
-  transition:
-    transform 0.35s var(--cx-ease),
-    box-shadow 0.35s var(--cx-ease);
-}
-
-.cx-poster:hover {
-  transform: translateY(-3px);
-}
-
-.cx-poster[data-current] {
-  box-shadow:
-    inset 0 0 0 1.5px rgb(255 255 255 / 30%),
-    0 40px 90px -40px color-mix(in srgb, var(--c) 55%, transparent),
-    0 30px 60px -36px rgb(0 0 0 / 90%);
-}
-
-.cx-poster[data-over] {
-  transform: scale(1.015);
-  box-shadow:
-    inset 0 0 0 2px #fff,
-    0 40px 90px -30px color-mix(in srgb, var(--c) 70%, transparent);
-}
-
-.cx-poster-hit {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: flex-end;
-  gap: clamp(20px, 5cqw, 40px);
-  padding: clamp(18px, 6cqh, 30px);
-  text-align: left;
-  cursor: pointer;
-}
-
-.cx-poster-back {
-  position: absolute;
-  inset: -16%;
-  background-position: center;
-  background-size: cover;
-  filter: blur(46px) saturate(1.35) brightness(0.62);
-}
-
-.cx-poster-hit::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(180deg, rgb(0 0 0 / 0%) 30%, rgb(0 0 0 / 50%) 100%);
-  pointer-events: none;
-}
-
-.cx-poster-art {
-  position: relative;
-  z-index: 1;
-  flex: none;
-  height: 100%;
-  aspect-ratio: 1;
-  border-radius: 10px;
-  background-color: var(--cx-cover);
-  background-position: center;
-  background-size: cover;
-  box-shadow:
-    0 30px 70px -26px rgb(0 0 0 / 90%),
-    inset 0 0 0 1px rgb(255 255 255 / 12%);
-}
-
-.cx-poster:not([data-on]) .cx-poster-art {
-  filter: saturate(0.75) brightness(0.86);
-}
-
-.cx-poster-txt {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  min-width: 0;
-  padding: 0 64px 18px 0;
-}
-
-.cx-poster-room {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  font-size: 13px;
-  font-weight: 600;
-  color: rgb(255 255 255 / 82%);
-}
-
-.cx-poster-room i {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--c);
-  box-shadow: 0 0 10px var(--c);
-}
-
-.cx-poster-room em {
-  font-style: normal;
-  font-weight: 500;
-  color: rgb(255 255 255 / 55%);
-}
-
-.cx-poster-title {
-  display: -webkit-box;
-  overflow: hidden;
-  font-size: clamp(24px, 5.2cqw, 52px);
-  font-weight: 800;
-  letter-spacing: -0.04em;
-  line-height: 1;
-  color: #fff;
-  text-shadow: 0 2px 30px rgb(0 0 0 / 45%);
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
-}
-
-.cx-poster-artist {
-  overflow: hidden;
-  font-size: 14.5px;
-  color: rgb(255 255 255 / 72%);
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.cx-poster-lvl {
-  position: absolute;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  z-index: 2;
-  height: 3px;
-  background: rgb(255 255 255 / 10%);
-}
-
-.cx-poster-lvl i {
-  display: block;
-  width: var(--pct);
-  height: 100%;
-  background: color-mix(in srgb, var(--c) 60%, #fff);
-  transition: width 0.3s var(--cx-ease);
-}
-
-.cx-poster-play {
-  position: absolute;
-  right: clamp(16px, 5cqh, 26px);
-  bottom: clamp(20px, 7cqh, 32px);
-  z-index: 3;
-  display: grid;
-  place-items: center;
-  width: 52px;
-  height: 52px;
-  border-radius: 50%;
-  background: #fff;
-  color: #0a0a0c;
-  box-shadow: 0 14px 34px -10px rgb(0 0 0 / 70%);
-  transition: transform 0.22s var(--cx-ease);
-}
-
-.cx-poster-play:hover {
-  transform: scale(1.07);
-}
-
-.cx-poster-play:active {
-  transform: scale(0.95);
-}
-
-/* A narrow poster is the sleeve itself, edge to edge, with the words over its foot. */
-@container (max-width: 520px) {
-  .cx-poster-back {
-    display: none;
-  }
-
-  .cx-poster-art {
-    position: absolute;
-    inset: 0;
-    height: auto;
-    aspect-ratio: auto;
-    border-radius: 0;
-    box-shadow: none;
-  }
-
-  .cx-poster-hit::after {
-    z-index: 1;
-    background: linear-gradient(180deg, rgb(0 0 0 / 0%) 34%, rgb(0 0 0 / 82%) 100%);
-  }
-
-  .cx-poster-txt {
-    z-index: 2;
-  }
-}
-
-.cx-poster-hint {
-  position: absolute;
-  top: 16px;
-  left: 50%;
-  z-index: 4;
-  translate: -50% 0;
-  display: inline-flex;
-  align-items: center;
-  height: 30px;
-  padding: 0 12px;
-  border-radius: 15px;
-  background: #fff;
-  font-size: 12px;
-  font-weight: 600;
-  color: #0a0a0c;
-  white-space: nowrap;
-  box-shadow: 0 10px 30px -10px rgb(0 0 0 / 80%);
-}
-
-/* --- the rooms with nothing on: a quiet row --- */
-
-.cx-quiets {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  flex: none;
-}
-
-.cx-quiet {
-  position: relative;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  height: 58px;
-  padding: 0 22px 0 11px;
-  border-radius: 16px;
-  background: rgb(255 255 255 / 4.5%);
-  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 7%);
-  text-align: left;
-  cursor: pointer;
-  transition:
-    background 0.25s var(--cx-ease),
-    transform 0.25s var(--cx-ease),
-    box-shadow 0.25s var(--cx-ease);
-}
-
-.cx-quiet:hover {
-  background: rgb(255 255 255 / 8%);
-  transform: translateY(-2px);
-}
-
-.cx-quiet[data-current] {
-  box-shadow: inset 0 0 0 1.5px rgb(255 255 255 / 26%);
-}
-
-.cx-quiet[data-over] {
-  box-shadow: inset 0 0 0 2px #fff;
-}
-
-.cx-quiet-ic {
-  display: grid;
-  place-items: center;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: rgb(255 255 255 / 6%);
-  color: var(--t4);
-}
-
-.cx-quiet[data-off] .cx-quiet-ic {
-  color: var(--t6);
-}
-
-.cx-quiet-txt {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.cx-quiet-name {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--t2);
-}
-
-.cx-quiet[data-off] .cx-quiet-name {
-  color: var(--t4);
-}
-
-.cx-quiet-line {
-  font-size: 12px;
-  color: var(--t5);
-}
-
-/* --- shelves --- */
 
 .cx-home-sec {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 16px;
   flex: none;
   min-width: 0;
 }
 
 .cx-home-sec-head {
   display: flex;
-  align-items: center;
-  gap: 10px;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 24px;
 }
 
-.cx-home-sec-lbl {
-  margin: 0 auto 0 0;
-  font-size: 17px;
-  font-weight: 700;
-  letter-spacing: -0.02em;
+.cx-home-house {
+  display: flex;
+  align-items: flex-start;
+  gap: 28px;
+}
+
+.cx-home-room {
+  display: flex;
+  flex-direction: column;
+  flex: none;
+  width: 208px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.cx-home-room-cov {
+  width: 208px;
+  height: 208px;
+  margin-bottom: 14px;
+  border-radius: 3px;
+  background-color: var(--cx-cover);
+  background-position: center;
+  background-size: cover;
+  box-shadow:
+    0 0 0 1px rgb(255 255 255 / 8%),
+    0 24px 40px -24px #000;
+  transition:
+    opacity 0.3s var(--cx-ease),
+    transform 0.3s var(--cx-ease),
+    box-shadow 0.3s var(--cx-ease);
+}
+
+.cx-home-room:not([data-on]) .cx-home-room-cov {
+  opacity: 0.5;
+}
+
+.cx-home-room:hover .cx-home-room-cov {
+  transform: translateY(-3px);
+}
+
+.cx-home-room[data-current] .cx-home-room-cov {
+  box-shadow:
+    0 0 0 1px rgb(255 255 255 / 34%),
+    0 24px 40px -24px #000;
+}
+
+.cx-home-room[data-over] .cx-home-room-cov {
+  box-shadow:
+    0 0 0 2px var(--t1),
+    0 24px 40px -24px #000;
+}
+
+.cx-root .cx-home-room-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  color: var(--t4);
+}
+
+.cx-home-room-name i {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--t7);
+}
+
+.cx-home-room[data-on] .cx-home-room-name i {
+  background: var(--t1);
+  box-shadow: 0 0 8px rgb(255 255 255 / 60%);
+}
+
+.cx-home-room-title {
+  margin-top: 8px;
+  overflow: hidden;
+  font-size: 14.5px;
+  color: var(--t1);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cx-home-room-artist {
+  margin-top: 3px;
+  overflow: hidden;
+  font-size: 12.5px;
+  color: var(--t5);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cx-home-quiets {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 220px;
+  max-width: 420px;
+  padding-left: 28px;
+  border-left: 1px solid rgb(255 255 255 / 7%);
+}
+
+.cx-home-quiets[data-alone] {
+  padding-left: 0;
+  border-left: 0;
+}
+
+.cx-home-quiets > .cx-home-lbl {
+  margin-top: 20px;
+  line-height: 1.8;
+}
+
+.cx-home-quiet {
+  display: grid;
+  grid-template-columns: 12px minmax(0, 1fr) auto;
+  align-items: center;
+  height: 46px;
+  border-bottom: 1px solid rgb(255 255 255 / 7%);
+  font-size: 14px;
+  color: var(--t3);
+  text-align: left;
+  cursor: pointer;
+  transition: color 0.18s;
+}
+
+.cx-home-quiet:hover,
+.cx-home-quiet[data-current] {
   color: var(--t1);
 }
 
-.cx-home-sec-act {
-  height: 32px;
-  padding: 0 14px;
-  border-radius: 16px;
-  background: rgb(255 255 255 / 6%);
-  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 8%);
-  font-size: 12.5px;
-  font-weight: 600;
-  color: var(--t2);
-  transition:
-    background 0.18s,
-    transform 0.22s var(--cx-ease);
+.cx-home-quiet[data-off] {
+  color: var(--t6);
 }
 
-.cx-home-sec-act:hover {
-  background: rgb(255 255 255 / 12%);
-  transform: translateY(-1px);
+.cx-home-quiet[data-over] {
+  border-bottom-color: var(--t1);
+}
+
+.cx-home-quiet i {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--t8);
+}
+
+.cx-home-quiet em {
+  margin-left: 10px;
+  font-style: normal;
+  font-size: 12.5px;
+  color: var(--t6);
+}
+
+.cx-root .cx-home-quiet-vol {
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  color: var(--t5);
+}
+
+.cx-home-scenes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.cx-home-scene {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  height: 36px;
+  padding: 0 16px;
+  border: 1px solid rgb(255 255 255 / 12%);
+  border-radius: 18px;
+  font-size: 13px;
+  color: var(--t2);
+  transition: border-color 0.18s;
+}
+
+.cx-home-scene:hover {
+  border-color: rgb(255 255 255 / 30%);
+}
+
+.cx-home-scene em {
+  font-style: normal;
+  font-size: 11.5px;
+  color: var(--t6);
 }
 
 .cx-home-row {
   display: flex;
-  gap: 18px;
-  margin: 0 calc(var(--pane-pad) * -1);
-  padding: 4px var(--pane-pad) 14px;
+  gap: 22px;
+  margin: 0 -56px;
+  padding: 0 56px 6px;
   overflow-x: auto;
   scrollbar-width: none;
-  mask-image: linear-gradient(90deg, #000 calc(100% - var(--pane-pad) - 40px), transparent 100%);
+  mask-image: linear-gradient(90deg, #000 calc(100% - 96px), transparent 100%);
 }
 
 .cx-home-row::-webkit-scrollbar {
@@ -2568,59 +2030,33 @@ html[data-arrived] .cx-side-mark {
   display: flex;
   flex-direction: column;
   flex: none;
-  gap: 4px;
-  width: 156px;
+  gap: 3px;
+  width: 128px;
   text-align: left;
   cursor: pointer;
 }
 
 .cx-home-tile-cov {
-  position: relative;
-  width: 156px;
-  height: 156px;
-  margin-bottom: 8px;
-  border-radius: 9px;
-  background-color: rgb(255 255 255 / 5%);
+  width: 128px;
+  height: 128px;
+  margin-bottom: 9px;
+  border-radius: 3px;
+  background-color: var(--cx-cover);
   background-position: center;
   background-size: cover;
   box-shadow:
-    0 22px 44px -22px rgb(0 0 0 / 90%),
-    inset 0 0 0 1px rgb(255 255 255 / 9%);
+    0 0 0 1px rgb(255 255 255 / 8%),
+    0 20px 36px -22px #000;
   transition: transform 0.3s var(--cx-ease);
 }
 
 .cx-home-tile:hover .cx-home-tile-cov {
-  transform: translateY(-4px) scale(1.02);
-}
-
-.cx-home-tile-play {
-  position: absolute;
-  right: 10px;
-  bottom: 10px;
-  display: grid;
-  place-items: center;
-  width: 38px;
-  height: 38px;
-  border-radius: 50%;
-  background: #fff;
-  color: #0a0a0c;
-  opacity: 0;
-  translate: 0 6px;
-  box-shadow: 0 10px 24px -8px rgb(0 0 0 / 70%);
-  transition:
-    opacity 0.22s,
-    translate 0.22s var(--cx-ease);
-}
-
-.cx-home-tile:hover .cx-home-tile-play {
-  opacity: 1;
-  translate: 0 0;
+  transform: translateY(-3px);
 }
 
 .cx-home-tile-title {
   overflow: hidden;
-  font-size: 13.5px;
-  font-weight: 600;
+  font-size: 13px;
   color: var(--t2);
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -2628,192 +2064,172 @@ html[data-arrived] .cx-side-mark {
 
 .cx-home-tile-sub {
   overflow: hidden;
-  font-size: 12.5px;
-  color: var(--t5);
+  font-size: 12px;
+  color: var(--t6);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.cx-home-doors {
+/* --- the rooms: a list, ruled ------------------------------------------------------- */
+
+.cx-root[data-shell] .cx-deskpage {
+  padding: 44px 56px 0;
+}
+
+.cx-root[data-shell] .cx-desk-row,
+.cx-root[data-shell] .cx-desk-group-row {
   display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
+  flex-direction: column;
+  gap: 0;
 }
 
-.cx-home-door {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  min-width: 190px;
-  height: 68px;
-  padding: 0 26px 0 14px;
-  border-radius: 18px;
-  background: rgb(255 255 255 / 4.5%);
-  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 7%);
-  text-align: left;
-  cursor: pointer;
-  transition:
-    background 0.25s var(--cx-ease),
-    transform 0.25s var(--cx-ease);
+.cx-root[data-shell] .cx-desk-row {
+  border-top: 1px solid rgb(255 255 255 / 7%);
 }
 
-.cx-home-door:hover {
-  background: rgb(255 255 255 / 9%);
-  transform: translateY(-2px);
-}
-
-.cx-home-door-name {
-  font-size: 15px;
-  font-weight: 650;
-  letter-spacing: -0.01em;
-  color: var(--t1);
-}
-
-/* ==========================================================================================
- * The rest — see `Light`: what is left on the ground when the frame steps away.
- * ========================================================================================== */
-
-.cx-root[data-shell][data-rest='light'] .cx-pane {
+.cx-root[data-shell] .cx-desk-strip {
+  grid-template-columns: 340px minmax(0, 1fr) 96px;
+  grid-template-areas: 'hit fader foot';
+  gap: 0 28px;
+  height: 76px;
+  padding: 0;
+  border-bottom: 1px solid rgb(255 255 255 / 7%);
+  border-radius: 0;
   background: none;
   box-shadow: none;
 }
 
-.cx-root[data-rest='light'] .cx-wall > .cx-house {
+.cx-root[data-shell] .cx-desk-strip:hover {
+  transform: none;
+}
+
+.cx-root[data-shell] .cx-desk-strip[data-over] {
+  background: rgb(255 255 255 / 4%);
+}
+
+.cx-root[data-shell] .cx-desk-cov {
+  width: 44px;
+  height: 44px;
+  border-radius: 3px;
+}
+
+.cx-root .cx-desk-name {
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--t3);
+}
+
+.cx-root .cx-desk-strip[data-on] .cx-desk-name,
+.cx-root .cx-desk-strip[data-current] .cx-desk-name {
+  color: var(--t1);
+}
+
+/* The level: a line, a dot, and the figure. */
+.cx-root .cx-desk-fader-rail {
+  height: 1px;
+  background: rgb(255 255 255 / 12%);
+}
+
+.cx-root .cx-desk-fader-fill,
+.cx-root .cx-desk-fader[data-lit] .cx-desk-fader-fill {
+  background: var(--t2);
+}
+
+.cx-root .cx-desk-fader-knob {
+  width: 11px;
+  height: 11px;
+  margin: -5px 0 0 -5px;
+  box-shadow: 0 0 0 4px #09090a;
+}
+
+.cx-root[data-shell] .cx-desk-group {
+  position: relative;
+  padding: 0 0 0 26px;
+  border: 0;
+  border-radius: 0;
+  background: none;
+}
+
+/* Rooms that play together: one line down their left edge. */
+.cx-root[data-shell] .cx-desk-group::before {
+  content: '';
+  position: absolute;
+  top: 14px;
+  bottom: 14px;
+  left: 0;
+  width: 1px;
+  background: var(--t1);
+}
+
+.cx-root[data-shell] .cx-desk-group-lbl {
+  height: 44px;
+  padding: 0;
+  border-bottom: 1px solid rgb(255 255 255 / 7%);
+  color: var(--t2);
+}
+
+/* --- the meters — see `VuPair` ---------------------------------------------------- */
+
+.cx-vu {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  max-width: 760px;
+}
+
+/* The deck gains a row for the meters and may scroll on a short window; on a wall panel it all stands. */
+.cx-root[data-shell] .cx-sig-deck {
+  grid-template-rows: auto auto minmax(200px, 1fr) minmax(184px, 1fr);
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+
+.cx-root[data-shell] .cx-sig-deck::-webkit-scrollbar {
   display: none;
 }
 
-.cx-root[data-rest='light'] .cx-wall,
-.cx-root[data-rest='light'] .cx-wall-room {
-  position: relative;
+.cx-vu-well {
+  padding: 14px;
+  border: 1px solid rgb(255 255 255 / 7%);
+  border-radius: 6px;
+  background: linear-gradient(180deg, #131316, #0e0e10);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 4%),
+    0 30px 60px -40px #000;
+}
+
+.cx-vu-face {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 4px;
+  font-family: var(--font-display);
+  box-shadow: inset 0 0 40px rgb(60 40 0 / 30%);
+}
+
+.cx-vu-num {
+  font-family: var(--font-mono);
+}
+
+/* The hall's drawn marks fill the disc they are drawn on. */
+.cx-mark-glyph svg {
+  width: 100%;
   height: 100%;
 }
 
-.cx-light {
-  position: absolute;
-  inset: 0;
-  z-index: 3;
-  overflow: hidden;
-  color: var(--rec-ink);
-  cursor: pointer;
-  animation: cx-vt-in 1.2s var(--cx-ease) both;
+/* A row's name is set at a reading weight; the playing one is the white one. */
+.cx-root .cx-ttitle,
+.cx-root .cx-upnext-title,
+.cx-root .cx-tile-name {
+  font-weight: 450;
 }
 
-.cx-light-wave {
-  position: absolute;
-  right: 0;
-  bottom: 100px;
-  left: 0;
-  width: 100%;
-  height: 260px;
-  pointer-events: none;
-}
-
-.cx-light-wave path {
-  fill: none;
-  stroke: var(--rec-ink);
-  stroke-width: 1.2;
-  opacity: 0;
-  transition: opacity 0.8s;
-}
-
-.cx-light-wave[data-live] path {
-  opacity: 0.3;
-}
-
-.cx-light-ui {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  padding: 44px 52px;
-  pointer-events: none;
-}
-
-.cx-light-row {
-  display: flex;
-  justify-content: flex-end;
-}
-
-.cx-light-clock {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 8px;
-}
-
-.cx-light-time.disp {
-  font-size: 84px;
-  font-weight: 300;
-  letter-spacing: -0.045em;
-  line-height: 1;
-  text-shadow: 0 4px 50px rgb(0 0 0 / 30%);
-}
-
-.cx-light-day {
-  font-size: 15px;
-  font-weight: 500;
-  color: color-mix(in srgb, var(--rec-ink) 74%, transparent);
-}
-
-.cx-light-np {
-  display: flex;
-  align-items: flex-end;
-  gap: 26px;
-}
-
-.cx-light-cov {
-  flex: none;
-  width: 148px;
-  height: 148px;
-  border-radius: 10px;
-  background-color: var(--cx-cover);
-  background-position: center;
-  background-size: cover;
-  box-shadow: 0 40px 90px -30px rgb(0 0 0 / 85%);
-}
-
-.cx-light-txt {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
-
-.cx-light-title {
-  font-size: 44px;
-  font-weight: 800;
-  letter-spacing: -0.04em;
-  line-height: 0.95;
-  text-shadow: 0 2px 40px rgb(0 0 0 / 35%);
-}
-
-.cx-light-artist {
-  margin-top: 10px;
-  font-size: 18px;
-  color: color-mix(in srgb, var(--rec-ink) 74%, transparent);
-}
-
-.cx-light-room {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-top: 14px;
-  font-size: 13px;
-  font-weight: 600;
-  color: color-mix(in srgb, var(--rec-ink) 50%, transparent);
-}
-
-.cx-light-room i {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--accent);
-  box-shadow: 0 0 8px color-mix(in srgb, var(--accent) 80%, transparent);
-}
-
-/* A room's name is written as it is, on the phone player's pill as everywhere else. */
-.cx-root .cx-np-roompill,
-.cx-root .cx-room-btn,
-.cx-root .cx-pbar-room {
-  text-transform: none;
+/* The whisper, after six still seconds: the words step back, but stay words. */
+.cx-root[data-shell][data-still] .cx-stage .cx-eyebrow,
+.cx-root[data-shell][data-still] .cx-stage .cx-stage-foot,
+.cx-root[data-shell][data-still] .cx-stage .cx-fav {
+  opacity: 0.55;
 }
