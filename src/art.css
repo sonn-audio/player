@@ -3082,7 +3082,7 @@
   align-items: center;
   gap: 14px;
   margin: 0 -14px;
-  padding: 10px 14px;
+  padding: 0 14px;
   border-radius: 6px;
   transition: background 0.16s;
 }
@@ -3091,12 +3091,15 @@
   background: rgb(255 255 255 / 4%);
 }
 
+/* The row's height is the button's own, so the whole line is the thing you press. */
 .cx-trow-main {
   display: flex;
   align-items: center;
   gap: 18px;
   flex: 1;
   min-width: 0;
+  min-height: 48px;
+  padding: 10px 0;
   text-align: left;
 }
 

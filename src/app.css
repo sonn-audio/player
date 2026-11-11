@@ -2146,7 +2146,8 @@ html[data-arrived] .cx-side-mark {
 }
 
 .cx-np-album {
-  min-height: 26px;
+  min-height: 44px;
+  margin-block: -9px;
   font-size: 13px;
   color: var(--t5);
 }
@@ -3920,7 +3921,32 @@ html[data-arrived] .cx-side-mark {
 
 /* In the hand the one filled button is a thumb tall in its own right, not by a reach around it. */
 @media (max-width: 979px) {
-  .cx-root .cx-play-btn {
+  .cx-root .cx-play-btn,
+  .cx-root .cx-wire {
     min-height: 44px;
+  }
+
+  /* The artist under a record's name is a door, and a thumb tall. */
+  /* Words that are buttons: a line of type, a thumb tall, with the margin giving back the difference. */
+  .cx-root .cx-tnote,
+  .cx-root .cx-qmain {
+    min-height: 44px;
+  }
+
+  .cx-root .cx-qsec-act,
+  .cx-root .cx-sheet .cx-time-tot,
+  .cx-root .cx-about-foot button {
+    display: inline-flex;
+    align-items: center;
+    min-width: 44px;
+    min-height: 44px;
+    margin-block: -15px;
+  }
+
+  .cx-root button.cx-detail-sub {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    margin-block: -4px -10px;
   }
 }
