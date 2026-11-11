@@ -2312,25 +2312,6 @@
 }
 
 /*
- * Shelves breathe, and the first one is the window.
- *
- * Every shelf the same size makes a page of equal rows, which is a file listing with pictures in it. The
- * first row of a service is what you actually see when you arrive, so it gets bigger tiles and the rest
- * settle into a rhythm under it — the same trick a shop window plays on a shelf.
- */
-
-/*
- * Not on a search, where the shelves are peers.
- *
- * The window works because a service's first shelf is the one it chose to lead with. Search has no such
- * order — the buckets come back in whatever sequence the provider answered in — so giving `songs` 260px
- * tiles and `albums` 190px says the first bucket matters more, which nothing about it does.
- */
-.cx-browse-inner:not([data-search]) .cx-shelf:first-of-type .cx-tile {
-  width: clamp(180px, 17vw, 260px);
-}
-
-/*
  * The row runs off the edge of the window, and says so by being cut by it.
  *
  * A shelf that stops at the same right margin as the paragraph above it looks like a row that happens
