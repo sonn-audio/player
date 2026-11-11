@@ -22,7 +22,7 @@ the rests; and between them a pane — a rounded sheet — that shows whatever t
 house, the stage, the catalogue, the inputs, the rooms, the reading.
 
 **A hi-fi component, not an app.** Black, silver and hairlines. The sleeve is the only colour on the
-screen and green is only ever a verdict. The lettering is a faceplate's: Barlow light for names, Barlow
+screen; green is the mark's, as in the admin, and otherwise only ever a verdict. The lettering is a faceplate's: Barlow light for names, Barlow
 Condensed in spaced capitals for labels, DM Mono for figures. Nothing is boxed that a line can separate.
 
 **Now playing is quiet on purpose** (`art/Stage.tsx`): the sleeve, the name, who, the record, one lamp

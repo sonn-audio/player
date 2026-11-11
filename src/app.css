@@ -62,10 +62,11 @@ html[data-arrived] .cx-side-mark {
   text-decoration: none;
 }
 
+/* The mark is the product's own green, here as in the admin: its signature, not a control. */
 .cx-side-mark {
   width: 26px;
   height: 21px;
-  color: var(--t1);
+  color: var(--accent);
 }
 
 .cx-root .cx-side-word {
@@ -2259,7 +2260,7 @@ html[data-arrived] .cx-side-mark {
   display: grid;
   place-items: center;
   height: 44px;
-  color: var(--t3);
+  color: var(--accent);
 }
 
 .cx-brand-mark {
