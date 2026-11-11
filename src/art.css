@@ -2654,6 +2654,25 @@
   opacity: 1;
 }
 
+/* Under a pointer the queue button takes the duration's place instead of holding a cell of its own
+   open beside it, so the title has the width. */
+@media (hover: hover) {
+  .cx-trow {
+    position: relative;
+  }
+
+  .cx-tact {
+    position: absolute;
+    right: 14px;
+    width: 44px;
+    justify-items: end;
+  }
+
+  .cx-trow:hover .cx-tdur {
+    opacity: 0;
+  }
+}
+
 .cx-tact:hover {
   color: var(--t1);
 }
@@ -2671,6 +2690,7 @@
   font-variant-numeric: tabular-nums;
   text-align: right;
   color: var(--t6);
+  transition: opacity 0.15s;
 }
 
 /* --- inputs --------------------------------------------------------------- */

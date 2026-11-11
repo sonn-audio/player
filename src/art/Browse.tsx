@@ -693,7 +693,7 @@ export function TrackRow({
       <button type="button" className="cx-tact" onClick={onQueue} title="Add to the queue">
         <QueueGlyph size={15} />
       </button>
-      {item.duration ? <span className="cx-tdur mono">{formatTime(item.duration)}</span> : null}
+      <span className="cx-tdur mono">{item.duration ? formatTime(item.duration) : null}</span>
     </div>
   );
 }
