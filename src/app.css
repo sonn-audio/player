@@ -1877,23 +1877,31 @@ html[data-arrived] .cx-side-mark {
   gap: 18px;
 }
 
-.cx-vu-well {
-  padding: 14px;
-  border: 1px solid rgb(255 255 255 / 7%);
-  border-radius: 6px;
-  background: linear-gradient(180deg, #131316, #0e0e10);
-  box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 4%),
-    0 30px 60px -40px #000;
-}
-
 .cx-vu-face {
   display: block;
   width: 100%;
   height: auto;
-  border-radius: 4px;
   font-family: var(--font-display);
-  box-shadow: inset 0 0 40px rgb(60 40 0 / 30%);
+  filter: drop-shadow(0 30px 34px rgb(0 0 0 / 70%));
+}
+
+.cx-vu-lamp-dot {
+  fill: #5b2a22;
+  transition: fill 0.12s;
+}
+
+.cx-vu-lamp-glow {
+  fill: #ff4b3a;
+  opacity: 0;
+  transition: opacity 0.12s;
+}
+
+.cx-vu-lamp[data-lit] .cx-vu-lamp-dot {
+  fill: #ff4b3a;
+}
+
+.cx-vu-lamp[data-lit] .cx-vu-lamp-glow {
+  opacity: 0.28;
 }
 
 .cx-vu-num {
