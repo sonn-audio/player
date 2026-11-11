@@ -127,8 +127,6 @@
 
 .cx-root .disp {
   font-family: var(--font-display);
-  font-weight: 800;
-  letter-spacing: -0.04em;
 }
 
 /* --- the artwork wash ------------------------------------------------------ */
@@ -385,7 +383,6 @@
 }
 
 .cx-house-line {
-  max-width: clamp(140px, 14vw, 240px);
   overflow: hidden;
   font-size: 12px;
   color: var(--t6);
@@ -925,11 +922,6 @@
      that sized itself from what was left over would have nothing to take a share of. */
   flex: none;
   min-width: 0;
-  /* A column, not a field: the timeline and the volume fader stop at a length a hand can cross rather
-     than running the full width of a 2560px monitor because there was nothing to stop them. 760px is
-     still that length, and 140px of it is what a title needs to stop being cut short — the column was
-     the other half of the truncation `titleStep` fixes. `44vw` keeps it a column on a narrow window. */
-  width: min(760px, 44vw);
 }
 
 .cx-eyebrow {
@@ -971,7 +963,6 @@
   /* The size itself is on the ladder below, keyed to how long the title is. This is the value a
      title gets if the step attribute never arrives. */
   font-size: clamp(38px, min(6vh, 4.6vw), 76px);
-  line-height: 1;
   color: var(--t1);
   display: -webkit-box;
   -webkit-box-orient: vertical;
@@ -1156,18 +1147,13 @@
  */
 .cx-stage-foot {
   display: flex;
-  align-items: flex-end;
   justify-content: space-between;
-  gap: 30px;
   order: 2;
-  margin-top: auto;
-  padding-top: clamp(18px, 4vh, 44px);
 }
 
 .cx-upnext {
   display: flex;
   flex-direction: column;
-  gap: 14px;
   min-width: 0;
 }
 
@@ -1620,10 +1606,8 @@
 .cx-qrow {
   display: flex;
   align-items: center;
-  gap: 10px;
   width: calc(100% + 16px);
   margin: 0 -8px;
-  padding: 7px 8px;
   border-radius: 5px;
   transition: background 0.15s;
 }
@@ -1684,9 +1668,6 @@
 }
 
 .cx-qcov {
-  width: 30px;
-  height: 30px;
-  border-radius: 3px;
   background-color: var(--cx-cover);
   background-position: center;
   background-size: cover;
@@ -2113,7 +2094,6 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
-  margin-bottom: 26px;
 }
 
 .cx-browse-back {
@@ -2239,7 +2219,6 @@
 .cx-browse-actions {
   display: flex;
   align-items: center;
-  gap: 26px;
   margin-bottom: 30px;
 }
 
@@ -2247,27 +2226,7 @@
 .cx-shuffle-btn {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 0;
   font-size: 10px;
-  letter-spacing: 0.2em;
-  transition: color 0.18s var(--cx-ease);
-}
-
-.cx-play-btn {
-  color: var(--gb);
-}
-
-.cx-play-btn:hover {
-  color: var(--t1);
-}
-
-.cx-shuffle-btn {
-  color: var(--t6);
-}
-
-.cx-shuffle-btn:hover {
-  color: var(--t3);
 }
 
 .cx-play-btn:active,
@@ -2365,9 +2324,6 @@
   background-color: var(--cx-cover);
   background-position: center;
   background-size: cover;
-  box-shadow:
-    0 40px 80px -38px rgb(0 0 0 / 95%),
-    inset 0 0 0 1px rgb(255 255 255 / 14%);
 }
 
 /*
@@ -2474,7 +2430,6 @@
 
   .cx-detail-cover {
     border-radius: 0;
-    box-shadow: none;
   }
 
   /* How the canvas stops — the player's own gesture, ending in the page rather than on an edge. */
@@ -2524,22 +2479,16 @@
     font-weight: 700;
   }
 
-  .cx-detail .cx-browse-actions {
-    margin-top: 16px;
-  }
 }
 
 .cx-detail-kind {
   font-size: 9px;
   letter-spacing: 0.22em;
-  color: var(--t6);
 }
 
 .cx-detail-title {
   margin: 10px 0 0;
-  font-size: clamp(28px, 3.4vw, 46px);
   line-height: 1.04;
-  letter-spacing: -0.035em;
   color: var(--t1);
 }
 
@@ -2562,9 +2511,7 @@
  * that happens.
  */
 @media (min-width: 1180px) {
-  .cx-browse-inner[data-detail] .cx-trows {
-    max-width: 860px;
-  }
+  
 }
 
 .cx-browse-empty {
@@ -2836,10 +2783,8 @@
  */
 .cx-bill-wall {
   position: absolute;
-  inset: -14%;
   background-position: center 30%;
   background-size: cover;
-  filter: blur(84px) brightness(0.72) saturate(1.15);
   pointer-events: none;
 }
 
@@ -2847,15 +2792,6 @@
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background:
-    linear-gradient(90deg, rgb(10 10 12 / 80%) 0%, rgb(10 10 12 / 52%) 38%, rgb(10 10 12 / 8%) 100%),
-    linear-gradient(
-      180deg,
-      var(--cx-bg),
-      rgb(10 10 12 / 26%) 28%,
-      rgb(10 10 12 / 26%) 64%,
-      var(--cx-bg)
-    );
 }
 
 .cx-bill-cover {
@@ -2869,9 +2805,6 @@
   background-color: var(--cx-cover);
   background-position: center;
   background-size: cover;
-  box-shadow:
-    0 30px 60px -30px rgb(0 0 0 / 95%),
-    inset 0 0 0 1px rgb(255 255 255 / 14%);
   transition: transform 0.4s var(--cx-ease);
 }
 
@@ -2964,27 +2897,18 @@
 
 .cx-bill-actions {
   display: inline-flex;
-  gap: 28px;
   margin-top: 8px;
 }
 
 .cx-bill-open {
   font-size: 10.5px;
-  letter-spacing: 0.2em;
-  color: var(--t5);
   transition: color 0.18s;
-}
-
-.cx-bill-open:hover {
-  color: var(--t1);
 }
 
 /* --- grids and shelves ---------------------------------------------------- */
 
 .cx-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  gap: 26px 22px;
 }
 
 /*
@@ -2994,9 +2918,6 @@
  * first row of a service is what you actually see when you arrive, so it gets bigger tiles and the rest
  * settle into a rhythm under it — the same trick a shop window plays on a shelf.
  */
-.cx-shelf {
-  margin-bottom: 46px;
-}
 
 /*
  * Not on a search, where the shelves are peers.
@@ -3152,7 +3073,6 @@
   place-items: center;
   aspect-ratio: 1;
   overflow: hidden;
-  border-radius: 6px;
   background-color: var(--cx-cover);
   background-position: center;
   background-size: cover;
@@ -3218,20 +3138,12 @@
 }
 
 .cx-tile-title {
-  margin-top: 11px;
-  font-size: 13px;
-  font-weight: 650;
-  letter-spacing: -0.01em;
-  color: var(--t2);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .cx-tile-sub {
-  margin-top: 3px;
-  font-size: 11.5px;
-  color: var(--t6);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -3411,7 +3323,6 @@
   display: grid;
   place-items: center;
   flex: none;
-  width: 22px;
   color: var(--t7);
   transition: color 0.2s;
 }
@@ -3640,8 +3551,6 @@
  * declaration instead of a sprite that has to be regenerated whenever a size changes.
  */
 .cx-meter {
-  --cell: repeating-linear-gradient(to top, #000 0 6px, transparent 6px 9px),
-    repeating-linear-gradient(to right, #000 0 15px, transparent 15px 18px);
 
   display: flex;
   flex: 1;
@@ -3670,9 +3579,6 @@
 .cx-meter-bars {
   display: flex;
   flex: 1;
-  /* The pair fills the tile. Two narrow columns in a wide box read as a diagram of a meter; two
-     that take the width read as the meter itself, which is the whole reason to draw one. */
-  gap: 10px;
   /* Against the scale, not centred in whatever is left: a scale a hand's width from the columns it
      measures is a legend, and a legend is something you have to look up. */
   justify-content: flex-start;
@@ -3722,7 +3628,6 @@
   content: '';
   position: absolute;
   inset: 0;
-  background: rgb(255 255 255 / 5%);
   -webkit-mask-image: var(--cell);
   -webkit-mask-composite: source-in;
   mask-image: var(--cell);
@@ -3743,7 +3648,6 @@
 .cx-meter-fill {
   position: absolute;
   inset: 0;
-  background: rgb(212 214 218 / 42%);
   /* The lit cells, on the same grid as the unlit ones — see `.cx-meter`. */
   -webkit-mask-image: var(--cell);
   -webkit-mask-composite: source-in;
@@ -3768,16 +3672,9 @@
   position: absolute;
   left: 0;
   right: 0;
-  height: 2px;
-  background: var(--accent);
-}
-
-.cx-meter-held[data-tone='warm'] {
-  background: #e7b75a;
 }
 
 .cx-meter-held[data-tone='hot'] {
-  background: #e4584f;
   box-shadow: 0 0 6px rgb(228 88 79 / 55%);
 }
 
@@ -3824,9 +3721,6 @@
 
   /* In the hand the meter is a band across the screen rather than a tall pair, so it gets a floor
      of its own — the columns are the one thing here that is worth nothing at 60px. */
-  .cx-meter {
-    min-height: 190px;
-  }
 
 }
 
@@ -4605,7 +4499,6 @@
   border-radius: 3px !important;
 }
 
-
 /* --- the reading on a phone: the band in three rows, no tab bar under an instrument --- */
 
 @media (max-width: 979px) {
@@ -4778,7 +4671,6 @@
 .cx-qnow-title {
   overflow: hidden;
   font-family: var(--font-display);
-  font-size: 18px;
   font-weight: 400;
   letter-spacing: -0.02em;
   color: var(--t1);
@@ -5144,10 +5036,6 @@
 
 .cx-browse-inner[data-spotlight]:not([data-root]) .cx-browse-head {
   margin-bottom: 6px;
-}
-
-.cx-browse-inner[data-spotlight]:not([data-root]) .cx-browse-back {
-  margin-bottom: 18px;
 }
 
 /* The billboard, as a head: taller sleeve, the record's colour clearly the room's. */
@@ -5843,7 +5731,6 @@
 .cx-gal-title {
   overflow: hidden;
   font-family: var(--font-display);
-  font-size: clamp(18px, 1.5vw, 26px);
   font-weight: 400;
   letter-spacing: -0.025em;
   line-height: 1.1;
@@ -5897,7 +5784,6 @@
     display: flex;
     align-items: center;
     flex: none;
-    width: min(calc(100vh - 54px), 60vw);
     height: 100%;
   }
 
@@ -5967,7 +5853,6 @@
 
   .cx-root[data-idle] .cx-stage[data-spread] .cx-stage-art {
     --cx-cover-size: auto;
-    width: min(100vh, 60vw);
   }
 
   .cx-root[data-idle] .cx-stage[data-spread] .cx-stage-meta {
@@ -5977,20 +5862,12 @@
     background: #0a0a0c;
   }
 
-  .cx-root[data-idle] .cx-stage[data-spread] .cx-title {
-    font-size: clamp(28px, 3.4vh, 44px);
-  }
-
   /* The resting page's two readouts sit on the page, not on the picture. */
   .cx-root[data-idle]:has(.cx-stage[data-spread]) .cx-idle-next {
     left: auto;
-    right: clamp(24px, 3vw, 52px);
     max-width: 30vw;
   }
 
-  .cx-root[data-idle]:has(.cx-stage[data-spread]) .cx-idle-progress {
-    left: min(100vh, 60vw);
-  }
 }
 
 /* A narrower page: the source leaves the eyebrow, the fader takes a line of its own under the shelf. */
@@ -6041,9 +5918,6 @@
  * ========================================================================================== */
 
 @media (min-width: 1280px) {
-  .cx-stage[data-spread] .cx-stage-art {
-    width: min(100vh, 60vw);
-  }
 
   .cx-stage[data-spread] .cx-stage-meta {
     padding-top: clamp(22px, 3.6vh, 48px);
@@ -6094,7 +5968,6 @@
   .cx-browse-inner[data-detail]:has(.cx-detail) {
     --page-pad: clamp(40px, 4vw, 84px);
     display: grid;
-    grid-template-columns: min(calc(100vh - 54px), 50vw) minmax(0, 1fr);
     grid-template-rows: auto auto auto auto auto minmax(0, 1fr);
     column-gap: 0;
     padding: 0;
@@ -6111,10 +5984,7 @@
     position: sticky;
     top: 0;
     align-self: start;
-    width: 100%;
-    height: calc(100vh - 54px);
     margin: 0;
-    aspect-ratio: auto;
   }
 
   .cx-browse-inner[data-detail]:has(.cx-detail) .cx-detail-cover {
@@ -6218,10 +6088,6 @@
 
   .cx-browse-inner[data-detail]:has(.cx-detail) {
     grid-template-columns: min(100cqh, 50vw) minmax(0, 1fr);
-  }
-
-  .cx-browse-inner[data-detail]:has(.cx-detail) .cx-detail-art {
-    height: 100cqh;
   }
 
   /* One ground, not a band: the record's wash fades over the whole view instead of stopping at 430px. */
@@ -6445,7 +6311,6 @@
  * none; only then does the name's box give way, and because the type is measured into it the name
  * simply gets smaller rather than clipped. The transport, the timeline and the house never give.
  * ========================================================================================== */
-
 
 /*
  * The shelf by the height it has, a record at a time. Three ahead needs a tall screen; a laptop lid
