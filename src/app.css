@@ -1570,6 +1570,31 @@ html[data-arrived] .cx-side-mark {
   border-left: 0;
 }
 
+/* A house with nothing on: the rooms stand side by side across the page, as the sources do on Music. */
+@media (min-width: 980px) {
+  .cx-home-quiets[data-alone] {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+    max-width: none;
+    /* Every cell carries the same inset and a rule on its right; the strip is hung one inset to the
+       left and cut back to the margin, so the first name of every row stands on the page's edge. */
+    margin: 0 -1px 0 -22px;
+    clip-path: inset(0 0 0 22px);
+    border-top: 1px solid rgb(255 255 255 / 7%);
+  }
+
+  .cx-home-quiets[data-alone] > .cx-home-quiet {
+    height: 64px;
+    padding: 0 22px;
+    border-right: 1px solid rgb(255 255 255 / 7%);
+  }
+
+  .cx-home-quiets[data-alone] > .cx-home-lbl {
+    grid-column: 1 / -1;
+    padding-left: 22px;
+  }
+}
+
 .cx-home-quiets > .cx-home-lbl {
   margin-top: 20px;
   line-height: 1.8;
