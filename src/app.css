@@ -1251,7 +1251,7 @@ html[data-arrived] .cx-side-mark {
 .cx-cover-last-title {
   overflow: hidden;
   font-size: clamp(16px, 2.2cqw, 24px);
-  font-weight: 650;
+  font-weight: 400;
   letter-spacing: -0.01em;
   line-height: 1.15;
   color: #fff;
@@ -1607,7 +1607,7 @@ html[data-arrived] .cx-side-mark {
   gap: 44px;
   height: 100%;
   min-height: 0;
-  padding: 44px 56px 40px;
+  padding: 44px var(--pane-pad) 40px;
   overflow-y: auto;
   scrollbar-width: none;
 }
@@ -1859,8 +1859,8 @@ html[data-arrived] .cx-side-mark {
 .cx-home-row {
   display: flex;
   gap: 22px;
-  margin: 0 -56px;
-  padding: 0 56px 6px;
+  margin: 0 calc(var(--pane-pad) * -1);
+  padding: 0 var(--pane-pad) 6px;
   overflow-x: auto;
   scrollbar-width: none;
   mask-image: linear-gradient(90deg, #000 calc(100% - 96px), transparent 100%);
@@ -1881,6 +1881,8 @@ html[data-arrived] .cx-side-mark {
 }
 
 .cx-home-tile-cov {
+  position: relative;
+  display: block;
   width: 128px;
   height: 128px;
   margin-bottom: 9px;
@@ -1917,7 +1919,7 @@ html[data-arrived] .cx-side-mark {
 /* --- the rooms: a list, ruled ------------------------------------------------------- */
 
 .cx-root[data-shell] .cx-deskpage {
-  padding: 44px 56px 0;
+  padding: 44px var(--pane-pad) 0;
 }
 
 /* --- the meters — see `VuPair` ---------------------------------------------------- */
@@ -2929,7 +2931,7 @@ html[data-arrived] .cx-side-mark {
 }
 
 /* A shelf runs past the page's edge, so the window visibly cuts it: keep going. */
-.cx-shelf {
+.cx-pick {
   display: flex;
   gap: 14px;
   margin: 0 calc(var(--pad) * -1);
@@ -2938,7 +2940,7 @@ html[data-arrived] .cx-side-mark {
   scrollbar-width: none;
 }
 
-.cx-shelf-item {
+.cx-pick-item {
   display: flex;
   flex: none;
   flex-direction: column;
@@ -2947,7 +2949,7 @@ html[data-arrived] .cx-side-mark {
   text-align: left;
 }
 
-.cx-shelf-cov {
+.cx-pick-cov {
   position: relative;
   display: block;
   width: 100%;
@@ -2958,12 +2960,12 @@ html[data-arrived] .cx-side-mark {
   transition: box-shadow 0.2s;
 }
 
-.cx-shelf-item:hover .cx-shelf-cov,
-.cx-shelf-item:focus-visible .cx-shelf-cov {
+.cx-pick-item:hover .cx-pick-cov,
+.cx-pick-item:focus-visible .cx-pick-cov {
   box-shadow: 0 0 0 1px rgb(255 255 255 / 34%);
 }
 
-.cx-shelf-title {
+.cx-pick-title {
   overflow: hidden;
   font-size: 13px;
   text-overflow: ellipsis;

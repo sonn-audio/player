@@ -2009,7 +2009,7 @@
 .cx-more-name {
   grid-column: 1;
   font-size: 15px;
-  font-weight: 600;
+  font-weight: 400;
   letter-spacing: -0.01em;
   color: var(--t3);
   transition: color 0.18s;
@@ -3429,7 +3429,7 @@
 
 .cx-input-name {
   font-size: 17px;
-  font-weight: 600;
+  font-weight: 400;
   letter-spacing: -0.01em;
   color: var(--t3);
   transition: color 0.18s;
@@ -4783,7 +4783,7 @@
   overflow: hidden;
   font-family: var(--font-display);
   font-size: 18px;
-  font-weight: 700;
+  font-weight: 400;
   letter-spacing: -0.02em;
   color: var(--t1);
   text-overflow: ellipsis;
@@ -5317,7 +5317,7 @@
   margin-top: 14px;
   font-family: var(--font-display);
   font-size: 20px;
-  font-weight: 700;
+  font-weight: 400;
   letter-spacing: -0.025em;
   color: var(--t1);
 }
@@ -5848,7 +5848,7 @@
   overflow: hidden;
   font-family: var(--font-display);
   font-size: clamp(18px, 1.5vw, 26px);
-  font-weight: 700;
+  font-weight: 400;
   letter-spacing: -0.025em;
   line-height: 1.1;
   color: var(--t1);
@@ -7133,7 +7133,7 @@
 
 .cx-crate-title {
   font-size: 28px;
-  font-weight: 700;
+  font-weight: 400;
   letter-spacing: -0.035em;
   color: var(--t1);
 }

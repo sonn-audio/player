@@ -185,8 +185,11 @@ export function House({
           <div className="cx-home-row">
             {recents.map((item) => (
               <button type="button" className="cx-home-tile" key={item.key} onClick={item.play} title={`Play ${item.title}`}>
-                <span className="cx-home-tile-cov" style={{ backgroundImage: itemCoverCss(item.cover) }} />
-                <span className="cx-home-tile-title">{item.title}</span>
+                <span className="cx-home-tile-cov" style={{ backgroundImage: itemCoverCss(item.cover) }}>
+                  {/* No picture: a white label, with the name typed on it. */}
+                  {!item.cover && <span className="cx-crate-label mono">{item.title}</span>}
+                </span>
+                {item.cover && <span className="cx-home-tile-title">{item.title}</span>}
                 {item.sub && <span className="cx-home-tile-sub">{item.sub}</span>}
               </button>
             ))}

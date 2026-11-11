@@ -688,7 +688,8 @@ export function ArtApp() {
                 channels={channels}
                 currentLeaderId={leaderOf(zone, zones)?.id ?? null}
                 drag={drag}
-                recents={recents.filter((item) => item.coverUrl).slice(0, 14).map((item) => ({
+                /* Something with a name: a bare stream address or an alert file is not a record. */
+                recents={recents.filter((item) => item.title || item.album).slice(0, 14).map((item) => ({
                   key: item.source,
                   title: item.title || item.album || item.source,
                   sub: item.artist,
@@ -834,7 +835,7 @@ export function ArtApp() {
                   cover: scene.coverUrl,
                   play: () => void recall(scene),
                 }))}
-                recents={recents.slice(0, 12).map((item) => ({
+                recents={recents.filter((item) => item.title || item.album).slice(0, 12).map((item) => ({
                   key: item.source,
                   title: item.title || item.album || item.source,
                   cover: item.coverUrl,
@@ -1489,13 +1490,13 @@ function Shelf({ label, items }: { label: string; items: Array<{ key: string; ti
   return (
     <section className="cx-hsec">
       <HomeSec label={label} />
-      <div className="cx-shelf">
+      <div className="cx-pick">
         {items.map((item) => (
-          <button type="button" className="cx-shelf-item" key={item.key} onClick={item.play}>
-            <span className="cx-shelf-cov" style={{ backgroundImage: itemCoverCss(item.cover) }}>
+          <button type="button" className="cx-pick-item" key={item.key} onClick={item.play}>
+            <span className="cx-pick-cov" style={{ backgroundImage: itemCoverCss(item.cover) }}>
               {!item.cover && <span className="cx-crate-label mono">{item.title}</span>}
             </span>
-            {item.cover && <span className="cx-shelf-title">{item.title}</span>}
+            {item.cover && <span className="cx-pick-title">{item.title}</span>}
           </button>
         ))}
       </div>
