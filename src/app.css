@@ -2137,9 +2137,10 @@ html[data-arrived] .cx-side-mark {
   white-space: nowrap;
 }
 
+/* A name that is a door is a thumb tall; the margin gives back what that takes. */
 .cx-np-artist {
-  min-height: 34px;
-  margin-top: 4px;
+  min-height: 44px;
+  margin-block: -1px -5px;
   font-size: 17px;
   color: var(--t3);
 }
@@ -3915,4 +3916,11 @@ html[data-arrived] .cx-side-mark {
     grid-column: 1 / -1;
   }
 
+}
+
+/* In the hand the one filled button is a thumb tall in its own right, not by a reach around it. */
+@media (max-width: 979px) {
+  .cx-root .cx-play-btn {
+    min-height: 44px;
+  }
 }
