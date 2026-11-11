@@ -427,7 +427,7 @@ export function LoudnessGraph({ zoneId, active, rate }: { zoneId: number; active
     /* The scale: −9 and −23 are where broadcast lives, so they are the two rules worth printing. */
     ctx.strokeStyle = 'rgba(255,255,255,0.05)';
     ctx.lineWidth = 1;
-    ctx.font = '9px "JetBrains Mono", ui-monospace, monospace';
+    ctx.font = '9px "DM Mono", ui-monospace, monospace';
     ctx.fillStyle = 'rgba(255,255,255,0.22)';
     for (const rule of [-9, -23, -36]) {
       const at = Math.round(y(rule)) + 0.5;

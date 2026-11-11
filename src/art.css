@@ -120,8 +120,8 @@
 }
 
 .cx-root .mono {
-  font-family: var(--font-mono);
-  font-weight: 700;
+  font-family: var(--font-label);
+  font-weight: 500;
   text-transform: uppercase;
 }
 
@@ -851,7 +851,7 @@
   /* A two-line title breaks at its middle rather than dropping one word — supported since
      Chrome 114/Safari 17.5, and a title that ignores it is exactly what it was before. */
   text-wrap: balance;
-  /* Optical alignment: Hanken's 800 weight carries enough side bearing at this size that a left-aligned
+  /* Optical alignment: a heavy display weight carries enough side bearing at this size that a left-aligned
      title reads as indented next to a 10px mono eyebrow above it. */
   margin-left: -0.035em;
   /* A title that is one 60-character word (a mix, a bootleg, half of YouTube) may break inside it

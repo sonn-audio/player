@@ -22,8 +22,8 @@ the rests; and between them a pane — a rounded sheet — that shows whatever t
 house, the stage, the catalogue, the inputs, the rooms, the reading.
 
 **A hi-fi component, not an app.** Black, silver and hairlines. The sleeve is the only colour on the
-screen and green is only ever a verdict. Labels are small spaced capitals, the way a faceplate is
-engraved; titles are set light; figures are mono. Nothing is boxed that a line can separate.
+screen and green is only ever a verdict. The lettering is a faceplate's: Barlow light for names, Barlow
+Condensed in spaced capitals for labels, DM Mono for figures. Nothing is boxed that a line can separate.
 
 **Now playing is quiet on purpose** (`art/Stage.tsx`): the sleeve, the name, who, the record, one lamp
 for what is on the wire, and what comes next.
@@ -50,8 +50,8 @@ Desktop and phone get different component trees, split at 980px, because they ar
 one has a pointer, a lot of width and every room on screen at once; the other has a thumb, one column
 and a player that must never scroll. Everything below the presentation is shared.
 
-The look is shared with the admin UI on purpose: the same two brand faces (Hanken Grotesk for
-display and for every word, JetBrains Mono for every figure, both self-hosted variable fonts), the
+The player has its own lettering (Barlow, Barlow Condensed and DM Mono, self-hosted so a house with
+no route to the internet still has its faces) and otherwise shares the admin UI's ground: the
 same near-black surfaces until a record lights them, the green kept for verdicts, hairlines instead of
 borders. Four sheets own it —
 `styles.css` (the tokens and the instruments), `shell.css` (splash and the overlays), `art.css`

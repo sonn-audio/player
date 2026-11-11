@@ -1285,9 +1285,10 @@ html[data-arrived] .cx-side-mark {
 .cx-root .cx-upnext-lbl.mono,
 .cx-root .cx-toc-lbl.mono,
 .cx-root .cx-browse-body[data-toc] .cx-doorshelf-name {
-  font-family: var(--font-mono);
+  font-family: var(--font-label);
+  font-size-adjust: 0.6;
   font-size: 10px;
-  font-weight: 600;
+  font-weight: 500;
   letter-spacing: 0.2em;
   text-transform: uppercase;
   color: var(--t5);
@@ -3407,7 +3408,7 @@ html[data-arrived] .cx-side-mark {
 }
 
 .cx-sig-headline i {
-  font-family: var(--font-body);
+  font-family: var(--font-sans);
   font-size: 12px;
   font-style: normal;
   letter-spacing: 0;
@@ -4066,6 +4067,14 @@ html[data-arrived] .cx-side-mark {
 /* The name is a nameplate of one of three sizes, but never wider than the column it stands in. */
 .cx-titlebox .cx-title {
   font-size: min(var(--fs, 56px), calc((100vw - 232px) * 0.058));
+  /* Room under the line for a g and a y: a clamped box cuts whatever hangs below it. */
+  line-height: 1.12;
+  padding-bottom: 0.06em;
+}
+
+.cx-root .cx-bill-title,
+.cx-root .cx-detail-title {
+  padding-bottom: 0.08em;
 }
 
 .cx-root[data-idle] .cx-titlebox .cx-title {
@@ -4145,4 +4154,39 @@ html[data-arrived] .cx-side-mark {
   .cx-mhead {
     padding-inline: max(22px, calc((100vw - 680px) / 2 + 22px));
   }
+}
+
+/* --- figures: whatever is a number is set in the figure face, not the label's ------------- */
+
+.cx-root .cx-vol-num,
+.cx-root .cx-vol-bubble,
+.cx-root .cx-upnext-dur,
+.cx-root .cx-tdur,
+.cx-root .cx-tidx,
+.cx-root .cx-times,
+.cx-root .cx-time-tot,
+.cx-root .cx-pbar-tl,
+.cx-root .cx-np-vol-num,
+.cx-root .cx-np-prog,
+.cx-root .cx-np-queue,
+.cx-root .cx-qnum,
+.cx-root .cx-qdur,
+.cx-root .cx-qrun,
+.cx-root .cx-desk-fader-val,
+.cx-root .cx-home-quiet-vol,
+.cx-root .cx-snav-k,
+.cx-root .cx-align-value,
+.cx-root .cx-align-step,
+.cx-root .cx-meter-scale,
+.cx-root .cx-index-count,
+.cx-root .cx-browse-count,
+.cx-root .cx-sig-step-detail,
+.cx-root .cx-source-fact,
+.cx-root .cx-search-key,
+.cx-root .cx-tnote,
+.cx-root .analysis-geometry,
+.cx-root .cx-sig-fig i {
+  font-family: var(--font-mono);
+  font-size-adjust: none;
+  font-weight: 400;
 }
