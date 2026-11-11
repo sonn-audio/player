@@ -63,7 +63,7 @@ export type Stage = {
 /**
  * Keep a figure whole across a line break.
  *
- * Eight stations across a strip give each of them about 140px, and the default line breaker splits at
+ * A narrow column gives a reading little room, and the default line breaker splits at
  * every space and after every hyphen — so `96 kHz` came apart between the number and its unit and
  * `24-bit` broke after the hyphen, a panel of numbers wearing its worst possible line breaks. Binding
  * the space inside a measurement and the hyphen inside `24-bit` leaves the sentence's own spaces as
@@ -73,7 +73,7 @@ export type Stage = {
  * reading unbreakable when it contains no separator, and an unbreakable reading in a 140px column is
  * a reading with an ellipsis in it.
  */
-function figures(text: string): string {
+export function figures(text: string): string {
   return text.replace(/(\d[\d.]*) (kHz|Hz|kbps|dB|ms|bit)/g, '$1\u00a0$2').replace(/(\d+)-bit/g, '$1\u2011bit');
 }
 
@@ -698,56 +698,6 @@ function LeadTrace({ samples, lo, hi }: { samples: number[]; lo: number; hi: num
         <rect className="signal-trace-band" x="0" y={y(hi)} width="100" height={Math.max(0, y(lo) - y(hi))} />
         <polyline className="signal-trace-line" points={points} />
       </svg>
-    </div>
-  );
-}
-
-/**
- * The chain, and only the chain.
- *
- * The verdict lives under the track title (`FormatChips`), where the question it answers — "am I
- * hearing the good version" — actually gets asked. What is left here is the part a rail is good at: the
- * stages in the order the audio passes through them, ending in the measured throughput.
- *
- * The transformation stays legible without the verdict: `Source` and `On the wire` state their formats
- * in the same notation, so identical lines mean nothing happened to the audio.
- */
-export function SignalPath({ zone }: { zone: ApiZoneState }) {
-  const stages = stagesOf(zone);
-
-  return (
-    <div className="signal-path">
-      {/* No heading of its own: the rail's own `Signal path` head names this card. */}
-      <Verdict zone={zone} />
-
-      {/* `data-live` while audio flows: the spine carries a slow pulse of light from Source to the
-          wire (see `.signal-stages[data-live]` in styles.css), so the chain does not just describe
-          the signal — it visibly has one. Stopped means still, which is itself a reading. */}
-      <ol className="signal-stages" data-live={zone.state === 'playing' || undefined}>
-        {stages.map((stage) => (
-          <li key={stage.label} className="signal-stage" data-state={stage.state}>
-            <span className="signal-dot" aria-hidden="true" />
-            <span className="signal-text">
-              <span className="signal-label">{stage.label}</span>
-              {/* Keyed on the reading, so a stage that *re-locks* — a new rate, a depth change, an
-                  EQ engaging — re-mounts and lands in the accent before settling to white. The
-                  chain reacts at exactly the moment the equipment does. The detail line is not
-                  keyed: it carries the measured bitrate, which moves every second and would turn
-                  a moment into a flicker. */}
-              {/* A figure is one word. See `figures`. */}
-              <span className="signal-value" key={stage.value}>
-                {figures(stage.value)}
-              </span>
-              {stage.detail && <span className="signal-detail">{stage.detail}</span>}
-            </span>
-          </li>
-        ))}
-      </ol>
-
-      {/* The clock is not here any more.
-          It is a *reading*, not a station: nothing passes through it. It stands with the level and the
-          note in the panel's right-hand column, where everything the equipment measures now lives —
-          see `SignalClock` and `.np-readout`. */}
     </div>
   );
 }

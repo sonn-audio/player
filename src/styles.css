@@ -127,8 +127,10 @@
    * nobody can name and everybody feels.
    */
   --accent: #4ade80;
-  --accent-soft: rgb(74 222 128 / 8%);
-  --accent-line: rgb(74 222 128 / 30%);
+  /* The verdict's own green, for a surface that sets its ink to silver. */
+  --ok: #4ade80;
+  --accent-soft: color-mix(in srgb, var(--accent) 8%, transparent);
+  --accent-line: color-mix(in srgb, var(--accent) 30%, transparent);
   /* The ink *on* the accent — the console's `--accent-on`, not a second near-black green. */
   --accent-ink: #062812;
 
@@ -429,10 +431,7 @@ svg {
 .badge,
 .analysis-axis span,
 .eq-handle-label,
-.eq-handle-value,
-.signal-value,
-.signal-detail,
-.signal-verdict-head {
+.eq-handle-value {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
 }
@@ -537,7 +536,7 @@ input[type='range']:not(.native-range)::-webkit-slider-thumb {
      than stuck on. */
   box-shadow:
     0 0 0 3px var(--bg),
-    0 0 8px rgb(74 222 128 / 35%);
+    0 0 8px color-mix(in srgb, var(--accent) 35%, transparent);
   transition: scale var(--dur) var(--ease);
 }
 
@@ -561,7 +560,7 @@ input[type='range']:not(.native-range)::-moz-range-thumb {
   background: var(--accent);
   box-shadow:
     0 0 0 3px var(--bg),
-    0 0 8px rgb(74 222 128 / 35%);
+    0 0 8px color-mix(in srgb, var(--accent) 35%, transparent);
 }
 
 /* Reached for, so it grows a little. */
@@ -1109,118 +1108,6 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
   height: 12px;
 }
 
-/* --- signal path ---------------------------------------------------------- */
-
-/* The card's whole content now, so nothing to separate it from: the rail's own head names it. */
-.signal-path {
-  margin: 0;
-}
-
-/*
- * The verdict, above the chain.
- *
- * `FLAC 24/192 → PCM 24/48` used to sit here and it was a puzzle: two codenames and four numbers, from
- * which the reader had to work out whether anything had happened. This says it — and when the answer is
- * "something happened" it names the cause, which is the difference between a readout and something you
- * can act on.
- *
- * The tone rides on the left edge rather than on a tinted panel: on this near-black page a filled block
- * reads as an alert, and "your audio is intact" is not an alert.
- */
-/*
- * The hairline sits *under* the verdict, not over it.
- *
- * Above, it read as the card's own top edge repeated and cut the verdict off from the head that
- * names it. Below, it does the one job a line has here: separating the conclusion from the chain of
- * evidence it was drawn from.
- */
-.signal-verdict {
-  position: relative;
-  margin: 2px 0 13px;
-  padding-left: 11px;
-  padding-bottom: 13px;
-  border-bottom: 1px solid var(--line);
-}
-
-.signal-verdict::before {
-  content: '';
-  position: absolute;
-  inset: 1px auto 1px 0;
-  width: 2px;
-  border-radius: var(--r-pill);
-  background: var(--line-strong);
-}
-
-/* Intact, either way: the file's own samples, or a lossy source we did not make worse. */
-.signal-verdict[data-tone='perfect']::before,
-.signal-verdict[data-tone='clean']::before {
-  background: var(--accent);
-}
-
-.signal-verdict[data-tone='altered']::before {
-  background: var(--warn);
-}
-
-.signal-verdict-head {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--text-dim);
-}
-
-.signal-verdict[data-tone='perfect'] .signal-verdict-head,
-.signal-verdict[data-tone='clean'] .signal-verdict-head {
-  color: var(--accent);
-}
-
-.signal-verdict[data-tone='altered'] .signal-verdict-head {
-  color: var(--warn);
-}
-
-/* The reason, in sentence case and the reading face: it is a sentence, not a label. */
-.signal-verdict-note {
-  margin-top: 3px;
-  font-size: 11.5px;
-  line-height: 1.4;
-  color: var(--text-dim);
-}
-
-/*
- * The chain, drawn as a path.
- *
- * The design's typography rather than this player's default, and it is better here: the stage *name* is
- * plain sans at reading weight and the *reading* under it is mono. That inverts what the rest of the
- * player does with labels, on purpose — in a five-row chain the names are what you scan and the values
- * are what you check, so making the names the quieter engraved thing had them disappear.
- *
- * The spine is dashed and drawn per row rather than as a border on the list, so the last stage does not
- * trail a line into nothing.
- */
-/*
- * While audio flows, so does the light: one faint pulse travelling the spine from Source to the
- * wire, on a loop slow enough to be company rather than a spinner. The chain used to *describe* a
- * signal; this is the difference between a diagram and an instrument. Behind the dots (they lift
- * themselves with a z-index) and over the dashes, so the light runs along the rail it belongs to.
- * Stopped playback means a still spine — which is itself a reading.
- */
-.signal-stages {
-  position: relative;
-}
-
-.signal-stages[data-live]::after {
-  content: '';
-  position: absolute;
-  top: 6px;
-  bottom: 6px;
-  left: 3px;
-  width: 1px;
-  pointer-events: none;
-  background: linear-gradient(180deg, transparent, rgb(74 222 128 / 65%) 50%, transparent) 0 -64px / 1px 64px no-repeat;
-  animation: signal-flow 4.6s linear infinite;
-}
-
 @keyframes signal-flow {
   from {
     background-position: 0 -64px;
@@ -1231,96 +1118,10 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
   }
 }
 
-.signal-stage {
-  position: relative;
-  display: flex;
-  gap: 12px;
-  padding-bottom: 13px;
-}
-
-.signal-stage:last-child {
-  padding-bottom: 0;
-}
-
-.signal-stage:not(:last-child)::before {
-  content: '';
-  position: absolute;
-  top: 14px;
-  bottom: 1px;
-  left: 3px;
-  border-left: 1px dashed var(--line-strong);
-}
-
-.signal-dot {
-  position: relative;
-  /* Above the travelling pulse: the light passes behind the stations, not through them. */
-  z-index: 1;
-  flex: none;
-  width: 7px;
-  height: 7px;
-  margin-top: 5px;
-  border-radius: 50%;
-  background: var(--text-mute);
-}
-
-/* Lit, with a halo: the stage is doing something. */
-.signal-stage[data-state='on'] .signal-dot {
-  background: var(--accent);
-  box-shadow: 0 0 0 3px var(--accent-soft), 0 0 7px rgb(74 222 128 / 45%);
-}
-
-/* Passive is good news, so it is quiet rather than warning-coloured. */
-.signal-stage[data-state='idle'] .signal-dot {
-  background: none;
-  box-shadow: inset 0 0 0 1.5px var(--text-mute);
-}
-
-.signal-stage[data-state='off'] .signal-dot {
-  background: var(--warn);
-}
-
-.signal-text {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-  gap: 2px;
-}
-
-.signal-label {
-  font-family: var(--font-sans);
-  font-size: 13.5px;
-  font-weight: 600;
-  letter-spacing: -0.01em;
-  text-transform: none;
-  color: var(--text);
-}
-
-.signal-value {
-  font-size: 11.5px;
-  color: var(--text-dim);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  /* A stage that re-locks lands in the accent and settles — keyed in `SignalPath`, so this runs
-     exactly when a reading changes and once on arrival, which is the chain locking in. */
-  animation: signal-relock 1.1s var(--ease);
-}
-
 @keyframes signal-relock {
   from {
     color: var(--accent);
   }
-}
-
-/* The reading a stage is *about* gets the brightest text in the row. */
-.signal-stage[data-state='on'] .signal-value {
-  color: var(--text-dim);
-}
-
-/* Secondary, and quieter for a reason: this is where the drifting measured bitrate lands. */
-.signal-detail {
-  color: var(--text-mute);
-  font-size: 10.5px;
-  letter-spacing: 0.04em;
 }
 
 /* --- signal path: the clock ----------------------------------------------- */
@@ -1505,9 +1306,9 @@ input[type='range']:not(.native-range):focus-visible::-webkit-slider-thumb {
  * shape of the thing inside it.
  */
 :focus-visible {
-  outline: 2px solid rgb(74 222 128 / 50%);
+  outline: 2px solid color-mix(in srgb, var(--accent) 50%, transparent);
   outline-offset: 2px;
-  box-shadow: 0 0 0 3px rgb(74 222 128 / 18%);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent);
 }
 
 /* --- reduced motion ------------------------------------------------------- */

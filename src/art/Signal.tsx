@@ -7,13 +7,13 @@
  * it was protecting — four instruments read side by side — never needed a shell at all. It needed a
  * room with something playing in it, which is exactly what the screen behind this one already is.
  *
- * So this is a *view*, the fourth one this window has (`home`, `browse`, `inputs`, `signal`), and the
- * door to it stands in the row beside `canvas` and `house` because those are the other two ways of
- * looking at the same room. What separates it from them: they are withdrawals — the chrome dims, the
- * clock comes up, the screen becomes a picture — and this is the opposite. Nothing dims. The band
- * across the top keeps the record's identity and its transport, so reading never costs you the
- * controls, and the accent comes back to the console's green because this is the surface that has
- * verdicts to give (see `.cx-root` in art.css for why the stage's is silver).
+ * So this is a *view*, one of the places this window has, and the door to it is the lamp that says
+ * what is on the line.
+ *
+ * The page opens on the answer: the verdict and why, two meters, the spectrum, four figures, and the
+ * path the audio took, read downwards. The instruments that are looked into rather than glanced at —
+ * the loudness history, the stereo picture, the scope — stand under the fold. Green is spent on one
+ * thing here, as everywhere: a signal that arrived untouched.
  *
  * **Two rooms are read here and they are not the same room.** The band takes its identity from `cur`,
  * which resolves to the group's *leader* — a follower mirrors it and its own track fields are stale.
@@ -26,8 +26,8 @@ import { AnalysisPanel } from '@/components/AnalysisPanel';
 import { Goniometer, LoudnessGraph, Meter, Scope } from '@/art/Instruments';
 import { VuPair } from '@/art/Vu';
 
-import { SignalClock, SignalWire, Verdict, stagesOf } from '@/components/SignalPath';
-import { Transport, Timeline, VolumeRow } from '@/art/Stage';
+import { SignalClock, SignalWire, Verdict, figures, stagesOf, type Stage } from '@/components/SignalPath';
+import { Transport, Timeline } from '@/art/Stage';
 import { zoneCoverCss } from '@/art/cover';
 import { BackGlyph } from '@/art/glyphs';
 import { useApi, useServer } from '@/state/ServerContext';
@@ -36,72 +36,95 @@ import type { Cur } from '@/art/useCur';
 import type { ApiHealthReport, ApiOutputCapabilities, ApiStreamFormat, ApiZoneState } from '@/api/types';
 import { PEAK_HOLD_MS, spectrumGeometry, toDb, useAnalysis } from '@/state/useAnalysis';
 
-/**
- * What the audio was before the chain, and what it is after it.
- *
- * The two ends of the rail, stated in the same notation on purpose: identical caps mean nothing
- * happened to the audio, and that is a thing you should be able to see without reading a word. It is
- * also the honest version of the proof a hash would give — we do not hash the stream, so the claim
- * this face makes is "no stage altered it", and the caps are what that claim looks like.
- */
-function Cap({
-  label,
-  format,
-  side,
-}: {
-  label: string;
-  format: ApiStreamFormat | null | undefined;
-  side: 'in' | 'out';
-}) {
-  return (
-    <div className="cx-sig-cap" data-side={side}>
-      <span className="cx-sig-cap-label mono">{label}</span>
-      {format ? (
-        <span className="cx-sig-cap-format">
-          {format.codec.toUpperCase()}
-          {/* The depth only when the format has one to report: a lossy source has no bit depth, and
-              printing `float` there describes our decoder rather than the file. */}
-          <i>
-            {format.sampleRate / 1000} kHz
-            {format.bitDepth ? ` · ${format.bitDepth}-bit` : ''}
-          </i>
-          <i>{format.channels} ch</i>
-        </span>
-      ) : (
-        <span className="cx-sig-cap-format" data-quiet>
-          —
-        </span>
-      )}
-    </div>
-  );
+/** A format in one line of figures: `FLAC · 44.1 kHz · 16-bit · 2 ch`. */
+function caps(format: ApiStreamFormat | null | undefined): string {
+  if (!format) {
+    return '—';
+  }
+  /* The depth only when the format has one to report: a lossy source has no bit depth, and printing
+     `float` there describes our decoder rather than the file. */
+  return [
+    format.codec.toUpperCase(),
+    `${format.sampleRate / 1000} kHz`,
+    format.bitDepth ? `${format.bitDepth}-bit` : null,
+    `${format.channels} ch`,
+  ]
+    .filter(Boolean)
+    .join(' · ');
 }
 
 /**
- * The chain, as a rail between the two caps.
+ * The path, read downwards: what was decoded, every stage it passed, what was handed off.
  *
- * Its own markup rather than the technical face's strip. That strip was written for a 90px band under
- * a display and carries the compromises of it — the details hidden, the stations squeezed, a
- * media query that drops them below 900px of window. Here the chain is the top third of the panel
- * and the subject of the whole face, so it gets a rail built for that: a hairline the stations stand
- * on, a lit dot where something is happening, and the light travelling from source to wire while
- * audio flows.
+ * The two ends are stated in the same notation on purpose: identical figures mean nothing happened to
+ * the audio, and that is a thing you should be able to see without reading a word. It is also the
+ * honest version of the proof a hash would give — we do not hash the stream, so the claim this face
+ * makes is "no stage altered it", and the two ends are what that claim looks like. A stage that is
+ * doing something is a lit point; one that is present and passive is a ring.
  */
-function Chain({ zone }: { zone: ApiZoneState }) {
-  const stages = stagesOf(zone);
+function Path({ zone }: { zone: ApiZoneState }) {
+  const end = (label: string, format: ApiStreamFormat | null | undefined): Stage => ({
+    label,
+    value: caps(format),
+    state: format ? 'on' : 'off',
+  });
+  const steps = [end('Decoded in', zone.format?.source), ...stagesOf(zone), end('Handed off', zone.format?.output)];
   return (
-    <ol className="cx-sig-rail" data-live={zone.state === 'playing' || undefined}>
-      {stages.map((stage) => (
-        <li key={stage.label} className="cx-sig-station" data-state={stage.state}>
+    <ol
+      className="cx-sig-chain"
+      data-live={zone.state === 'playing' || undefined}
+      data-ok={zone.format?.bitPerfect || undefined}
+    >
+      {steps.map((step) => (
+        <li key={step.label} data-state={step.state}>
           <span className="cx-sig-dot" aria-hidden="true" />
-          <span className="cx-sig-station-name mono">{stage.label}</span>
-          {/* Keyed on the reading, so a stage that re-locks — a new rate, an EQ engaging — lands in
-              the accent before settling. The chain reacts when the equipment does. */}
-          <span className="cx-sig-station-value" key={stage.value}>
-            {stage.value}
+          <span className="cx-sig-step">
+            <span className="cx-sig-step-name mono">{step.label}</span>
+            {/* Keyed on the reading, so a stage that re-locks — a new rate, an EQ engaging — arrives
+                rather than swaps. The chain reacts when the equipment does. */}
+            <span className="cx-sig-step-value" key={step.value}>
+              {figures(step.value)}
+            </span>
+            {step.detail && <span className="cx-sig-step-detail mono">{figures(step.detail)}</span>}
           </span>
         </li>
       ))}
     </ol>
+  );
+}
+
+/**
+ * The four figures a record is summed up in, set large under the instruments that draw them.
+ *
+ * Integrated loudness and its range say how the record was mastered, the true peak says whether it
+ * clips on the way out of a converter, and the correlation says whether the two channels are one
+ * picture. Everything else on the page is the working.
+ */
+function Figures({ zoneId, active, rate }: { zoneId: number; active: boolean; rate: number }) {
+  const analysis = useAnalysis(zoneId, active, rate);
+  const truePeak = Math.max(analysis.truePeakLeft ?? -Infinity, analysis.truePeakRight ?? -Infinity);
+  const correlation = analysis.correlation;
+  return (
+    <div className="cx-sig-figs">
+      <Figure label="Integrated" value={reading(analysis.loudnessIntegrated)} unit="LUFS" />
+      <Figure label="Range" value={reading(analysis.loudnessRange)} unit="LU" />
+      <Figure label="True peak" value={signed(truePeak)} unit="dBTP" bad={truePeak > 0} />
+      <Figure
+        label="Correlation"
+        value={correlation === null ? '—' : `${correlation >= 0 ? '+' : '−'}${Math.abs(correlation).toFixed(2)}`}
+        bad={correlation !== null && correlation < -0.1}
+      />
+    </div>
+  );
+}
+
+function Figure({ label, value, unit, bad }: { label: string; value: string; unit?: string; bad?: boolean }) {
+  return (
+    <div className="cx-sig-fig" data-tone={bad ? 'bad' : undefined}>
+      <span className="mono">{label}</span>
+      <b>{value}</b>
+      {unit && <i className="mono">{unit}</i>}
+    </div>
   );
 }
 
@@ -123,7 +146,7 @@ function Tile({
   /** A word about how the instrument behaves, at the other end of its own name. */
   aside?: string | undefined;
   /** Columns of twelve — the deck's only widths. */
-  span: 3 | 6 | 12;
+  span: 3 | 6;
   children: React.ReactNode;
 }) {
   return (
@@ -169,7 +192,7 @@ function uptime(seconds: number): string {
 }
 
 /**
- * The server's own vitals, for the foot of the deck.
+ * The server's own vitals, for the last tile on the bench.
  *
  * `/health` is a poll rather than an event — it is the one thing here the stream does not carry — so
  * it is read once on arrival and then rarely: a version does not change while you are looking at it
@@ -492,127 +515,68 @@ export function Signal({
   return (
     <section className="cx-sig">
       {/*
-       * The band: who this is, how far in, and every control you would otherwise leave to reach.
-       *
-       * The sleeve is here at 52px and it is the same object as the one on the stage — it flies between
-       * the two (`useCoverAnchor`), which is what makes this read as one window rearranging itself
-       * rather than a page swap. That flight was written to carry artwork between the two *faces*; it
-       * does the same job better between two views of one.
+       * In the hand there is no frame around this view, so it carries its own way back and the
+       * transport: reading never costs you the controls.
        */}
-      <header className="cx-sig-band">
-        <span
-          className="cx-sig-cover"
-          style={{ backgroundImage: zoneCoverCss(api, leader, 160) }}
-          {...coverAnchor}
-        />
-
-        <span className="cx-sig-id">
-          <span className="cx-sig-eyebrow mono">
-            {cur.name}
-            {cur.source && ` · ${cur.source}`}
-          </span>
-          <span className="cx-sig-title">{cur.title}</span>
-          <span className="cx-sig-sub">
-            {[cur.artist, cur.album].filter(Boolean).join(' · ')}
-          </span>
-        </span>
-
-        {/* Only where there is something to seek within — `cur.showBar` is the source's own word, so a
-            station gets the transport and no timeline rather than a bar that cannot be dragged. */}
-        {!bare && cur.showBar && (
-          <span className="cx-sig-bar">
-            <Timeline cur={cur} />
-          </span>
-        )}
-
-        {!bare && <Transport cur={cur} size="bar" />}
-
-        {!bare && <VolumeRow cur={cur} className="cx-sig-vol" />}
-
-        {/*
-         * The way back, where the way in was.
-         *
-         * A view has to say how to leave it in the view itself: `Escape` works and nobody discovers
-         * `Escape`. It reads `player` rather than `back` because that is where it goes — the same
-         * naming the row of doors downstairs uses.
-         */}
-        {!bare && (
+      {!bare && (
+        <header className="cx-sig-band">
           <button type="button" className="cx-sig-back mono" onClick={onLeave}>
             <BackGlyph size={13} />
-            stage
+            player
           </button>
+          <div className="cx-sig-now">
+            <span className="cx-sig-cover" style={{ backgroundImage: zoneCoverCss(api, leader, 160) }} {...coverAnchor} />
+            <span className="cx-sig-id">
+              <span className="cx-sig-title">{cur.title}</span>
+              <span className="cx-sig-sub">{[cur.artist, cur.album].filter(Boolean).join(' · ')}</span>
+            </span>
+            <Transport cur={cur} size="bar" />
+          </div>
+          {cur.showBar && <Timeline cur={cur} />}
+        </header>
+      )}
+
+      {/*
+       * The verdict, at the size of a headline because it is one — the answer to the question that
+       * brought anybody here — and beside it, in a sentence, why. Everything under it is the working.
+       */}
+      <header className="cx-sig-head">
+        <span className="cx-sig-lbl mono">
+          Signal · {zone.name}
+          {cur.source && ` · ${cur.source}`}
+        </span>
+        {zone.format?.output ? (
+          <Verdict zone={zone} />
+        ) : (
+          <div className="signal-verdict">
+            <p className="signal-verdict-head">Idle</p>
+            <p className="signal-verdict-note">nothing is on the line in this room</p>
+          </div>
         )}
       </header>
 
+      <div className="cx-sig-main">
+        <div className="cx-sig-bench">
+          {/* The meters, first: the one instrument here that is watched rather than read. */}
+          <VuPair zoneId={zone.id} active={streaming} rate={rate} />
+          <div className="cx-sig-panel">
+            <AnalysisPanel zoneId={zone.id} active={streaming} capabilities={zone.output?.capabilities} />
+          </div>
+          <Figures zoneId={zone.id} active={streaming} rate={rate} />
+        </div>
+
+        <aside className="cx-sig-path">
+          <span className="cx-sig-lbl mono">The path</span>
+          <Path zone={zone} />
+        </aside>
+      </div>
+
       {/*
-       * The deck.
-       *
-       * Twelve columns, and for now the instruments that already exist hung in it: the chain across the
-       * top, then the level, the spectrum and the timing side by side. The tiles the prototype's deck
-       * adds beyond these — the group's sync table, the session counters, the stereo field — go in the
-       * same grid as they earn their data; the frame is what is being judged first.
+       * The bench, under the fold: the instruments that are looked into rather than glanced at. A
+       * K-weighted loudness history, the stereo picture, the waveform, the peaks, and the hand-off's
+       * own timing.
        */}
       <div className="cx-sig-deck">
-        {/*
-         * The hero: the verdict, then the audio's two ends with the chain between them.
-         *
-         * The verdict is set at the size of a headline because it is one — it is the answer to the
-         * question that brought anybody to this face, and everything to the right of it is the
-         * working. No tile label above it: a heading that says `SIGNAL PATH` over a heading that says
-         * `Bit-perfect` is a label naming a label.
-         */}
-        <article className="cx-sig-tile cx-sig-hero" data-span={12}>
-          <div className="cx-sig-verdict">
-            <Verdict zone={zone} />
-          </div>
-          <Cap label="Decoded in" format={zone.format?.source} side="in" />
-          <Chain zone={zone} />
-          <Cap label="Handed off" format={zone.format?.output} side="out" />
-        </article>
-
-        {/*
-         * The meter, narrow, against the display it belongs to.
-         *
-         * Two columns rather than three: a level wants height, not width, and the seven columns the
-         * spectrum gets in exchange are the ones that make a mix legible.
-         */}
-        {/* The meters, first and widest: the one instrument on the deck that is watched rather than
-            read — see `VuPair`. */}
-        <Tile span={12} label="Level" aside="VU · 0 at −18 dBFS · 300 ms">
-          <VuPair zoneId={zone.id} active={streaming} rate={rate} />
-        </Tile>
-
-        <Tile span={3} label="Peak" aside={`peak hold ${(PEAK_HOLD_MS / 1000).toFixed(1)} s`}>
-          <Meter zoneId={zone.id} active={streaming} rate={rate} />
-          <LevelRead zoneId={zone.id} active={streaming} capabilities={zone.output?.capabilities} />
-        </Tile>
-
-        {/* No label: `analysis-heading` is this instrument's own, and naming it twice is how a deck
-            starts looking like a form. */}
-        <Tile span={6}>
-          <AnalysisPanel
-            zoneId={zone.id}
-            active={streaming}
-            capabilities={zone.output?.capabilities}
-          />
-        </Tile>
-
-        {/* Two readings, one column: the clock draws its own head, the wire is a bare list and takes
-            one from the tile. Both are about the hand-off rather than about the music. */}
-        <Tile span={3}>
-          <SignalClock zone={zone} />
-          <span className="cx-sig-tile-label mono">On the wire</span>
-          <SignalWire zone={zone} />
-        </Tile>
-
-        {/*
-         * The measured row.
-         *
-         * Everything above is either a fact the server states or a level the stream already carried.
-         * These four are *measurements* — a K-weighted loudness meter, a 4× peak reconstruction, a
-         * correlation over the window and a waveform — and they are the reason the deck is worth
-         * having a room open for.
-         */}
         <Tile span={6} label="Loudness" aside="EBU R128 · last 90 s">
           <Loudness zoneId={zone.id} active={streaming} rate={rate} />
         </Tile>
@@ -625,35 +589,43 @@ export function Signal({
           <ScopeTile zoneId={zone.id} active={streaming} rate={rate} />
         </Tile>
 
+        <Tile span={3} label="Peak" aside={`hold ${(PEAK_HOLD_MS / 1000).toFixed(1)} s`}>
+          <Meter zoneId={zone.id} active={streaming} rate={rate} />
+          <LevelRead zoneId={zone.id} active={streaming} capabilities={zone.output?.capabilities} />
+        </Tile>
+
+        {/* Two readings about the hand-off rather than about the music. */}
+        <Tile span={3}>
+          <SignalClock zone={zone} />
+        </Tile>
+
+        <Tile span={3} label="On the wire">
+          <SignalWire zone={zone} />
+        </Tile>
+
+        {/*
+         * The machine, not the music. What the server reports is what it is and how long it has been
+         * up, plus whether we are still hearing from it — the one thing on this page that decides if
+         * the rest of it is current. No CPU, no temperature: neither exists on the wire, and a tile
+         * that invents its numbers undermines every honest reading above it.
+         */}
+        <Tile span={3} label="The machine">
+          <div className="cx-sig-rows">
+            <Row label="Sonn">{health?.version ?? '—'}</Row>
+            <Row label="Up">{health ? uptime(health.uptimeSec) : '—'}</Row>
+            <Row label="Rooms">{zones.length}</Row>
+            {health && health.status !== 'ok' && (
+              <Row label="Server">
+                <span data-tone="bad">{health.status}</span>
+              </Row>
+            )}
+            <Row label="Stream">
+              <span data-tone={status === 'open' ? undefined : 'bad'}>{status === 'open' ? 'connected' : 'reconnecting'}</span>
+            </Row>
+          </div>
+        </Tile>
       </div>
 
-      {/*
-       * The foot: the machine, not the music.
-       *
-       * The mockup put CPU, memory and a temperature here and none of the three exists on the wire —
-       * a foot that invents its numbers undermines every honest reading above it. What the server does
-       * report is what it is and how long it has been up, plus whether we are still hearing from it,
-       * which is the one thing on this whole screen that decides if the rest of it is current.
-       */}
-      <footer className="cx-sig-foot mono">
-        <span>
-          sonn <b>{health?.version ?? '—'}</b>
-        </span>
-        <span>
-          up <b>{health ? uptime(health.uptimeSec) : '—'}</b>
-        </span>
-        <span>
-          <b>{zones.length}</b> room{zones.length === 1 ? '' : 's'}
-        </span>
-        {health && health.status !== 'ok' && (
-          <span data-tone="warn">
-            server <b>{health.status}</b>
-          </span>
-        )}
-        <span className="cx-sig-foot-end" data-tone={status === 'open' ? undefined : 'warn'}>
-          {status === 'open' ? 'stream connected' : 'reconnecting'}
-        </span>
-      </footer>
     </section>
   );
 }

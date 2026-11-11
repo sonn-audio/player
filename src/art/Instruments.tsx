@@ -37,7 +37,12 @@ function fit(canvas: HTMLCanvasElement): { ctx: CanvasRenderingContext2D; w: num
 
 /** The ink, taken from CSS so the accent is defined in one place for the whole deck. */
 function ink(canvas: HTMLCanvasElement): string {
-  return getComputedStyle(canvas).color || '#4ade80';
+  return getComputedStyle(canvas).color || 'rgb(212, 214, 218)';
+}
+
+/** The same ink, thinner: `rgb(r, g, b)` as it comes from CSS, with an alpha. */
+function faint(rgb: string, alpha: number): string {
+  return rgb.replace(/^rgb\(([^)]+)\)$/, `rgba($1, ${alpha})`);
 }
 
 /**
@@ -485,10 +490,10 @@ export function LoudnessGraph({ zoneId, active, rate }: { zoneId: number; active
     };
 
     const accent = ink(element);
-    trace(log.shortTerm, accent, 1.5, 'rgba(74,222,128,0.07)');
+    trace(log.shortTerm, accent, 1.5, faint(accent, 0.07));
     /* The restless one over the shape, not under it: it is the reading that moves, and a line the
        area could swallow is a line nobody can follow. */
-    trace(log.momentary, 'rgba(74,222,128,0.38)', 1);
+    trace(log.momentary, faint(accent, 0.38), 1);
 
     if (integrated !== null && Number.isFinite(integrated)) {
       const at = Math.round(y(integrated)) + 0.5;

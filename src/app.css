@@ -471,12 +471,6 @@ html[data-arrived] .cx-side-mark {
   --browse-pad: var(--pane-pad);
 }
 
-.cx-root[data-shell] .cx-sig-band,
-.cx-root[data-shell] .cx-sig-deck {
-  padding-left: var(--pane-pad);
-  padding-right: var(--pane-pad);
-}
-
 /* --- the billboard as a card, the shelves fading into the gutter ---------------------- */
 
 /*
@@ -1932,18 +1926,6 @@ html[data-arrived] .cx-side-mark {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 18px;
-  max-width: 760px;
-}
-
-/* The deck gains a row for the meters and may scroll on a short window; on a wall panel it all stands. */
-.cx-root[data-shell] .cx-sig-deck {
-  grid-template-rows: auto auto minmax(200px, 1fr) minmax(184px, 1fr);
-  overflow-y: auto;
-  scrollbar-width: none;
-}
-
-.cx-root[data-shell] .cx-sig-deck::-webkit-scrollbar {
-  display: none;
 }
 
 .cx-vu-well {
@@ -3352,4 +3334,615 @@ html[data-arrived] .cx-side-mark {
 
 .cx-desk[data-phone] .cx-desk-group {
   padding-left: 16px;
+}
+
+/* --- the reading — see `Signal` ---------------------------------------------------------- */
+
+.cx-sig {
+  /* The instruments' ink is silver here; green is the verdict's alone. */
+  --accent: #d4d6da;
+  --accent-soft: rgb(212 214 218 / 8%);
+  --accent-line: rgb(212 214 218 / 30%);
+
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  padding: 0 var(--pane-pad, 22px);
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+
+.cx-sig-lbl {
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--t5);
+}
+
+/* The verdict and, beside it, why. */
+.cx-sig-head {
+  display: grid;
+  flex: none;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 380px);
+  column-gap: 44px;
+  align-items: end;
+  padding: 40px 0 26px;
+}
+
+.cx-sig-head .cx-sig-lbl {
+  grid-column: 1 / -1;
+  margin-bottom: 14px;
+}
+
+.cx-sig-head .signal-verdict {
+  display: contents;
+}
+
+.cx-sig-head .signal-verdict::before {
+  content: none;
+}
+
+.cx-sig-head .signal-verdict-head {
+  grid-column: 1;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(34px, 3.6vw, 52px);
+  font-weight: 300;
+  letter-spacing: -0.025em;
+  line-height: 1.05;
+  color: var(--t1);
+}
+
+/* The lamp: green for untouched, white for clean, amber for altered, dark for nothing. */
+.cx-sig-head .signal-verdict-head::before {
+  content: '';
+  flex: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--t7);
+}
+
+.cx-sig-head .signal-verdict[data-tone='perfect'] .signal-verdict-head::before {
+  background: var(--ok);
+  box-shadow: 0 0 12px var(--ok);
+}
+
+.cx-sig-head .signal-verdict[data-tone='clean'] .signal-verdict-head::before {
+  background: var(--t1);
+  box-shadow: 0 0 10px rgb(255 255 255 / 50%);
+}
+
+.cx-sig-head .signal-verdict[data-tone='altered'] .signal-verdict-head::before {
+  background: #e0a03c;
+  box-shadow: 0 0 10px rgb(224 160 60 / 55%);
+}
+
+.cx-sig-head .signal-verdict-note {
+  grid-column: 2;
+  margin: 0 0 6px;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--t4);
+}
+
+.cx-sig-head .signal-verdict-note::first-letter {
+  text-transform: uppercase;
+}
+
+/* The instruments on the left, the path down the right. */
+.cx-sig-main {
+  display: grid;
+  flex: none;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  column-gap: 44px;
+}
+
+.cx-sig-bench {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  min-width: 0;
+}
+
+.cx-sig-panel {
+  padding: 18px 24px 14px;
+  border: 1px solid rgb(255 255 255 / 7%);
+  border-radius: 6px;
+  background: linear-gradient(180deg, #131316, #0e0e10);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 4%),
+    0 30px 60px -40px #000;
+}
+
+.cx-sig-panel .analysis-panel {
+  padding: 0;
+}
+
+/* Four figures, set at the size of what they are: the record, in numbers. */
+.cx-sig-figs {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 20px;
+  padding: 8px 0 4px;
+}
+
+.cx-sig-fig {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: baseline;
+  gap: 8px 7px;
+}
+
+.cx-sig-fig span {
+  grid-column: 1 / -1;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--t5);
+}
+
+.cx-sig-fig b {
+  font-family: var(--font-mono);
+  font-size: 28px;
+  font-weight: 300;
+  letter-spacing: -0.02em;
+  color: var(--t1);
+  font-variant-numeric: tabular-nums;
+}
+
+.cx-sig-fig i {
+  font-size: 11px;
+  font-style: normal;
+  color: var(--t5);
+}
+
+.cx-sig-fig[data-tone='bad'] b {
+  color: #e5644e;
+}
+
+/* The path: a line down the page with a point for every stage. */
+.cx-sig-path {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  padding-left: 32px;
+  border-left: 1px solid var(--hair);
+}
+
+.cx-sig-chain {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.cx-sig-chain li {
+  position: relative;
+  display: grid;
+  grid-template-columns: 7px minmax(0, 1fr);
+  column-gap: 18px;
+  padding-bottom: 18px;
+}
+
+.cx-sig-chain li:last-child {
+  padding-bottom: 0;
+}
+
+/* The wire between one point and the next. */
+.cx-sig-chain li:not(:last-child)::before {
+  content: '';
+  position: absolute;
+  top: 12px;
+  bottom: -5px;
+  left: 3px;
+  width: 1px;
+  background: rgb(255 255 255 / 14%);
+}
+
+.cx-sig-chain[data-ok] li:not(:last-child)::before {
+  background: color-mix(in srgb, var(--ok) 55%, transparent);
+}
+
+.cx-sig-dot {
+  width: 7px;
+  height: 7px;
+  margin-top: 4px;
+  border-radius: 50%;
+  background: var(--t8);
+}
+
+.cx-sig-chain li[data-state='idle'] .cx-sig-dot {
+  background: #09090a;
+  box-shadow: inset 0 0 0 1px var(--t5);
+}
+
+.cx-sig-chain li[data-state='on'] .cx-sig-dot {
+  background: var(--t1);
+}
+
+.cx-sig-chain[data-ok] li[data-state='on'] .cx-sig-dot {
+  background: var(--ok);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--ok) 70%, transparent);
+}
+
+.cx-sig-step {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.cx-sig-step-name {
+  font-size: 9.5px;
+  font-weight: 500;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--t5);
+}
+
+.cx-sig-step-value {
+  font-size: 14px;
+  line-height: 1.35;
+  color: var(--t2);
+  animation: cx-sig-land 0.6s var(--cx-ease);
+}
+
+.cx-sig-chain li[data-state='off'] .cx-sig-step-value,
+.cx-sig-chain li[data-state='idle'] .cx-sig-step-value {
+  color: var(--t5);
+}
+
+.cx-root .cx-sig-step-detail {
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  font-size: 10.5px;
+  line-height: 1.5;
+  color: var(--t5);
+}
+
+@keyframes cx-sig-land {
+  from {
+    opacity: 0;
+    translate: 6px 0;
+  }
+}
+
+/* The bench, under the fold: tiles between hairlines, no boxes. */
+.cx-sig-deck {
+  display: grid;
+  flex: none;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 0 44px;
+  margin-top: 40px;
+  border-top: 1px solid var(--hair);
+}
+
+.cx-sig-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  grid-column: span 3;
+  min-width: 0;
+  padding: 22px 0 26px;
+  border-bottom: 1px solid var(--hair);
+}
+
+.cx-sig-tile[data-span='6'] {
+  grid-column: span 6;
+}
+
+.cx-sig-tile-label {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--t5);
+}
+
+.cx-sig-tile-label i {
+  font-size: 10px;
+  font-style: normal;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  text-transform: none;
+  color: var(--t6);
+}
+
+.cx-sig-tile .signal-timing,
+.cx-sig-tile .signal-wire {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+/* The clock names itself; its name is set like every other tile's. */
+.cx-sig-tile .signal-timing-head {
+  margin-bottom: 14px;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.24em;
+  color: var(--t5);
+}
+
+/* The peak meter: two columns standing in the tile. */
+.cx-sig-tile .cx-meter {
+  flex: none;
+  height: 150px;
+}
+
+/* A drawn instrument, and the ink it draws with: silver, read once from here. */
+.cx-sig-figure {
+  position: relative;
+  isolation: isolate;
+  width: 100%;
+  height: 150px;
+  color: #d4d6da;
+}
+
+.cx-sig-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 2px;
+  background: #0c0c0e;
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 5%);
+}
+
+/* The goniometer is a figure, not a field: it stays square in whatever it is given. */
+.cx-sig-figure:not([data-wide]) .cx-sig-canvas {
+  aspect-ratio: 1;
+  width: auto;
+  max-width: 100%;
+  margin: 0 auto;
+}
+
+/* The cage sits over the light and carries nothing of its own. */
+.cx-sig-canvas[data-layer='grid'] {
+  position: absolute;
+  inset: 0;
+  background: none;
+  box-shadow: none;
+}
+
+.cx-sig-figure:not([data-wide]) .cx-sig-canvas[data-layer='grid'] {
+  right: 0;
+  left: 0;
+}
+
+.cx-sig-headline {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 22px;
+  font-weight: 300;
+  letter-spacing: -0.02em;
+  color: var(--t1);
+  font-variant-numeric: tabular-nums;
+}
+
+.cx-sig-headline i {
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-style: normal;
+  letter-spacing: 0;
+  color: var(--t5);
+}
+
+.cx-sig-headline[data-tone='bad'] {
+  color: #e5644e;
+}
+
+.cx-sig-foot-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.cx-sig-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.cx-sig-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.cx-sig-stat span {
+  font-size: 9.5px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--t6);
+}
+
+.cx-sig-stat em {
+  font-family: var(--font-mono);
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 300;
+  color: var(--t2);
+  font-variant-numeric: tabular-nums;
+}
+
+.cx-sig-stat[data-lead] em {
+  color: var(--t1);
+}
+
+.cx-sig-stat em i,
+.cx-sig-unit {
+  margin-left: 5px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-style: normal;
+  color: var(--t6);
+}
+
+.cx-sig-rows {
+  display: flex;
+  flex-direction: column;
+}
+
+.cx-sig-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 30px;
+  border-top: 1px solid var(--hair);
+  font-size: 12.5px;
+  color: var(--t4);
+}
+
+.cx-sig-row > em {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-style: normal;
+  color: var(--t2);
+  font-variant-numeric: tabular-nums;
+}
+
+.cx-sig-row [data-tone='bad'] {
+  color: #e5644e;
+}
+
+/* In the hand: the way back, the record, the transport — the frame a phone does not have. */
+.cx-sig-band {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  margin: 0 -22px;
+  padding: 0 22px 6px;
+  border-bottom: 1px solid var(--hair);
+}
+
+.cx-sig-back {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  gap: 8px;
+  min-height: 44px;
+  font-size: 9.5px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--t4);
+}
+
+.cx-sig-now {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.cx-sig-cover {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border-radius: 2px;
+  background: var(--cx-cover) center / cover;
+}
+
+.cx-sig-id {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.cx-sig-title,
+.cx-sig-sub {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cx-sig-title {
+  font-size: 15px;
+  font-weight: 450;
+  color: var(--t1);
+}
+
+.cx-sig-sub {
+  font-size: 12px;
+  color: var(--t5);
+}
+
+.cx-sig-band .cx-transport {
+  flex: none;
+  gap: 4px;
+  margin: 0;
+}
+
+.cx-sig-band .cx-tr-side {
+  display: none;
+}
+
+.cx-sig-band .cx-bar-wrap {
+  max-width: none;
+  margin-top: 6px;
+}
+
+/* A narrow window: the path goes under the instruments, the bench in one column. */
+@media (max-width: 1180px) {
+  .cx-sig-main {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: 34px;
+  }
+
+  .cx-sig-path {
+    padding: 26px 0 0;
+    border-top: 1px solid var(--hair);
+    border-left: 0;
+  }
+
+  .cx-sig-deck {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 979px) {
+  .cx-sig-head {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 26px 0 22px;
+  }
+
+  .cx-sig-head .signal-verdict-note {
+    grid-column: 1;
+    margin-top: 12px;
+  }
+
+  .cx-sig-figs {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 22px 20px;
+  }
+
+  .cx-sig-panel {
+    padding: 14px 14px 10px;
+  }
+
+  .cx-sig-deck {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .cx-sig-tile,
+  .cx-sig-tile[data-span='6'] {
+    grid-column: 1 / -1;
+  }
+
 }

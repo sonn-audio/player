@@ -218,7 +218,7 @@ export function AnalysisPanel({
    * the instrument is drawing the product's own mark. A logo does not need a second colour to be a
    * logo, and the display should not need one to be the logo.
    */
-  const BAR_INK = 'rgb(74 222 128 / 26%)';
+  const BAR_INK = 'rgb(212 214 218 / 30%)';
 
   /*
    * The cells are back — in silver, where they never were the problem.
