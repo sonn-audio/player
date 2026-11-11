@@ -7,8 +7,9 @@
  * a warm backlit scale from −20 to +3 with its red zone, a black needle, a hub — and nothing about it
  * is decoration: the needles follow the room's own left and right levels off the analysis stream.
  *
- * 0 VU is set at −18 dBFS, the alignment a studio uses, so a full modern master sits around zero and
- * touches the red on its peaks instead of pinning the needle. The ballistics are a VU meter's: about
+ * 0 VU is set at −12 dBFS. A studio aligns at −18, and at −18 a modern master — which sits near
+ * −9 LUFS — holds both needles against the stop, where they say nothing. At −12 such a record sits
+ * around zero and touches the red on its peaks, and a quiet, dynamic one still moves in the lower half. The ballistics are a VU meter's: about
  * 300 ms to rise and to fall, which is what makes it read loudness rather than peaks.
  */
 import { useEffect, useRef } from 'react';
@@ -17,7 +18,7 @@ import { toDb, useAnalysis } from '@/state/useAnalysis';
 const VU_MIN = -20;
 const VU_MAX = 3;
 /** dBFS at which the needle sits on 0. */
-const ALIGN_DBFS = -18;
+const ALIGN_DBFS = -12;
 /** Degrees either side of straight up. */
 const SWEEP = 48;
 const CX = 190;

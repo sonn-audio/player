@@ -31,7 +31,7 @@ for what is on the wire, and what comes next.
 **Signal is the instrument** (`art/Signal.tsx`, `art/Vu.tsx`): the one place the player shows what it
 is made of. The page opens on the answer — the verdict with its lamp, and why in a sentence — then two
 VU meters on a lit scale that follow the room's left and right levels off the analysis stream (0 VU at
-−18 dBFS, a VU's 300 ms), the spectrum, four figures (integrated loudness, range, true peak,
+−12 dBFS, a VU's 300 ms), the spectrum, four figures (integrated loudness, range, true peak,
 correlation), and down the right the path from file to amplifier, a point for every stage. Under the
 fold: the loudness history, the stereo field, the scope, the peaks, the clock. The instruments draw in
 silver; the lamp is the only green.

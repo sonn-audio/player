@@ -4406,8 +4406,7 @@
 
 .cx-root :focus-visible {
   /*
-   * The product's ring: a half-strength outline with a faint halo, the same one the console and the
-   * technical player use. A player has a lot of small round buttons, so the offset is a pixel wider
+   * The ring: a half-strength outline with a faint halo, in silver like every other control. A player has a lot of small round buttons, so the offset is a pixel wider
    * here — a 2px ring hard against a 44px circle reads as a border on the button.
    *
    * No `border-radius` here, deliberately. It used to set one, and that does not round the *ring* —
@@ -4415,9 +4414,9 @@
    * already follows whatever radius the thing it surrounds has, so saying nothing is what makes a
    * circular button get a circular ring and a segmented control keep its square inner edge.
    */
-  outline: 2px solid rgb(74 222 128 / 50%);
+  outline: 2px solid rgb(255 255 255 / 55%);
   outline-offset: 3px;
-  box-shadow: 0 0 0 3px rgb(74 222 128 / 18%);
+  box-shadow: 0 0 0 3px rgb(255 255 255 / 12%);
 }
 
 /*
@@ -4653,7 +4652,7 @@
 }
 
 .cx-meter-fill {
-  background: rgb(74 222 128 / 55%);
+  background: rgb(212 214 218 / 55%);
   clip-path: inset(calc(100% - var(--lvl, 0%)) 0 0 0);
 }
 
