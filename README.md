@@ -21,23 +21,21 @@ along the foot with the record, its transport, timeline and fader, the room it p
 the rests; and between them a pane — a rounded sheet — that shows whatever the room is showing: the
 house, the stage, the catalogue, the inputs, the rooms, the reading.
 
-**The room is lit by the record** (`art/Ground.tsx`, `art/palette.ts`). One layer lies under the whole
-window: the sleeve's own colours, read off the picture in the browser, as soft fields of light that
-drift past each other. The sidebar and the bar stand on it and the pane is glass over it — clearer on
-the stage and at home, darker under a listing. A change of record glides; a room with nothing on is lit,
-lower, by the last record it played. The most vivid hue is the one accent (play, the timeline, the
-active row). Words are set in the display face; mono is for figures.
+**A hi-fi component, not an app.** Black, silver and hairlines. The sleeve is the only colour on the
+screen and green is only ever a verdict. Labels are small spaced capitals, the way a faceplate is
+engraved; titles are set light; figures are mono. Nothing is boxed that a line can separate.
 
-**Home is the house as records** (`art/House.tsx`): every room with music is a poster of its sleeve
-with the room's name, what is on, how loud, and play; the rooms with nothing on are a quiet row; under
-them what this room played lately, what it keeps, and the services. Press a poster to stand in that
-room; pull one onto another and they play together. The sleeve flies between the poster, the stage and
-the bar (a view transition), because there is one record and it is in one place.
+**Now playing is quiet on purpose** (`art/Stage.tsx`): the sleeve, the name, who, the record, one lamp
+for what is on the wire, and what comes next.
 
-**Left alone for a minute the frame steps away and the ground is what is left** (`art/Light.tsx`): the
-same light, now moving on the room's own audio analysis (`GET /zones/{id}/analysis`), with the hour,
-the record in a corner and the spectrum as a contour. The record and the house, the two older rests,
-are still there from the bar.
+**Signal is the instrument** (`art/Signal.tsx`, `art/Vu.tsx`): the one place the player shows what it
+is made of. Two VU meters on a lit scale follow the room's left and right levels off the analysis
+stream (0 VU at −18 dBFS, a VU's 300 ms); under them the peak meter, the spectrum, loudness, the
+stereo field and the scope; above them the verdict and the path from file to amplifier.
+
+**Home** (`art/House.tsx`) is the house as the records that are on in it: a sleeve per room with
+music, the quiet rooms as lines of type, and what this room played lately. **Rooms** is a ruled list:
+a line, a dot and a figure per room, and one line down the left of rooms that play together.
 
 On a **phone** the frame is a bottom nav and sheets: a home you browse, a bar along the bottom that
 says what is playing, and the full player one press up from it — painted in the record's own colours
@@ -153,12 +151,10 @@ src/
   art/          The player
     ArtApp.tsx      Views, sheets, the two trees (desk and phone), the keys
     Shell.tsx       The desk's frame: sidebar and player bar
-    Ground.tsx      The light under everything: the sleeve's colours, drifting
-    palette.ts      The sleeve's colours, read off the picture
-    House.tsx       Home: the rooms as posters, lately, kept, the services
-    Light.tsx       The rest: what stands on the ground when the frame steps away
-    accent.ts       The server's two colours per track: the fallback, and each other room's tint
-    serviceMark.tsx A service's mark: its logo, or the library and the radio drawn
+    House.tsx       Home: a sleeve per room with music, the quiet rooms, lately
+    Vu.tsx          The VU meters on the Signal deck
+    accent.ts       One drop of the record's colour, for the few things that are the record's
+    serviceMark.tsx A service's colour, and the library and the radio drawn
     Stage.tsx       The record on a desk and on a phone; Transport, Timeline, VolumeRow
     Browse.tsx      The catalogue, the inputs page, the mini bar
     Channels.tsx    The rooms as cards (groups, scenes, lining up)
