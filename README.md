@@ -21,19 +21,23 @@ along the foot with the record, its transport, timeline and fader, the room it p
 the rests; and between them a pane — a rounded sheet — that shows whatever the room is showing: the
 house, the stage, the catalogue, the inputs, the rooms, the reading.
 
-**The record owns the room** (`art/accent.ts`). The frame is made of whatever is playing: the sleeve's
-dark becomes the frame and the pane, its most salient colour the one accent on the page (play, the
-timeline, the active row), and the ink the server reads for that dark the text ladder. A red album and
-a blue one are two rooms. Words are set in the display face; mono is for figures.
+**The room is lit by the record** (`art/Ground.tsx`, `art/palette.ts`). One layer lies under the whole
+window: the sleeve's own colours, read off the picture in the browser, as soft fields of light that
+drift past each other. The sidebar and the bar stand on it and the pane is glass over it — clearer on
+the stage and at home, darker under a listing. A change of record glides; a room with nothing on is lit,
+lower, by the last record it played. The most vivid hue is the one accent (play, the timeline, the
+active row). Words are set in the display face; mono is for figures.
 
-**Home is the house as light** (`art/House.tsx`): every room a window, a playing room lit in the
-colour of its record, its volume the brightness, a group one light across the rooms that share it.
-Press a window to stand in that room; pull one onto another and they play together.
+**Home is the house as records** (`art/House.tsx`): every room with music is a poster of its sleeve
+with the room's name, what is on, how loud, and play; the rooms with nothing on are a quiet row; under
+them what this room played lately, what it keeps, and the services. Press a poster to stand in that
+room; pull one onto another and they play together. The sleeve flies between the poster, the stage and
+the bar (a view transition), because there is one record and it is in one place.
 
-**Left alone for a minute the panel becomes the light the record throws** (`art/Light.tsx`): a field
-of the record's colours breathing on the room's own audio analysis (`GET /zones/{id}/analysis`), the
-spectrum a contour along the bottom, the clock and the record in the corners. The record and the
-house, the two older rests, are still there from the bar.
+**Left alone for a minute the frame steps away and the ground is what is left** (`art/Light.tsx`): the
+same light, now moving on the room's own audio analysis (`GET /zones/{id}/analysis`), with the hour,
+the record in a corner and the spectrum as a contour. The record and the house, the two older rests,
+are still there from the bar.
 
 On a **phone** the frame is a bottom nav and sheets: a home you browse, a bar along the bottom that
 says what is playing, and the full player one press up from it — painted in the record's own colours
@@ -149,9 +153,11 @@ src/
   art/          The player
     ArtApp.tsx      Views, sheets, the two trees (desk and phone), the keys
     Shell.tsx       The desk's frame: sidebar and player bar
-    House.tsx       The house as light — the desk's home
-    Light.tsx       The rest: the record's light, breathing on the analysis
-    accent.ts       The record's palette, as the frame's custom properties
+    Ground.tsx      The light under everything: the sleeve's colours, drifting
+    palette.ts      The sleeve's colours, read off the picture
+    House.tsx       Home: the rooms as posters, lately, kept, the services
+    Light.tsx       The rest: what stands on the ground when the frame steps away
+    accent.ts       The server's two colours per track: the fallback, and each other room's tint
     serviceMark.tsx A service's mark: its logo, or the library and the radio drawn
     Stage.tsx       The record on a desk and on a phone; Transport, Timeline, VolumeRow
     Browse.tsx      The catalogue, the inputs page, the mini bar
