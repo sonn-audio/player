@@ -56,6 +56,9 @@ import type { ContentAbout, ContentItem, ContentListing, ContentSection, Content
 import type { ApiInput, ApiZoneState } from '@/api/types';
 import type { Cur } from '@/art/useCur';
 
+/** A screen you touch has no `/` to press; the hint is for a keyboard. */
+const HAS_KEYS = !window.matchMedia('(hover: none)').matches;
+
 /** How many children to ask for. One screenful of tiles and then some. */
 const PAGE = 120;
 
@@ -1388,8 +1391,8 @@ export function Browse({
                   placeholder="Search everything"
                   onChange={(event) => setQuery(event.target.value)}
                 />
-                {/* The key that gets you here, and the one that gets you out. */}
-                <kbd className="cx-search-key mono">{query ? 'esc' : '/'}</kbd>
+                {/* The key that gets you here, and the one that gets you out — where there are keys. */}
+                {HAS_KEYS && <kbd className="cx-search-key mono">{query ? 'esc' : '/'}</kbd>}
               </div>
             </div>
 
