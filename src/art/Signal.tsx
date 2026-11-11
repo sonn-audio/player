@@ -24,6 +24,7 @@
 import { useEffect, useState } from 'react';
 import { AnalysisPanel } from '@/components/AnalysisPanel';
 import { Goniometer, LoudnessGraph, Meter, Scope } from '@/art/Instruments';
+import { VuPair } from '@/art/Vu';
 
 import { SignalClock, SignalWire, Verdict, stagesOf } from '@/components/SignalPath';
 import { Transport, Timeline, VolumeRow } from '@/art/Stage';
@@ -575,7 +576,13 @@ export function Signal({
          * Two columns rather than three: a level wants height, not width, and the seven columns the
          * spectrum gets in exchange are the ones that make a mix legible.
          */}
-        <Tile span={3} label="Level" aside={`peak hold ${(PEAK_HOLD_MS / 1000).toFixed(1)} s`}>
+        {/* The meters, first and widest: the one instrument on the deck that is watched rather than
+            read — see `VuPair`. */}
+        <Tile span={12} label="Level" aside="VU · 0 at −18 dBFS · 300 ms">
+          <VuPair zoneId={zone.id} active={streaming} rate={rate} />
+        </Tile>
+
+        <Tile span={3} label="Peak" aside={`peak hold ${(PEAK_HOLD_MS / 1000).toFixed(1)} s`}>
           <Meter zoneId={zone.id} active={streaming} rate={rate} />
           <LevelRead zoneId={zone.id} active={streaming} capabilities={zone.output?.capabilities} />
         </Tile>
