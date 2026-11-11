@@ -2109,75 +2109,6 @@
 }
 
 /*
- * Search: a line, not a pill.
- *
- * It was a rounded, filled, outlined capsule with an accent ring on focus — the single most boxed thing
- * in the face, sitting next to a 54px heading that follows the no-boxes rule. A field is a place you
- * write on, and what a place you write on looks like is a rule with room above it. The rule takes the
- * accent on focus, which is the same move the sheet tabs and the timeline make.
- */
-.cx-search {
-  position: relative;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.cx-search::after {
-  content: '';
-  position: absolute;
-  inset: auto 0 0;
-  height: 1px;
-  background: var(--hair);
-  transition:
-    background 0.22s,
-    box-shadow 0.22s;
-}
-
-.cx-search:focus-within::after {
-  background: var(--g);
-  box-shadow: 0 0 14px -2px color-mix(in srgb, var(--g) 55%, transparent);
-}
-
-.cx-search input {
-  flex: 1;
-  min-width: 0;
-  border: 0;
-  background: none;
-  color: var(--t1);
-  font-family: var(--font-sans);
-  font-size: 13px;
-  outline: none;
-}
-
-/* The UA's own clear button is a grey ×-in-a-circle: the one control on the page nobody styled. */
-.cx-search input::-webkit-search-cancel-button {
-  appearance: none;
-}
-
-/*
- * No ring on the field — its rule *is* the focus state.
- *
- * `:focus-visible` always matches a text input, mouse or keyboard, so the product's green ring drew a
- * hard rectangle around the field the entire time anyone was typing in it: exactly the box this stopped
- * being. The accent underline says the same thing, in the vocabulary of the page.
- */
-.cx-search input:focus-visible {
-  outline: none;
-  box-shadow: none;
-}
-
-/*
- * On a phone the field is the only thing on its line, so it takes the line.
- *
- * The title row wraps below the desktop breakpoint and the field lands under the heading at its
- * 300px basis — a rule ending two thirds of the way across, under a heading that runs the full width.
- */
-@media (max-width: 979px) {
-  
-}
-
-/*
  * A record's two actions, as text.
  *
  * They were a filled capsule and a hairline capsule — the only two boxed things in a face whose stated
@@ -2405,17 +2336,6 @@
   margin-bottom: 0;
 }
 
-/*
- * The list gets its own column but not the whole of it.
- *
- * Uncapped, a 1900px window put the running time a thousand pixels from the title it belongs to, and the
- * eye has to travel the whole way to pair them. 860px is about as wide as a two-column row can be before
- * that happens.
- */
-@media (min-width: 1180px) {
-  
-}
-
 .cx-browse-empty {
   display: block;
   padding: 20px 0;
@@ -2501,299 +2421,11 @@
   flex-direction: column;
 }
 
-.cx-door {
-  position: relative;
-  display: flex;
-  align-items: center;
-  gap: 26px;
-  padding: clamp(18px, 2.4vh, 30px) 0;
-  border-bottom: 1px solid var(--hair-soft);
-  text-align: left;
-  animation: cx-door-in 0.5s var(--cx-ease) backwards;
-  animation-delay: calc(var(--i) * 70ms);
-  transition: padding-left 0.35s var(--cx-ease);
-}
-
-.cx-door:hover {
-  padding-left: 10px;
-}
-
 @keyframes cx-door-in {
   from {
     opacity: 0;
     transform: translateY(10px);
   }
-}
-
-/*
- * The name and what is behind it travel together.
- *
- * `flex: 1` pushed the fan of sleeves to the far right edge, so on a 1450px panel a door was a word on
- * the left, a canyon, and four thumbnails against the opposite wall — two halves of one row that had
- * stopped looking like one row. Sized to its content instead, with the chevron taking the slack, the
- * evidence sits beside the name it is evidence for.
- */
-.cx-door-meta {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  /*
-   * A column of a stated width, not one that shrink-wraps its word.
-   *
-   * Sized to content, every door's artwork started immediately after its own name — so `Radio`,
-   * `Spotify` and `YouTube Music` put their sleeves at three different left edges and the page had a
-   * ragged column of pictures down the middle. A shared column gives them one edge to stand on, which
-   * is the whole difference between a list of rows and a table.
-   */
-  flex: 0 0 clamp(190px, 22%, 340px);
-  min-width: 0;
-}
-
-/* The chevron keeps the far edge; everything else stays left. */
-.cx-door-go {
-  margin-left: auto;
-}
-
-.cx-door-name {
-  font-size: clamp(24px, 2.6vw, 38px);
-  line-height: 1.1;
-  color: var(--t3);
-  transition: color 0.2s;
-}
-
-.cx-door:hover .cx-door-name {
-  color: var(--t1);
-}
-
-/* A door with nothing to show says what is behind it instead — and now that a door goes two levels
-   looking for artwork, the ones that still say it are the ones that genuinely have no pictures at all
-   (a folder of alert sounds), which is worth being able to read: 8.5px at `--t7` was a grey smudge. */
-.cx-door-inside {
-  font-size: 10px;
-  letter-spacing: 0.16em;
-  color: var(--t6);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-/*
- * Four sleeves, overlapping and leaning back — a stack seen at an angle, not four thumbnails.
- *
- * They square up and fan apart under the pointer: the door opens a little before it opens. `--n` is the
- * position from the back of the stack, so the same rules hold for two sleeves or for four.
- */
-.cx-door-peek {
-  /* Bigger, now that it stands beside the name rather than across the page from it: at the far edge a
-     66px sleeve was a thumbnail nobody could read, and next to a 38px word it is the picture. */
-  --sleeve: clamp(52px, 6vw, 86px);
-
-  display: flex;
-  flex: none;
-  margin-left: clamp(20px, 3vw, 48px);
-  opacity: 0;
-  transition: opacity 0.6s var(--cx-ease);
-}
-
-.cx-door-peek[data-on] {
-  opacity: 1;
-}
-
-.cx-door-sleeve {
-  position: relative;
-  width: var(--sleeve);
-  aspect-ratio: 1;
-  border-radius: 3px;
-  background-color: var(--cx-cover);
-  background-position: center;
-  background-size: cover;
-  box-shadow:
-    0 12px 26px -14px rgb(0 0 0 / 90%),
-    inset 0 0 0 1px rgb(255 255 255 / 10%);
-  /* A little more lean, and alternating rather than a fan: records in a crate do not agree. */
-  rotate: calc(4.4deg - var(--n) * 2.2deg);
-  transition:
-    margin-left 0.42s var(--cx-ease),
-    rotate 0.42s var(--cx-ease);
-}
-
-/*
- * Loose enough to be records.
- *
- * At a 34% overlap four sleeves showed as four vertical slivers with a word each — the eye reads that
- * as a clipped row, not as a stack, which is the one thing the gesture is for. At 22% each record keeps
- * its own face and the pile still leans; hover still spreads them to 14% and straightens them.
- */
-.cx-door-sleeve + .cx-door-sleeve {
-  margin-left: calc(-0.22 * var(--sleeve));
-}
-
-.cx-door:hover .cx-door-sleeve {
-  rotate: 0deg;
-}
-
-.cx-door:hover .cx-door-sleeve + .cx-door-sleeve {
-  margin-left: calc(-0.14 * var(--sleeve));
-}
-
-.cx-door-go {
-  flex: none;
-  display: grid;
-  place-items: center;
-  color: var(--t8);
-  transition:
-    color 0.2s,
-    translate 0.35s var(--cx-ease);
-}
-
-.cx-door:hover .cx-door-go {
-  color: var(--t4);
-  translate: 5px 0;
-}
-
-/* --- the billboard --------------------------------------------------------- */
-
-/*
- * One record put forward, on a wall of its own light — see `Billboard` in Browse.tsx.
- *
- * The wall is the sleeve blurred past recognition, and the scrim fades it into the page at *both*
- * edges: a band that starts and stops is a box, and a pool of light is not. Full-bleed past the
- * page margin the same way the shelves run off the window's edge.
- */
-.cx-bill {
-  position: relative;
-  display: flex;
-  align-items: center;
-  gap: clamp(24px, 3.4vw, 52px);
-  overflow: hidden;
-  animation: cx-door-in 0.5s var(--cx-ease) backwards;
-}
-
-/*
- * The record's own colour, across the whole band.
- *
- * It was held down so far that the band came out the same near-black as the page behind it — a
- * full-width stripe of nothing with a small sleeve and a heading sitting in the left quarter of it,
- * and eight hundred pixels of dead grey to their right. The colour was already there; it was simply
- * turned off.
- *
- * So it is let up, and then shaped: dark on the left where the type is and opening out to the right,
- * which turns the empty half of the band into the field the record throws — the same composition the
- * stage makes of a sleeve and the colour beside it.
- */
-.cx-bill-wall {
-  position: absolute;
-  background-position: center 30%;
-  background-size: cover;
-  pointer-events: none;
-}
-
-.cx-bill-scrim {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-}
-
-.cx-bill-cover {
-  position: relative;
-  z-index: 1;
-  flex: none;
-  width: clamp(124px, 19vh, 204px);
-  aspect-ratio: 1;
-  overflow: hidden;
-  background-color: var(--cx-cover);
-  background-position: center;
-  background-size: cover;
-  transition: transform 0.4s var(--cx-ease);
-}
-
-/* The same printed-gloss breath the stage's sleeve carries. */
-.cx-bill-cover::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background: linear-gradient(
-    118deg,
-    rgb(255 255 255 / 10%) 0%,
-    rgb(255 255 255 / 4%) 22%,
-    transparent 38%
-  );
-  mix-blend-mode: soft-light;
-}
-
-.cx-bill-cover:hover {
-  transform: scale(1.02);
-}
-
-.cx-bill-cover[data-person] {
-  border-radius: 50%;
-}
-
-.cx-bill-meta {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 10px;
-  min-width: 0;
-}
-
-.cx-bill-kicker {
-  display: inline-flex;
-  align-items: center;
-  gap: 12px;
-  font-size: 9.5px;
-  letter-spacing: 0.26em;
-}
-
-/* Provenance, same figure as the stage's eyebrow: a dot, then where the pick came from. */
-.cx-bill-from {
-  display: inline-flex;
-  align-items: center;
-  gap: 12px;
-  font-style: normal;
-}
-
-.cx-bill-from::before {
-  content: '';
-  width: 3px;
-  height: 3px;
-  border-radius: 50%;
-}
-
-.cx-bill-title {
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
-  overflow: hidden;
-  font-size: clamp(30px, 4.4vw, 56px);
-  line-height: 1.04;
-  letter-spacing: -0.035em;
-  text-align: left;
-  text-wrap: balance;
-  color: var(--t1);
-  transition: color 0.2s;
-}
-
-.cx-bill-title:hover {
-  color: #fff;
-}
-
-.cx-bill-sub {
-  font-size: 15px;
-  color: var(--t4);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  max-width: 100%;
-}
-
-.cx-bill-actions {
-  display: inline-flex;
-  margin-top: 8px;
 }
 
 /* --- grids and shelves ---------------------------------------------------- */
@@ -3597,24 +3229,6 @@
    has gone rather than as a room that is quiet. */
 .cx-meter[data-quiet] .cx-meter-fill {
   opacity: 0.25;
-}
-
-/*
- * The deck arrives.
- *
- * Rows in the order the eye reads them, 70 ms apart — enough that it registers as *assembling* and
- * short enough that nobody waits for it. It plays on entering the view and never again: the second
- * time you see a screen build itself it is a delay, not a gesture. `both` so a tile is invisible
- * until its own moment rather than flashing at full opacity first.
- */
-
-/* One column in the hand: the deck is a stack of instruments read one at a time, which is the shape a
-   phone can hold — and the reason this can exist on a phone at all now that it is not a shell. */
-@media (max-width: 979px) {
-
-  /* In the hand the meter is a band across the screen rather than a tall pair, so it gets a floor
-     of its own — the columns are the one thing here that is worth nothing at 60px. */
-
 }
 
 @keyframes cx-player-up {
@@ -4646,35 +4260,6 @@
   opacity: 0.7;
 }
 
-/* --- the billboard: the record's colour, not a grey band --- */
-
-.cx-bill {
-  border-bottom: 1px solid var(--hair);
-}
-
-.cx-bill-wall {
-  inset: -30% -10%;
-  filter: blur(110px) brightness(0.55) saturate(1.3);
-  opacity: 0.55;
-  mask-image: radial-gradient(60% 90% at 22% 50%, #000 20%, transparent 80%);
-}
-
-.cx-bill-cover {
-  box-shadow:
-    0 30px 70px -30px rgb(0 0 0 / 95%),
-    inset 0 0 0 1px rgb(255 255 255 / 10%);
-}
-
-.cx-bill-actions {
-  gap: 12px;
-  align-items: center;
-}
-
-.cx-bill-open {
-  display: inline-flex;
-  align-items: center;
-}
-
 /* The title, at poster size on a wide window: the ladder's cap goes from 76 to 96. */
 @media (min-width: 1500px) {
   .cx-title {
@@ -4796,7 +4381,7 @@
 /* Songs in a shelf are rows, not tiles: a sleeve at 44px, the name, who, how long. */
 .cx-trows[data-cols] .cx-trow {
   margin: 0;
-  padding: 8px 6px;
+  padding: 0;
   border-bottom: 1px solid var(--hair);
   border-radius: 0;
   break-inside: avoid;
@@ -4812,8 +4397,9 @@
 
 .cx-tthumb {
   flex: none;
-  width: 44px;
-  height: 44px;
+  width: 40px;
+  height: 40px;
+  border-radius: 2px;
   background-color: var(--cx-cover);
   background-position: center;
   background-size: cover;
@@ -4853,43 +4439,6 @@
 
 .cx-browse-inner[data-spotlight]:not([data-root]) .cx-browse-head {
   margin-bottom: 6px;
-}
-
-/* The billboard, as a head: taller sleeve, the record's colour clearly the room's. */
-.cx-browse-inner[data-spotlight] .cx-bill {
-  padding-top: clamp(22px, 3.6vh, 44px);
-  padding-bottom: clamp(30px, 5vh, 60px);
-}
-
-.cx-browse-inner[data-spotlight] .cx-bill-cover {
-  width: clamp(160px, 24vh, 260px);
-}
-
-.cx-browse-inner[data-spotlight] .cx-bill-wall {
-  opacity: 0.85;
-  filter: blur(120px) brightness(0.62) saturate(1.45);
-  mask-image: radial-gradient(70% 100% at 24% 50%, #000 15%, transparent 85%);
-}
-
-.cx-browse-inner[data-spotlight] .cx-bill-title {
-  font-size: clamp(34px, 4.8vw, 68px);
-}
-
-/* The front's billboard is a band, not a page: the hall under it is the picture. */
-.cx-browse-inner[data-root] .cx-bill {
-  margin-bottom: 22px;
-}
-
-.cx-browse-inner[data-root] .cx-bill-cover {
-  width: clamp(110px, 15vh, 150px);
-}
-
-.cx-browse-inner[data-root] .cx-bill-title {
-  font-size: clamp(26px, 3vw, 40px);
-}
-
-.cx-browse-inner[data-root] .cx-bill-actions {
-  margin-top: 2px;
 }
 
 .cx-browse-inner[data-root] .cx-browse-back {
@@ -6594,15 +6143,6 @@
 
 }
 
-/* The two shelves under the marks, in the browse page's own section rhythm. */
-.cx-frontsec + .cx-frontsec {
-  margin-top: clamp(26px, 3.4vh, 40px);
-}
-
-.cx-frontsec .cx-sec-head {
-  margin-bottom: 16px;
-}
-
 /* ==========================================================================================
  * Inputs, again: an icon per jack, the room it would play in, and what arrives by itself.
  * ========================================================================================== */
@@ -6656,152 +6196,6 @@
   font-size: 12.5px;
   line-height: 1.5;
   color: var(--t6);
-}
-
-/* ==========================================================================================
- * The crate: what the room played lately, as records to flip through. See `Crate.tsx`.
- * ========================================================================================== */
-
-.cx-crate {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin: 0 calc(-1 * var(--browse-pad, 40px));
-  padding: 0 var(--browse-pad, 40px);
-  overflow: hidden;
-}
-
-.cx-crate-row {
-  position: relative;
-  width: 100%;
-  height: clamp(220px, 30vh, 300px);
-  perspective: 1500px;
-  perspective-origin: 50% 45%;
-}
-
-.cx-crate-floor {
-  position: absolute;
-  left: 50%;
-  top: clamp(190px, 27vh, 270px);
-  width: 1000px;
-  height: 80px;
-  translate: -50% 0;
-  background: radial-gradient(50% 50% at 50% 50%, rgb(0 0 0 / 70%), transparent 70%);
-  filter: blur(10px);
-  pointer-events: none;
-}
-
-/*
- * One rule for every sleeve, from its distance to the middle.
- *
- * `--d` is signed (left negative), `--ad` its size. The middle one is upright at full size; each step
- * out is smaller, further back and more turned away, with a veil over it that deepens with distance.
- * All of it transitions, so pressing a sleeve at the side turns the crate rather than redrawing it.
- */
-.cx-crate-lp {
-  --w: calc(250px - var(--ad) * 34px);
-
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  z-index: calc(10 - var(--ad));
-  width: var(--w);
-  aspect-ratio: 1;
-  border-radius: 4px;
-  background-color: var(--cx-cover);
-  background-position: center;
-  background-size: cover;
-  box-shadow:
-    0 34px 60px -22px rgb(0 0 0 / 95%),
-    0 4px 10px rgb(0 0 0 / 40%),
-    inset 0 0 0 1px rgb(255 255 255 / 12%);
-  translate: calc(-50% + var(--d) * 165px) -50%;
-  transform: translateZ(calc(var(--ad) * -80px)) rotateY(calc(var(--d) * -14deg));
-  transform-style: preserve-3d;
-  cursor: pointer;
-  transition:
-    translate 0.6s var(--cx-ease),
-    transform 0.6s var(--cx-ease),
-    width 0.6s var(--cx-ease),
-    box-shadow 0.6s var(--cx-ease);
-}
-
-.cx-crate-lp::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: 4px;
-  background: rgb(9 9 11 / calc(var(--ad) * 0.2));
-  transition: background 0.6s var(--cx-ease);
-}
-
-.cx-crate-lp::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: 4px;
-  background: linear-gradient(100deg, rgb(255 255 255 / 8%), transparent 20%, transparent 85%, rgb(0 0 0 / 25%));
-  pointer-events: none;
-}
-
-.cx-crate-lp[data-centre] {
-  transform: none;
-}
-
-.cx-crate-lp:hover {
-  box-shadow:
-    0 40px 70px -22px rgb(0 0 0 / 95%),
-    0 4px 10px rgb(0 0 0 / 40%),
-    inset 0 0 0 1px rgb(255 255 255 / 22%);
-}
-
-.cx-crate-cap {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  margin-top: 14px;
-  text-align: center;
-}
-
-.cx-crate-title {
-  font-size: 28px;
-  font-weight: 400;
-  letter-spacing: -0.035em;
-  color: var(--t1);
-}
-
-.cx-crate-sub {
-  font-size: 13px;
-  color: var(--t5);
-}
-
-.cx-crate-play {
-  margin-top: 10px;
-}
-
-.cx-crate-dots {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  margin-top: 12px;
-}
-
-.cx-crate-dots i {
-  width: 4px;
-  height: 4px;
-  border-radius: 50%;
-  background: var(--t8);
-  transition:
-    width 0.3s var(--cx-ease),
-    background 0.3s;
-}
-
-.cx-crate-dots i[data-on] {
-  width: 16px;
-  border-radius: 2px;
-  background: var(--t2);
 }
 
 /* --- what a search cannot say for itself --- */

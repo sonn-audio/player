@@ -740,6 +740,7 @@ export function ArtApp() {
                     services={services}
                     onExit={goHome}
                     onOpenRooms={() => setSheet('rooms')}
+                    onInputs={() => setView({ kind: 'inputs' })}
                     // Remount on a different root so the internal path stack starts fresh rather than
                     // keeping the last service's trail.
                     key={view.node.id ?? 'root'}
@@ -802,6 +803,7 @@ export function ArtApp() {
                 services={services}
                 onExit={goHome}
                 onOpenRooms={() => setSheet('rooms')}
+                onInputs={() => setView({ kind: 'inputs' })}
                 key={view.node.id ?? 'root'}
               />
             ) : view.kind === 'inputs' ? (

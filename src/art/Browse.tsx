@@ -36,8 +36,7 @@ import { Origin, titleStep } from '@/art/Stage';
 import { useResolved } from '@/art/useOrigin';
 import { ArtistWork, artistLine, useArtistRecords } from '@/art/Artist';
 import { LetterIndex, alphabetical } from '@/art/Index';
-import { Crate } from '@/art/Crate';
-import { serviceGlyph, serviceTag } from '@/art/serviceMark';
+import { serviceTag } from '@/art/serviceMark';
 import {
   BackGlyph,
   Bars,
@@ -212,266 +211,44 @@ function peek(content: ContentSource, id: string): Promise<Peek> {
   return hit;
 }
 
-/** The sleeves in a peek — what both the door's fan and the shelf decision read. */
-function artOf(items: ContentItem[]): string[] {
-  return items.map((item) => item.coverUrl).filter((url): url is string => Boolean(url));
-}
+/** What each source is, in a word, for the line under its name. */
+const SOURCE_FACT: Record<string, string> = {
+  library: 'the files in this house',
+  radio: 'stations',
+  spotify: 'streaming',
+  applemusic: 'streaming',
+  ytmusic: 'streaming',
+};
 
 /**
- * The *records* in a peek: albums only.
+ * A source, as a position on the selector.
  *
- * A door's stack is a picture of what is behind it, and a playlist's cover is a tile with a word on it —
- * `Op repeat`, `Chill` — where an album's is a sleeve. Where a service offers both, the stack is made of
- * albums; the playlists stay for the shelf, where the word is the point.
+ * The front of the catalogue is an amplifier's input selector: the sources in a ruled strip, each a
+ * name and a word about what it is, and a lamp on the one feeding this room now. No logos — a
+ * trademark is colour on a panel that has one colour, the sleeve's — and no pictures of what is
+ * inside; the shelf under the strip is where the music is.
  */
-function albumArtOf(items: ContentItem[]): string[] {
-  return artOf(items.filter((item) => item.kind === 'album'));
-}
-
-/** Children worth opening for albums first: the ones whose name says so. */
-function albumish(item: ContentItem): boolean {
-  return /album|release|nieuw|new|recent/i.test(item.name);
-}
-
-
-/**
- * The records behind a door, looking as far in as it takes.
- *
- * A service that puts its music on the doorstep needs no looking: one request and the sleeves are
- * there. A library does not. Its door leads to `Local Media`, which leads to `Albums · Artists ·
- * Tracks`, which is where the records finally are — three levels down, and a search that stopped one
- * short drew the library as three lines of grey type in a player holding a thousand sleeves.
- *
- * Bounded in both directions: at most `depth` levels further in, the first three doors at each level,
- * and it stops the moment three records are in hand. Doors whose names say `albums` are opened first,
- * because they are where records are kept. Everything is cached module-wide by id, so a hall walked
- * back into costs nothing and the worst case is a handful of requests, once, for the one door that
- * keeps its music in a back room.
- */
-async function records(content: ContentSource, id: string, depth: number): Promise<string[]> {
-  const found = await peek(content, id);
-  const here = albumArtOf(found.items);
-  if (here.length >= 4 || depth <= 0) {
-    return here;
-  }
-  const children = found.items.filter((entry) => entry.browsable);
-  const ordered = [...children.filter(albumish), ...children.filter((entry) => !albumish(entry))].slice(0, 3);
-  const out = [...here];
-  for (const child of ordered) {
-    out.push(...(await records(content, child.id, depth - 1)));
-    if (out.length >= 4) {
-      break;
-    }
-  }
-  return out;
-}
-
-
-function ServiceMark({
-  item,
+function Source({
+  name,
+  fact,
+  on,
   index,
   onOpen,
 }: {
-  item: ContentItem;
+  name: string;
+  fact: string;
+  /** This room is playing from it. */
+  on: boolean;
   index: number;
   onOpen: () => void;
 }) {
-  /* `svg` then `png` then neither: the file is optional, and which kind it is should not have to be
-     configured anywhere. */
-  const [kind, setKind] = useState<'svg' | 'png' | null>('svg');
-  const [shown, setShown] = useState(false);
-  const service = item.service || item.name.toLowerCase().replace(/\s+/g, '');
-  const src = kind ? `${import.meta.env.BASE_URL}icons/service-${service}.${kind}` : '';
-  const miss = (): void => {
-    setKind((was) => (was === 'svg' ? 'png' : null));
-    setShown(false);
-  };
-
   return (
-    <button
-      type="button"
-      className="cx-mark"
-      onClick={onOpen}
-      style={{ '--i': index } as React.CSSProperties}
-      title={item.name}
-    >
-      <span className="cx-mark-face" data-logo={shown || undefined}>
-        {/* A service without a trademark of its own gets a drawing of what it is — a record for the
-            library, waves for the radio — at the weight the logos have, so four marks read as four
-            services and not as two services and two stand-ins. */}
-        {serviceGlyph(service) ? (
-          <span className="cx-mark-glyph">{serviceGlyph(service)}</span>
-        ) : (
-          <span className="disp cx-mark-mono" aria-hidden="true">
-            {initials(item.name)}
-          </span>
-        )}
-        {kind && (
-          <img
-            className="cx-mark-logo"
-            src={src}
-            alt=""
-            onError={miss}
-            onLoad={(event) => {
-              /* A server that answers every path with its index page would otherwise hand back a
-                 page as an image; a mark with no width is not a mark. */
-              if (event.currentTarget.naturalWidth === 0) {
-                miss();
-              } else {
-                setShown(true);
-              }
-            }}
-          />
-        )}
+    <button type="button" className="cx-source" data-on={on || undefined} onClick={onOpen} style={{ '--i': index } as React.CSSProperties}>
+      <span className="cx-source-name disp">
+        {name}
+        {on && <i className="cx-sdot-state" data-playing aria-hidden="true" />}
       </span>
-      <span className="cx-mark-name disp">{item.name}</span>
-    </button>
-  );
-}
-
-/**
- * A door: a name the size of a heading, and a glimpse of what is behind it.
- *
- * The alternative — and what this replaces — is a tile with no picture, which is a hole the shape of a
- * record where there is no record. A listing of containers is a table of contents, and a table of
- * contents should be set as type, with the artwork as the evidence rather than the subject.
- */
-function Door({
-  item,
-  index,
-  hall = false,
-  preferred = [],
-  onOpen,
-}: {
-  item: ContentItem;
-  index: number;
-  /** At the front of the catalogue: a tall panel with the sleeves whole in a stack, not a row with a fan. */
-  hall?: boolean;
-  /**
-   * Sleeves that are *yours* — this room's favourites and what it played lately, from this service.
-   * They stand in front of anything the service puts forward: the hall is a portrait of the house,
-   * not the services' shop windows.
-   */
-  preferred?: string[];
-  onOpen: () => void;
-}) {
-  const { content } = useServer();
-  const [inside, setInside] = useState<Peek>(NOTHING);
-  /* Sleeves found a level further down, when the room behind this door is itself all doors. */
-  const [deeper, setDeeper] = useState<string[]>([]);
-
-  /*
-   * One level, and then one more only if the first had nothing to show.
-   *
-   * A library's door leads to *Albums · Artists · Tracks*, which are three more doors with no pictures
-   * of their own — so a peek that stops at the first level finds nothing and the whole library renders
-   * as three lines of type on an empty page, in a player holding a thousand sleeves. The music is one
-   * step further down, and this is the only place that can go and get it: the shelf composition upstairs
-   * decides from *this* door's peek, and a door with no art is exactly what it decides against.
-   *
-   * Bounded on purpose. One extra level, the first three doors behind this one, and it stops at the
-   * first one that has sleeves — so the cost is at most three requests for a door that had none, once
-   * per session (`peek` is a module-level cache), and zero for every door that already had artwork.
-   */
-  useEffect(() => {
-    /* A door at the front of the catalogue draws its own mark and nothing from inside it, so it asks
-       for nothing: five services used to cost up to a dozen requests each looking for sleeves that
-       are no longer on the card. */
-    if (hall) {
-      return undefined;
-    }
-    let live = true;
-    void peek(content, item.id).then(async (found) => {
-      if (!live) {
-        return;
-      }
-      setInside(found);
-      /* Enough records on the doorstep: no need to look further in. */
-      if (albumArtOf(found.items).length >= 3) {
-        return;
-      }
-      /* Otherwise go and find them — see `records`. Two levels, which is what a library needs and
-         one more than anything else does. */
-      const found_ = await records(content, item.id, 2);
-      if (!live) {
-        return;
-      }
-      if (found_.length > 0) {
-        setDeeper(found_);
-        return;
-      }
-      const children = found.items.filter((entry) => entry.browsable);
-      /* No records anywhere: any picture beats a blank, so the old rule — the first child with art. */
-      if (artOf(found.items).length > 0) {
-        return;
-      }
-      for (const child of children.slice(0, 3)) {
-        const below = await peek(content, child.id);
-        if (!live) {
-          return;
-        }
-        const art = artOf(below.items);
-        if (art.length > 0) {
-          setDeeper(art);
-          return;
-        }
-      }
-    });
-    return () => {
-      live = false;
-    };
-  }, [content, item.id, hall]);
-
-  /* Records first — the door's own, then those found behind it — and only failing both, any art at all. */
-  const own = artOf(inside.items);
-  const albums = [...albumArtOf(inside.items), ...deeper];
-  const behind = albums.length > 0 ? albums : own;
-  const art = [...preferred, ...behind.filter((url) => !preferred.includes(url))].slice(0, 4);
-  // For a door with nothing to show: the names of the first few things behind it, which is what
-  // a table of contents does when there is no illustration.
-  const names = inside.items.map((entry) => entry.name).filter(Boolean).slice(0, 3);
-
-  /*
-   * Painted right to left, so the first sleeve ends up in front.
-   *
-   * The stack leans back away from the reader and each card overlaps the one before it, which only works
-   * if the frontmost card is drawn last — hence the reversal here rather than an `order` in the
-   * stylesheet, where the negative margins would then be applied in the wrong places and drag the whole
-   * fan out of its box.
-   */
-  const stack = [...art].reverse();
-
-  if (hall) {
-    return <ServiceMark item={item} index={index} onOpen={onOpen} />;
-  }
-
-  return (
-    <button
-      type="button"
-      className="cx-door"
-      onClick={onOpen}
-      style={{ '--i': index } as React.CSSProperties}
-    >
-      <span className="cx-door-meta">
-        <span className="cx-door-name disp">{item.name}</span>
-        {art.length === 0 && names.length > 0 && (
-          <span className="cx-door-inside mono">{names.join(' · ')}</span>
-        )}
-      </span>
-
-      <span className="cx-door-peek" data-on={stack.length > 0 || undefined}>
-        {stack.map((url, at) => (
-          <span
-            key={url}
-            className="cx-door-sleeve"
-            style={{ backgroundImage: itemCoverCss(url), '--n': at, zIndex: at } as React.CSSProperties}
-          />
-        ))}
-      </span>
-
-      <span className="cx-door-go">
-        <ForwardGlyph size={17} />
-      </span>
+      {fact && <span className="cx-source-fact mono">{fact}</span>}
     </button>
   );
 }
@@ -506,9 +283,6 @@ function Billboard({
   const open = item.browsable ? onOpen : onPlay;
   return (
     <section className="cx-bill">
-      <span className="cx-bill-wall" style={{ backgroundImage: itemCoverCss(item.coverUrl) }} aria-hidden="true" />
-      <span className="cx-bill-scrim" aria-hidden="true" />
-
       <button
         type="button"
         className="cx-bill-cover"
@@ -984,12 +758,61 @@ function Actions({
   );
 }
 
+/**
+ * What a search found, with where to go next beside it — or, with nothing to stand beside it, just
+ * the shelves themselves, so a page that is not a search keeps the layout it has always had.
+ */
+function Results({ side, children }: { side: React.ReactNode; children: React.ReactNode }) {
+  if (!side) {
+    return <>{children}</>;
+  }
+  return (
+    <div className="cx-results">
+      <div className="cx-results-main">{children}</div>
+      {side}
+    </div>
+  );
+}
+
+/** A flat row of things to put on. One with no picture is a white label with its name typed on it. */
+function Picks({
+  label,
+  items,
+}: {
+  label: string;
+  items: Array<{ key: string; title: string; sub: string | undefined; cover: string | undefined; play: () => void }>;
+}) {
+  if (items.length === 0) {
+    return null;
+  }
+  return (
+    <section className="cx-frontsec">
+      <div className="cx-sec-head">
+        <span className="cx-sec-lbl mono">{label}</span>
+        <span className="cx-sec-rule" />
+      </div>
+      <div className="cx-home-row">
+        {items.map((item) => (
+          <button type="button" className="cx-home-tile" key={item.key} onClick={item.play} title={`Play ${item.title}`}>
+            <span className="cx-home-tile-cov" style={{ backgroundImage: itemCoverCss(item.cover) }}>
+              {!item.cover && <span className="cx-crate-label mono">{item.title}</span>}
+            </span>
+            {item.cover && <span className="cx-home-tile-title">{item.title}</span>}
+            {item.cover && item.sub && <span className="cx-home-tile-sub">{item.sub}</span>}
+          </button>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 export function Browse({
   zone,
   root,
   services = [],
   onExit,
   onOpenRooms,
+  onInputs,
 }: {
   zone: ApiZoneState | null;
   /** What the server offers, for the notes a search leaves: which service did not answer, which cannot be asked. */
@@ -999,38 +822,13 @@ export function Browse({
   /** Called when the back link is pressed at the top of the stack. */
   onExit: () => void;
   /** The way to the desk, from the head of a record: "play in · this room" is a door, not a label. */
-  onOpenRooms?: (() => void) | undefined;
+  onOpenRooms?: (() => void) | undefined;  /** The wired sources, as the last position on the selector at the front of the catalogue. */
+  onInputs?: (() => void) | undefined;
 }) {
   const api = useApi();
   const { content } = useServer();
-  /*
-   * The house's own records, by service, for the hall's stacks.
-   *
-   * Favourites first (a choice), then what this room played lately (a trace), one sleeve per record.
-   * The service is read off the entry's own `service` where it says one and off the source's prefix
-   * where it does not — a favourite says `spotify:track:…`, which is enough.
-   */
   const recents = useRecents(zone?.id ?? null);
   const favorites = useFavorites(zone?.id ?? null);
-  const mine = useMemo(() => {
-    const byService: Record<string, string[]> = {};
-    const add = (service: string | undefined, url: string | undefined): void => {
-      if (!service || !url) {
-        return;
-      }
-      const list = (byService[service] ??= []);
-      if (!list.includes(url) && list.length < 3) {
-        list.push(url);
-      }
-    };
-    for (const item of favorites) {
-      add(item.source.includes(':') ? item.source.split(':')[0] : undefined, item.coverUrl);
-    }
-    for (const item of recents) {
-      add(item.service ?? (item.source.includes(':') ? item.source.split(':')[0] : undefined), item.coverUrl);
-    }
-    return byService;
-  }, [favorites, recents]);
   /* The record we are going back from lands on its tile — see `Tile`'s `anchor`. */
   const [returning, setReturning] = useState<string | null>(null);
   const detailLanding = useCoverAnchor();
@@ -1388,7 +1186,16 @@ export function Browse({
    * heading on the page that repeated the first row under it and matched nothing anyone pressed.
    * The container's name stays the answer where no label exists — a deep link, a search result.
    */
-  const title = query ? `“${query}”` : (here.label ?? container?.name ?? 'Music');
+  /* In a search, the sections that are all people or all lists stand beside the answer. */
+  const listed = (section: { items: ContentItem[] }): boolean =>
+    section.items.length > 0 && section.items.every((item) => item.kind === 'artist' || item.kind === 'playlist');
+  const beside = query ? sections.filter(listed) : [];
+  const primary = query ? sections.filter((section) => !listed(section)) : sections;
+
+  /* Which source this room is playing from, to light its position on the selector. */
+  const playingFrom = zone?.source?.id?.split(/[:.]/)[0] ?? '';
+
+  const title = query ? 'Results' : (here.label ?? container?.name ?? 'Music');
 
   /*
    * An object, as opposed to a shelf.
@@ -1581,6 +1388,8 @@ export function Browse({
                   placeholder="Search everything"
                   onChange={(event) => setQuery(event.target.value)}
                 />
+                {/* The key that gets you here, and the one that gets you out. */}
+                <kbd className="cx-search-key mono">{query ? 'esc' : '/'}</kbd>
               </div>
             </div>
 
@@ -1632,7 +1441,7 @@ export function Browse({
           )}
 
           {/* The window dressing, above everything the page lists — see `Billboard`. */}
-          {spotlight && (
+          {spotlight && !atRoot && (
             <Billboard
               item={spotlight.item}
               from={spotlight.from}
@@ -1659,12 +1468,42 @@ export function Browse({
             />
           )}
 
-          {sections.map((section) => (
+          {/*
+           * What was found. Songs and records are the answer and take the page; people and lists are
+           * where you go next, so in a search they stand in a column of their own beside it.
+           */}
+          <Results
+            side={
+              beside.length > 0 ? (
+    <aside className="cx-results-side">
+                  {beside.map((section) => (
+                    <section className="cx-listsec" key={section.id}>
+                      <span className="cx-sec-lbl mono">{section.name}</span>
+                      <div className="cx-lrows">
+                        {section.items.slice(0, 6).map((item) => (
+                          <button type="button" className="cx-lrow" key={item.id} onClick={() => open(item)}>
+                            <span
+                              className="cx-lrow-art"
+                              data-person={item.kind === 'artist' || undefined}
+                              style={{ backgroundImage: itemCoverCss(item.coverUrl) }}
+                            />
+                            <span className="cx-lrow-name">{item.name}</span>
+                            <ForwardGlyph size={11} />
+                          </button>
+                        ))}
+                      </div>
+                    </section>
+                  ))}
+                </aside>
+              ) : null
+            }
+          >
+          {primary.map((section) => (
             <section
               className="cx-shelf"
               key={section.id}
               data-mixed={mixed || undefined}
-              data-lead={(section.items.length >= 3 && !section.items.every((item) => item.kind === 'track')) || undefined}
+              data-lead={(!query && section.items.length >= 3 && !section.items.every((item) => item.kind === 'track')) || undefined}
             >
               <div className="cx-sec-head">
                 <span className="cx-sec-lbl mono">{section.name}</span>
@@ -1762,6 +1601,7 @@ export function Browse({
               )}
             </section>
           ))}
+          </Results>
 
           {/*
            * What a search cannot say for itself.
@@ -1825,12 +1665,16 @@ export function Browse({
                  * is not rhythm, it is noise.
                  */
                 return atRoot ? (
-                  <Door
+                  <Source
                     key={item.id}
-                    item={item}
+                    name={item.name}
                     index={index}
-                    hall
-                    preferred={mine[item.service] ?? []}
+                    on={zone?.state === 'playing' && playingFrom === item.service}
+                    fact={
+                      zone?.state === 'playing' && playingFrom === item.service
+                        ? `on in ${zone.name}`
+                        : (SOURCE_FACT[item.service] ?? '')
+                    }
                     onOpen={() => open(item)}
                   />
                 ) : artful.length >= SHELF_MIN_ART ? (
@@ -1857,6 +1701,9 @@ export function Browse({
                   </section>
                 ) : null;
               })}
+              {atRoot && onInputs && (
+                <Source name="Inputs" fact="what is wired in" on={false} index={items.length} onOpen={onInputs} />
+              )}
             </div>
           ) : portrait ? (
             <ArtistWork
@@ -1905,55 +1752,45 @@ export function Browse({
             ))
           )}
 
-          {/*
-           * Under the services, the music itself.
-           *
-           * The front of the catalogue used to be five doors and nothing else — a lobby, with every
-           * record in the house one more press away than it needed to be. What this room played
-           * lately and what it has been told to keep are the two shelves anybody actually reaches
-           * for, they are already in hand (both feed the marks above), and a sleeve you can press is
-           * worth more than a panel you have to open.
-           */}
-          {atRoot && recents.length > 0 && (
-            <section className="cx-hsec cx-frontsec">
-              <div className="cx-sec-head">
-                <span className="cx-sec-lbl mono">lately in this room</span>
-                <span className="cx-sec-rule" />
-              </div>
-              {/* As records in a crate, not a row of thumbnails — see `Crate`. */}
-              <Crate
-                room={zone?.name ?? 'this room'}
-                items={recents.slice(0, 12).map((entry) => ({
-                  key: entry.source,
-                  title: entry.title || entry.album || entry.source,
-                  sub: [entry.artist, entry.album && entry.album !== entry.title ? entry.album : ''].filter(Boolean).join(' · '),
-                  cover: entry.coverUrl || undefined,
-                  play: () => zone && void api.play(zone.id, entry.source),
-                }))}
-              />
-            </section>
+          {/* One record offered, under the selector: no panel around it, just the sleeve and its name. */}
+          {spotlight && atRoot && (
+            <Billboard
+              item={spotlight.item}
+              from={spotlight.from}
+              onOpen={() => open(spotlight.item)}
+              onPlay={() => play(spotlight.item)}
+            />
           )}
 
-          {atRoot && favorites.length > 0 && (
-            <section className="cx-hsec cx-frontsec">
-              <div className="cx-sec-head">
-                <span className="cx-sec-lbl mono">kept</span>
-                <span className="cx-sec-rule" />
-              </div>
-              <div className="cx-welcome-recents-row">
-                {favorites.slice(0, 12).map((entry) => (
-                  <button
-                    type="button"
-                    className="cx-welcome-recent"
-                    key={entry.id}
-                    onClick={() => zone && void api.play(zone.id, entry.source)}
-                  >
-                    <span className="cx-welcome-recent-cov" style={{ backgroundImage: itemCoverCss(entry.coverUrl) }} />
-                    <span className="cx-welcome-recent-title">{entry.name}</span>
-                  </button>
-                ))}
-              </div>
-            </section>
+          {/* Under the selector, the music itself: what this room played lately and what it was told
+              to keep, as a flat row of sleeves — the two shelves anybody actually reaches for. */}
+          {atRoot && (
+            <Picks
+              label={`lately in ${zone?.name ?? 'this room'}`}
+              items={recents
+                .filter((entry) => entry.title || entry.album)
+                .slice(0, 14)
+                .map((entry) => ({
+                  key: entry.source,
+                  title: entry.title || entry.album || entry.source,
+                  sub: entry.artist,
+                  cover: entry.coverUrl,
+                  play: () => zone && void api.play(zone.id, entry.source),
+                }))}
+            />
+          )}
+
+          {atRoot && (
+            <Picks
+              label="kept"
+              items={favorites.slice(0, 14).map((entry) => ({
+                key: String(entry.id),
+                title: entry.name,
+                sub: '',
+                cover: entry.coverUrl,
+                play: () => zone && void api.play(zone.id, entry.source),
+              }))}
+            />
           )}
 
           {/*

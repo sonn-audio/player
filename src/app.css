@@ -451,30 +451,6 @@ html[data-arrived] .cx-side-mark {
   --browse-pad: var(--pane-pad);
 }
 
-/* --- the billboard as a card, the shelves fading into the gutter ---------------------- */
-
-/*
- * A band from edge to edge was right on a window, where the edge was the window's. Inside a rounded
- * pane an edge-to-edge band is a stripe through a card, so the billboard stands within the gutter as a
- * card of its own — the record's wall inside it, corners of its own, a hairline — and a shelf that runs
- * on past the gutter fades into it rather than being cut by the pane's corner.
- */
-.cx-root .cx-bill {
-  margin: 0 0 28px;
-  padding: 28px 36px;
-  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 6%);
-}
-
-.cx-root .cx-browse-inner[data-root] .cx-bill {
-  padding: 22px 30px;
-}
-
-.cx-root .cx-bill-scrim {
-  background:
-    linear-gradient(90deg, rgb(16 17 20 / 72%) 0%, rgb(16 17 20 / 42%) 45%, rgb(16 17 20 / 14%) 100%),
-    linear-gradient(180deg, rgb(16 17 20 / 28%), rgb(16 17 20 / 8%) 30%, rgb(16 17 20 / 8%) 70%, rgb(16 17 20 / 40%));
-}
-
 .cx-root .cx-shelf-row {
   mask-image: linear-gradient(
     90deg,
@@ -493,7 +469,6 @@ html[data-arrived] .cx-side-mark {
  */
 .cx-root .cx-play-btn,
 .cx-root .cx-shuffle-btn,
-.cx-root .cx-bill-open,
 .cx-root .cx-inputs-empty-go {
   height: 34px;
   padding: 0 16px 0 14px;
@@ -505,7 +480,6 @@ html[data-arrived] .cx-side-mark {
 }
 
 .cx-root .cx-shuffle-btn:hover,
-.cx-root .cx-bill-open:hover,
 .cx-root .cx-inputs-empty-go:hover {
   border-color: rgb(255 255 255 / 20%);
   color: var(--t1);
@@ -573,21 +547,6 @@ html[data-arrived] .cx-side-mark {
   color: var(--t1);
 }
 
-/* The billboard's kicker on a lit wall: the wall took the record's light and the kicker stayed in the
-   greys of a black page, which left "today · where it came from" unreadable over a bright sleeve. */
-.cx-root .cx-bill-kicker {
-  color: var(--t3);
-  text-shadow: 0 1px 10px rgb(0 0 0 / 55%);
-}
-
-.cx-root .cx-bill-from {
-  color: var(--t4);
-}
-
-.cx-root .cx-bill-from::before {
-  background: var(--t5);
-}
-
 /* A shelf opened out of a door inside a service (Spotify's Popular Playlists) heads itself the way the
    server's own sections do (Apple Music's Voor jou), so one page does not carry two kinds of shelf head. */
 
@@ -632,33 +591,6 @@ html[data-arrived] .cx-side-mark {
   .cx-root[data-shell] .cx-stage .cx-upnext-list li:nth-child(n + 3) {
     display: none;
   }
-}
-
-/* The search field in the frame's own language: a chip, like the room and the lamp in the bar. */
-.cx-root .cx-search {
-  flex: 0 1 280px;
-  height: 36px;
-  padding: 0 14px;
-  border: 1px solid rgb(255 255 255 / 9%);
-  border-radius: 18px;
-  background: rgb(255 255 255 / 2.5%);
-  color: var(--t6);
-  transition:
-    border-color 0.18s,
-    color 0.18s;
-}
-
-.cx-root .cx-search::after {
-  display: none;
-}
-
-.cx-root .cx-search input::placeholder {
-  color: var(--t6);
-}
-
-.cx-root .cx-search:focus-within {
-  border-color: rgb(255 255 255 / 20%);
-  color: var(--t4);
 }
 
 /* --- the desk, as a page in the pane ------------------------------------------ */
@@ -935,68 +867,10 @@ html[data-arrived] .cx-side-mark {
   }
 }
 
-/* --- the phone speaks the same language ------------------------------------------------ */
-
-@media (max-width: 979px) {
-  /* The billboard stacks: a 200px sleeve beside five lines of kicker was a column of broken words. */
-  .cx-root .cx-bill {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 16px;
-    padding: 18px;
-  }
-
-  .cx-root .cx-bill-cover {
-    width: 128px;
-  }
-
-  .cx-root .cx-bill-kicker {
-    display: block;
-    max-width: 100%;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  /* The provenance runs on inline so the one line can end in an ellipsis rather than a cut. */
-  .cx-root .cx-bill-from {
-    display: inline;
-    margin-left: 12px;
-  }
-
-  .cx-root .cx-bill-from::before {
-    display: inline-block;
-    margin-right: 12px;
-    vertical-align: middle;
-  }
-
-  .cx-root .cx-bill-title {
-    font-size: 30px;
-  }
-
-  /* The crate at a hand's width: smaller sleeves, closer together. */
-  .cx-crate-row {
-    height: 220px;
-  }
-
-  .cx-crate-lp {
-    --w: calc(172px - var(--ad) * 26px);
-
-    translate: calc(-50% + var(--d) * 104px) -50%;
-    transform: translateZ(calc(var(--ad) * -60px)) rotateY(calc(var(--d) * -12deg));
-  }
-
-  .cx-crate-title {
-    font-size: 22px;
-  }
-
-}
-
 /* --- motion: the small answers a control gives a hand ----------------------------------- */
 
 .cx-root .cx-play-btn,
 .cx-root .cx-shuffle-btn,
-.cx-root .cx-bill-open,
 .cx-root .cx-inputs-empty-go,
 .cx-pbar-room,
 .cx-pbar-ic,
@@ -1011,7 +885,6 @@ html[data-arrived] .cx-side-mark {
 
 .cx-root .cx-play-btn:hover,
 .cx-root .cx-shuffle-btn:hover,
-.cx-root .cx-bill-open:hover,
 .cx-root .cx-inputs-empty-go:hover,
 .cx-pbar-room:hover {
   transform: translateY(-1px);
@@ -1019,7 +892,6 @@ html[data-arrived] .cx-side-mark {
 
 .cx-root .cx-play-btn:active,
 .cx-root .cx-shuffle-btn:active,
-.cx-root .cx-bill-open:active,
 .cx-pbar-room:active,
 .cx-pbar-ic:active,
 .cx-snav:active {
@@ -1039,15 +911,6 @@ html[data-arrived] .cx-side-mark {
 
 .cx-pbar .cx-tr-play:active {
   transform: scale(0.95);
-}
-
-/* A sleeve in the crate comes forward under the pointer, in the plane it already stands in. */
-.cx-crate-lp:hover {
-  transform: translateZ(calc(var(--ad) * -80px + 18px)) rotateY(calc(var(--d) * -14deg));
-}
-
-.cx-crate-lp[data-centre]:hover {
-  transform: translateZ(18px);
 }
 
 /* --- a page with nothing on it ---------------------------------------------------------- */
@@ -1287,22 +1150,18 @@ html[data-arrived] .cx-side-mark {
 
 /* --- the same recording, once ---------------------------------------------------------- */
 
-.cx-tnote {
+.cx-root .cx-tnote {
   display: inline-flex;
   align-items: center;
   gap: 4px;
   flex: none;
   height: 22px;
-  padding: 0 8px 0 9px;
-  border: 1px solid rgb(255 255 255 / 10%);
-  border-radius: 11px;
-  font-size: 9px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  font-size: 10px;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  text-transform: none;
   color: var(--t5);
-  transition:
-    color 0.18s,
-    border-color 0.18s;
+  transition: color 0.18s;
 }
 
 .cx-tnote svg {
@@ -1315,7 +1174,6 @@ html[data-arrived] .cx-side-mark {
 
 .cx-tnote:hover {
   color: var(--t1);
-  border-color: rgb(255 255 255 / 20%);
 }
 
 /* An edition, under the recording that stands for it: indented, its number withheld. */
@@ -1339,8 +1197,6 @@ html[data-arrived] .cx-side-mark {
 @media (max-width: 979px) {
   .cx-root .cx-play-btn,
   .cx-root .cx-shuffle-btn,
-  .cx-root .cx-bill-open,
-  .cx-root .cx-bill-title,
   .cx-root .cx-inputs-empty-go,
   .cx-root .cx-sec-more,
   .cx-root .cx-empty-act,
@@ -1358,8 +1214,6 @@ html[data-arrived] .cx-side-mark {
 
   .cx-root .cx-play-btn::after,
   .cx-root .cx-shuffle-btn::after,
-  .cx-root .cx-bill-open::after,
-  .cx-root .cx-bill-title::after,
   .cx-root .cx-inputs-empty-go::after,
   .cx-root .cx-sec-more::after,
   .cx-root .cx-empty-act::after,
@@ -1396,12 +1250,6 @@ html[data-arrived] .cx-side-mark {
     display: inline-flex;
     align-items: center;
     min-height: 44px;
-  }
-
-  /* The billboard's name is a clamped box, which a pseudo-element cannot hang out of. */
-  .cx-root .cx-bill-title {
-    padding: 9px 0;
-    margin: -9px 0;
   }
 
   /* The transport, at the size of a thumb; the gaps give back what the buttons take. */
@@ -1450,7 +1298,6 @@ html[data-arrived] .cx-side-mark {
 /* A sleeve has the corners of a sleeve, and an edge. */
 .cx-root .cx-cover,
 .cx-root .cx-tile-cov,
-.cx-root .cx-bill-cover,
 .cx-root .cx-upnext-art,
 .cx-root .cx-tthumb,
 .cx-root[data-shell] .cx-browse-inner[data-detail]:has(.cx-detail) .cx-detail-cover {
@@ -1459,17 +1306,12 @@ html[data-arrived] .cx-side-mark {
 
 .cx-root .cx-play-btn,
 .cx-root .cx-shuffle-btn,
-.cx-root .cx-bill-open,
 .cx-root .cx-inputs-empty-go,
 .cx-root .cx-empty-act,
 .cx-root .cx-cta button,
 .cx-root .cx-cover-last-go {
   font-size: 10px;
   letter-spacing: 0.16em;
-}
-
-.cx-root .cx-bill {
-  border-radius: 6px;
 }
 
 /* --- the stage: one record, and room around it ---------------------------------------- */
@@ -2282,135 +2124,6 @@ html[data-arrived] .cx-side-mark {
   }
 }
 
-/* --- the services, as marks on the panel — see `Mark` in `Browse` ------------------------- */
-
-.cx-hall {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0;
-  margin-bottom: clamp(30px, 4.4vh, 54px);
-  border-top: 1px solid var(--hair);
-  border-bottom: 1px solid var(--hair);
-}
-
-/* A plate per service: a ring, a name, a rule between it and the next. */
-.cx-root .cx-mark {
-  display: flex;
-  flex: 1 1 0;
-  align-items: center;
-  gap: 16px;
-  min-width: 168px;
-  height: 84px;
-  padding: 0 22px 0 0;
-  cursor: pointer;
-  animation: cx-door-in 0.5s var(--cx-ease) backwards;
-  animation-delay: calc(var(--i, 0) * 60ms);
-}
-
-.cx-root .cx-mark + .cx-mark {
-  padding-left: 22px;
-  border-left: 1px solid var(--hair);
-}
-
-.cx-mark-face {
-  position: relative;
-  display: grid;
-  flex: none;
-  place-items: center;
-  width: 44px;
-  height: 44px;
-  overflow: hidden;
-  border-radius: 50%;
-  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 16%);
-  color: var(--t3);
-  transition:
-    box-shadow 0.25s var(--cx-ease),
-    color 0.25s var(--cx-ease);
-}
-
-.cx-mark-glyph {
-  width: 22px;
-  height: 22px;
-}
-
-.cx-mark-glyph svg {
-  display: block;
-  width: 100%;
-  height: 100%;
-}
-
-.cx-mark-mono {
-  font-size: 13px;
-  font-weight: 500;
-  letter-spacing: 0.04em;
-}
-
-/* A real logo sits in the ring in grey, and takes its own colour when it is pointed at. */
-.cx-mark-logo {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  opacity: 0;
-  filter: grayscale(1) brightness(0.82);
-  transition:
-    opacity 0.3s var(--cx-ease),
-    filter 0.3s var(--cx-ease);
-}
-
-.cx-mark-face[data-logo] .cx-mark-logo {
-  opacity: 1;
-}
-
-.cx-mark-face[data-logo] .cx-mark-mono,
-.cx-mark-face[data-logo] .cx-mark-glyph {
-  display: none;
-}
-
-.cx-root .cx-mark-name {
-  min-width: 0;
-  overflow: hidden;
-  font-size: 17px;
-  font-weight: 300;
-  letter-spacing: -0.01em;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  color: var(--t3);
-  transition: color 0.2s var(--cx-ease);
-}
-
-.cx-mark:hover .cx-mark-face,
-.cx-mark:focus-visible .cx-mark-face {
-  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 60%);
-  color: var(--t1);
-}
-
-.cx-mark:hover .cx-mark-logo,
-.cx-mark:focus-visible .cx-mark-logo {
-  filter: none;
-}
-
-.cx-mark:hover .cx-mark-name,
-.cx-mark:focus-visible .cx-mark-name {
-  color: var(--t1);
-}
-
-/* On a phone the plates stack: one service to a line. */
-@media (max-width: 640px) {
-  .cx-root .cx-mark {
-    flex: 1 1 100%;
-    height: 64px;
-    padding: 0;
-  }
-
-  .cx-root .cx-mark + .cx-mark {
-    padding-left: 0;
-    border-top: 1px solid var(--hair);
-    border-left: 0;
-  }
-}
-
 /* Where a row came from, when a page mixes services: two capitals, not a colour. */
 .cx-svc {
   font-size: 8.5px;
@@ -2524,10 +2237,6 @@ html[data-arrived] .cx-side-mark {
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 3;
-}
-
-.cx-crate-lp[data-centre] .cx-crate-label {
-  color: var(--t3);
 }
 
 /* --- the phone's three bars: the head, what is playing, the tabs -------------------------- */
@@ -3956,5 +3665,394 @@ html[data-arrived] .cx-side-mark {
     align-items: center;
     min-height: 44px;
     margin-block: -4px -10px;
+  }
+}
+
+/* --- the front of the catalogue: a selector, one record, the shelves ---------------------- */
+
+/* The question, on a line. */
+.cx-search {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 12px;
+  width: min(340px, 100%);
+  height: 40px;
+  border-bottom: 1px solid rgb(255 255 255 / 14%);
+  color: var(--t5);
+  transition: border-color 0.2s;
+}
+
+.cx-search:focus-within,
+.cx-search:has(input:not(:placeholder-shown)) {
+  border-color: var(--t3);
+}
+
+.cx-search input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  border: 0;
+  outline: 0;
+  background: none;
+  font: inherit;
+  font-size: 14px;
+  color: var(--t1);
+}
+
+.cx-search input::placeholder {
+  color: var(--t5);
+}
+
+.cx-search input::-webkit-search-cancel-button {
+  display: none;
+}
+
+.cx-root .cx-search-key {
+  flex: none;
+  font-size: 10.5px;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  text-transform: none;
+  color: var(--t7);
+}
+
+/* The selector: the sources in a ruled strip, a lamp on the one that is on. */
+.cx-hall {
+  display: flex;
+  flex-wrap: wrap;
+  border-top: 1px solid var(--hair);
+  border-bottom: 1px solid var(--hair);
+}
+
+.cx-source {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  justify-content: center;
+  gap: 9px;
+  min-width: 150px;
+  min-height: 88px;
+  padding: 0 22px;
+  text-align: left;
+  animation: cx-door-in 0.5s var(--cx-ease) backwards;
+  animation-delay: calc(var(--i, 0) * 50ms);
+}
+
+.cx-source:first-child {
+  padding-left: 0;
+}
+
+.cx-source + .cx-source {
+  border-left: 1px solid var(--hair);
+}
+
+.cx-root .cx-source-name {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 19px;
+  font-weight: 300;
+  letter-spacing: -0.01em;
+  color: var(--t3);
+  transition: color 0.18s;
+}
+
+.cx-source[data-on] .cx-source-name,
+.cx-source:hover .cx-source-name,
+.cx-source:focus-visible .cx-source-name {
+  color: var(--t1);
+}
+
+.cx-root .cx-source-fact {
+  font-size: 10.5px;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  color: var(--t5);
+}
+
+/* One record offered: the sleeve and its name, nothing around them. */
+.cx-bill {
+  display: grid;
+  grid-template-columns: 232px minmax(0, 1fr);
+  column-gap: 44px;
+  align-items: center;
+  padding: 40px 0 38px;
+}
+
+.cx-bill-cover {
+  position: relative;
+  width: 232px;
+  aspect-ratio: 1;
+  overflow: hidden;
+  border-radius: 3px;
+  background: var(--cx-cover) center / cover;
+  box-shadow:
+    0 0 0 1px rgb(255 255 255 / 9%),
+    0 40px 70px -40px #000;
+}
+
+.cx-bill-cover[data-person] {
+  border-radius: 50%;
+}
+
+.cx-bill-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 0;
+}
+
+.cx-root .cx-bill-kicker {
+  display: flex;
+  gap: 12px;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.24em;
+  color: var(--t5);
+}
+
+.cx-bill-from {
+  font-style: normal;
+}
+
+.cx-bill-from::before {
+  content: '·';
+  margin-right: 12px;
+}
+
+.cx-root .cx-bill-title {
+  display: -webkit-box;
+  max-width: 100%;
+  margin-top: 16px;
+  overflow: hidden;
+  font-size: clamp(30px, 3.2vw, 44px);
+  font-weight: 300;
+  letter-spacing: -0.03em;
+  line-height: 1.08;
+  text-align: left;
+  color: var(--t1);
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.cx-bill-sub {
+  margin-top: 10px;
+  font-size: 19px;
+  color: var(--t3);
+}
+
+.cx-bill-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 24px;
+}
+
+.cx-root .cx-bill-open {
+  display: inline-flex;
+  align-items: center;
+  height: 36px;
+  padding: 0 18px;
+  border: 1px solid rgb(255 255 255 / 14%);
+  border-radius: 18px;
+  font-size: 10.5px;
+  letter-spacing: 0.16em;
+  color: var(--t2);
+  transition: border-color 0.18s, color 0.18s;
+}
+
+.cx-root .cx-bill-open:hover,
+.cx-root .cx-bill-open:focus-visible {
+  border-color: rgb(255 255 255 / 45%);
+  color: var(--t1);
+}
+
+/* Inside a service the record offered heads the page, between two rules. */
+.cx-browse-inner:not([data-root]) .cx-bill {
+  margin-bottom: 30px;
+  border-top: 1px solid var(--hair);
+  border-bottom: 1px solid var(--hair);
+}
+
+/* The shelves under it. */
+.cx-frontsec {
+  display: flex;
+  flex-direction: column;
+  padding-top: 22px;
+  border-top: 1px solid var(--hair);
+}
+
+.cx-frontsec + .cx-frontsec {
+  margin-top: 34px;
+}
+
+.cx-frontsec .cx-sec-head {
+  margin-bottom: 18px;
+}
+
+.cx-frontsec .cx-sec-rule {
+  display: none;
+}
+
+/* --- a search: the answer on the page, where to go next beside it ------------------------- */
+
+.cx-results {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  column-gap: 56px;
+  align-items: start;
+}
+
+.cx-results-main {
+  min-width: 0;
+}
+
+.cx-results-side {
+  display: flex;
+  flex-direction: column;
+  gap: 38px;
+  padding-left: 32px;
+  border-left: 1px solid var(--hair);
+}
+
+.cx-listsec {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.cx-lrows {
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid var(--hair);
+}
+
+.cx-lrow {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 58px;
+  border-bottom: 1px solid var(--hair);
+  text-align: left;
+  color: var(--t3);
+  transition: color 0.18s;
+}
+
+.cx-lrow-art {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 2px;
+  background: var(--cx-cover) center / cover;
+}
+
+.cx-lrow-art[data-person] {
+  border-radius: 50%;
+  filter: grayscale(1);
+  transition: filter 0.25s;
+}
+
+.cx-lrow-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  font-size: 14.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cx-lrow svg {
+  flex: none;
+  color: var(--t7);
+  transition: color 0.18s, translate 0.18s;
+}
+
+.cx-lrow:hover,
+.cx-lrow:focus-visible {
+  color: var(--t1);
+}
+
+.cx-lrow:hover .cx-lrow-art[data-person],
+.cx-lrow:focus-visible .cx-lrow-art[data-person] {
+  filter: none;
+}
+
+.cx-lrow:hover svg,
+.cx-lrow:focus-visible svg {
+  color: var(--t1);
+  translate: 2px 0;
+}
+
+/* A narrow window and the hand: one column, the selector one source to a line. */
+@media (max-width: 1180px) {
+  .cx-results {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: 34px;
+  }
+
+  .cx-results-side {
+    padding-left: 0;
+    border-left: 0;
+  }
+}
+
+@media (max-width: 640px) {
+  .cx-search {
+    width: 100%;
+    height: 44px;
+  }
+
+  .cx-source {
+    flex: 1 1 100%;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 56px;
+    padding: 0;
+  }
+
+  .cx-source + .cx-source {
+    border-top: 1px solid var(--hair);
+    border-left: 0;
+  }
+
+  .cx-bill {
+    grid-template-columns: 112px minmax(0, 1fr);
+    column-gap: 20px;
+    padding: 26px 0;
+  }
+
+  .cx-bill-cover {
+    width: 112px;
+  }
+
+  .cx-root .cx-bill-title {
+    margin-top: 10px;
+    font-size: 24px;
+  }
+
+  .cx-bill-sub {
+    margin-top: 6px;
+    font-size: 15px;
+  }
+
+  .cx-bill-actions {
+    margin-top: 6px;
+  }
+
+  /* In the hand the name and the word beside the button are a thumb tall. */
+  .cx-root .cx-bill-title {
+    display: flex;
+    align-items: center;
+    min-height: 44px;
+    margin-top: 2px;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  .cx-root .cx-bill-open {
+    height: 44px;
+    border-radius: 22px;
   }
 }

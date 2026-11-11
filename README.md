@@ -113,10 +113,12 @@ what a tap does from `browsable`/`playable` rather than from `kind`, so an album
 offers "play all". Search a track, click it, and it plays in the selected zone.
 
 The catalogue has a back link and the covers, and picks its shape from what a listing actually
-holds — a hall of service marks at the front, a table of contents where nothing has artwork, shelves
-where the server sent sections, a running order where it is a record, a grid otherwise. Inside a
-service the categories stand as a contents column beside the shelves, and one record is put forward
-each day on a wall of its own light.
+holds. The front is an amplifier's input selector: the sources in a ruled strip, each a name and a
+word, with a lamp on the one feeding this room; under it one record offered for the day, and what
+the room played lately and was told to keep as flat rows of sleeves. Elsewhere: a table of contents
+where nothing has artwork, shelves where the server sent sections, a running order where it is a
+record, a grid otherwise. A search is a question on a line; songs and records answer it on the page,
+and the artists and playlists stand in a column beside them.
 
 **Scenes** — a moment in the house, saved and replayed in one press. "Dinner" is not a track: it is
 the kitchen and the living room in step, that playlist, at *that* volume. Every part of it already
@@ -158,7 +160,7 @@ src/
     House.tsx       Home: a sleeve per room with music, the quiet rooms, lately
     Vu.tsx          The VU meters on the Signal deck
     artKey.ts       When the artwork changed: the key every dissolve hangs on
-    serviceMark.tsx A service's two capitals, and the library and the radio drawn
+    serviceMark.tsx A service's two capitals, for a row that says where it came from
     Stage.tsx       The record on a desk and on a phone; Transport, Timeline, VolumeRow
     Browse.tsx      The catalogue, the inputs page, the mini bar
     Channels.tsx    The rooms as cards (groups, scenes, lining up)
