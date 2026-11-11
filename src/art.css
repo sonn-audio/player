@@ -198,42 +198,7 @@
   opacity: 1;
 }
 
-/*
- * The playing cover, blurred to ambience — and fully grey.
- *
- * `grayscale(1)` is not a limitation, it is the decision: a saturated 110px blur behind a listing tints
- * every cover standing on it and the page stops being black, which is the one thing this design cannot
- * afford. A bolder version of this layer carried the sleeve's palette as two faint radials, and at every
- * alpha you could actually see it was a colour cast rather than light. The record's colour has exactly
- * one home in this face and it is the accent — one drop, in the things that mean something.
- */
-.cx-bg {
-  position: absolute;
-  inset: -10%;
-  pointer-events: none;
-  background-position: center 30%;
-  background-size: cover;
-  /*
-   * Almost all of the colour still goes, and what is left is a trace.
-   *
-   * `grayscale(1)` was the note above taken at its word. Letting 38% of the chroma through was the
-   * over-correction: at 110px of blur a sleeve's colour stops being a picture and becomes a field, and
-   * a field is a cast. 15% is the amount you cannot name but can tell has gone when you remove it.
-   */
-  filter: grayscale(0.85) saturate(1.04) blur(110px) brightness(0.42);
-}
-
-/*
- * The light moves.
- *
- * Real light does — a room lit by a window is never lit the same way twice a minute apart — and a
- * wash that holds perfectly still reads as wallpaper the moment you notice it. So the blurred
- * record drifts: one slow arc of scale and position, ninety seconds out and ninety back, always
- * below the speed of attention. The 10–14% overscan these layers already carry is what the drift
- * spends, so no edge ever shows. `transform` composes with nothing else here, and the global
- * reduced-motion rule (end of this sheet) stills it for those who asked for stillness.
- */
-.cx-bg,
+/* The phone player's own ground drifts, slowly: light in a room is never still. */
 .cx-mstage-bg {
   animation: cx-wash-drift 90s ease-in-out infinite alternate;
   will-change: transform;
@@ -247,53 +212,6 @@
   to {
     transform: scale(1.08) translate(1.4%, -1.1%);
   }
-}
-
-/*
- * The veil: near-black, always, and the record's temperature only where the record is.
- *
- * The first pass built the whole window out of `--cx-stage` (`colors.backgroundDark`, damped) at
- * 60–97%, and it was mud. Two reasons, and the second is the one that matters:
- *
- *  - At that strength a temperature is a *cast*. The page stopped being near-black and became a
- *    coloured room, which is the exact thing this face rejected once before.
- *  - `backgroundDark` is not neutral even when the artwork is. Measured on Radiohead's *Staircase*:
- *    `primary` comes back `[69,69,69]` — a perfectly grey sleeve — while `backgroundDark` is
- *    `[57,34,34]`, brown-red. So a black record painted a brown room, which is not the record's own
- *    light, it is a bias in the channel it was derived from.
- *
- * So the veil is the page's own near-black again, and the tint is a second, small layer over it: a
- * quarter of the record's dark at the centre, gone by 70% of the way out, mixed *toward* the page
- * colour rather than laid over it — so a warm sleeve warms the space around itself and a grey one
- * leaves it alone. It still cross-dissolves for free, `--cx-stage` being a registered property.
- */
-.cx-bg-scrim {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background:
-    /* The corners fall away, so the eye is delivered to the middle of the room rather than to the
-       edges of a browser window. Wide and shallow — a vignette you can point at is a filter. */
-    radial-gradient(122% 108% at 50% 44%, transparent 40%, rgb(0 0 0 / 42%) 100%),
-    linear-gradient(180deg, rgb(10 10 12 / 62%), rgb(10 10 12 / 88%));
-}
-
-/*
- * And the tint belongs to the page that is showing the record.
- *
- * A listing is thirty covers, each with its own colour, standing on a ground; tinting that ground with
- * the thirty-first is a dirty window. Home only — the browse pages and the inputs page get the plain
- * near-black they had.
- */
-.cx-root[data-view='home'] .cx-bg-scrim {
-  background:
-    radial-gradient(122% 108% at 50% 44%, transparent 40%, rgb(0 0 0 / 42%) 100%),
-    radial-gradient(
-      110% 86% at 28% 46%,
-      color-mix(in srgb, var(--cx-stage) 26%, transparent) 0%,
-      transparent 70%
-    ),
-    linear-gradient(180deg, rgb(10 10 12 / 62%), rgb(10 10 12 / 88%));
 }
 
 /*
@@ -7882,7 +7800,6 @@
 }
 
 /* The wash comes up as the chrome goes down — the room gets darker and more coloured at once. */
-.cx-root[data-idle] .cx-bg-scrim,
 .cx-root[data-idle] .cx-mstage-scrim {
   opacity: 0.55;
   transition: opacity 1.4s var(--cx-ease);
@@ -9125,12 +9042,6 @@
 
 /* --- stage: the record colours the room, the fader has its number, the timeline answers a hover --- */
 
-/* The page wash was forced almost grey so it would not tint a wall of covers in a listing. The stage
-   has one cover, and the concept's whole idea is that its colour is the room's. */
-.cx-root[data-view='home'] .cx-bg {
-  filter: grayscale(0.4) saturate(1.15) blur(110px) brightness(0.5);
-}
-
 .cx-vol-num {
   min-width: 2ch;
   font-size: 11.5px;
@@ -9612,22 +9523,6 @@
     --cx-stage 1.9s ease,
     --cx-a1 2.4s ease,
     --cx-a2 2.4s ease;
-}
-
-/*
- * The room, in the record's two colours.
- *
- * The primary sits behind the sleeve, where the bloom already puts the record's light; the accent
- * takes the far corner, so the page has a warm side and a cool side the way a lit room does. Both are
- * grounds (see `groundOf`), never fills: the type stays white type and the sleeve stays the only
- * bright thing. They glide on a track change with the rest of the palette.
- */
-.cx-root[data-view='home'] .cx-bg-scrim {
-  background:
-    radial-gradient(122% 108% at 50% 44%, transparent 40%, rgb(0 0 0 / 42%) 100%),
-    radial-gradient(92% 80% at 26% 44%, color-mix(in srgb, var(--cx-a1) 72%, transparent) 0%, transparent 62%),
-    radial-gradient(80% 70% at 88% 92%, color-mix(in srgb, var(--cx-a2) 58%, transparent) 0%, transparent 60%),
-    linear-gradient(180deg, rgb(10 10 12 / 62%), rgb(10 10 12 / 88%));
 }
 
 /* The phone player: the same two colours, the accent rising from the foot where the controls are. */
@@ -10527,15 +10422,6 @@
   display: grid;
   place-items: center;
   color: var(--t7);
-}
-
-/* The record's accent, a little more present in the far corner. */
-.cx-root[data-view='home'] .cx-bg-scrim {
-  background:
-    radial-gradient(122% 108% at 50% 44%, transparent 40%, rgb(0 0 0 / 42%) 100%),
-    radial-gradient(92% 80% at 26% 44%, color-mix(in srgb, var(--cx-a1) 72%, transparent) 0%, transparent 62%),
-    radial-gradient(90% 80% at 88% 92%, color-mix(in srgb, var(--cx-a2) 74%, transparent) 0%, transparent 62%),
-    linear-gradient(180deg, rgb(10 10 12 / 62%), rgb(10 10 12 / 88%));
 }
 
 /* --- the reading --- */
