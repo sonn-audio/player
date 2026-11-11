@@ -4095,8 +4095,11 @@ html[data-arrived] .cx-side-mark {
   .cx-pbar-vol .cx-vol-slider {
     width: 72px;
   }
+}
 
-  /* Five or six sources in one row: the word under each name gives way before the row breaks. */
+/* Five or six sources in one row: the word under each name gives way before the row breaks. A phone
+   stacks them instead. */
+@media (min-width: 641px) and (max-width: 1180px) {
   .cx-hall {
     flex-wrap: nowrap;
   }
