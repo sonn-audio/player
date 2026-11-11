@@ -292,84 +292,6 @@
   min-height: 0;
 }
 
-/*
- * The house, along the foot of the wall.
- *
- * One row: every room as a small sleeve, its name and what is on. A hairline above it and nothing else
- * — no fill, no frame — so it reads as the floor the room stands on rather than as a bar.
- */
-.cx-house {
-  display: flex;
-  align-items: center;
-  gap: clamp(28px, 3.6vw, 56px);
-  flex: none;
-  height: 72px;
-  padding: 0 40px;
-  border-top: 1px solid var(--hair);
-  overflow: hidden;
-}
-
-.cx-house-room {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  min-width: 0;
-  padding: 6px 8px;
-  margin: 0 -8px;
-  border-radius: 4px;
-  text-align: left;
-  cursor: pointer;
-  transition:
-    background 0.25s var(--cx-ease),
-    box-shadow 0.25s var(--cx-ease);
-}
-
-.cx-house-room[data-current] {
-  cursor: default;
-}
-
-.cx-house-room:not([data-current]):hover {
-  background: rgb(255 255 255 / 3%);
-}
-
-.cx-house-cov {
-  flex: none;
-  width: 34px;
-  height: 34px;
-  border-radius: 2px;
-  background-color: rgb(255 255 255 / 4%);
-  background-position: center;
-  background-size: cover;
-  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 8%);
-}
-
-.cx-house-room[data-quiet] .cx-house-cov {
-  background-image: none !important;
-}
-
-.cx-house-txt {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  min-width: 0;
-}
-
-.cx-house-name {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 10px;
-  letter-spacing: 0.22em;
-  color: var(--t6);
-  white-space: nowrap;
-  transition: color 0.2s;
-}
-
-.cx-house-room[data-current] .cx-house-name,
-.cx-house-room:hover .cx-house-name {
-  color: var(--t3);
-}
-
 .cx-house-plus {
   font-style: normal;
   color: var(--t7);
@@ -380,51 +302,6 @@
   height: 5px;
   border-radius: 50%;
   background: var(--g);
-}
-
-.cx-house-line {
-  overflow: hidden;
-  font-size: 12px;
-  color: var(--t6);
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.cx-house-room[data-quiet] .cx-house-line {
-  color: var(--t8);
-}
-
-/* A record in the hand: every other room lights up as somewhere it could land. */
-.cx-house-room[data-hot] {
-  box-shadow: inset 0 0 0 1px var(--hair);
-}
-
-.cx-house-room[data-over] {
-  background: rgb(255 255 255 / 9%);
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--g) 60%, transparent);
-}
-
-.cx-house-room[data-over] .cx-house-name {
-  color: var(--t1);
-}
-
-.cx-house-ways {
-  display: flex;
-  align-items: center;
-  gap: 28px;
-  margin-left: auto;
-  flex: none;
-}
-
-.cx-house-ways button {
-  font-size: 10px;
-  letter-spacing: 0.22em;
-  color: var(--t7);
-  transition: color 0.18s;
-}
-
-.cx-house-ways button:hover {
-  color: var(--t3);
 }
 
 /*
@@ -3474,7 +3351,6 @@
 .cx-root[data-idle] .cx-bar-wrap,
 .cx-root[data-idle] .cx-times,
 .cx-root[data-idle] .cx-stage-foot,
-.cx-root[data-idle] .cx-house,
 .cx-root[data-idle] .cx-fav {
   opacity: 0;
   visibility: hidden;
@@ -3501,8 +3377,7 @@
 .cx-root[data-idle] .cx-transport,
 .cx-root[data-idle] .cx-bar-wrap,
 .cx-root[data-idle] .cx-times,
-.cx-root[data-idle] .cx-stage-foot,
-.cx-root[data-idle] .cx-house {
+.cx-root[data-idle] .cx-stage-foot {
   max-height: 0;
   margin-top: 0;
   margin-bottom: 0;
@@ -4267,24 +4142,6 @@
   }
 }
 
-/* The strip: a playing room carries its progress as a hairline under its line. */
-.cx-house-prog {
-  display: block;
-  width: 100%;
-  height: 1px;
-  margin-top: 2px;
-  overflow: hidden;
-  background: rgb(255 255 255 / 8%);
-}
-
-.cx-house-prog i {
-  display: block;
-  height: 100%;
-  background: var(--g);
-  opacity: 0.8;
-  transition: width 0.92s linear;
-}
-
 .cx-inputs-empty {
   display: flex;
   flex-direction: column;
@@ -4978,25 +4835,6 @@
     font-size: 15px;
   }
 
-  .cx-house {
-    height: 80px;
-  }
-
-  .cx-house-cov {
-    width: 40px;
-    height: 40px;
-  }
-}
-
-/* The strip: the line has room for a name and an artist; a quiet room shows its glyph. */
-.cx-house-line {
-  max-width: clamp(160px, 18vw, 340px);
-}
-
-.cx-house-cov {
-  display: grid;
-  place-items: center;
-  color: var(--t7);
 }
 
 /* The side letters stand inside the figure, not on its edge. */
@@ -5004,29 +4842,6 @@
   left: 6px;
   font-size: 9px;
   color: rgb(255 255 255 / 42%);
-}
-
-/* ==========================================================================================
- * The spread.
- *
- * On a wide window a room with a record on is two pages: the sleeve is the left one — square, from the
- * bar to the floor, flush to the edge, no shadow, never cropped — and the room is the right one, a
- * field in the record's colour with the type on it and the house at its foot. Not an object on a
- * table: a poster. A room with nothing on keeps the centred composition — a blank left page is not
- * a picture of anything.
- * ========================================================================================== */
-
-/* The row of rooms, inside a page: a section like the others, with a head and rooms that wrap. */
-.cx-house-row {
-  display: flex;
-  align-items: center;
-  gap: clamp(28px, 3.6vw, 56px);
-  width: 100%;
-  min-width: 0;
-}
-
-.cx-house .cx-house-row {
-  height: 100%;
 }
 
 /* --- the gallery: the house at rest --- */
@@ -5262,10 +5077,6 @@
     height: 44px;
   }
 
-  .cx-stage[data-spread] .cx-house-cov {
-    width: 34px;
-    height: 34px;
-  }
 }
 
 /* ==========================================================================================
@@ -5673,27 +5484,6 @@
  * gets two; a short one gets one; a very short one keeps only the count on the label, which is the
  * thing you actually read at a glance. Each step hands the name's box about seventy pixels back.
  */
-@media (max-height: 1100px) {
-  .cx-stage .cx-upnext-list li:nth-child(n + 3) {
-    display: none;
-  }
-}
-
-@media (max-height: 940px) {
-  .cx-stage .cx-upnext-list li:nth-child(n + 2) {
-    display: none;
-  }
-}
-
-@media (max-height: 850px) {
-  .cx-stage .cx-upnext-list {
-    display: none;
-  }
-
-  .cx-stage .cx-stage-foot {
-    padding-top: clamp(14px, 2.4vh, 26px);
-  }
-}
 
 /*
  * The foot by the page's own width, not the window's.

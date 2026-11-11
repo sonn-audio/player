@@ -479,7 +479,7 @@ export function Stage({
   const letters = mainTitle(cur.title).length;
   const plate = !cur.hasTrack ? 56 : letters > 30 ? 44 : letters > 16 ? 56 : 72;
   /* At rest the name is read from across the room, so the same three sizes stand a third larger. */
-  const fit = { ref: undefined, size: resting || spread ? Math.round(plate * 1.34) : plate };
+  const fit = { size: resting || spread ? Math.round(plate * 1.34) : plate };
 
   /*
    * A track change is a dissolve, so each line keeps the one it is replacing.
@@ -751,7 +751,7 @@ export function Stage({
               <h1
                 className="disp cx-title cx-out"
                 key={gone.title.id}
-                style={gone.title.value.size ? { fontSize: `${gone.title.value.size}px` } : undefined}
+                style={{ '--fs': `${gone.title.value.size}px` } as React.CSSProperties}
                 aria-hidden="true"
               >
                 {gone.title.value.text}
@@ -760,8 +760,7 @@ export function Stage({
             <h1
               className="disp cx-title cx-in cx-in-2"
               key={titleId}
-              ref={fit.ref}
-              style={fit.size ? { fontSize: `${fit.size}px` } : undefined}
+              style={{ '--fs': `${fit.size}px` } as React.CSSProperties}
             >
               {mainTitle(cur.title)}
             </h1>

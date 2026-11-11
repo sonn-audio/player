@@ -279,15 +279,6 @@ export function ArtApp() {
   }, [content]);
 
   /*
-   * The house is quiet: nothing loaded in any room.
-   *
-   * Worth its own screen rather than an empty player, because an empty player invites you to press
-   * play on nothing. This offers the ways *in* instead — and it is the state a wall panel sits in for
-   * most of the day, so it should look composed rather than unfinished.
-   */
-  const houseQuiet = zones.length > 0 && zones.every((candidate) => !candidate.track);
-
-  /*
    * Does this room have a running order — and therefore a queue, a shuffle and a repeat?
    *
    * `source.seekable` is the first-frame answer and the reason it is first: it arrives with the zone, so
@@ -721,18 +712,7 @@ export function ArtApp() {
                 }
               />
             ) : !phone ? (
-              <Wall
-                channels={channels}
-                currentLeaderId={leaderOf(zone, zones)?.id ?? null}
-                onSelect={select}
-                drag={drag}
-                onCanvas={() => setAsked('record')}
-                onHouse={() => setAsked('house')}
-                canCanvas={cur.hasTrack}
-                /* Under the stage the rooms stand on the record's own page; the strip is for the
-                   quiet house, whose welcome has no page of its own. */
-                foot={view.kind === 'home' && houseQuiet}
-              >
+              <Wall currentLeaderId={leaderOf(zone, zones)?.id ?? null} drag={drag}>
                 {view.kind === 'browse' ? (
                   <Browse
                     zone={zone}

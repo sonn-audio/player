@@ -203,9 +203,11 @@ html[data-arrived] .cx-side-mark {
 .cx-pbar {
   position: relative;
   z-index: 3;
-  display: flex;
+  /* Three columns that cannot run into each other: what plays, the transport, the room. */
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 440px) minmax(0, 1fr);
+  column-gap: 24px;
   align-items: center;
-  justify-content: space-between;
   flex: none;
   height: 84px;
   margin-left: 232px;
@@ -233,7 +235,6 @@ html[data-arrived] .cx-side-mark {
   align-items: center;
   gap: 14px;
   min-width: 0;
-  flex: 0 1 400px;
 }
 
 .cx-pbar-cov {
@@ -310,15 +311,11 @@ html[data-arrived] .cx-side-mark {
 }
 
 .cx-pbar-mid {
-  position: absolute;
-  top: 50%;
-  left: 50%;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 5px;
-  width: 440px;
-  translate: -50% -50%;
+  min-width: 0;
 }
 
 .cx-pbar-tl {
@@ -377,7 +374,6 @@ html[data-arrived] .cx-side-mark {
   align-items: center;
   justify-content: flex-end;
   gap: 16px;
-  flex: 0 1 400px;
   min-width: 0;
 }
 
@@ -589,6 +585,14 @@ html[data-arrived] .cx-side-mark {
 
 @media (max-height: 820px) {
   .cx-root[data-shell] .cx-stage .cx-upnext-list li:nth-child(n + 3) {
+    display: none;
+  }
+}
+
+/* A window too short for a list keeps the record and its name and drops what follows whole — the
+   label with the rows, never a heading over nothing. */
+@media (max-height: 640px) {
+  .cx-root[data-shell] .cx-stage .cx-stage-foot {
     display: none;
   }
 }
@@ -4054,5 +4058,91 @@ html[data-arrived] .cx-side-mark {
   .cx-root .cx-bill-open {
     height: 44px;
     border-radius: 22px;
+  }
+}
+
+/* --- the same frame on a wall panel: 1024 by 768, landscape ------------------------------- */
+
+/* The name is a nameplate of one of three sizes, but never wider than the column it stands in. */
+.cx-titlebox .cx-title {
+  font-size: min(var(--fs, 56px), calc((100vw - 232px) * 0.058));
+}
+
+.cx-root[data-idle] .cx-titlebox .cx-title {
+  font-size: min(var(--fs, 56px), 6vw);
+}
+
+@media (max-width: 1180px) {
+  .cx-pbar {
+    grid-template-columns: minmax(0, 1fr) minmax(240px, 340px) minmax(0, 1fr);
+  }
+
+  /* The room is named in the index beside the bar; here it gives its place to the fader. */
+  .cx-root .cx-pbar-room {
+    display: none;
+  }
+
+  .cx-pbar-vol .cx-vol-slider {
+    width: 72px;
+  }
+
+  /* Five or six sources in one row: the word under each name gives way before the row breaks. */
+  .cx-hall {
+    flex-wrap: nowrap;
+  }
+
+  .cx-source {
+    min-width: 0;
+    padding: 0 16px;
+  }
+
+  .cx-root .cx-source-name {
+    font-size: 17px;
+    white-space: nowrap;
+  }
+
+  .cx-root .cx-source-fact {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+/* A short window: the index closes up so its last line is still on the panel. */
+@media (max-height: 820px) {
+  .cx-side {
+    gap: 20px;
+    padding-top: 24px;
+    padding-bottom: 14px;
+  }
+
+  .cx-root .cx-snav {
+    height: 30px;
+  }
+}
+
+/* --- a tablet held upright: the hand's layout, as one column in the middle of the glass ----- */
+
+@media (min-width: 700px) and (max-width: 979px) {
+  .cx-welcome {
+    max-width: 680px;
+  }
+
+  .cx-hrooms {
+    max-width: none;
+  }
+
+  .cx-np {
+    max-width: 560px;
+    margin: 0 auto;
+  }
+
+  .cx-root:not([data-shell]) .cx-browse-inner {
+    max-width: 720px;
+    margin-inline: auto;
+  }
+
+  .cx-mhead {
+    padding-inline: max(22px, calc((100vw - 680px) / 2 + 22px));
   }
 }
