@@ -3893,6 +3893,20 @@ html[data-arrived] .cx-side-mark {
   display: none;
 }
 
+/* Every control in the hand is a thumb wide. */
+.cx-sig-band .cx-transport .cx-tr-skip,
+.cx-sig-band .cx-transport .cx-tr-play {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+}
+
+.cx-sig-band .cx-time-tot {
+  min-height: 44px;
+  margin-block: -12px;
+}
+
 .cx-sig-band .cx-bar-wrap {
   max-width: none;
   margin-top: 6px;
@@ -3934,6 +3948,13 @@ html[data-arrived] .cx-side-mark {
 
   .cx-sig-panel {
     padding: 14px 14px 10px;
+  }
+
+  .cx-sig .analysis-eq-toggle {
+    justify-content: flex-end;
+    min-width: 44px;
+    min-height: 44px;
+    margin-block: -12px;
   }
 
   .cx-sig-deck {
