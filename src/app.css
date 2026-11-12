@@ -3715,17 +3715,23 @@ html[data-arrived] .cx-side-mark {
   transition: border-color 0.2s;
 }
 
-.cx-search:focus-within,
 .cx-search:has(input:not(:placeholder-shown)) {
   border-color: var(--t3);
 }
 
-.cx-search input {
+/* The field you are typing in says so with its own rule, not with a ring round the input. */
+.cx-search:focus-within {
+  border-color: var(--t1);
+  color: var(--t2);
+}
+
+.cx-root .cx-search input {
   flex: 1;
   min-width: 0;
   height: 100%;
   border: 0;
   outline: 0;
+  box-shadow: none;
   background: none;
   font: inherit;
   font-size: 14px;
