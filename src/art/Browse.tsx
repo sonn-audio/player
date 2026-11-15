@@ -1765,8 +1765,22 @@ export function Browse({
             />
           )}
 
-          {/* Under the selector, the music itself: what this room played lately and what it was told
-              to keep, as a flat row of sleeves — the two shelves anybody actually reaches for. */}
+          {/* Under the selector, the music itself, as flat rows of sleeves: what this room was told to
+              keep, then what it played lately. The favourites lead because they are a choice; the
+              other is a trace. */}
+          {atRoot && (
+            <Picks
+              label={`favourites in ${zone?.name ?? 'this room'}`}
+              items={favorites.slice(0, 14).map((entry) => ({
+                key: String(entry.id),
+                title: entry.name,
+                sub: '',
+                cover: entry.coverUrl,
+                play: () => zone && void api.play(zone.id, entry.source),
+              }))}
+            />
+          )}
+
           {atRoot && (
             <Picks
               label={`lately in ${zone?.name ?? 'this room'}`}
@@ -1780,19 +1794,6 @@ export function Browse({
                   cover: entry.coverUrl,
                   play: () => zone && void api.play(zone.id, entry.source),
                 }))}
-            />
-          )}
-
-          {atRoot && (
-            <Picks
-              label="kept"
-              items={favorites.slice(0, 14).map((entry) => ({
-                key: String(entry.id),
-                title: entry.name,
-                sub: '',
-                cover: entry.coverUrl,
-                play: () => zone && void api.play(zone.id, entry.source),
-              }))}
             />
           )}
 
