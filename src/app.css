@@ -2013,6 +2013,7 @@ html[data-arrived] .cx-side-mark {
   display: inline-flex;
   align-items: center;
   align-self: flex-start;
+  min-width: 44px;
   max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -3695,6 +3696,7 @@ html[data-arrived] .cx-side-mark {
   .cx-root button.cx-detail-sub {
     display: inline-flex;
     align-items: center;
+    min-width: 44px;
     min-height: 44px;
     margin-block: -4px -10px;
   }
@@ -4090,6 +4092,7 @@ html[data-arrived] .cx-side-mark {
   .cx-root .cx-bill-title {
     display: flex;
     align-items: center;
+    min-width: 44px;
     min-height: 44px;
     margin-top: 2px;
     white-space: nowrap;
