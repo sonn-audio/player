@@ -679,6 +679,12 @@ export function ArtApp() {
                 channels={channels}
                 currentLeaderId={leaderOf(zone, zones)?.id ?? null}
                 drag={drag}
+                favorites={favorites.slice(0, 14).map((item) => ({
+                  key: String(item.id),
+                  title: item.name,
+                  cover: item.coverUrl,
+                  play: () => zone && void api.play(zone.id, item.source),
+                }))}
                 /* Something with a name: a bare stream address or an alert file is not a record. */
                 recents={recents.filter((item) => item.title || item.album).slice(0, 14).map((item) => ({
                   key: item.source,

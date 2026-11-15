@@ -26,6 +26,7 @@ export function House({
   channels,
   currentLeaderId,
   drag,
+  favorites,
   recents,
   scenes,
   onSelect,
@@ -36,6 +37,8 @@ export function House({
   channels: Channel[];
   currentLeaderId: number | null;
   drag: RoomDrag;
+  /** What the room you stand in was told to keep. */
+  favorites: Shelf;
   /** What the room you stand in played lately. */
   recents: Shelf;
   /** Saved moments: the rooms, what was on, how loud. */
@@ -174,6 +177,15 @@ export function House({
         </section>
       )}
 
+      {favorites.length > 0 && (
+        <section className="cx-home-sec">
+          <div className="cx-home-sec-head">
+            <span className="cx-home-lbl mono">favourites in this room</span>
+          </div>
+          <Sleeves items={favorites} />
+        </section>
+      )}
+
       <section className="cx-home-sec">
         <div className="cx-home-sec-head">
           <span className="cx-home-lbl mono">{recents.length > 0 ? 'lately in this room' : 'nothing played here yet'}</span>
@@ -181,21 +193,26 @@ export function House({
             browse music
           </button>
         </div>
-        {recents.length > 0 && (
-          <div className="cx-home-row">
-            {recents.map((item) => (
-              <button type="button" className="cx-home-tile" key={item.key} onClick={item.play} title={`Play ${item.title}`}>
-                <span className="cx-home-tile-cov" style={{ backgroundImage: itemCoverCss(item.cover) }}>
-                  {/* No picture: a white label, with the name typed on it. */}
-                  {!item.cover && <span className="cx-crate-label mono">{item.title}</span>}
-                </span>
-                {item.cover && <span className="cx-home-tile-title">{item.title}</span>}
-                {item.sub && <span className="cx-home-tile-sub">{item.sub}</span>}
-              </button>
-            ))}
-          </div>
-        )}
+        {recents.length > 0 && <Sleeves items={recents} />}
       </section>
+    </div>
+  );
+}
+
+
+/** A row of things to put on. One with no picture is a white label, with its name typed on it. */
+function Sleeves({ items }: { items: Shelf }) {
+  return (
+    <div className="cx-home-row">
+      {items.map((item) => (
+        <button type="button" className="cx-home-tile" key={item.key} onClick={item.play} title={`Play ${item.title}`}>
+          <span className="cx-home-tile-cov" style={{ backgroundImage: itemCoverCss(item.cover) }}>
+            {!item.cover && <span className="cx-crate-label mono">{item.title}</span>}
+          </span>
+          {item.cover && <span className="cx-home-tile-title">{item.title}</span>}
+          {item.sub && <span className="cx-home-tile-sub">{item.sub}</span>}
+        </button>
+      ))}
     </div>
   );
 }
